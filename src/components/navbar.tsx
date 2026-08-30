@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import gsap from "gsap";
 import {
   Search, ChevronDown,
   CreditCard, FileText, Users, BarChart3, Package,
@@ -85,7 +86,6 @@ const menus: Record<string, MenuData> = {
       mockupType: "drops",
     },
   },
-
   fundadores: {
     columns: [
       {
@@ -134,15 +134,13 @@ function MockupVisual({ type }: { type: FeaturedCard["mockupType"] }) {
     return (
       <div className="w-full rounded-xl bg-stone-900 p-3 mb-4 overflow-hidden">
         <div className="flex items-center gap-1.5 mb-3">
-          <div className="size-2 rounded-full bg-stone-700" />
-          <div className="size-2 rounded-full bg-stone-700" />
-          <div className="size-2 rounded-full bg-stone-700" />
+          {[0,1,2].map(i => <div key={i} className="size-2 rounded-full bg-stone-700" />)}
         </div>
-        {["bg-blue-400", "bg-violet-400", "bg-green-400", "bg-orange-400", "bg-pink-400"].map((c, i) => (
+        {["bg-blue-400","bg-violet-400","bg-green-400","bg-orange-400","bg-pink-400"].map((c, i) => (
           <div key={i} className="flex items-center gap-2 mb-2 last:mb-0">
             <div className={`size-5 rounded-md ${c} opacity-80 shrink-0`} />
             <div className="flex-1 space-y-1">
-              <div className={`h-1.5 rounded-full bg-stone-600 ${i % 2 === 0 ? "w-3/4" : "w-1/2"}`} />
+              <div className={`h-1.5 rounded-full bg-stone-600 ${i%2===0?"w-3/4":"w-1/2"}`} />
               <div className="h-1 rounded-full bg-stone-700 w-1/3" />
             </div>
             <div className="h-4 w-7 rounded-full bg-stone-700 flex items-center justify-center">
@@ -156,7 +154,7 @@ function MockupVisual({ type }: { type: FeaturedCard["mockupType"] }) {
   return (
     <div className="w-full rounded-xl bg-gradient-to-br from-stone-100 to-stone-200 p-3 mb-4">
       <div className="grid grid-cols-2 gap-1.5">
-        {["bg-blue-400", "bg-violet-400", "bg-green-400", "bg-orange-400"].map((c, i) => (
+        {["bg-blue-400","bg-violet-400","bg-green-400","bg-orange-400"].map((c,i) => (
           <div key={i} className="bg-white rounded-lg p-2 shadow-sm">
             <div className={`size-5 rounded-md ${c} opacity-70 mb-1.5`} />
             <div className="h-1.5 rounded-full bg-stone-200 w-3/4 mb-1" />
@@ -168,41 +166,136 @@ function MockupVisual({ type }: { type: FeaturedCard["mockupType"] }) {
   );
 }
 
-// ─── NavLink slide-up ─────────────────────────────────────────────────────────
+// ─── GSAP NavLink — slide-up text on hover ────────────────────────────────────
 
 function NavLink({ href, children }: { href: string; children: string }) {
+  const topRef  = useRef<HTMLSpanElement>(null);
+  const botRef  = useRef<HTMLSpanElement>(null);
+  const tlRef   = useRef<gsap.core.Timeline | null>(null);
+
+  useEffect(() => {
+    tlRef.current = gsap.timeline({ paused: true })
+      .to(topRef.current, { y: "-100%", opacity: 0, duration: 0.28, ease: "power2.inOut" }, 0)
+      .fromTo(botRef.current, { y: "100%", opacity: 0 }, { y: "0%", opacity: 1, duration: 0.28, ease: "power2.inOut" }, 0);
+    return () => { tlRef.current?.kill(); };
+  }, []);
+
   return (
-    <Link href={href} className="px-3 py-1.5 rounded-md text-[13.5px] font-medium text-stone-600 hover:text-stone-900 hover:bg-stone-100/80 transition-colors">
-      {children}
+    <Link
+      href={href}
+      className="relative inline-flex overflow-hidden px-3 py-1.5 rounded-md hover:bg-stone-100/80 transition-colors"
+      onMouseEnter={() => tlRef.current?.play()}
+      onMouseLeave={() => tlRef.current?.reverse()}
+    >
+      <span ref={topRef}  className="block text-[13.5px] font-medium text-stone-600 leading-none">{children}</span>
+      <span ref={botRef}  className="absolute inset-x-3 text-[13.5px] font-medium text-stone-900 leading-none" aria-hidden>{children}</span>
     </Link>
   );
 }
 
-// ─── Navbar principal (maneja el estado del megamenu a nivel raíz) ────────────
+// ─── GSAP Trigger button — slide-up text on hover ────────────────────────────
+
+function TriggerButton({
+  label,
+  active,
+  onEnter,
+}: {
+  label: string;
+  active: boolean;
+  onEnter: () => void;
+}) {
+  const topRef = useRef<HTMLSpanElement>(null);
+  const botRef = useRef<HTMLSpanElement>(null);
+  const tlRef  = useRef<gsap.core.Timeline | null>(null);
+
+  useEffect(() => {
+    tlRef.current = gsap.timeline({ paused: true })
+      .to(topRef.current,  { y: "-100%", opacity: 0, duration: 0.28, ease: "power2.inOut" }, 0)
+      .fromTo(botRef.current, { y: "100%", opacity: 0 }, { y: "0%", opacity: 1, duration: 0.28, ease: "power2.inOut" }, 0);
+    return () => { tlRef.current?.kill(); };
+  }, []);
+
+  return (
+    <button
+      onMouseEnter={() => { tlRef.current?.play(); onEnter(); }}
+      onMouseLeave={() => { if (!active) tlRef.current?.reverse(); }}
+      className={`relative inline-flex items-center gap-0.5 overflow-hidden px-3 py-1.5 rounded-md transition-colors text-[13.5px] font-medium ${active ? "bg-stone-100/80" : "hover:bg-stone-100/80"}`}
+      aria-expanded={active}
+    >
+      <span ref={topRef}  className="block text-stone-600 leading-none">{label}</span>
+      <span ref={botRef}  className="absolute left-3 text-stone-900 leading-none" aria-hidden>{label}</span>
+      <ChevronDown
+        className={`size-3.5 text-stone-400 ml-0.5 transition-transform duration-300 ease-out ${active ? "rotate-180" : ""}`}
+      />
+    </button>
+  );
+}
+
+// ─── Navbar ───────────────────────────────────────────────────────────────────
 
 export function Navbar() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const panelRef   = useRef<HTMLDivElement>(null);
+  const hideTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  let hideTimeout: ReturnType<typeof setTimeout>;
+  // Animar el panel con GSAP cuando cambia activeMenu
+  const currentMenu = activeMenu ? menus[activeMenu] : null;
+
+  const animatePanel = useCallback((show: boolean) => {
+    if (!panelRef.current) return;
+    if (show) {
+      gsap.fromTo(
+        panelRef.current,
+        { opacity: 0, y: -8, display: "block" },
+        { opacity: 1, y: 0, duration: 0.22, ease: "power3.out" }
+      );
+    } else {
+      gsap.to(panelRef.current, {
+        opacity: 0,
+        y: -6,
+        duration: 0.18,
+        ease: "power2.in",
+        onComplete: () => {
+          if (panelRef.current) panelRef.current.style.display = "none";
+        },
+      });
+    }
+  }, []);
+
+  // Sincronizar animación con estado
+  const prevActiveRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (activeMenu && !prevActiveRef.current) {
+      // Abrir
+      animatePanel(true);
+    } else if (!activeMenu && prevActiveRef.current) {
+      // Cerrar
+      animatePanel(false);
+    }
+    prevActiveRef.current = activeMenu;
+  }, [activeMenu, animatePanel]);
+
+  // Inicializar panel como oculto
+  useEffect(() => {
+    if (panelRef.current) panelRef.current.style.display = "none";
+  }, []);
 
   const handleEnter = (key: string) => {
-    clearTimeout(hideTimeout);
+    if (hideTimeout.current) clearTimeout(hideTimeout.current);
     setActiveMenu(key);
   };
 
   const handleLeave = () => {
-    hideTimeout = setTimeout(() => setActiveMenu(null), 150);
+    hideTimeout.current = setTimeout(() => setActiveMenu(null), 120);
   };
-
-  const currentMenu = activeMenu ? menus[activeMenu] : null;
 
   return (
     <div
       className="fixed top-0 inset-x-0 z-50 px-4"
       onMouseLeave={handleLeave}
     >
-      {/* Barra principal */}
-      <div className={`max-w-7xl mx-auto bg-white border border-t-0 border-stone-200/70 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.06)] px-6 h-[52px] flex items-center justify-between gap-8 transition-all duration-200 ${activeMenu ? "rounded-b-none border-b-transparent" : "rounded-b-2xl"}`}>
+      {/* Barra */}
+      <div className={`max-w-7xl mx-auto bg-white border border-t-0 border-stone-200/70 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.06)] px-6 h-[52px] flex items-center justify-between gap-8 transition-[border-radius] duration-200 ${activeMenu ? "rounded-b-none" : "rounded-b-2xl"}`}>
 
         {/* LEFT */}
         <div className="flex items-center gap-6">
@@ -214,15 +307,13 @@ export function Navbar() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-0.5">
-            {(["compradores", "fundadores"] as const).map((key) => (
-              <button
+            {(["compradores","fundadores"] as const).map((key) => (
+              <TriggerButton
                 key={key}
-                onMouseEnter={() => handleEnter(key)}
-                className={`group flex items-center gap-0.5 px-3 py-1.5 rounded-md transition-colors text-[13.5px] font-medium ${activeMenu === key ? "bg-stone-100/80 text-stone-900" : "text-stone-600 hover:bg-stone-100/80 hover:text-stone-900"}`}
-              >
-                {key === "compradores" ? "Para compradores" : "Para fundadores"}
-                <ChevronDown className={`size-3.5 text-stone-400 ml-0.5 transition-transform duration-200 ${activeMenu === key ? "rotate-180" : ""}`} />
-              </button>
+                label={key === "compradores" ? "Para compradores" : "Para fundadores"}
+                active={activeMenu === key}
+                onEnter={() => handleEnter(key)}
+              />
             ))}
             <NavLink href="/el-proyecto">El Proyecto</NavLink>
           </nav>
@@ -236,17 +327,18 @@ export function Navbar() {
           <NavLink href="/sign-in">Acceso</NavLink>
           <Link
             href="/newsletter"
-            className="inline-flex items-center bg-stone-900 hover:bg-stone-800 text-white text-[13.5px] font-medium px-4 py-1.5 rounded-full transition-colors"
+            className="inline-flex items-center bg-stone-900 hover:bg-stone-800 text-white text-[13.5px] font-medium px-4 py-1.5 rounded-full transition-colors duration-200"
           >
             Suscribirse →
           </Link>
         </div>
       </div>
 
-      {/* Panel full-width del megamenu */}
+      {/* Panel megamenu — controlado por GSAP */}
       <div
-        className={`max-w-7xl mx-auto bg-white border border-t-0 border-stone-200/70 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.14)] rounded-b-2xl overflow-hidden transition-all duration-200 ease-[cubic-bezier(0.33,1,0.68,1)] ${currentMenu ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-2 pointer-events-none"}`}
-        onMouseEnter={() => activeMenu && handleEnter(activeMenu)}
+        ref={panelRef}
+        className="max-w-7xl mx-auto bg-white border border-t-0 border-stone-200/70 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.14)] rounded-b-2xl overflow-hidden"
+        onMouseEnter={() => { if (hideTimeout.current) clearTimeout(hideTimeout.current); }}
       >
         {currentMenu && (
           <div className="flex gap-0 p-6">
@@ -286,7 +378,7 @@ export function Navbar() {
               ))}
             </div>
 
-            {/* Featured card */}
+            {/* Featured */}
             <div className="w-[200px] shrink-0 border-l border-stone-100 pl-6 ml-2">
               <MockupVisual type={currentMenu.featured.mockupType} />
               <span className="inline-block text-[9.5px] font-bold uppercase tracking-widest bg-stone-900 text-white px-2 py-0.5 rounded-full mb-2">
