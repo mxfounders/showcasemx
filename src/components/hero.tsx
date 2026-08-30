@@ -81,12 +81,13 @@ export function Hero({ onSearch, onCategory }: { onSearch: (query: string) => vo
             <div className="pointer-events-none absolute -inset-1.5 bg-gradient-to-r from-stone-200 to-stone-100 rounded-full blur-md opacity-40 group-hover:opacity-70 transition duration-500"></div>
             
             {/* Pill Search Box */}
-            <form onSubmit={event => { event.preventDefault(); onSearch(String(new FormData(event.currentTarget).get("query") ?? "")); }} role="search" className="relative bg-white rounded-3xl sm:rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.05)] border border-stone-200/80 p-2.5 flex flex-wrap sm:flex-nowrap items-center gap-3 transition-shadow duration-300 group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] group-hover:border-stone-300/80">
+            <form onSubmit={event => { event.preventDefault(); onSearch(String(new FormData(event.currentTarget).get("query") ?? "")); }} role="search" className="relative bg-white rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.05)] border border-stone-200/80 p-1.5 md:p-2.5 flex items-center gap-2 transition-shadow duration-300 group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] group-hover:border-stone-300/80">
               <label htmlFor="solution-search" className="sr-only">¿Qué necesitas resolver en tu empresa?</label>
-              <div className="flex min-w-0 flex-1 items-center gap-3">
-                <div className="pl-3 sm:pl-5 shrink-0">
-                  <Search aria-hidden="true" className="size-[20px] text-stone-400" />
-                </div>
+              
+              <div className="pl-3 md:pl-5 shrink-0">
+                <Search aria-hidden="true" className="size-4 md:size-[20px] text-stone-400" />
+              </div>
+              
               <input
                 id="solution-search"
                 name="query"
@@ -94,11 +95,12 @@ export function Hero({ onSearch, onCategory }: { onSearch: (query: string) => vo
                 type="text"
                 placeholder="¿Qué necesitas resolver en tu empresa?"
                 aria-describedby="solution-search-example"
-                className="min-w-0 flex-1 bg-transparent border-none rounded-lg outline-none focus-visible:underline decoration-stone-300 underline-offset-8 text-[16px] text-stone-900 placeholder:text-stone-400 font-medium px-2 py-3 w-full"
+                className="min-w-0 flex-1 bg-transparent border-none rounded-lg outline-none focus-visible:underline decoration-stone-300 underline-offset-8 text-[14px] md:text-[16px] text-stone-900 placeholder:text-stone-400 font-medium px-1 md:px-2 py-2 md:py-3 w-full text-ellipsis"
               />
-              </div>
-              <button type="submit" style={actionButtonStyle} className="action-button h-12 px-6 sm:px-8 rounded-full text-[14.5px] font-medium transition-colors flex items-center justify-center shrink-0 w-full sm:w-auto">
-                Encontrar soluciones
+              
+              <button type="submit" style={actionButtonStyle} className="action-button h-10 md:h-12 px-5 md:px-8 rounded-full text-[13px] md:text-[14.5px] font-medium transition-colors flex items-center justify-center shrink-0">
+                <span className="hidden sm:inline">Encontrar soluciones</span>
+                <span className="sm:hidden">Buscar</span>
               </button>
             </form>
             <p id="solution-search-example" className="relative mt-4 px-2 text-center text-[13px] leading-relaxed text-stone-500">

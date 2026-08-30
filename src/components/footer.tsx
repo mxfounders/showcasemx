@@ -165,8 +165,8 @@ export function Footer() {
       <div className="max-w-7xl mx-auto bg-white rounded-t-2xl border border-b-0 border-stone-200/70 shadow-[0_-4px_32px_-4px_rgba(0,0,0,0.06)]">
 
         {/* Top — Logo + tagline */}
-        <div className="px-12 pt-12 pb-8 border-b border-stone-100">
-          <div className="flex items-start justify-between">
+        <div className="px-6 md:px-12 pt-8 md:pt-12 pb-8 border-b border-stone-100">
+          <div className="flex flex-col md:flex-row items-start justify-between gap-6">
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <div className="size-[22px] rounded-[5px] bg-stone-900 flex items-center justify-center">
@@ -180,7 +180,7 @@ export function Footer() {
             </div>
             <Link
               href="/newsletter"
-              style={actionButtonStyle} className="inline-flex items-center gap-2 action-button text-[13px] font-medium px-5 py-2.5 rounded-full transition-colors duration-200"
+              style={actionButtonStyle} className="inline-flex items-center justify-center gap-2 action-button text-[13px] font-medium px-5 py-2.5 rounded-full transition-colors duration-200 w-full md:w-auto"
             >
               <Mail className="size-3.5" />
               Suscribirse al newsletter →
@@ -189,7 +189,7 @@ export function Footer() {
         </div>
 
         {/* Mega grid de columnas */}
-        <div className="px-12 py-10">
+        <div className="px-6 md:px-12 py-8 md:py-10">
           {footerSections.map((section) => (
             <div key={section.heading} className="mb-10 last:mb-0">
               {/* Heading de sección */}
@@ -198,7 +198,7 @@ export function Footer() {
               </p>
 
               {/* Sub-columnas */}
-              <div className={`grid gap-8 ${section.cols.length === 3 ? "grid-cols-3" : section.cols.length === 1 ? "grid-cols-2 md:grid-cols-4" : "grid-cols-2"}`}>
+              <div className={`grid gap-8 grid-cols-1 sm:grid-cols-2 ${section.cols.length === 3 ? "md:grid-cols-3" : section.cols.length === 1 ? "md:grid-cols-4" : "md:grid-cols-2"}`}>
                 {section.cols.map((col, ci) => (
                   <div key={ci}>
                     {col.subheading && (
@@ -225,12 +225,12 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="border-t border-stone-100 mx-12" />
-        <div className="px-12 py-6 flex items-center justify-between">
-          <p className="text-[12px] text-stone-400">
+        <div className="border-t border-stone-100 mx-6 md:mx-12" />
+        <div className="px-6 md:px-12 py-6 flex flex-col md:flex-row items-center md:items-start justify-between gap-4">
+          <p className="text-[12px] text-stone-400 text-center md:text-left">
             © {new Date().getFullYear()} ShowcaseMX · Hecho en México
           </p>
-          <div className="flex items-center gap-5">
+          <div className="flex items-center justify-center gap-5">
             <Link
               href="https://x.com/showcasemx"
               target="_blank"
