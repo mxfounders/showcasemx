@@ -150,9 +150,9 @@ function FooterLink({ href, label, icon: Icon, iconBg, iconColor }: {
         <Icon className={`size-3 ${iconColor}`} />
       </div>
       {/* Texto con slide-up */}
-      <span className="relative overflow-hidden inline-flex h-[1.1em]">
-        <span ref={topRef} className="block text-[13px] text-stone-500 leading-none whitespace-nowrap">{label}</span>
-        <span ref={botRef} className="absolute top-0 left-0 text-[13px] text-stone-900 font-medium leading-none whitespace-nowrap" aria-hidden>{label}</span>
+      <span className="relative overflow-hidden inline-flex h-[1.2em] pr-1">
+        <span ref={topRef} className="block text-[13px] font-medium text-stone-500 leading-none whitespace-nowrap">{label}</span>
+        <span ref={botRef} className="absolute top-0 left-0 text-[13px] font-medium text-stone-900 leading-none whitespace-nowrap" aria-hidden>{label}</span>
       </span>
     </Link>
   );
