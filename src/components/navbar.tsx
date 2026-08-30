@@ -3,8 +3,8 @@ import { Search } from "lucide-react";
 
 export function Navbar() {
   return (
-    <header className="w-full bg-white border-b border-stone-200/60">
-      <div className="max-w-7xl mx-auto px-6 h-[52px] flex items-center justify-between gap-8">
+    <header className="fixed top-0 inset-x-0 z-50 px-4">
+      <div className="max-w-7xl mx-auto bg-white rounded-b-2xl border border-t-0 border-stone-200/70 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.06)] px-6 h-[52px] flex items-center justify-between gap-8">
 
         {/* LEFT: Logo + Nav */}
         <div className="flex items-center gap-8">

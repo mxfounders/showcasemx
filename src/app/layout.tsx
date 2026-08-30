@@ -20,7 +20,7 @@ export default function RootLayout({
     <html lang="es">
       <body className={cn("min-h-screen bg-[#f5f5f4] font-sans antialiased", inter.variable)}>
         <Navbar />
-        <main>{children}</main>
+        <main className="pt-14">{children}</main>
       </body>
     </html>
   );
