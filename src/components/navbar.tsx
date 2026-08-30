@@ -171,15 +171,8 @@ function MockupVisual({ type }: { type: FeaturedCard["mockupType"] }) {
 
 function NavLink({ href, children }: { href: string; children: string }) {
   return (
-    <Link href={href} className="group relative px-3 py-1.5 rounded-md hover:bg-stone-100/80 transition-colors overflow-hidden inline-flex">
-      <span className="flex flex-col items-start text-[13.5px] font-medium leading-none">
-        <span className="block text-stone-600 group-hover:text-stone-900 transition-all duration-300 ease-[cubic-bezier(0.33,1,0.68,1)] group-hover:-translate-y-full group-hover:opacity-0">
-          {children}
-        </span>
-        <span aria-hidden="true" className="absolute inset-x-3 text-stone-900 translate-y-full opacity-0 transition-all duration-300 ease-[cubic-bezier(0.33,1,0.68,1)] group-hover:translate-y-0 group-hover:opacity-100">
-          {children}
-        </span>
-      </span>
+    <Link href={href} className="px-3 py-1.5 rounded-md text-[13.5px] font-medium text-stone-600 hover:text-stone-900 hover:bg-stone-100/80 transition-colors">
+      {children}
     </Link>
   );
 }
@@ -242,12 +235,9 @@ export function Navbar() {
           <NavLink href="/sign-in">Acceso</NavLink>
           <Link
             href="/newsletter"
-            className="group inline-flex items-center bg-stone-900 hover:bg-stone-800 text-white text-[13.5px] font-medium px-4 py-1.5 rounded-full transition-colors overflow-hidden relative"
+            className="inline-flex items-center bg-stone-900 hover:bg-stone-800 text-white text-[13.5px] font-medium px-4 py-1.5 rounded-full transition-colors"
           >
-            <span className="relative overflow-hidden inline-flex h-[1em]">
-              <span className="block transition-all duration-300 ease-[cubic-bezier(0.33,1,0.68,1)] group-hover:-translate-y-full group-hover:opacity-0 whitespace-nowrap">Suscribirse →</span>
-              <span aria-hidden="true" className="absolute top-0 left-0 translate-y-full opacity-0 transition-all duration-300 ease-[cubic-bezier(0.33,1,0.68,1)] group-hover:translate-y-0 group-hover:opacity-100 whitespace-nowrap">Suscribirse →</span>
-            </span>
+            Suscribirse →
           </Link>
         </div>
       </div>
