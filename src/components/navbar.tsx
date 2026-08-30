@@ -20,6 +20,7 @@ type NavItem = {
   iconBg: string;
   iconColor: string;
   label: string;
+  desc: string;
   href: string;
 };
 
@@ -44,34 +45,34 @@ const menus: Record<string, MenuData> = {
       {
         heading: "Por problema operativo",
         links: [
-          { icon: CreditCard,     iconBg: "bg-blue-50",   iconColor: "text-blue-500",   label: "Cobros y cuentas por cobrar", href: "/explorar/cobros" },
-          { icon: FileText,       iconBg: "bg-violet-50", iconColor: "text-violet-500", label: "Contratos y firma digital",   href: "/explorar/contratos" },
-          { icon: Users,          iconBg: "bg-green-50",  iconColor: "text-green-500",  label: "Nómina y compliance",         href: "/explorar/nomina" },
-          { icon: BarChart3,      iconBg: "bg-orange-50", iconColor: "text-orange-500", label: "Visibilidad financiera",      href: "/explorar/finanzas" },
-          { icon: Package,        iconBg: "bg-pink-50",   iconColor: "text-pink-500",   label: "Inventario y supply chain",   href: "/explorar/inventario" },
-          { icon: Target,         iconBg: "bg-red-50",    iconColor: "text-red-500",    label: "Ventas y CRM",                href: "/explorar/ventas" },
-          { icon: HeadphonesIcon, iconBg: "bg-teal-50",   iconColor: "text-teal-500",   label: "Atención al cliente",         href: "/explorar/soporte" },
+          { icon: CreditCard,     iconBg: "bg-blue-50",   iconColor: "text-blue-500",   label: "Cobros y cuentas por cobrar", desc: "Reduce tu ciclo de cobranza de semanas a días",         href: "/explorar/cobros" },
+          { icon: FileText,       iconBg: "bg-violet-50", iconColor: "text-violet-500", label: "Contratos y firma digital",   desc: "Cierra acuerdos sin imprimir una sola hoja",            href: "/explorar/contratos" },
+          { icon: Users,          iconBg: "bg-green-50",  iconColor: "text-green-500",  label: "Nómina y compliance",         desc: "IMSS, SAT y dispersión en un solo lugar",               href: "/explorar/nomina" },
+          { icon: BarChart3,      iconBg: "bg-orange-50", iconColor: "text-orange-500", label: "Visibilidad financiera",      desc: "Sabe exactamente qué entra, qué sale y cuándo",         href: "/explorar/finanzas" },
+          { icon: Package,        iconBg: "bg-pink-50",   iconColor: "text-pink-500",   label: "Inventario y supply chain",   desc: "Control de stock en tiempo real, sin hojas de Excel",  href: "/explorar/inventario" },
+          { icon: Target,         iconBg: "bg-red-50",    iconColor: "text-red-500",    label: "Ventas y CRM",                desc: "Pipeline claro para cerrar más y perder menos",         href: "/explorar/ventas" },
+          { icon: HeadphonesIcon, iconBg: "bg-teal-50",   iconColor: "text-teal-500",   label: "Atención al cliente",         desc: "Mesa de ayuda multicanal sin caos operativo",           href: "/explorar/soporte" },
         ],
       },
       {
         heading: "Por industria",
         links: [
-          { icon: Building2,   iconBg: "bg-indigo-50", iconColor: "text-indigo-500", label: "Agencias y consultoras",     href: "/industria/agencias" },
-          { icon: ShoppingBag, iconBg: "bg-pink-50",   iconColor: "text-pink-500",   label: "Retail y e-commerce",        href: "/industria/retail" },
-          { icon: Factory,     iconBg: "bg-stone-100", iconColor: "text-stone-600",  label: "Manufactura",                href: "/industria/manufactura" },
-          { icon: Scale,       iconBg: "bg-amber-50",  iconColor: "text-amber-600",  label: "Despachos legales",          href: "/industria/legal" },
-          { icon: HardHat,     iconBg: "bg-orange-50", iconColor: "text-orange-500", label: "Construcción y real estate", href: "/industria/construccion" },
-          { icon: Heart,       iconBg: "bg-red-50",    iconColor: "text-red-500",    label: "Salud y clínicas",           href: "/industria/salud" },
-          { icon: GraduationCap, iconBg:"bg-blue-50",  iconColor: "text-blue-500",   label: "Educación y EdTech",         href: "/industria/educacion" },
+          { icon: Building2,    iconBg: "bg-indigo-50", iconColor: "text-indigo-500", label: "Agencias y consultoras",     desc: "Factura, gestiona proyectos y cobra a tiempo",           href: "/industria/agencias" },
+          { icon: ShoppingBag,  iconBg: "bg-pink-50",   iconColor: "text-pink-500",   label: "Retail y e-commerce",        desc: "Inventario, pagos y logística integrados",               href: "/industria/retail" },
+          { icon: Factory,      iconBg: "bg-stone-100", iconColor: "text-stone-600",  label: "Manufactura",                desc: "Digitaliza planta, proveedores y calidad",                href: "/industria/manufactura" },
+          { icon: Scale,        iconBg: "bg-amber-50",  iconColor: "text-amber-600",  label: "Despachos legales",          desc: "Expedientes, clientes y honorarios sin papel",            href: "/industria/legal" },
+          { icon: HardHat,      iconBg: "bg-orange-50", iconColor: "text-orange-500", label: "Construcción y real estate", desc: "Contratos de obra, estimaciones y avance en obra",       href: "/industria/construccion" },
+          { icon: Heart,        iconBg: "bg-red-50",    iconColor: "text-red-500",    label: "Salud y clínicas",           desc: "Agenda, expediente clínico y cobros en un sistema",      href: "/industria/salud" },
+          { icon: GraduationCap,iconBg: "bg-blue-50",   iconColor: "text-blue-500",   label: "Educación y EdTech",         desc: "Inscripciones, cobranza y comunicación con padres",      href: "/industria/educacion" },
         ],
       },
       {
         heading: "Colecciones",
         links: [
-          { icon: Layers,     iconBg: "bg-stone-100", iconColor: "text-stone-700", label: "Essential Stack MX",  href: "/colecciones/essential" },
-          { icon: Briefcase,  iconBg: "bg-blue-50",   iconColor: "text-blue-600",  label: "CFO Toolkit",         href: "/colecciones/cfo" },
-          { icon: TrendingUp, iconBg: "bg-green-50",  iconColor: "text-green-600", label: "Agencia en 30 días",  href: "/colecciones/agencia" },
-          { icon: BookOpen,   iconBg: "bg-violet-50", iconColor: "text-violet-600",label: "Stack legal moderno", href: "/colecciones/legal" },
+          { icon: Layers,     iconBg: "bg-stone-100", iconColor: "text-stone-700", label: "Essential Stack MX",  desc: "Las herramientas mínimas para operar sin caos",         href: "/colecciones/essential" },
+          { icon: Briefcase,  iconBg: "bg-blue-50",   iconColor: "text-blue-600",  label: "CFO Toolkit",         desc: "Control financiero para directores de finanzas",         href: "/colecciones/cfo" },
+          { icon: TrendingUp, iconBg: "bg-green-50",  iconColor: "text-green-600", label: "Agencia en 30 días",  desc: "Lanza tu operación de servicios desde cero",             href: "/colecciones/agencia" },
+          { icon: BookOpen,   iconBg: "bg-violet-50", iconColor: "text-violet-600",label: "Stack legal moderno", desc: "De firma de contratos a cobranza, sin impresoras",       href: "/colecciones/legal" },
         ],
       },
     ],
@@ -90,28 +91,28 @@ const menus: Record<string, MenuData> = {
       {
         heading: "Entrar al catálogo",
         links: [
-          { icon: Send,           iconBg: "bg-blue-50",   iconColor: "text-blue-500",  label: "Cómo aplicar",        href: "/aplicar" },
-          { icon: ClipboardCheck, iconBg: "bg-green-50",  iconColor: "text-green-500", label: "Criterios de entrada", href: "/criterios" },
-          { icon: Settings,       iconBg: "bg-stone-100", iconColor: "text-stone-600", label: "Proceso de revisión",  href: "/proceso" },
-          { icon: HelpCircle,     iconBg: "bg-amber-50",  iconColor: "text-amber-500", label: "Preguntas frecuentes", href: "/faq" },
+          { icon: Send,           iconBg: "bg-blue-50",   iconColor: "text-blue-500",  label: "Cómo aplicar",         desc: "El proceso de entrada en 3 pasos, sin burocracia",        href: "/aplicar" },
+          { icon: ClipboardCheck, iconBg: "bg-green-50",  iconColor: "text-green-500", label: "Criterios de entrada",  desc: "Qué evalúa el equipo: tracción, modelo y ejecución",      href: "/criterios" },
+          { icon: Settings,       iconBg: "bg-stone-100", iconColor: "text-stone-600", label: "Proceso de revisión",   desc: "De draft a publicado: tiempos y comunicación directa",    href: "/proceso" },
+          { icon: HelpCircle,     iconBg: "bg-amber-50",  iconColor: "text-amber-500", label: "Preguntas frecuentes",  desc: "Todo lo que debes saber antes de enviar tu aplicación",   href: "/faq" },
         ],
       },
       {
         heading: "Tu presencia",
         links: [
-          { icon: LayoutDashboard, iconBg: "bg-violet-50", iconColor: "text-violet-500", label: "Dashboard de métricas", href: "/dashboard/founder" },
-          { icon: Target,          iconBg: "bg-red-50",    iconColor: "text-red-500",    label: "Leads corporativos",    href: "/leads" },
-          { icon: UserCircle,      iconBg: "bg-blue-50",   iconColor: "text-blue-500",   label: "Tu perfil de producto", href: "/perfil" },
-          { icon: Rocket,          iconBg: "bg-orange-50", iconColor: "text-orange-500", label: "Weekly Drops",          href: "/drops" },
+          { icon: LayoutDashboard, iconBg: "bg-violet-50", iconColor: "text-violet-500", label: "Dashboard de métricas", desc: "Visitas, leads y qué búsquedas llegan a tu producto",    href: "/dashboard/founder" },
+          { icon: Target,          iconBg: "bg-red-50",    iconColor: "text-red-500",    label: "Leads corporativos",    desc: "Empresas que vieron tu solución y quieren hablar",        href: "/leads" },
+          { icon: UserCircle,      iconBg: "bg-blue-50",   iconColor: "text-blue-500",   label: "Tu perfil de producto", desc: "Cómo te presentas ante compradores corporativos",         href: "/perfil" },
+          { icon: Rocket,          iconBg: "bg-orange-50", iconColor: "text-orange-500", label: "Weekly Drops",          desc: "Sé parte del lanzamiento semanal más visto del ecosistema", href: "/drops" },
         ],
       },
       {
         heading: "Comunidad",
         links: [
-          { icon: Globe,    iconBg: "bg-teal-50",  iconColor: "text-teal-500",  label: "Directorio de founders",   href: "/fundadores" },
-          { icon: Calendar, iconBg: "bg-pink-50",  iconColor: "text-pink-500",  label: "Eventos y networking",     href: "/eventos" },
-          { icon: Mail,     iconBg: "bg-indigo-50",iconColor: "text-indigo-500",label: "Newsletter semanal",       href: "/newsletter" },
-          { icon: Award,    iconBg: "bg-amber-50", iconColor: "text-amber-500", label: "Founders destacados",      href: "/destacados" },
+          { icon: Globe,    iconBg: "bg-teal-50",   iconColor: "text-teal-500",  label: "Directorio de founders",   desc: "Conoce quién más está construyendo en el catálogo",      href: "/fundadores" },
+          { icon: Calendar, iconBg: "bg-pink-50",   iconColor: "text-pink-500",  label: "Eventos y networking",     desc: "Encuentros B2B presenciales en CDMX y Monterrey",        href: "/eventos" },
+          { icon: Mail,     iconBg: "bg-indigo-50", iconColor: "text-indigo-500",label: "Newsletter semanal",       desc: "Inteligencia de mercado: qué buscan las empresas hoy",   href: "/newsletter" },
+          { icon: Award,    iconBg: "bg-amber-50",  iconColor: "text-amber-500", label: "Founders destacados",      desc: "Los operadores más traccionados del catálogo este mes",   href: "/destacados" },
         ],
       },
     ],
@@ -263,14 +264,19 @@ export function Navbar() {
                         <li key={item.href}>
                           <Link
                             href={item.href}
-                            className="group/item flex items-center gap-2.5 px-1.5 py-1.5 rounded-lg hover:bg-stone-50 transition-colors"
+                            className="group/item flex items-start gap-2.5 px-1.5 py-2 rounded-lg hover:bg-stone-50 transition-colors"
                           >
-                            <div className={`size-7 rounded-lg ${item.iconBg} flex items-center justify-center shrink-0`}>
+                            <div className={`size-7 rounded-lg ${item.iconBg} flex items-center justify-center shrink-0 mt-0.5`}>
                               <Icon className={`size-3.5 ${item.iconColor}`} />
                             </div>
-                            <span className="text-[13px] font-medium text-stone-700 group-hover/item:text-stone-950 transition-colors leading-tight">
-                              {item.label}
-                            </span>
+                            <div>
+                              <p className="text-[13px] font-medium text-stone-800 group-hover/item:text-stone-950 transition-colors leading-tight">
+                                {item.label}
+                              </p>
+                              <p className="text-[11.5px] text-stone-400 leading-snug mt-0.5">
+                                {item.desc}
+                              </p>
+                            </div>
                           </Link>
                         </li>
                       );
