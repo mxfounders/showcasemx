@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useRef, useEffect, useCallback } from "react";
 import gsap from "gsap";
+import { actionButtonStyle, brandColors, getAccentStyle } from "@/lib/brand-colors";
 import {
   Search, ChevronDown,
   CreditCard, FileText, Users, BarChart3, Package,
@@ -18,8 +19,6 @@ import {
 
 type NavItem = {
   icon: React.ElementType;
-  iconBg: string;
-  iconColor: string;
   label: string;
   desc: string;
   href: string;
@@ -46,34 +45,34 @@ const menus: Record<string, MenuData> = {
       {
         heading: "Por problema operativo",
         links: [
-          { icon: CreditCard,     iconBg: "bg-blue-50",   iconColor: "text-blue-500",   label: "Cobros y cuentas por cobrar", desc: "Reduce tu ciclo de cobranza de semanas a días",         href: "/explorar/cobros" },
-          { icon: FileText,       iconBg: "bg-violet-50", iconColor: "text-violet-500", label: "Contratos y firma digital",   desc: "Cierra acuerdos sin imprimir una sola hoja",            href: "/explorar/contratos" },
-          { icon: Users,          iconBg: "bg-green-50",  iconColor: "text-green-500",  label: "Nómina y compliance",         desc: "IMSS, SAT y dispersión en un solo lugar",               href: "/explorar/nomina" },
-          { icon: BarChart3,      iconBg: "bg-orange-50", iconColor: "text-orange-500", label: "Visibilidad financiera",      desc: "Sabe exactamente qué entra, qué sale y cuándo",         href: "/explorar/finanzas" },
-          { icon: Package,        iconBg: "bg-pink-50",   iconColor: "text-pink-500",   label: "Inventario y supply chain",   desc: "Control de stock en tiempo real, sin hojas de Excel",  href: "/explorar/inventario" },
-          { icon: Target,         iconBg: "bg-red-50",    iconColor: "text-red-500",    label: "Ventas y CRM",                desc: "Pipeline claro para cerrar más y perder menos",         href: "/explorar/ventas" },
-          { icon: HeadphonesIcon, iconBg: "bg-teal-50",   iconColor: "text-teal-500",   label: "Atención al cliente",         desc: "Mesa de ayuda multicanal sin caos operativo",           href: "/explorar/soporte" },
+          { icon: CreditCard,     label: "Cobros y cuentas por cobrar", desc: "Reduce tu ciclo de cobranza de semanas a días",         href: "/explorar/cobros" },
+          { icon: FileText,       label: "Contratos y firma digital",   desc: "Cierra acuerdos sin imprimir una sola hoja",            href: "/explorar/contratos" },
+          { icon: Users,          label: "Nómina y compliance",         desc: "IMSS, SAT y dispersión en un solo lugar",               href: "/explorar/nomina" },
+          { icon: BarChart3,      label: "Visibilidad financiera",      desc: "Sabe exactamente qué entra, qué sale y cuándo",         href: "/explorar/finanzas" },
+          { icon: Package,        label: "Inventario y supply chain",   desc: "Control de stock en tiempo real, sin hojas de Excel",  href: "/explorar/inventario" },
+          { icon: Target,         label: "Ventas y CRM",                desc: "Pipeline claro para cerrar más y perder menos",         href: "/explorar/ventas" },
+          { icon: HeadphonesIcon, label: "Atención al cliente",         desc: "Mesa de ayuda multicanal sin caos operativo",           href: "/explorar/soporte" },
         ],
       },
       {
         heading: "Por industria",
         links: [
-          { icon: Building2,    iconBg: "bg-indigo-50", iconColor: "text-indigo-500", label: "Agencias y consultoras",     desc: "Factura, gestiona proyectos y cobra a tiempo",           href: "/industria/agencias" },
-          { icon: ShoppingBag,  iconBg: "bg-pink-50",   iconColor: "text-pink-500",   label: "Retail y e-commerce",        desc: "Inventario, pagos y logística integrados",               href: "/industria/retail" },
-          { icon: Factory,      iconBg: "bg-stone-100", iconColor: "text-stone-600",  label: "Manufactura",                desc: "Digitaliza planta, proveedores y calidad",                href: "/industria/manufactura" },
-          { icon: Scale,        iconBg: "bg-amber-50",  iconColor: "text-amber-600",  label: "Despachos legales",          desc: "Expedientes, clientes y honorarios sin papel",            href: "/industria/legal" },
-          { icon: HardHat,      iconBg: "bg-orange-50", iconColor: "text-orange-500", label: "Construcción y real estate", desc: "Contratos de obra, estimaciones y avance en obra",       href: "/industria/construccion" },
-          { icon: Heart,        iconBg: "bg-red-50",    iconColor: "text-red-500",    label: "Salud y clínicas",           desc: "Agenda, expediente clínico y cobros en un sistema",      href: "/industria/salud" },
-          { icon: GraduationCap,iconBg: "bg-blue-50",   iconColor: "text-blue-500",   label: "Educación y EdTech",         desc: "Inscripciones, cobranza y comunicación con padres",      href: "/industria/educacion" },
+          { icon: Building2,    label: "Agencias y consultoras",     desc: "Factura, gestiona proyectos y cobra a tiempo",           href: "/industria/agencias" },
+          { icon: ShoppingBag,  label: "Retail y e-commerce",        desc: "Inventario, pagos y logística integrados",               href: "/industria/retail" },
+          { icon: Factory,      label: "Manufactura",                desc: "Digitaliza planta, proveedores y calidad",                href: "/industria/manufactura" },
+          { icon: Scale,        label: "Despachos legales",          desc: "Expedientes, clientes y honorarios sin papel",            href: "/industria/legal" },
+          { icon: HardHat,      label: "Construcción y real estate", desc: "Contratos de obra, estimaciones y avance en obra",       href: "/industria/construccion" },
+          { icon: Heart,        label: "Salud y clínicas",           desc: "Agenda, expediente clínico y cobros en un sistema",      href: "/industria/salud" },
+          { icon: GraduationCap,label: "Educación y EdTech",         desc: "Inscripciones, cobranza y comunicación con padres",      href: "/industria/educacion" },
         ],
       },
       {
         heading: "Colecciones",
         links: [
-          { icon: Layers,     iconBg: "bg-stone-100", iconColor: "text-stone-700", label: "Essential Stack MX",  desc: "Las herramientas mínimas para operar sin caos",         href: "/colecciones/essential" },
-          { icon: Briefcase,  iconBg: "bg-blue-50",   iconColor: "text-blue-600",  label: "CFO Toolkit",         desc: "Control financiero para directores de finanzas",         href: "/colecciones/cfo" },
-          { icon: TrendingUp, iconBg: "bg-green-50",  iconColor: "text-green-600", label: "Agencia en 30 días",  desc: "Lanza tu operación de servicios desde cero",             href: "/colecciones/agencia" },
-          { icon: BookOpen,   iconBg: "bg-violet-50", iconColor: "text-violet-600",label: "Stack legal moderno", desc: "De firma de contratos a cobranza, sin impresoras",       href: "/colecciones/legal" },
+          { icon: Layers,     label: "Essential Stack MX",  desc: "Las herramientas mínimas para operar sin caos",         href: "/colecciones/essential" },
+          { icon: Briefcase,  label: "CFO Toolkit",         desc: "Control financiero para directores de finanzas",         href: "/colecciones/cfo" },
+          { icon: TrendingUp, label: "Agencia en 30 días",  desc: "Lanza tu operación de servicios desde cero",             href: "/colecciones/agencia" },
+          { icon: BookOpen,   label: "Stack legal moderno", desc: "De firma de contratos a cobranza, sin impresoras",       href: "/colecciones/legal" },
         ],
       },
     ],
@@ -91,28 +90,28 @@ const menus: Record<string, MenuData> = {
       {
         heading: "Entrar al catálogo",
         links: [
-          { icon: Send,           iconBg: "bg-blue-50",   iconColor: "text-blue-500",  label: "Cómo aplicar",         desc: "El proceso de entrada en 3 pasos, sin burocracia",        href: "/aplicar" },
-          { icon: ClipboardCheck, iconBg: "bg-green-50",  iconColor: "text-green-500", label: "Criterios de entrada",  desc: "Qué evalúa el equipo: tracción, modelo y ejecución",      href: "/criterios" },
-          { icon: Settings,       iconBg: "bg-stone-100", iconColor: "text-stone-600", label: "Proceso de revisión",   desc: "De draft a publicado: tiempos y comunicación directa",    href: "/proceso" },
-          { icon: HelpCircle,     iconBg: "bg-amber-50",  iconColor: "text-amber-500", label: "Preguntas frecuentes",  desc: "Todo lo que debes saber antes de enviar tu aplicación",   href: "/faq" },
+          { icon: Send,           label: "Cómo aplicar",         desc: "El proceso de entrada en 3 pasos, sin burocracia",        href: "/aplicar" },
+          { icon: ClipboardCheck, label: "Criterios de entrada",  desc: "Qué evalúa el equipo: tracción, modelo y ejecución",      href: "/criterios" },
+          { icon: Settings,       label: "Proceso de revisión",   desc: "De draft a publicado: tiempos y comunicación directa",    href: "/proceso" },
+          { icon: HelpCircle,     label: "Preguntas frecuentes",  desc: "Todo lo que debes saber antes de enviar tu aplicación",   href: "/faq" },
         ],
       },
       {
         heading: "Tu presencia",
         links: [
-          { icon: LayoutDashboard, iconBg: "bg-violet-50", iconColor: "text-violet-500", label: "Dashboard de métricas", desc: "Visitas, leads y qué búsquedas llegan a tu producto",    href: "/dashboard/founder" },
-          { icon: Target,          iconBg: "bg-red-50",    iconColor: "text-red-500",    label: "Leads corporativos",    desc: "Empresas que vieron tu solución y quieren hablar",        href: "/leads" },
-          { icon: UserCircle,      iconBg: "bg-blue-50",   iconColor: "text-blue-500",   label: "Tu perfil de producto", desc: "Cómo te presentas ante compradores corporativos",         href: "/perfil" },
-          { icon: Rocket,          iconBg: "bg-orange-50", iconColor: "text-orange-500", label: "Weekly Drops",          desc: "Sé parte del lanzamiento semanal más visto del ecosistema", href: "/drops" },
+          { icon: LayoutDashboard, label: "Dashboard de métricas", desc: "Visitas, leads y qué búsquedas llegan a tu producto",    href: "/dashboard/founder" },
+          { icon: Target,          label: "Leads corporativos",    desc: "Empresas que vieron tu solución y quieren hablar",        href: "/leads" },
+          { icon: UserCircle,      label: "Tu perfil de producto", desc: "Cómo te presentas ante compradores corporativos",         href: "/perfil" },
+          { icon: Rocket,          label: "Weekly Drops",          desc: "Sé parte del lanzamiento semanal más visto del ecosistema", href: "/drops" },
         ],
       },
       {
         heading: "Comunidad",
         links: [
-          { icon: Globe,    iconBg: "bg-teal-50",   iconColor: "text-teal-500",  label: "Directorio de founders",   desc: "Conoce quién más está construyendo en el catálogo",      href: "/fundadores" },
-          { icon: Calendar, iconBg: "bg-pink-50",   iconColor: "text-pink-500",  label: "Eventos y networking",     desc: "Encuentros B2B presenciales en CDMX y Monterrey",        href: "/eventos" },
-          { icon: Mail,     iconBg: "bg-indigo-50", iconColor: "text-indigo-500",label: "Newsletter semanal",       desc: "Inteligencia de mercado: qué buscan las empresas hoy",   href: "/newsletter" },
-          { icon: Award,    iconBg: "bg-amber-50",  iconColor: "text-amber-500", label: "Founders destacados",      desc: "Los operadores más traccionados del catálogo este mes",   href: "/destacados" },
+          { icon: Globe,    label: "Directorio de founders",   desc: "Conoce quién más está construyendo en el catálogo",      href: "/fundadores" },
+          { icon: Calendar, label: "Eventos y networking",     desc: "Encuentros B2B presenciales en CDMX y Monterrey",        href: "/eventos" },
+          { icon: Mail,     label: "Newsletter semanal",       desc: "Inteligencia de mercado: qué buscan las empresas hoy",   href: "/newsletter" },
+          { icon: Award,    label: "Founders destacados",      desc: "Los operadores más traccionados del catálogo este mes",   href: "/destacados" },
         ],
       },
     ],
@@ -136,9 +135,9 @@ function MockupVisual({ type }: { type: FeaturedCard["mockupType"] }) {
         <div className="flex items-center gap-1.5 mb-3">
           {[0,1,2].map(i => <div key={i} className="size-2 rounded-full bg-stone-700" />)}
         </div>
-        {["bg-blue-400","bg-violet-400","bg-green-400","bg-orange-400","bg-pink-400"].map((c, i) => (
+        {Object.values(brandColors).map((c, i) => (
           <div key={i} className="flex items-center gap-2 mb-2 last:mb-0">
-            <div className={`size-5 rounded-md ${c} opacity-80 shrink-0`} />
+            <div style={{ backgroundColor: c.solid }} className="size-5 rounded-md opacity-80 shrink-0" />
             <div className="flex-1 space-y-1">
               <div className={`h-1.5 rounded-full bg-stone-600 ${i%2===0?"w-3/4":"w-1/2"}`} />
               <div className="h-1 rounded-full bg-stone-700 w-1/3" />
@@ -154,9 +153,9 @@ function MockupVisual({ type }: { type: FeaturedCard["mockupType"] }) {
   return (
     <div className="w-full rounded-xl bg-gradient-to-br from-stone-100 to-stone-200 p-3 mb-4">
       <div className="grid grid-cols-2 gap-1.5">
-        {["bg-blue-400","bg-violet-400","bg-green-400","bg-orange-400"].map((c,i) => (
+        {Object.values(brandColors).slice(0, 4).map((c,i) => (
           <div key={i} className="bg-white rounded-lg p-2 shadow-sm">
-            <div className={`size-5 rounded-md ${c} opacity-70 mb-1.5`} />
+            <div style={{ backgroundColor: c.solid }} className="size-5 rounded-md opacity-70 mb-1.5" />
             <div className="h-1.5 rounded-full bg-stone-200 w-3/4 mb-1" />
             <div className="h-1 rounded-full bg-stone-100 w-1/2" />
           </div>
@@ -199,10 +198,12 @@ function TriggerButton({
   label,
   active,
   onEnter,
+  onActivate,
 }: {
   label: string;
   active: boolean;
   onEnter: () => void;
+  onActivate: () => void;
 }) {
   const topRef = useRef<HTMLSpanElement>(null);
   const botRef = useRef<HTMLSpanElement>(null);
@@ -217,10 +218,13 @@ function TriggerButton({
 
   return (
     <button
+      type="button"
+      onClick={onActivate}
       onMouseEnter={() => { tlRef.current?.play(); onEnter(); }}
       onMouseLeave={() => { if (!active) tlRef.current?.reverse(); }}
       className={`relative inline-flex items-center gap-0.5 overflow-hidden px-3 py-1.5 rounded-md transition-colors text-[13.5px] font-medium ${active ? "bg-stone-100/80" : "hover:bg-stone-100/80"}`}
       aria-expanded={active}
+      aria-controls="navigation-panel"
     >
       <span ref={topRef}  className="block text-stone-600 leading-none">{label}</span>
       <span ref={botRef}  className="absolute left-3 text-stone-900 leading-none" aria-hidden>{label}</span>
@@ -235,6 +239,7 @@ function TriggerButton({
 
 export function Navbar() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const navigationRef = useRef<HTMLDivElement>(null);
   const panelRef   = useRef<HTMLDivElement>(null);
   const hideTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -243,6 +248,7 @@ export function Navbar() {
 
   const animatePanel = useCallback((show: boolean) => {
     if (!panelRef.current) return;
+    gsap.killTweensOf(panelRef.current);
     if (show) {
       gsap.fromTo(
         panelRef.current,
@@ -277,7 +283,12 @@ export function Navbar() {
 
   // Inicializar panel como oculto
   useEffect(() => {
-    if (panelRef.current) panelRef.current.style.display = "none";
+    const panel = panelRef.current;
+    if (panel) panel.style.display = "none";
+    return () => {
+      if (hideTimeout.current) clearTimeout(hideTimeout.current);
+      if (panel) gsap.killTweensOf(panel);
+    };
   }, []);
 
   const handleEnter = (key: string) => {
@@ -286,13 +297,26 @@ export function Navbar() {
   };
 
   const handleLeave = () => {
+    if (hideTimeout.current) clearTimeout(hideTimeout.current);
+    if (navigationRef.current?.contains(document.activeElement)) return;
     hideTimeout.current = setTimeout(() => setActiveMenu(null), 120);
   };
 
   return (
     <div
+      ref={navigationRef}
       className="fixed top-0 inset-x-0 z-50 px-4"
       onMouseLeave={handleLeave}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setActiveMenu(null);
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== "Escape") return;
+        const trigger = navigationRef.current?.querySelector<HTMLButtonElement>('button[aria-expanded="true"]');
+        if (hideTimeout.current) clearTimeout(hideTimeout.current);
+        setActiveMenu(null);
+        trigger?.focus();
+      }}
     >
       {/* Barra */}
       <div className={`max-w-7xl mx-auto bg-white border border-t-0 border-stone-200/70 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.06)] px-6 h-[52px] flex items-center justify-between gap-8 transition-[border-radius] duration-200 ${activeMenu ? "rounded-b-none" : "rounded-b-2xl"}`}>
@@ -313,6 +337,7 @@ export function Navbar() {
                 label={key === "compradores" ? "Para compradores" : "Para fundadores"}
                 active={activeMenu === key}
                 onEnter={() => handleEnter(key)}
+                onActivate={() => handleEnter(key)}
               />
             ))}
             <NavLink href="/el-proyecto">El Proyecto</NavLink>
@@ -321,13 +346,13 @@ export function Navbar() {
 
         {/* RIGHT */}
         <div className="flex items-center gap-2">
-          <button className="p-2 rounded-md text-stone-400 hover:text-stone-700 hover:bg-stone-100/80 transition-colors">
+          <button type="button" aria-label="Buscar" className="p-2 rounded-md text-stone-400 hover:text-stone-700 hover:bg-stone-100/80 transition-colors">
             <Search className="size-[15px]" />
           </button>
           <NavLink href="/sign-in">Acceso</NavLink>
           <Link
             href="/newsletter"
-            className="inline-flex items-center bg-stone-900 hover:bg-stone-800 text-white text-[13.5px] font-medium px-4 py-1.5 rounded-full transition-colors duration-200"
+            style={actionButtonStyle} className="inline-flex items-center action-button text-[13.5px] font-medium px-4 py-1.5 rounded-full transition-colors duration-200"
           >
             Suscribirse →
           </Link>
@@ -336,7 +361,11 @@ export function Navbar() {
 
       {/* Panel megamenu — controlado por GSAP */}
       <div
+        id="navigation-panel"
         ref={panelRef}
+        onClick={(event) => {
+          if (event.target instanceof Element && event.target.closest("a")) setActiveMenu(null);
+        }}
         className="max-w-7xl mx-auto bg-white border border-t-0 border-stone-200/70 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.14)] rounded-b-2xl overflow-hidden"
         onMouseEnter={() => { if (hideTimeout.current) clearTimeout(hideTimeout.current); }}
       >
@@ -358,8 +387,8 @@ export function Navbar() {
                             href={item.href}
                             className="group/item flex items-start gap-2.5 px-1.5 py-2 rounded-lg hover:bg-stone-50 transition-colors"
                           >
-                            <div className={`size-7 rounded-lg ${item.iconBg} flex items-center justify-center shrink-0 mt-0.5`}>
-                              <Icon className={`size-3.5 ${item.iconColor}`} />
+                            <div style={getAccentStyle(item.href)} className="size-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                              <Icon className="size-3.5" />
                             </div>
                             <div>
                               <p className="text-[13px] font-medium text-stone-800 group-hover/item:text-stone-950 transition-colors leading-tight">

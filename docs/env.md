@@ -1,52 +1,44 @@
-# Variables de Entorno — ShowcaseMX
+# Variables de entorno — ShowcaseMX
 
-Crea un archivo `.env.local` en la raíz del proyecto con las siguientes variables.
-**Nunca commitear `.env.local` al repositorio.** (Ya está en `.gitignore`)
+## Qué necesita la versión actual
 
----
+La home muestra ejemplos locales y no importa el cliente de base de datos.
+Puede ejecutarse sin credenciales de Neon, Clerk u OpenAI. Eso no significa que
+esas integraciones estén listas.
 
-## Todas las variables requeridas
+El archivo `.env.local.example` contiene únicamente placeholders. Copiarlo a
+`.env.local` cuando se vaya a conectar un servicio y reemplazar solo los valores
+necesarios. No commitear secretos ni incluir valores reales en documentación.
 
-```bash
-# ─── BASE DE DATOS ─────────────────────────────────────────
-# Neon PostgreSQL Serverless
-# Obtener desde: https://console.neon.tech → tu proyecto → Connection string
-NEON_DATABASE_URL=postgres://user:password@endpoint.neon.tech/neondb?sslmode=require
+| Variable | Uso | Estado del código |
+| --- | --- | --- |
+| `NEON_DATABASE_URL` | Cliente Neon y herramientas Drizzle | Se lee al importar `src/db/index.ts` y en `drizzle.config.ts` |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clave pública de Clerk | Integración pendiente |
+| `CLERK_SECRET_KEY` | Operaciones servidor de Clerk | Integración pendiente |
+| `OPENAI_API_KEY` | Embeddings/respuestas | Integración pendiente |
 
-# ─── AUTENTICACIÓN ─────────────────────────────────────────
-# Clerk — Autenticación B2B
-# Obtener desde: https://dashboard.clerk.com → tu app → API Keys
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-CLERK_SECRET_KEY=sk_test_...
+La presencia y validez de variables en Vercel o Neon no se verificaron en esta
+actualización. La documentación anterior las daba por configuradas sin evidencia
+suficiente; revisar cada entorno antes de conectar servicios.
 
-# URLs de redirección de Clerk (valores fijos)
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/onboarding
+## Configuración futura
 
-# ─── INTELIGENCIA ARTIFICIAL ───────────────────────────────
-# OpenAI — Para embeddings (text-embedding-3-small) y LLM (gpt-4o-mini)
-# Obtener desde: https://platform.openai.com/api-keys
-OPENAI_API_KEY=sk-proj-...
-```
+Las rutas de login, registro, onboarding y dashboard no existen todavía.
+Definir redirecciones al implementarlas. El webhook de Clerk necesitará su
+configuración de verificación; no se ha añadido ni implementado aún.
 
----
+## Reglas
 
-## Estado por entorno
+- `NEXT_PUBLIC_` expone valores al navegador: solo usarlo para datos públicos.
+- `NEON_DATABASE_URL`, `CLERK_SECRET_KEY` y `OPENAI_API_KEY` son secretos de servidor.
+- Separar bases/credenciales de desarrollo, preview y producción.
+- Antes de migrar, comprobar el entorno al que apunta `NEON_DATABASE_URL`.
+- Drizzle carga `.env.local` mediante dotenv; Next carga su entorno al arrancar.
+- El build descarga la fuente Inter configurada en el layout, por lo que puede
+  necesitar acceso de red aun sin integraciones de negocio.
 
-| Variable | Local (`.env.local`) | Vercel (Producción) |
-|----------|---------------------|---------------------|
-| `NEON_DATABASE_URL` | ✅ Configurar | ✅ Ya configurado |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | ⏳ Pendiente | ⏳ Pendiente |
-| `CLERK_SECRET_KEY` | ⏳ Pendiente | ⏳ Pendiente |
-| `OPENAI_API_KEY` | ⏳ Pendiente | ⏳ Pendiente |
+## Actualización: búsqueda y postulaciones
 
----
+La búsqueda local y los chips de la home ya funcionan. Se añadió invitación y formulario con endpoint de guardado en Neon; activación de credenciales y tabla pendiente. Ver [detalle](discovery.md) para el estado vigente, que sustituye las referencias anteriores a búsqueda de interfaz o formulario futuro.
 
-## Notas importantes
-
-- Las variables con prefijo `NEXT_PUBLIC_` son visibles en el cliente (browser). No poner secrets ahí.
-- `NEON_DATABASE_URL` **nunca** debe tener prefijo `NEXT_PUBLIC_`. Es solo server-side.
-- `CLERK_SECRET_KEY` es server-side únicamente. Nunca exponer al cliente.
-- En Vercel: Settings → Environment Variables → agregar cada variable para "Production" y "Preview".
+Conexión: se acepta `NEON_DATABASE_URL`, `DATABASE_URL` o `POSTGRES_URL`, en ese orden, solo en servidor. Neon conectado en Vercel no confirma que exista `solution_applications`. La sesión CLI revisada solo accede al equipo flouvia, donde no aparece ShowcaseMX; tabla y envío remotos siguen sin verificar. No se cambiaron bases remotas.

@@ -1,92 +1,93 @@
 # Roadmap — ShowcaseMX
 
-## Estado General del Proyecto
+## Estado: prototipo interactivo, base aún en consolidación
 
-**Fase actual:** Fase 1 — Infraestructura Base ✅
+Las casillas completas describen código o comportamiento local comprobado. No
+implican integración de backend, CI remoto aprobado o despliegue en producción.
 
----
+### Implementado
 
-## Fase 1 — Infraestructura Base
-**Objetivo:** Tener el proyecto compilando, deployado y con la BD conectada.
+- [x] Next.js App Router, React, TypeScript y Tailwind.
+- [x] Home con hero de dos líneas y copy de descubrimiento/conexión.
+- [x] Navbar y footer con iconos de una paleta compartida de cinco familias.
+- [x] Explorador sin título ni fondo exterior, siete categorías y nueve tarjetas
+  por categoría; tres columnas en pantallas grandes.
+- [x] Cord (software) y Flouvia (servicio) con fichas y enlaces oficiales; ejemplos
+  restantes claramente identificados. Ver [entradas reales](listings.md).
+- [x] Cambio animado de categoría, navegación por teclado, diálogo de ejemplo,
+  movimiento reducido en el explorador y adaptación móvil de esa sección.
+- [x] Scripts de lint, typecheck, build y check; comprobados localmente.
+- [x] Workflow de GitHub Actions definido para push/pull_request.
+- [x] Configuración Vercel versionada: framework Next.js y salida `.next`.
+- [x] Cliente y esquema Drizzle/Neon escritos.
+- [x] Clerk y AI SDK instalados, sin integración.
 
-- [x] Next.js 14 (App Router, TypeScript, Tailwind CSS)
-- [x] shadcn/ui inicializado (tema oscuro)
-- [x] Drizzle ORM + Neon Serverless configurados
-- [x] Esquema de BD definido (users, products, embeddings, endorsements, leads)
-- [x] Clerk instalado para autenticación
-- [x] Vercel AI SDK instalado
-- [x] Deploy en Vercel funcionando
-- [x] Variables de entorno configuradas en Vercel
-- [x] Base de datos Neon creada
-- [x] Repositorio en GitHub (mxfounders/showcasemx)
-- [x] Navbar flotante — redondeada abajo, megamenu full-width con GSAP
-- [x] Footer — redondeado arriba, espejo de la navbar, 6 columnas B2B
-- [x] GSAP instalado — slide-up en links, fade+y en panel megamenu
-- [x] Documentación base (`docs/`, `CLAUDE.md`)
-- [ ] Extensión pgvector habilitada en Neon
-- [ ] Primera migración aplicada a Neon (`npx drizzle-kit push`)
+## Orden propuesto para completar el producto
 
----
+### 1. Base estable
 
-## Fase 2 — Autenticación y Dashboards
-**Objetivo:** Usuarios pueden registrarse, iniciar sesión y ver su dashboard según su rol.
+- [ ] Confirmar despliegue real y ejecución remota de CI.
+- [ ] Completar navegación móvil y revisar footer/contrastes en pantallas pequeñas.
+- [ ] Dar tratamiento explícito a enlaces de funcionalidades todavía inexistentes.
+- [ ] Unificar tipografía y extender movimiento reducido al resto de la interfaz.
+- [ ] Alinear metadatos y texto del footer con el nuevo posicionamiento.
 
-- [ ] Middleware de Clerk configurado (proteger rutas `/dashboard/**`)
-- [ ] Webhook de Clerk → sincronizar usuario en tabla `users` de Neon
-- [ ] Dashboard del Founder (`/dashboard/founder`)
-  - [ ] Métricas: visitas al perfil, leads generados, búsquedas que matchearon
-  - [ ] Lista de sus productos y estado de aprobación
-- [ ] Dashboard del Cliente (`/dashboard/client`)
-  - [ ] Búsquedas guardadas
-  - [ ] Herramientas guardadas ("Mi Tech Stack")
-- [ ] Panel de Admin (`/dashboard/admin`)
-  - [ ] Cola de productos en `pending_review`
-  - [ ] Aprobar / rechazar con un clic
+Salida: home navegable sin acciones engañosas, interfaz revisada y despliegue verificado.
 
----
+### 2. Catálogo real
 
-## Fase 3 — Catálogo y Buscador IA
-**Objetivo:** El core del producto está vivo. Los usuarios pueden buscar y descubrir.
+- [ ] Ajustar esquema para identificadores, slugs, categorías y ficha de producto.
+- [ ] Generar/revisar migraciones y confirmar su aplicación al entorno correcto.
+- [ ] Confirmar pgvector cuando se aplique el esquema que utiliza `vector(1536)`.
+- [ ] Cargar un conjunto pequeño de productos reales revisados.
+- [ ] Implementar `/explorar` y `/p/[slug]`, filtros y estados vacíos/de error.
+- [ ] Sustituir ejemplos sin perder etiquetas honestas ni navegación accesible.
 
-- [ ] Página del catálogo (`/explorar`) con grid de productos aprobados
-- [ ] Página de producto individual (`/p/[slug]`)
-- [ ] Input de IA funcional en el home
-  - [ ] API route para procesar la búsqueda (`/api/search`)
-  - [ ] Generar embedding de la query del usuario
-  - [ ] pgvector similarity search contra `product_embeddings`
-  - [ ] Streaming de la respuesta del LLM con Vercel AI SDK
-- [ ] Al buscar → generar registro en tabla `leads` (con `intent_query`)
-- [ ] Formulario de aplicación para founders (`/aplicar`)
-  - [ ] Al enviar → producto entra como `pending_review`
-  - [ ] Generar embedding del producto automáticamente
+Salida: encontrar y entender productos reales; los no aprobados no se publican.
 
----
+### 3. Identidad, administración y publicación
 
-## Fase 4 — Social y Distribución
-**Objetivo:** Prueba social, interacción y los mecanismos de distribución orgánica.
+- [ ] Integrar Clerk, webhook verificado y vínculo único con `users`.
+- [ ] Implementar roles y autorización en servidor.
+- [ ] Construir `/aplicar`, revisión admin y edición de productos propios.
+- [ ] Implementar transiciones de estado y registro de revisión.
 
-- [ ] Sistema de Endorsements (votos con peso)
-- [ ] "Weekly Drops" — lógica de `launched_at` para revelar productos cada martes
-- [ ] Páginas de perfil de founders (`/founder/[slug]`)
-- [ ] Compartir producto (Open Graph cards optimizadas para WhatsApp/Twitter)
-- [ ] Newsletter de "Weekly Drop" (integrar Resend o similar)
-- [ ] SEO: sitemap.xml, meta tags, structured data para Google
+Salida: un founder puede postular; solo un admin puede aprobar/publicar.
 
----
+### 4. Contactos y leads
 
-## Fase 5 — Monetización
-**Objetivo:** Los primeros flujos de ingresos.
+- [ ] Formulario de contacto con validación, consentimiento y control de abuso.
+- [ ] Evitar duplicados por reenvíos y definir entrega/notificación al founder.
+- [ ] Dashboard mínimo de productos y leads propios.
+- [ ] Separar eventos de búsqueda y solicitudes comerciales.
 
-- [ ] Definir modelo de monetización exacto (leads premium, featured listings, comisión transaccional)
-- [ ] Integrar CordHQ como producto featured (el "Caballo de Troya")
-- [ ] Analytics de intención de compra para el equipo (dashboard interno)
+Salida: la solicitud llega al responsable y no expone datos de otros founders.
 
----
+### 5. Búsqueda por problema
 
-## Stack de Decisiones Pendientes
+- [ ] Recuperación de productos aprobados y evaluación de relevancia.
+- [ ] Embeddings, consultas pgvector y actualización al editar productos.
+- [ ] API de búsqueda, límites de uso y estados de carga/error/sin resultados.
+- [ ] Respuestas IA basadas en productos recuperados, sin inventar herramientas.
 
-| Decisión | Opciones | Estado |
-|----------|---------|--------|
-| Email/Newsletter | Resend + React Email | Por decidir |
-| Analytics | Vercel Analytics / Mixpanel | Por decidir |
-| CDN para logos/imágenes | Vercel Blob / Cloudinary | Por decidir |
+Salida: explicar por qué una opción es relevante o admitir que no hay coincidencia.
+
+### 6. Distribución y negocio
+
+- [ ] SEO, sitemap y Open Graph para fichas reales.
+- [ ] Medición de descubrimiento → ficha → solicitud de contacto.
+- [ ] Probar hipótesis de monetización y política de productos propios/patrocinios.
+- [ ] Priorizar newsletter, colecciones, drops, perfiles y endorsements según demanda.
+
+Dashboard del comprador, guardados, eventos y métricas sofisticadas quedan después
+del recorrido principal; no son requisitos del primer catálogo útil.
+
+## Decisiones pendientes
+
+Proveedor de correo, analytics, almacenamiento de imágenes, criterios de entrada,
+modelo comercial y política de curaduría. No instalar servicios adicionales antes
+de definir el flujo que los necesita.
+
+## Actualización: búsqueda y postulaciones
+
+La búsqueda local y los chips de la home ya funcionan. Se añadió invitación y formulario con endpoint de guardado en Neon; activación de credenciales y tabla pendiente. Ver [detalle](discovery.md) para el estado vigente, que sustituye las referencias anteriores a búsqueda de interfaz o formulario futuro.

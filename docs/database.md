@@ -1,112 +1,72 @@
-# Base de Datos — ShowcaseMX
+# Base de datos — ShowcaseMX
 
-**Motor:** PostgreSQL Serverless via [Neon](https://neon.tech)  
-**ORM:** Drizzle ORM  
-**Schema file:** [`src/db/schema.ts`](../src/db/schema.ts)  
-**Cliente:** [`src/db/index.ts`](../src/db/index.ts)  
-**Migraciones:** `drizzle/` (generadas con `npx drizzle-kit generate`)
+Fuente de verdad: [`src/db/schema.ts`](../src/db/schema.ts).
+Cliente: [`src/db/index.ts`](../src/db/index.ts), Drizzle sobre Neon HTTP.
 
----
+## Estado
 
-## Diagrama de Relaciones
+El esquema está escrito, pero la home no lo consulta: usa
+`src/lib/catalog-preview.ts`. No hay carpeta de migraciones versionadas
+`drizzle/` en esta revisión. La existencia remota de tablas, extensión pgvector y
+credenciales no se verificó. No confundir cliente configurado con BD operativa.
 
-```
-users (1) ──────── (N) products         [un founder tiene N productos]
-users (1) ──────── (N) endorsements     [un user da N endorsements]
-users (1) ──────── (N) leads            [un client genera N leads]
-products (1) ───── (1) product_embeddings [cada producto tiene 1 vector]
-products (1) ───── (N) endorsements
-products (1) ───── (N) leads
-```
+## Tablas actuales
 
----
+Todas tienen `id` UUID con PK y valor aleatorio por defecto.
 
-## Tablas
+| Tabla | Campos y restricciones relevantes |
+| --- | --- |
+| `users` | `email` obligatorio y único; `role` obligatorio, default `client`; `company_name`, `linkedin_url` opcionales; `is_verified` default false; `created_at` |
+| `products` | `founder_id` FK obligatoria; `name`, `tagline`, `description_pain`, `pricing_model` obligatorios; `status` default `draft`; `url`, `launched_at` opcionales; `created_at` |
+| `product_embeddings` | `product_id` FK obligatoria, sin unicidad; `embedding` tipo custom `vector(1536)`, nullable |
+| `endorsements` | `product_id` y `user_id` FK obligatorias; `weight` default 1; `created_at`; sin unicidad del par usuario/producto |
+| `leads` | `product_id` y `client_id` FK obligatorias; `intent_query` opcional; `status` default `initiated`; `created_at` |
 
-### `users`
-Identidad centralizada. Todos los actores del sistema viven aquí.
+Enums:
 
-| Columna | Tipo | Descripción |
-|---------|------|-------------|
-| `id` | uuid (PK) | Identificador único |
-| `email` | text (unique) | Email, indexado |
-| `role` | enum | `founder` \| `client` \| `admin` |
-| `company_name` | text | Nombre de la empresa (buyers corporativos) |
-| `linkedin_url` | text | Para validar identidad real |
-| `is_verified` | boolean | Sello de confianza (activo por admins) |
-| `created_at` | timestamp | Fecha de registro |
+- Usuario: `founder`, `client`, `admin`.
+- Producto: `draft`, `pending_review`, `approved`, `rejected`.
+- Precio: `saas`, `transactional`, `custom`.
+- Lead: `initiated`, `contacted`, `closed`.
 
-### `products`
-El catálogo curado. Solo los aprueba un `admin`.
+Las relaciones actuales permiten varios productos por usuario y varios leads,
+endorsements y embeddings por producto. La intención original de un embedding
+por producto **no está garantizada** por el esquema actual.
 
-| Columna | Tipo | Descripción |
-|---------|------|-------------|
-| `id` | uuid (PK) | Identificador único |
-| `founder_id` | uuid (FK → users) | Quién lo construyó |
-| `name` | text | Nombre del producto |
-| `tagline` | text | Copy de 60 chars máx |
-| `description_pain` | text | **Qué dolor operativo resuelve** (input para la IA) |
-| `pricing_model` | enum | `saas` \| `transactional` \| `custom` |
-| `status` | enum | `draft` → `pending_review` → `approved` / `rejected` |
-| `url` | text | URL del producto |
-| `launched_at` | timestamp | Para Weekly Drops |
-| `created_at` | timestamp | Fecha de creación |
+`tagline` es text sin límite de 60 caracteres en BD. `weight` no implementa por
+sí mismo un sistema de reputación. Los enums no garantizan permisos ni transiciones
+válidas; falta lógica de aplicación.
 
-### `product_embeddings`
-El cerebro del buscador IA. Separada de `products` para no bloquear queries normales.
+## Ajustes propuestos antes de conectar el catálogo
 
-| Columna | Tipo | Descripción |
-|---------|------|-------------|
-| `id` | uuid (PK) | Identificador único |
-| `product_id` | uuid (FK → products) | Producto asociado |
-| `embedding` | vector(1536) | Vector generado por `text-embedding-3-small` de OpenAI |
+- Identificador único de Clerk para sincronizar identidades.
+- Slug único, categoría, datos de ficha y fechas de actualización/revisión.
+- Restricción única de embedding por producto si se mantiene esa decisión.
+- Restricción única de endorsement por usuario/producto y validación de peso.
+- Definir índices y políticas de borrado conforme a consultas y necesidades reales.
+- Separar búsquedas de leads y definir tratamiento de solicitudes duplicadas.
+- Evaluar registros de revisión y autorización por propietario.
 
-### `endorsements`
-Prueba social B2B con peso. No son upvotes vacíos.
+Son pendientes, no columnas o restricciones ya aplicadas. El mapeo visual de
+categorías/colores pertenece a `src/lib/`, no es una taxonomía persistida en BD.
 
-| Columna | Tipo | Descripción |
-|---------|------|-------------|
-| `id` | uuid (PK) | Identificador único |
-| `product_id` | uuid (FK → products) | Producto endorsado |
-| `user_id` | uuid (FK → users) | Quién endosa |
-| `weight` | integer | Peso del voto (CFO verificado = 10, usuario nuevo = 1) |
-| `created_at` | timestamp | Fecha |
-
-### `leads`
-**El corazón del modelo de negocio.** Registra cada intención de compra.
-
-| Columna | Tipo | Descripción |
-|---------|------|-------------|
-| `id` | uuid (PK) | Identificador único |
-| `product_id` | uuid (FK → products) | Producto de interés |
-| `client_id` | uuid (FK → users) | El corporativo interesado |
-| `intent_query` | text | **Qué buscó el cliente en la IA antes de contactar** |
-| `status` | enum | `initiated` \| `contacted` \| `closed` |
-| `created_at` | timestamp | Fecha del lead |
-
----
-
-## Comandos de Migraciones
+## Migraciones y seguridad operativa
 
 ```bash
-# Generar archivo de migración desde el schema
 npx drizzle-kit generate
-
-# Aplicar migraciones directamente a Neon (dev/staging)
-npx drizzle-kit push
-
-# Explorar la BD visualmente
 npx drizzle-kit studio
 ```
 
-> ⚠️ Siempre correr `npx drizzle-kit push` después de modificar `src/db/schema.ts`
+`drizzle.config.ts` define salida `./drizzle` y toma `NEON_DATABASE_URL` de
+`.env.local`. Generar una migración no la aplica. Revisar SQL y base destino antes
+de ejecutar cualquier cambio. `npx drizzle-kit push` sincroniza directamente el
+esquema con la base configurada: no correrlo automáticamente después de cada edición.
 
----
+Antes de aplicar tablas con `vector(1536)`, confirmar que pgvector esté habilitado.
+La generación de embeddings y los índices de búsqueda semántica aún no existen.
+No registrar búsquedas como leads por defecto: una solicitud de contacto es un
+evento distinto de escribir una consulta.
 
-## Estado Actual
+## Actualización: búsqueda y postulaciones
 
-- [x] Schema definido en código (`src/db/schema.ts`)
-- [x] Cliente Neon configurado (`src/db/index.ts`)
-- [x] Variables de entorno en Vercel
-- [ ] Extensión `pgvector` habilitada en Neon (correr `CREATE EXTENSION vector;` en Neon console)
-- [ ] Primera migración aplicada (`npx drizzle-kit push`)
+La búsqueda local y los chips de la home ya funcionan. Se añadió invitación y formulario con endpoint de guardado en Neon; activación de credenciales y tabla pendiente. Ver [detalle](discovery.md) para el estado vigente, que sustituye las referencias anteriores a búsqueda de interfaz o formulario futuro.

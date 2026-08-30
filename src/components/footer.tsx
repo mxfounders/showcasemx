@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRef, useEffect } from "react";
 import gsap from "gsap";
+import { actionButtonStyle, getAccentStyle } from "@/lib/brand-colors";
 import {
   CreditCard, FileText, Users, BarChart3, Package,
   Target, HeadphonesIcon, Building2, ShoppingBag, Factory,
@@ -22,34 +23,34 @@ const footerSections = [
       {
         subheading: "Por problema",
         links: [
-          { icon: CreditCard,     iconBg: "bg-blue-50",   iconColor: "text-blue-500",   label: "Cobros y cobranza",         href: "/explorar/cobros" },
-          { icon: FileText,       iconBg: "bg-violet-50", iconColor: "text-violet-500", label: "Contratos digitales",       href: "/explorar/contratos" },
-          { icon: Users,          iconBg: "bg-green-50",  iconColor: "text-green-500",  label: "Nómina y compliance",       href: "/explorar/nomina" },
-          { icon: BarChart3,      iconBg: "bg-orange-50", iconColor: "text-orange-500", label: "Visibilidad financiera",    href: "/explorar/finanzas" },
-          { icon: Package,        iconBg: "bg-pink-50",   iconColor: "text-pink-500",   label: "Inventario y supply",       href: "/explorar/inventario" },
-          { icon: Target,         iconBg: "bg-red-50",    iconColor: "text-red-500",    label: "Ventas y CRM",              href: "/explorar/ventas" },
-          { icon: HeadphonesIcon, iconBg: "bg-teal-50",   iconColor: "text-teal-500",   label: "Atención al cliente",       href: "/explorar/soporte" },
+          { icon: CreditCard,     label: "Cobros y cobranza",         href: "/explorar/cobros" },
+          { icon: FileText,       label: "Contratos digitales",       href: "/explorar/contratos" },
+          { icon: Users,          label: "Nómina y compliance",       href: "/explorar/nomina" },
+          { icon: BarChart3,      label: "Visibilidad financiera",    href: "/explorar/finanzas" },
+          { icon: Package,        label: "Inventario y supply",       href: "/explorar/inventario" },
+          { icon: Target,         label: "Ventas y CRM",              href: "/explorar/ventas" },
+          { icon: HeadphonesIcon, label: "Atención al cliente",       href: "/explorar/soporte" },
         ],
       },
       {
         subheading: "Por industria",
         links: [
-          { icon: Building2,    iconBg: "bg-indigo-50", iconColor: "text-indigo-500", label: "Agencias",                  href: "/industria/agencias" },
-          { icon: ShoppingBag,  iconBg: "bg-pink-50",   iconColor: "text-pink-500",   label: "Retail y e-commerce",       href: "/industria/retail" },
-          { icon: Factory,      iconBg: "bg-stone-100", iconColor: "text-stone-600",  label: "Manufactura",               href: "/industria/manufactura" },
-          { icon: Scale,        iconBg: "bg-amber-50",  iconColor: "text-amber-600",  label: "Despachos legales",         href: "/industria/legal" },
-          { icon: HardHat,      iconBg: "bg-orange-50", iconColor: "text-orange-500", label: "Construcción",              href: "/industria/construccion" },
-          { icon: Heart,        iconBg: "bg-red-50",    iconColor: "text-red-500",    label: "Salud y clínicas",          href: "/industria/salud" },
-          { icon: GraduationCap,iconBg: "bg-blue-50",   iconColor: "text-blue-500",   label: "Educación",                 href: "/industria/educacion" },
+          { icon: Building2,    label: "Agencias",                  href: "/industria/agencias" },
+          { icon: ShoppingBag,  label: "Retail y e-commerce",       href: "/industria/retail" },
+          { icon: Factory,      label: "Manufactura",               href: "/industria/manufactura" },
+          { icon: Scale,        label: "Despachos legales",         href: "/industria/legal" },
+          { icon: HardHat,      label: "Construcción",              href: "/industria/construccion" },
+          { icon: Heart,        label: "Salud y clínicas",          href: "/industria/salud" },
+          { icon: GraduationCap,label: "Educación",                 href: "/industria/educacion" },
         ],
       },
       {
         subheading: "Colecciones",
         links: [
-          { icon: Layers,     iconBg: "bg-stone-100", iconColor: "text-stone-700", label: "Essential Stack MX",        href: "/colecciones/essential" },
-          { icon: Briefcase,  iconBg: "bg-blue-50",   iconColor: "text-blue-600",  label: "CFO Toolkit",               href: "/colecciones/cfo" },
-          { icon: TrendingUp, iconBg: "bg-green-50",  iconColor: "text-green-600", label: "Agencia en 30 días",        href: "/colecciones/agencia" },
-          { icon: BookOpen,   iconBg: "bg-violet-50", iconColor: "text-violet-600",label: "Stack legal moderno",       href: "/colecciones/legal" },
+          { icon: Layers,     label: "Essential Stack MX",        href: "/colecciones/essential" },
+          { icon: Briefcase,  label: "CFO Toolkit",               href: "/colecciones/cfo" },
+          { icon: TrendingUp, label: "Agencia en 30 días",        href: "/colecciones/agencia" },
+          { icon: BookOpen,   label: "Stack legal moderno",       href: "/colecciones/legal" },
         ],
       },
     ],
@@ -60,28 +61,28 @@ const footerSections = [
       {
         subheading: "Entrar al catálogo",
         links: [
-          { icon: Send,           iconBg: "bg-blue-50",   iconColor: "text-blue-500",   label: "Cómo aplicar",             href: "/aplicar" },
-          { icon: ClipboardCheck, iconBg: "bg-green-50",  iconColor: "text-green-500",  label: "Criterios de entrada",     href: "/criterios" },
-          { icon: Settings,       iconBg: "bg-stone-100", iconColor: "text-stone-600",  label: "Proceso de revisión",      href: "/proceso" },
-          { icon: HelpCircle,     iconBg: "bg-amber-50",  iconColor: "text-amber-500",  label: "Preguntas frecuentes",     href: "/faq" },
+          { icon: Send,           label: "Cómo aplicar",             href: "/aplicar" },
+          { icon: ClipboardCheck, label: "Criterios de entrada",     href: "/criterios" },
+          { icon: Settings,       label: "Proceso de revisión",      href: "/proceso" },
+          { icon: HelpCircle,     label: "Preguntas frecuentes",     href: "/faq" },
         ],
       },
       {
         subheading: "Tu presencia",
         links: [
-          { icon: LayoutDashboard,iconBg: "bg-violet-50", iconColor: "text-violet-500", label: "Dashboard de métricas",    href: "/dashboard/founder" },
-          { icon: Target,         iconBg: "bg-red-50",    iconColor: "text-red-500",    label: "Leads corporativos",       href: "/leads" },
-          { icon: UserCircle,     iconBg: "bg-blue-50",   iconColor: "text-blue-500",   label: "Tu perfil de producto",    href: "/perfil" },
-          { icon: Rocket,         iconBg: "bg-orange-50", iconColor: "text-orange-500", label: "Weekly Drops",             href: "/drops" },
+          { icon: LayoutDashboard,label: "Dashboard de métricas",    href: "/dashboard/founder" },
+          { icon: Target,         label: "Leads corporativos",       href: "/leads" },
+          { icon: UserCircle,     label: "Tu perfil de producto",    href: "/perfil" },
+          { icon: Rocket,         label: "Weekly Drops",             href: "/drops" },
         ],
       },
       {
         subheading: "Comunidad",
         links: [
-          { icon: Globe,    iconBg: "bg-teal-50",   iconColor: "text-teal-500",  label: "Directorio de founders",    href: "/fundadores" },
-          { icon: Calendar, iconBg: "bg-pink-50",   iconColor: "text-pink-500",  label: "Eventos y networking",      href: "/eventos" },
-          { icon: Mail,     iconBg: "bg-indigo-50", iconColor: "text-indigo-500",label: "Newsletter semanal",        href: "/newsletter" },
-          { icon: Award,    iconBg: "bg-amber-50",  iconColor: "text-amber-500", label: "Founders destacados",       href: "/destacados" },
+          { icon: Globe,    label: "Directorio de founders",    href: "/fundadores" },
+          { icon: Calendar, label: "Eventos y networking",      href: "/eventos" },
+          { icon: Mail,     label: "Newsletter semanal",        href: "/newsletter" },
+          { icon: Award,    label: "Founders destacados",       href: "/destacados" },
         ],
       },
     ],
@@ -92,13 +93,13 @@ const footerSections = [
       {
         subheading: "",
         links: [
-          { icon: Zap,          iconBg: "bg-yellow-50", iconColor: "text-yellow-500", label: "Buscador IA",               href: "/buscar" },
-          { icon: Rocket,       iconBg: "bg-orange-50", iconColor: "text-orange-500", label: "Weekly Drops",              href: "/drops" },
-          { icon: Layers,       iconBg: "bg-stone-100", iconColor: "text-stone-700",  label: "Colecciones curadas",       href: "/colecciones" },
-          { icon: Globe,        iconBg: "bg-teal-50",   iconColor: "text-teal-500",   label: "Explorar catálogo",         href: "/explorar" },
-          { icon: Target,       iconBg: "bg-red-50",    iconColor: "text-red-500",    label: "El Proyecto",               href: "/el-proyecto" },
-          { icon: Mail,         iconBg: "bg-indigo-50", iconColor: "text-indigo-500", label: "Newsletter",                href: "/newsletter" },
-          { icon: Calendar,     iconBg: "bg-pink-50",   iconColor: "text-pink-500",   label: "Eventos",                   href: "/eventos" },
+          { icon: Zap,          label: "Buscador IA",               href: "/buscar" },
+          { icon: Rocket,       label: "Weekly Drops",              href: "/drops" },
+          { icon: Layers,       label: "Colecciones curadas",       href: "/colecciones" },
+          { icon: Globe,        label: "Explorar catálogo",         href: "/explorar" },
+          { icon: Target,       label: "El Proyecto",               href: "/el-proyecto" },
+          { icon: Mail,         label: "Newsletter",                href: "/newsletter" },
+          { icon: Calendar,     label: "Eventos",                   href: "/eventos" },
         ],
       },
     ],
@@ -109,9 +110,9 @@ const footerSections = [
       {
         subheading: "",
         links: [
-          { icon: FileText,  iconBg: "bg-stone-100", iconColor: "text-stone-500", label: "Aviso de privacidad",       href: "/privacidad" },
-          { icon: BookOpen,  iconBg: "bg-stone-100", iconColor: "text-stone-500", label: "Términos de uso",           href: "/terminos" },
-          { icon: Settings,  iconBg: "bg-stone-100", iconColor: "text-stone-500", label: "Política de cookies",       href: "/cookies" },
+          { icon: FileText,  label: "Aviso de privacidad",       href: "/privacidad" },
+          { icon: BookOpen,  label: "Términos de uso",           href: "/terminos" },
+          { icon: Settings,  label: "Política de cookies",       href: "/cookies" },
         ],
       },
     ],
@@ -120,12 +121,10 @@ const footerSections = [
 
 // ─── FooterLink con GSAP slide-up ─────────────────────────────────────────────
 
-function FooterLink({ href, label, icon: Icon, iconBg, iconColor }: {
+function FooterLink({ href, label, icon: Icon }: {
   href: string;
   label: string;
   icon: React.ElementType;
-  iconBg: string;
-  iconColor: string;
 }) {
   const topRef = useRef<HTMLSpanElement>(null);
   const botRef = useRef<HTMLSpanElement>(null);
@@ -146,8 +145,8 @@ function FooterLink({ href, label, icon: Icon, iconBg, iconColor }: {
       onMouseLeave={() => tlRef.current?.reverse()}
     >
       {/* Icono */}
-      <div className={`size-6 rounded-md ${iconBg} flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110`}>
-        <Icon className={`size-3 ${iconColor}`} />
+      <div style={getAccentStyle(href)} className="size-6 rounded-md flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110">
+        <Icon className="size-3" />
       </div>
       {/* Texto con slide-up */}
       <span className="relative overflow-hidden inline-flex h-[1.2em] pr-1">
@@ -181,7 +180,7 @@ export function Footer() {
             </div>
             <Link
               href="/newsletter"
-              className="inline-flex items-center gap-2 bg-stone-900 hover:bg-stone-800 text-white text-[13px] font-medium px-5 py-2.5 rounded-full transition-colors duration-200"
+              style={actionButtonStyle} className="inline-flex items-center gap-2 action-button text-[13px] font-medium px-5 py-2.5 rounded-full transition-colors duration-200"
             >
               <Mail className="size-3.5" />
               Suscribirse al newsletter →
@@ -214,8 +213,6 @@ export function Footer() {
                             href={link.href}
                             label={link.label}
                             icon={link.icon}
-                            iconBg={link.iconBg}
-                            iconColor={link.iconColor}
                           />
                         </li>
                       ))}

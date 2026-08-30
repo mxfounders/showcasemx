@@ -93,3 +93,7 @@
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   }
 }
+/* Palette supplied by actionButtonStyle; consistent hover and keyboard focus. */
+.action-button:hover { filter: brightness(0.96); }
+.action-button:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.action-button:disabled { filter: none; }

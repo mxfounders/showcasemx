@@ -1,128 +1,92 @@
-# Sistema de Diseño — ShowcaseMX
+# Diseño — ShowcaseMX
 
-## Filosofía (Innegociable)
+## Dirección vigente
 
-**"Stealth Wealth Corporativo."**
+Interfaz clara, editorial y directa, con tipografía marcada, espacios amplios,
+esquinas redondeadas y movimiento discreto. Esta dirección sustituye la propuesta
+oscura inicial. No reintroducirla al trabajar a partir de documentación antigua.
 
-- UI minimalista nivel Apple / Linear.app
-- Modo oscuro puro. Cero modo claro.
-- Cero clichés de startups: no cohetes, no ilustraciones infantiles, no gradientes neón
-- Tipografías limpias y técnicas
-- Silencioso, extremadamente rápido, sin adornos
+- Fondo de página: `#f5f5f4`.
+- Tarjetas y navegación: blanco, bordes stone y sombras suaves.
+- Texto: stone oscuro; secundarios en stone, sin usar el color como única señal.
+- Cinco familias de acentos compartidas: ver [colores](colors.md).
+- Acciones globales de búsqueda/suscripción: fondo oscuro neutro y texto blanco.
 
-La interfaz debe comunicar: *"Este software lo usan empresas serias."*
+## Hero
 
----
+- Sin texto pequeño, etiqueta o eyebrow sobre el título.
+- Dos líneas: «Encuentra soluciones.» / «Conoce a sus creadores.»
+- Cada frase está en un span de bloque sin salto interno. El tamaño responde al
+  ancho del contenedor mediante `clamp(1.25rem, 8cqw, 3.25rem)`.
+- Ancho máximo `max-w-5xl`; texto a la derecha desde `lg`, debajo en pantallas menores.
+- Buscador blanco centrado, con etiqueta accesible, ejemplo debajo y chips con
+  la misma paleta que navbar/footer. El botón aún no ejecuta búsquedas.
+- Copy completo en [producto](product.md).
 
-## Paleta de Colores
+## Explorador de categorías
 
-Usamos variables CSS de shadcn/ui mapeadas a tonos zinc/grafito/titanio de Tailwind.
+Archivo: `src/components/category-explorer.tsx`.
 
-### Fondos
-| Token | Valor aprox | Uso |
-|-------|------------|-----|
-| `background` | `zinc-950` / `#09090b` | Fondo principal de la app |
-| `card` | `zinc-900` / `#18181b` | Tarjetas, modales, panels |
-| `muted` | `zinc-800` / `#27272a` | Fondos secundarios, hover states |
+- Va después del hero, sin título visible. Tiene nombre accesible de sección.
+- Sin tarjeta gris, borde o fondo exterior: todo se apoya sobre el fondo de página.
+- Ancho máximo 1600 px; padding exterior y espacios entre elementos se conservan.
+- Siete categorías: Cobros, Finanzas, Nómina, Ventas, Operación, Legal y Agencias.
+- Nueve tarjetas por categoría. Contenido real y ficticio diferenciado en `src/lib/catalog-preview.ts`.
+- Una columna en móvil, dos desde `sm`, tres desde `xl`.
+- Categorías horizontales deslizables en móvil; columna sticky desde `lg` con
+  filas según el número de categorías cuya altura se adapta a la ventana. No confundir nueve entradas
+  por categoría con nueve categorías.
+- Activo: color intenso, texto blanco, flecha visible y `aria-pressed`.
+- Flechas del teclado y Home/End cambian selección y foco.
+- Las tarjetas mantienen una altura uniforme y muestran una visualización
+  decorativa, inicial/nombre, descripción y funcionalidad.
+- «Ver ejemplo» abre un diálogo nativo con aviso de producto ficticio. Cierre
+  mediante botón, Escape o fondo; retorno del foco al botón que lo abrió.
 
-### Texto
-| Token | Valor aprox | Uso |
-|-------|------------|-----|
-| `foreground` | `zinc-50` / `#fafafa` | Texto principal |
-| `muted-foreground` | `zinc-400` / `#a1a1aa` | Texto secundario, labels |
-| `zinc-600` | `#52525b` | Placeholders, metadata |
+## Navbar y footer
 
-### Bordes
-| Token | Uso |
-|-------|-----|
-| `border` | `white/[0.08]` — Bordes sutiles, casi invisibles |
-| `white/[0.05]` | Bordes en inputs y elementos de fondo |
+- Navbar fija en `top-0`, blanco, margen horizontal y esquinas inferiores redondeadas.
+- Navbar y panel de megamenú: `max-w-7xl`. Apertura por hover o clic/teclado;
+  Escape cierra. Los enlaces todavía apuntan mayormente a rutas pendientes.
+- Footer blanco con esquinas superiores redondeadas y columnas por tema.
+- Los iconos usan `getAccentStyle(href)` de `brand-colors.ts`; no definir
+  `iconBg`/`iconColor` independientes para cada enlace.
+- Navegación móvil completa y distribución del footer en pantallas estrechas
+  siguen pendientes de una revisión general. El explorador sí tiene adaptación móvil.
 
-### Acciones
-| Elemento | Estilo |
-|----------|--------|
-| CTA primario | `bg-zinc-100 text-zinc-900` — Blanco/titanio sobre oscuro |
-| CTA secundario / Ghost | `text-zinc-300 hover:bg-zinc-800/50` |
-| Destructivo | Rojo apagado, no brillante |
+## Tipografía: estado real
 
-### Nunca usar
-- Azules brillantes tipo `blue-500`
-- Verdes lima o naranjas
-- Gradientes arcoíris
-- Sombras de colores (solo `shadow-black/50`)
+El layout carga Inter como `--font-sans`, pero `globals.css` declara Helvetica
+Neue/Helvetica/Arial en html/body. Falta unificar esa configuración; no afirmar
+que Inter sea la fuente efectiva en todos los componentes. Hay archivos Geist
+heredados que no se usan en el layout actual.
 
----
+## Movimiento
 
-## Tipografía
+GSAP ya está instalado; no agregar un segundo motor para estos efectos.
 
-**Font principal:** Inter (Google Fonts via `next/font`)  
-Variable CSS: `--font-sans`
+| Elemento | Comportamiento actual |
+| --- | --- |
+| Hero | Entrada de título, texto, búsqueda y chips con solapamiento |
+| Enlaces navbar/footer | Slide-up de texto al hover |
+| Megamenú | Entrada 220 ms; salida 180 ms; cancelación de tweens previos |
+| Tarjetas al cambiar categoría | Salida 120 ms; entrada 380 ms, stagger 35 ms |
+| Hover de tarjeta | Sombra/borde y desplazamiento breve de visual y flecha |
 
-```tsx
-// En layout.tsx
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
-```
+El explorador respeta `prefers-reduced-motion` y cancela transiciones anteriores
+al cambiar rápido. Extender esa preferencia al hero/navbar/footer es pendiente.
+Evitar rebotes, rotación automática de categorías y cambios de altura entre filtros.
 
-### Escala tipográfica
-| Uso | Clase Tailwind |
-|-----|----------------|
-| Título hero | `text-5xl md:text-7xl font-bold tracking-tight` |
-| Título sección | `text-2xl font-semibold tracking-tight` |
-| Subtítulo / tagline | `text-base text-muted-foreground` |
-| Body | `text-sm leading-relaxed` |
-| Label / metadata | `text-xs text-zinc-500` |
-| Navbar links | `text-[13px] font-medium` |
+## Comprobaciones de interfaz
 
----
+Revisar escritorio y móvil, cambio rápido de categorías, teclado, cierre del
+diálogo, foco visible y consistencia de color entre navegación, catálogo y footer.
+Los chequeos de lint/tipos/build no sustituyen estas comprobaciones visuales.
 
-## Componentes Clave
+## Actualización: búsqueda y postulaciones
 
-### Navbar
-- Flotante (`fixed top-6`), no pegada al borde
-- Forma de pastilla (`rounded-full`)
-- Fondo: `bg-background/60 backdrop-blur-xl`
-- Borde: `border border-white/[0.08]`
-- Archivo: `src/components/navbar.tsx`
+La búsqueda local y los chips de la home ya funcionan. Se añadió invitación y formulario con endpoint de guardado en Neon; activación de credenciales y tabla pendiente. Ver [detalle](discovery.md) para el estado vigente, que sustituye las referencias anteriores a búsqueda de interfaz o formulario futuro.
 
-### Cards de Producto
-- `bg-card border border-border rounded-xl`
-- Hover: `hover:border-white/[0.15] transition-colors`
-- Sin sombras de colores
-- Padding: `p-5 md:p-6`
+Invitación a fundadores: fila horizontal desde 1280px, título de 32px en una línea, descripción breve debajo y botón a la derecha. En pantallas menores se apila sin forzar una línea ni desbordar.
 
-### Inputs / Search
-- `bg-zinc-900 border border-zinc-800 rounded-2xl`
-- Placeholder: `text-zinc-600`
-- Focus: borde ligeramente más brillante, sin glow de colores
-
-### Badges / Pills
-- `rounded-full border border-zinc-800 bg-zinc-900/50 px-3 py-1 text-xs`
-- Para estados: `approved` = borde verde apagado, `pending` = borde amarillo apagado
-
----
-
-## Animaciones (GSAP 3)
-
-**Motor:** GSAP 3 — instalado como dependencia principal.
-
-| Animación | Implementación | Curva / Duración |
-|-----------|---------------|-----------------|
-| Slide-up texto en NavLinks | `gsap.timeline` con `y: -100% / 100%` + opacity | `power2.inOut` · 280ms |
-| Panel megamenu — abrir | `gsap.fromTo` · `y: -8 → 0` + `opacity: 0 → 1` | `power3.out` · 220ms |
-| Panel megamenu — cerrar | `gsap.to` · `y: 0 → -6` + `opacity: 1 → 0` | `power2.in` · 180ms |
-| Chevron rotación | CSS `transition-transform duration-300 ease-out` | — |
-| Logo hover | CSS `transition-transform duration-300 group-hover:rotate-6` | — |
-
-### Reglas de animación
-- Cero bouncing (`elastic`, `bounce` están prohibidos)
-- Entradas: siempre más rápidas que salidas (`power3.out` vs `power2.in`)
-- Hover de links de menú: slide-up con `reverse()` al salir (no se reinicia desde cero)
-- Nada de `animate-spin`, `animate-bounce` de Tailwind en UI de producción
-
----
-
-## Spacing
-
-Usamos el sistema de espaciado estándar de Tailwind.
-Máximo ancho del contenido principal: `max-w-6xl mx-auto`
-Padding horizontal global: `px-4 md:px-6`
+Actualización de botones: CTA y chips de búsqueda usan `actionButtonStyle` (azul suave #E4EBFC y texto #365DC4). Se conservan los cinco colores de categorías e iconos. El buscador no tiene recuadro de foco interior; el teclado señala el campo con subrayado discreto.

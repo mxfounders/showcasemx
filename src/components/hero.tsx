@@ -2,10 +2,11 @@
 
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
-import { Sparkles, CreditCard, Users, LayoutDashboard } from "lucide-react";
-import Link from "next/link";
+import { Search, CreditCard, Users, LayoutDashboard } from "lucide-react";
 
-export function Hero() {
+import { actionButtonStyle } from "@/lib/brand-colors";
+
+export function Hero({ onSearch, onCategory }: { onSearch: (query: string) => void; onCategory: (id: string) => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const textRef = useRef<HTMLParagraphElement>(null);
@@ -13,18 +14,19 @@ export function Hero() {
   const tagsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const tl = gsap.timeline();
 
     tl.fromTo(
       titleRef.current,
-      { opacity: 0, y: 40 },
+      { opacity: 0, y: 30 },
       { opacity: 1, y: 0, duration: 0.8, ease: "power4.out" }
     )
     .fromTo(
       textRef.current,
       { opacity: 0, y: 20 },
       { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
-      "-=0.5"
+      "-=0.6"
     )
     .fromTo(
       searchRef.current,
@@ -45,67 +47,80 @@ export function Hero() {
   }, []);
 
   return (
-    <div ref={containerRef} className="relative min-h-[82vh] flex flex-col justify-end pb-20 pt-32 px-6">
-      <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-end">
+    <div ref={containerRef} className="relative pt-32 lg:pt-40 pb-20 px-6">
+      <div className="max-w-5xl mx-auto w-full">
         
-        {/* Left: Huge Typography */}
-        <div className="lg:col-span-7">
-          <h1 
-            ref={titleRef}
-            className="text-[4.5rem] md:text-[6rem] lg:text-[6.5rem] leading-[0.9] tracking-[-0.04em] font-bold text-stone-900"
-          >
-            Software B2B<br />
-            de grado<br />
-            institucional.
-          </h1>
+        {/* TOP ROW: Title Left, Text Right */}
+        <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] items-end gap-8 lg:gap-12 mb-20">
+          {/* Left: Typography */}
+          <div className="min-w-0 [container-type:inline-size]">
+            <h1 
+              ref={titleRef}
+              className="text-[clamp(1.25rem,8cqw,3.25rem)] leading-[1.05] tracking-[-0.03em] font-bold text-stone-900"
+            >
+              <span className="block whitespace-nowrap">Encuentra soluciones.</span>{" "}
+              <span className="block whitespace-nowrap">Conoce a sus creadores.</span>
+            </h1>
+          </div>
+
+          {/* Right: Copy */}
+          <div className="max-w-[420px]">
+            <p 
+              ref={textRef}
+              className="text-[17.5px] text-stone-600 leading-relaxed font-medium"
+            >
+              Descubre herramientas creadas en México para resolver los retos de tu empresa. En ShowcaseMX seleccionamos productos, te ayudamos a entender qué resuelven y te acercamos a quienes los construyen.
+            </p>
+          </div>
         </div>
 
-        {/* Right: Copy & Search */}
-        <div className="lg:col-span-5 flex flex-col gap-8 lg:pb-3">
-          <p 
-            ref={textRef}
-            className="text-[17px] text-stone-600 leading-relaxed font-medium max-w-md"
-          >
-            ShowcaseMX no es un directorio más. Es la boutique curada con la infraestructura operativa exacta que tu empresa necesita, seleccionada por operadores.
-          </p>
-
-          <div ref={searchRef} className="w-full relative group">
+        {/* BOTTOM ROW: Centered Search Bar */}
+        <div className="flex flex-col items-center">
+          <div ref={searchRef} className="w-full max-w-3xl relative group mb-8">
             {/* Glow effect */}
-            <div className="absolute -inset-1.5 bg-gradient-to-r from-stone-200 to-stone-100 rounded-[1.25rem] blur-md opacity-40 group-hover:opacity-70 transition duration-500"></div>
+            <div className="pointer-events-none absolute -inset-1.5 bg-gradient-to-r from-stone-200 to-stone-100 rounded-full blur-md opacity-40 group-hover:opacity-70 transition duration-500"></div>
             
-            {/* Search Input Box */}
-            <div className="relative bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-stone-200/80 p-2 flex items-center gap-3 transition-shadow duration-300 group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] group-hover:border-stone-300/80">
-              <div className="size-11 rounded-xl bg-stone-50 border border-stone-100 flex items-center justify-center shrink-0">
-                <Sparkles className="size-5 text-stone-400" />
-              </div>
+            {/* Pill Search Box */}
+            <form onSubmit={event => { event.preventDefault(); onSearch(String(new FormData(event.currentTarget).get("query") ?? "")); }} role="search" className="relative bg-white rounded-3xl sm:rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.05)] border border-stone-200/80 p-2.5 flex flex-wrap sm:flex-nowrap items-center gap-3 transition-shadow duration-300 group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] group-hover:border-stone-300/80">
+              <label htmlFor="solution-search" className="sr-only">¿Qué necesitas resolver en tu empresa?</label>
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <div className="pl-3 sm:pl-5 shrink-0">
+                  <Search aria-hidden="true" className="size-[20px] text-stone-400" />
+                </div>
               <input
+                id="solution-search"
+                name="query"
+                maxLength={200}
                 type="text"
-                placeholder="Ej: Necesito automatizar mis cobros..."
-                className="flex-1 bg-transparent border-none outline-none text-[15px] text-stone-900 placeholder:text-stone-400 font-medium px-1 w-full"
+                placeholder="¿Qué necesitas resolver en tu empresa?"
+                aria-describedby="solution-search-example"
+                className="min-w-0 flex-1 bg-transparent border-none rounded-lg outline-none focus-visible:underline decoration-stone-300 underline-offset-8 text-[16px] text-stone-900 placeholder:text-stone-400 font-medium px-2 py-3 w-full"
               />
-              <button className="bg-stone-900 hover:bg-stone-800 text-white h-11 px-6 rounded-xl text-[14px] font-medium transition-colors flex items-center gap-2 shrink-0">
-                Buscar
+              </div>
+              <button type="submit" style={actionButtonStyle} className="action-button h-12 px-6 sm:px-8 rounded-full text-[14.5px] font-medium transition-colors flex items-center justify-center shrink-0 w-full sm:w-auto">
+                Encontrar soluciones
               </button>
-            </div>
+            </form>
+            <p id="solution-search-example" className="relative mt-4 px-2 text-center text-[13px] leading-relaxed text-stone-500">
+              Prueba con “quiero cobrar a tiempo” o “necesito organizar mi nómina”.
+            </p>
           </div>
 
           {/* Quick tags */}
-          <div ref={tagsRef} className="flex items-center gap-4 text-[12.5px] font-medium text-stone-400">
+          <div ref={tagsRef} className="flex items-center gap-3 text-[13px] font-medium text-stone-400 flex-wrap justify-center">
             <span>Explora:</span>
-            <div className="flex gap-2">
-              <Link href="/explorar/finanzas" className="flex items-center gap-1.5 bg-stone-200/50 hover:bg-stone-200 px-2.5 py-1.5 rounded-lg text-stone-600 transition-colors">
-                <CreditCard className="size-3.5"/> Finanzas
-              </Link>
-              <Link href="/explorar/nomina" className="flex items-center gap-1.5 bg-stone-200/50 hover:bg-stone-200 px-2.5 py-1.5 rounded-lg text-stone-600 transition-colors">
-                <Users className="size-3.5"/> Nómina
-              </Link>
-              <Link href="/explorar/ventas" className="flex items-center gap-1.5 bg-stone-200/50 hover:bg-stone-200 px-2.5 py-1.5 rounded-lg text-stone-600 transition-colors">
-                <LayoutDashboard className="size-3.5"/> CRM
-              </Link>
-            </div>
+            <button type="button" onClick={() => onCategory("finanzas")} style={actionButtonStyle} className="action-button flex items-center gap-1.5 hover:brightness-95 px-3.5 py-1.5 rounded-full text-stone-600 transition-colors">
+              <CreditCard className="size-3.5"/> Finanzas
+            </button>
+            <button type="button" onClick={() => onCategory("nomina")} style={actionButtonStyle} className="action-button flex items-center gap-1.5 hover:brightness-95 px-3.5 py-1.5 rounded-full text-stone-600 transition-colors">
+              <Users className="size-3.5"/> Nómina
+            </button>
+            <button type="button" onClick={() => onCategory("ventas")} style={actionButtonStyle} className="action-button flex items-center gap-1.5 hover:brightness-95 px-3.5 py-1.5 rounded-full text-stone-600 transition-colors">
+              <LayoutDashboard className="size-3.5"/> CRM
+            </button>
           </div>
-
         </div>
+
       </div>
     </div>
   );

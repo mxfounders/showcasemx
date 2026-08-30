@@ -1,87 +1,99 @@
-# Stack Técnico — ShowcaseMX
+# Stack y operación — ShowcaseMX
 
-## Resumen
+## Tecnologías presentes
 
-| Capa | Tecnología | Decisión |
-|------|-----------|---------|
-| Framework | Next.js 14 (App Router) | SSR nativo, Server Actions, SEO |
-| Lenguaje | TypeScript strict | Tipo seguro a escala |
-| Estilos | Tailwind CSS v3 | Utilidades, dark mode fácil |
-| Componentes UI | shadcn/ui | Minimalista, personalizable, accesible |
-| Animaciones | GSAP 3 | Slide-up texto en navbar, panel megamenu |
-| Base de datos | Neon (PostgreSQL Serverless) | Escala a cero, branching tipo git, pgvector |
-| ORM | Drizzle ORM | Type-safe, ligero, edge-ready |
-| Auth | Clerk | B2B auth, organizations, UI limpia |
-| IA | Vercel AI SDK + OpenAI | Streaming nativo, embeddings |
-| Vector Search | pgvector (Neon) | Búsqueda semántica del dolor operativo |
-| Deploy | Vercel | CI/CD automático desde GitHub |
-| Repo | GitHub (mxfounders/showcasemx) | Org mxfounders |
+Consultar `package.json` y `package-lock.json` para versiones y resolución exactas.
 
----
+| Capa | Tecnología | Estado |
+| --- | --- | --- |
+| Aplicación | Next.js 14.2.35 / React 18 / App Router | Home y layout implementados |
+| Lenguaje | TypeScript estricto | Comprobación local disponible |
+| Estilos | Tailwind CSS 3, tokens CSS | Interfaz clara y cinco acentos |
+| Componentes | shadcn, Base UI, Lucide | Botón base y componentes propios |
+| Animación | GSAP 3 | Hero, navegación y explorador |
+| Datos | Drizzle + Neon HTTP | Cliente/esquema, no usados por la home |
+| Autenticación | Clerk | Dependencia, sin provider/middleware/webhook |
+| IA | Vercel AI SDK + proveedor OpenAI | Dependencias, sin endpoint |
+| Búsqueda vectorial | Tipo custom `vector(1536)` | Solo esquema; integración pendiente |
+| Despliegue | Vercel + GitHub | Configuración presente; resultado remoto sin verificar aquí |
 
-## Por qué cada decisión
+Clerk gestionará autenticación; Drizzle realiza consultas y persistencia, no
+sustituye auth. Los permisos deberán comprobarse en servidor.
 
-### Next.js 14 sobre Astro
-Astro es más rápido para sitios estáticos, pero ShowcaseMX tiene comportamiento de **app viva**:
-- Usuarios logueados con estado global (como un Product Hunt)
-- Dashboards asimétricos con data en tiempo real
-- Acciones de interacción: guardar, votar, contactar, buscar con IA
-- Server Actions para mutaciones sin APIs custom
+## Flujo actual de renderizado
 
-Astro requeriría gestionar estado global entre islas con librerías externas (NanoStores), lo que se vuelve un dolor a escala. Next.js App Router lo resuelve de forma nativa.
+`layout.tsx` incluye navbar y footer. `page.tsx` compone `Hero` y
+`CategoryExplorer`. Estos componentes interactivos usan cliente; la página sigue
+siendo Server Component. No hay API routes ni Server Actions de negocio.
 
-### Neon sobre Supabase
-- Neon es **solo base de datos** (PostgreSQL Serverless). Más especializado, mejor performance.
-- Soporte nativo de `pgvector` para el motor de IA.
-- Branching de base de datos tipo git (ideal para no romper producción).
-- Se integra de forma nativa con Vercel (environment variables automáticas).
-- Drizzle ORM maneja auth y queries. No necesitamos el backend de Supabase.
+`catalog-preview.ts` contiene tipos, Cord y Flouvia y 57 ejemplos ficticios. `brand-colors.ts`
+centraliza cinco paletas y el mapa de rutas compartido por navbar y footer.
+`db/index.ts` crea el cliente Neon al importarse y requiere una URL válida.
 
-### Drizzle sobre Prisma
-- Más rápido en runtime (no genera un proceso separado).
-- Type-safe al 100% sin codegen.
-- Compatible con Edge Runtime de Vercel.
-- SQL-like API: más control, menos magia.
+## Arquitectura propuesta, no implementada
 
-### Clerk sobre Auth.js
-- Soporta **organizaciones B2B** de forma nativa (crucial para buyers corporativos).
-- UI de onboarding lista en minutos.
-- Webhooks para sincronizar usuarios con nuestra tabla `users` en Neon.
-- Trade-off: es un servicio externo con costo, pero ahorra semanas de desarrollo de auth.
+- Consultas reutilizables en `src/db/queries/` cuando exista el catálogo real.
+- Autorización y validación separadas de la presentación.
+- Búsqueda: consulta → embedding → productos aprobados por similitud → respuesta
+  explicada. El esquema reserva 1536 dimensiones, pero generación, índices,
+  modelos, límites y evaluación siguen pendientes.
+- Ninguna búsqueda debe crear automáticamente un lead comercial.
 
----
+## Validación local y CI
 
-## Arquitectura de la IA (Vector Search)
-
-```
-1. Founder registra producto
-   → descriptionPain + tagline pasan por OpenAI Embeddings (text-embedding-3-small)
-   → Vector de 1536 dimensiones se guarda en product_embeddings (pgvector)
-
-2. CFO escribe "mis clientes tardan 15 días en pagarme"
-   → Esa frase se convierte en vector via OpenAI Embeddings
-   → pgvector hace similarity search (cosine distance) contra product_embeddings
-   → Trae los N productos más cercanos semánticamente
-
-3. LLM (gpt-4o-mini) redacta la respuesta:
-   → "Encontramos 2 herramientas que resuelven ese cuello de botella..."
-   → La respuesta se hace stream via Vercel AI SDK (efecto tipo ChatGPT)
+```bash
+npm ci
+npm run dev
+# En otro momento, sin dev usando la misma carpeta de salida:
+npm run check
 ```
 
----
+`check` ejecuta lint, TypeScript y build. Para lint/tipos sin build:
 
-## Flujo de CI/CD
-
-```
-git push origin main
-   → GitHub notifica a Vercel
-   → Vercel corre npm run build
-   → Si pasa → deploy a producción automático
-   → Si falla → build error en Vercel dashboard
+```bash
+npm run lint
+npm run typecheck
 ```
 
----
+`.github/workflows/check.yml` usa Node 22, `npm ci` y `npm run check` en push y PR.
+La existencia del workflow no prueba que se haya ejecutado remotamente. No hay
+suite automatizada de pruebas funcionales definida en package.json.
 
-## Variables de Entorno Requeridas
+Se comprobaron localmente build, tipos, lint, categorías, fichas, teclado y
+adaptación del explorador. Estas comprobaciones no cubren servicios aún sin integrar.
 
-Ver [`docs/env.md`](./env.md) para el listado completo.
+## Evitar conflictos de caché
+
+No lanzar dev y build simultáneamente sobre el mismo `.next`, ni varios dev en
+el mismo checkout. Durante esta sesión se observaron errores de estilos y módulos
+`vendor-chunks` por salidas mezcladas. Para verificar mientras dev está abierto,
+compilar una copia aislada con su propia carpeta de salida. Si ocurre el conflicto,
+reiniciar el servidor afectado con caché regenerada; no borrar código fuente.
+
+## Vercel
+
+`vercel.json` fija:
+
+```json
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next"
+}
+```
+
+El log aportado mostraba compilación correcta seguida de un error por buscar
+`public`. La configuración versionada aborda ese fallo. No crear una carpeta
+`public` vacía ni activar exportación estática para ocultarlo.
+
+Un push a la rama conectada puede iniciar el despliegue mediante la integración
+Git de Vercel. Confirmar por separado aceptación del push, CI y estado del deploy;
+no asumir que GitHub Actions bloquea por sí mismo el despliegue de Vercel.
+
+Variables por integración en [entorno](env.md); cambios de datos en
+[base de datos](database.md).
+
+## Actualización: búsqueda y postulaciones
+
+La búsqueda local y los chips de la home ya funcionan. Se añadió invitación y formulario con endpoint de guardado en Neon; activación de credenciales y tabla pendiente. Ver [detalle](discovery.md) para el estado vigente, que sustituye las referencias anteriores a búsqueda de interfaz o formulario futuro.
