@@ -12,7 +12,7 @@ import {
   Layers, Briefcase, TrendingUp, BookOpen,
   Send, LayoutDashboard, UserCircle, Rocket,
   Globe, Calendar, Mail, Award,
-  ClipboardCheck, HelpCircle, Settings,
+  ClipboardCheck, HelpCircle, Settings, Menu, X
 } from "lucide-react";
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
@@ -239,9 +239,17 @@ function TriggerButton({
 
 export function Navbar() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
   const navigationRef = useRef<HTMLDivElement>(null);
   const panelRef   = useRef<HTMLDivElement>(null);
   const hideTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (mobileMenuOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "unset";
+    return () => { document.body.style.overflow = "unset"; };
+  }, [mobileMenuOpen]);
 
   // Animar el panel con GSAP cuando cambia activeMenu
   const currentMenu = activeMenu ? menus[activeMenu] : null;
@@ -319,7 +327,7 @@ export function Navbar() {
       }}
     >
       {/* Barra */}
-      <div className={`max-w-7xl mx-auto bg-white border border-t-0 border-stone-200/70 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.06)] px-6 h-[52px] flex items-center justify-between gap-8 transition-[border-radius] duration-200 ${activeMenu ? "rounded-b-none" : "rounded-b-2xl"}`}>
+      <div className={`max-w-7xl mx-auto bg-white border border-t-0 border-stone-200/70 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.06)] px-6 h-[52px] flex items-center justify-between gap-8 transition-[border-radius] duration-200 ${(activeMenu || mobileMenuOpen) ? "rounded-b-none" : "rounded-b-2xl"}`}>
 
         {/* LEFT */}
         <div className="flex items-center gap-6">
@@ -349,24 +357,35 @@ export function Navbar() {
           <button type="button" aria-label="Buscar" className="p-2 rounded-md text-stone-400 hover:text-stone-700 hover:bg-stone-100/80 transition-colors">
             <Search className="size-[15px]" />
           </button>
-          <NavLink href="/sign-in">Acceso</NavLink>
-          <Link
-            href="/newsletter"
-            style={actionButtonStyle} className="inline-flex items-center action-button text-[13.5px] font-medium px-4 py-1.5 rounded-full transition-colors duration-200"
+          
+          <div className="hidden md:flex items-center gap-2">
+            <NavLink href="/sign-in">Acceso</NavLink>
+            <Link
+              href="/newsletter"
+              style={actionButtonStyle} className="inline-flex items-center action-button text-[13.5px] font-medium px-4 py-1.5 rounded-full transition-colors duration-200"
+            >
+              Suscribirse →
+            </Link>
+          </div>
+
+          <button 
+            type="button" 
+            className="md:hidden p-2 rounded-md text-stone-600 hover:bg-stone-100/80 transition-colors"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            Suscribirse →
-          </Link>
+            {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+          </button>
         </div>
       </div>
 
-      {/* Panel megamenu — controlado por GSAP */}
+      {/* Panel megamenu — controlado por GSAP (Desktop) */}
       <div
         id="navigation-panel"
         ref={panelRef}
         onClick={(event) => {
           if (event.target instanceof Element && event.target.closest("a")) setActiveMenu(null);
         }}
-        className="max-w-7xl mx-auto bg-white border border-t-0 border-stone-200/70 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.14)] rounded-b-2xl overflow-hidden"
+        className="hidden md:block max-w-7xl mx-auto bg-white border border-t-0 border-stone-200/70 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.14)] rounded-b-2xl overflow-hidden"
         onMouseEnter={() => { if (hideTimeout.current) clearTimeout(hideTimeout.current); }}
       >
         {currentMenu && (
@@ -426,6 +445,68 @@ export function Navbar() {
           </div>
         )}
       </div>
+
+      {/* Mobile Menu Panel */}
+      <div 
+        className={`md:hidden absolute top-[52px] inset-x-4 bg-white border border-t-0 border-stone-200/70 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.14)] rounded-b-2xl overflow-hidden transition-all duration-300 ease-in-out ${mobileMenuOpen ? "max-h-[85vh] opacity-100" : "max-h-0 opacity-0 border-transparent"}`}
+      >
+        <div className="overflow-y-auto max-h-[85vh] px-6 py-4 flex flex-col gap-6">
+          {/* Acceso & Suscribirse (Mobile) */}
+          <div className="flex flex-col gap-3 pb-4 border-b border-stone-100">
+            <Link href="/sign-in" className="text-[15px] font-medium text-stone-600" onClick={() => setMobileMenuOpen(false)}>Acceso</Link>
+            <Link href="/newsletter" className="inline-flex items-center justify-center bg-stone-900 text-white text-[15px] font-medium px-4 py-2.5 rounded-lg" onClick={() => setMobileMenuOpen(false)}>Suscribirse →</Link>
+          </div>
+
+          {/* Accordions */}
+          {(["compradores", "fundadores"] as const).map(key => {
+            const menu = menus[key];
+            const isOpen = mobileAccordion === key;
+            return (
+              <div key={key} className="border-b border-stone-100 pb-4 last:border-0">
+                <button 
+                  onClick={() => setMobileAccordion(isOpen ? null : key)}
+                  className="flex items-center justify-between w-full text-[16px] font-semibold text-stone-900 mb-2"
+                >
+                  {key === "compradores" ? "Para compradores" : "Para fundadores"}
+                  <ChevronDown className={`size-4 text-stone-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+                </button>
+                
+                {/* Expanded Content */}
+                <div className={`overflow-hidden transition-all duration-300 ${isOpen ? "max-h-[1500px] mt-5" : "max-h-0"}`}>
+                  <div className="flex flex-col gap-6">
+                    {menu.columns.map(col => (
+                      <div key={col.heading}>
+                        <p className="text-[11px] font-bold text-stone-400 uppercase tracking-widest mb-3">{col.heading}</p>
+                        <div className="flex flex-col gap-4">
+                          {col.links.map(link => {
+                            const Icon = link.icon;
+                            return (
+                              <Link key={link.href} href={link.href} className="flex items-start gap-3" onClick={() => setMobileMenuOpen(false)}>
+                                <div style={getAccentStyle(link.href)} className="size-7 rounded-lg flex items-center justify-center shrink-0">
+                                  <Icon className="size-3.5" />
+                                </div>
+                                <div>
+                                  <p className="text-[14px] font-medium text-stone-800 leading-none mb-1">{link.label}</p>
+                                  <p className="text-[12px] text-stone-500 leading-tight">{link.desc}</p>
+                                </div>
+                              </Link>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+          
+          <Link href="/el-proyecto" className="text-[16px] font-semibold text-stone-900 pb-4" onClick={() => setMobileMenuOpen(false)}>
+            El Proyecto
+          </Link>
+        </div>
+      </div>
+
     </div>
   );
 }
