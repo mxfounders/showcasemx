@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
-import { Sparkles, CreditCard, Users, LayoutDashboard, ArrowRight } from "lucide-react";
+import { Sparkles, CreditCard, Users, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 
 export function Hero() {
