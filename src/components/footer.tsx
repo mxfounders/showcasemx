@@ -11,6 +11,7 @@ import {
   Send, LayoutDashboard, UserCircle, Rocket,
   Globe, Calendar, Mail, Award,
   ClipboardCheck, HelpCircle, Settings, Zap,
+  Twitter, Linkedin, Github
 } from "lucide-react";
 
 // ─── Datos ────────────────────────────────────────────────────────────────────
@@ -162,7 +163,7 @@ function FooterLink({ href, label, icon: Icon, iconBg, iconColor }: {
 
 export function Footer() {
   return (
-    <footer className="px-4 pb-4 mt-24">
+    <footer className="px-4 mt-24">
       <div className="max-w-7xl mx-auto bg-white rounded-t-2xl border border-b-0 border-stone-200/70 shadow-[0_-4px_32px_-4px_rgba(0,0,0,0.06)]">
 
         {/* Top — Logo + tagline */}
@@ -231,24 +232,33 @@ export function Footer() {
         <div className="border-t border-stone-100 mx-12" />
         <div className="px-12 py-6 flex items-center justify-between">
           <p className="text-[12px] text-stone-400">
-            © {new Date().getFullYear()} ShowcaseMX · Hecho en México 🇲🇽
+            © {new Date().getFullYear()} ShowcaseMX · Hecho en México
           </p>
           <div className="flex items-center gap-5">
-            {[
-              { label: "X / Twitter", href: "https://x.com/showcasemx" },
-              { label: "LinkedIn",    href: "https://linkedin.com/company/showcasemx" },
-              { label: "GitHub",      href: "https://github.com/mxfounders" },
-            ].map((s) => (
-              <Link
-                key={s.href}
-                href={s.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[12px] text-stone-400 hover:text-stone-700 transition-colors"
-              >
-                {s.label}
-              </Link>
-            ))}
+            <Link
+              href="https://x.com/showcasemx"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-stone-400 hover:text-stone-900 transition-colors"
+            >
+              <Twitter className="size-4" />
+            </Link>
+            <Link
+              href="https://linkedin.com/company/showcasemx"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-stone-400 hover:text-stone-900 transition-colors"
+            >
+              <Linkedin className="size-4" />
+            </Link>
+            <Link
+              href="https://github.com/mxfounders"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-stone-400 hover:text-stone-900 transition-colors"
+            >
+              <Github className="size-4" />
+            </Link>
           </div>
         </div>
 
