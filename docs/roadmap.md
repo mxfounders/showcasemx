@@ -19,8 +19,9 @@
 - [x] Variables de entorno configuradas en Vercel
 - [x] Base de datos Neon creada
 - [x] Repositorio en GitHub (mxfounders/showcasemx)
-- [x] Navbar flotante minimalista
-- [x] Hero section con AI search input
+- [x] Navbar flotante — redondeada abajo, megamenu full-width con GSAP
+- [x] Footer — redondeado arriba, espejo de la navbar, 6 columnas B2B
+- [x] GSAP instalado — slide-up en links, fade+y en panel megamenu
 - [x] Documentación base (`docs/`, `CLAUDE.md`)
 - [ ] Extensión pgvector habilitada en Neon
 - [ ] Primera migración aplicada a Neon (`npx drizzle-kit push`)

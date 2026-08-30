@@ -8,6 +8,7 @@
 | Lenguaje | TypeScript strict | Tipo seguro a escala |
 | Estilos | Tailwind CSS v3 | Utilidades, dark mode fácil |
 | Componentes UI | shadcn/ui | Minimalista, personalizable, accesible |
+| Animaciones | GSAP 3 | Slide-up texto en navbar, panel megamenu |
 | Base de datos | Neon (PostgreSQL Serverless) | Escala a cero, branching tipo git, pgvector |
 | ORM | Drizzle ORM | Type-safe, ligero, edge-ready |
 | Auth | Clerk | B2B auth, organizations, UI limpia |

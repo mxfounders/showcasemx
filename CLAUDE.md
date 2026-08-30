@@ -70,7 +70,8 @@ showcasemx/
 │   │   └── page.tsx           # Home (Hero + AI search input)
 │   ├── components/
 │   │   ├── ui/                # Componentes shadcn (no modificar directamente)
-│   │   └── navbar.tsx         # Navbar flotante principal
+│   │   ├── navbar.tsx         # Navbar flotante con megamenu full-width + GSAP
+│   │   └── footer.tsx         # Footer espejo de la navbar (rounded-t-2xl)
 │   ├── db/
 │   │   ├── index.ts           # Cliente Drizzle + Neon
 │   │   └── schema.ts          # Esquema completo de la BD

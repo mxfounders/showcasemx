@@ -101,12 +101,23 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 ---
 
-## Animaciones
+## Animaciones (GSAP 3)
 
-- Cero rebotes o efectos "bouncy"
-- Solo transiciones de opacidad: `transition-opacity duration-200`
-- Hover en links/cards: `transition-colors duration-150`
-- Fade-in de resultados de IA: `animate-in fade-in duration-300`
+**Motor:** GSAP 3 — instalado como dependencia principal.
+
+| Animación | Implementación | Curva / Duración |
+|-----------|---------------|-----------------|
+| Slide-up texto en NavLinks | `gsap.timeline` con `y: -100% / 100%` + opacity | `power2.inOut` · 280ms |
+| Panel megamenu — abrir | `gsap.fromTo` · `y: -8 → 0` + `opacity: 0 → 1` | `power3.out` · 220ms |
+| Panel megamenu — cerrar | `gsap.to` · `y: 0 → -6` + `opacity: 1 → 0` | `power2.in` · 180ms |
+| Chevron rotación | CSS `transition-transform duration-300 ease-out` | — |
+| Logo hover | CSS `transition-transform duration-300 group-hover:rotate-6` | — |
+
+### Reglas de animación
+- Cero bouncing (`elastic`, `bounce` están prohibidos)
+- Entradas: siempre más rápidas que salidas (`power3.out` vs `power2.in`)
+- Hover de links de menú: slide-up con `reverse()` al salir (no se reinicia desde cero)
+- Nada de `animate-spin`, `animate-bounce` de Tailwind en UI de producción
 
 ---
 
