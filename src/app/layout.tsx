@@ -7,8 +7,8 @@ import { Navbar } from "@/components/navbar";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "ShowcaseMX | B2B Software",
-  description: "Directorio curado de software B2B para founders y corporativos en México.",
+  title: "ShowcaseMX | Software B2B Mexicano",
+  description: "Catálogo curado de software B2B construido por operadores mexicanos.",
 };
 
 export default function RootLayout({
@@ -17,14 +17,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className="dark">
-      <body
-        className={cn("min-h-screen bg-background font-sans antialiased", inter.variable)}
-      >
+    <html lang="es">
+      <body className={cn("min-h-screen bg-[#f5f5f4] font-sans antialiased", inter.variable)}>
         <Navbar />
-        <main className="pt-24 pb-16">
-          {children}
-        </main>
+        <main>{children}</main>
       </body>
     </html>
   );
