@@ -483,7 +483,7 @@ export function Navbar({ authenticated = false }: { authenticated?: boolean }) {
         <div className="overflow-y-auto max-h-[85vh] px-6 py-4 flex flex-col gap-6">
           {/* Cuenta & Suscribirse (Mobile) */}
           <div className="flex flex-col gap-3 pb-4 border-b border-stone-100">
-            <Link href={authenticated ? "/account" : "/sign-in"} className="text-[15px] font-medium text-stone-600" onClick={() => setMobileMenuOpen(false)}>{authenticated ? "Ir a mi panel" : "Entrar"}</Link>
+            <Link href={authenticated ? "/account" : "/sign-in"} className="action-button inline-flex items-center justify-center rounded-lg bg-stone-100 px-4 py-2.5 text-[15px] font-medium text-stone-700 hover:bg-stone-200" onClick={() => setMobileMenuOpen(false)}>{authenticated ? "Ir a mi panel" : "Entrar"}</Link>
             <Link href="/newsletter" style={actionButtonStyle} className="action-button inline-flex items-center justify-center text-[15px] font-medium px-4 py-2.5 rounded-lg" onClick={() => setMobileMenuOpen(false)}>Suscribirse <span className="button-arrow" aria-hidden="true">→</span></Link>
           </div>
 
