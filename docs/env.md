@@ -11,6 +11,7 @@ variables. Separar bases de desarrollo, preview y producción.
 | RESEND_API_KEY | Envío transaccional: recuperación, verificación y avisos; no campañas automáticas. |
 | AUTH_EMAIL_FROM | Remitente con dominio autorizado en Resend. |
 | CONTACT_EMAIL_TO | Destino opcional del formulario público. Por defecto `contacto@shwcs.site`. |
+| MONITOR_EMAIL_TO | Destino interno de las alertas de salud de producción. |
 | GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET | OAuth propio. Callback exacto AUTH_APP_ORIGIN/api/auth/google/callback. |
 | CRON_SECRET | Secreto servidor de mínimo 32 caracteres para /api/internal/mail. Nunca en query. |
 | AUTH_REQUIRE_VERIFIED_EMAIL | true para exigir verificación antes de crear contactos; activar tras probar entrega. |

@@ -2,5 +2,15 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "buildCommand": "npm run build",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "crons": [
+    {
+      "path": "/api/internal/monitor",
+      "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/internal/mail",
+      "schedule": "15 14 * * *"
+    }
+  ]
 }

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +31,8 @@ export default function RootLayout({
       <body className={cn("min-h-screen bg-[#f5f5f4] font-sans antialiased", inter.variable)}>
         <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-white focus:px-5 focus:py-3 focus:text-stone-900 focus:shadow-lg">Saltar al contenido</a>
         {children}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
