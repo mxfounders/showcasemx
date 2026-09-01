@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Bell, BookOpen, ChartNoAxesCombined, Layers3, Search, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Bell, BookOpen, ChartNoAxesCombined, Layers3, ShieldCheck } from 'lucide-react';
 
 const releases = [
   {
@@ -54,7 +54,7 @@ export function ChangelogStory() {
       </div>
     </section>
 
-    <section className="mx-auto max-w-[1500px] px-5 pt-24 sm:px-10 lg:px-16 lg:pt-32"><div className="grid overflow-hidden rounded-[30px] bg-stone-900 text-white lg:grid-cols-[1fr_320px]"><div className="p-8 sm:p-12"><Search className="size-7 text-white/50" aria-hidden="true" /><h2 className="mt-16 max-w-3xl text-4xl font-semibold leading-none tracking-[-0.055em] sm:text-6xl">¿Hay algo que debería funcionar mejor?</h2><p className="mt-6 max-w-xl leading-relaxed text-white/55">Los detalles importan. Cuéntanos qué te estorba, qué falta o qué esperabas encontrar.</p><Link href="/contacto" className="mt-8 inline-flex items-center gap-3 text-sm font-medium">Abrir una conversación <ArrowRight className="size-4" aria-hidden="true" /></Link></div><div className="flex min-h-64 items-center justify-center border-t border-white/10 bg-[#365DC4] lg:border-l lg:border-t-0"><div className="flex size-36 items-center justify-center rounded-full border border-white/25"><div className="flex size-20 items-center justify-center rounded-full bg-white text-[#365DC4]"><Bell className="size-7" aria-hidden="true" /></div></div></div></div></section>
+    <section className="mx-auto max-w-[1500px] px-5 pt-20 sm:px-10 lg:px-16 lg:pt-24"><div className="flex flex-col items-start justify-between gap-6 border-t border-stone-200 py-8 sm:flex-row sm:items-center"><div><h2 className="text-xl font-medium tracking-[-0.025em]">¿Algo debería funcionar mejor?</h2><p className="mt-2 max-w-2xl text-sm leading-relaxed text-stone-500">Cuéntanos qué te estorba, qué falta o qué esperabas encontrar.</p></div><Link href="/contacto" className="group inline-flex shrink-0 items-center gap-2 text-sm font-medium text-[#365DC4]">Abrir una conversación <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none" aria-hidden="true" /></Link></div></section>
   </article>;
 }
 
