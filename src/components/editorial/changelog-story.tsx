@@ -40,7 +40,7 @@ export function ChangelogStory() {
   return <article className="pb-24 sm:pb-32">
     <header className="mx-auto max-w-[1500px] px-5 pt-12 sm:px-10 sm:pt-16 lg:px-16">
       <div className="grid gap-10 border-b border-stone-200 pb-14 lg:grid-cols-[1.3fr_0.7fr] lg:items-end lg:pb-16">
-        <div><div className="flex items-center gap-3 text-xs font-medium uppercase tracking-[0.18em] text-[#365DC4]"><span className="size-2 rounded-full bg-[#365DC4]"/>Changelog</div><h1 className="mt-8 max-w-5xl text-5xl font-semibold leading-[0.94] tracking-[-0.06em] sm:text-6xl lg:text-7xl">Lo nuevo en shwcs.</h1></div>
+        <div><h1 className="max-w-5xl text-5xl font-semibold leading-[0.94] tracking-[-0.06em] sm:text-6xl lg:text-7xl">Lo nuevo en shwcs.</h1></div>
         <div className="max-w-md lg:justify-self-end"><p className="text-xl leading-relaxed tracking-[-0.02em] text-stone-600">Un registro de los cambios que ya puedes usar en shwcs.</p><p className="mt-5 text-sm leading-relaxed text-stone-400">Publicamos funciones cuando están disponibles. Las ideas que siguen en desarrollo se quedan fuera hasta convertirse en algo real.</p><Link href="/contacto" className="mt-8 inline-flex items-center gap-2 text-sm font-medium text-[#365DC4]">Cuéntanos qué mejorarías <ArrowRight className="size-4" aria-hidden="true" /></Link></div>
       </div>
     </header>
