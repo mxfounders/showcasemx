@@ -1,0 +1,4 @@
+"use client";
+import { useEffect,useRef } from 'react';
+// Aggregate events only: no visitor ID, cookie, fingerprint, referrer or buyer list data.
+export function PublicMetrics({solutionId}:{solutionId:string}){const fired=useRef(false);useEffect(()=>{if(navigator.doNotTrack==='1'||(navigator as Navigator&{globalPrivacyControl?:boolean}).globalPrivacyControl)return;function record(event:'view'|'click'){void fetch('/api/metrics',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({solutionId,event}),keepalive:true}).catch(()=>{});}if(!fired.current){fired.current=true;record('view');}function click(e:MouseEvent){const target=e.target instanceof Element?e.target.closest('a[data-official-site]'):null;if(target)record('click');}document.addEventListener('click',click);return()=>document.removeEventListener('click',click);},[solutionId]);return null;}

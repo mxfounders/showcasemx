@@ -21,4 +21,4 @@ No hay `.env.local` en el checkout revisado. No se aplicaron cambios remotos ni 
 
 `npx tsx --test tests/discovery.test.ts` comprueba búsqueda, deduplicación y validación de postulaciones. `npm run lint` y `npm run typecheck`. Compilar en copia aislada mientras esté activo next dev.
 
-Conexión: se acepta `NEON_DATABASE_URL`, `DATABASE_URL` o `POSTGRES_URL`, en ese orden, solo en servidor. Neon conectado en Vercel no confirma que exista `solution_applications`. La sesión CLI revisada solo accede al equipo flouvia, donde no aparece ShowcaseMX; tabla y envío remotos siguen sin verificar. No se cambiaron bases remotas.
+Conexión: se acepta `NEON_DATABASE_URL`, `DATABASE_URL` o `POSTGRES_URL`, en ese orden, solo en servidor. Neon conectado en Vercel no confirma que exista `solution_applications`. La sesión CLI revisada solo accede al equipo flouvia, donde no aparece shwcs; tabla y envío remotos siguen sin verificar. No se cambiaron bases remotas.

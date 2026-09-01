@@ -1,0 +1,2 @@
+import type { SVGProps } from 'react';
+export function CommunityIcon({className='',...props}:SVGProps<SVGSVGElement>){return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={`community-icon ${className}`} {...props}><g transform="rotate(25 12 12)"><circle cx="12" cy="12" r="8.5"/><ellipse cx="12" cy="12" rx="4.25" ry="8.5"/><path d="M3.5 12h17"/></g></svg>;}

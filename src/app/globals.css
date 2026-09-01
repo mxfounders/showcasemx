@@ -97,3 +97,165 @@
 .action-button:hover { filter: brightness(0.96); }
 .action-button:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 .action-button:disabled { filter: none; }
+
+/* Short, restrained feedback. No cursor tracking or magnetic displacement. */
+.action-button { transition: background-color 180ms ease, filter 180ms ease, transform 180ms ease, box-shadow 180ms ease; }
+.action-button:not(:disabled):active { transform: translateY(1px); }
+.action-button .lucide-arrow-up-right,
+.action-button .lucide-arrow-right,
+.action-button .button-arrow { transition: transform 180ms ease; }
+@media (hover: hover) {
+  .action-button:not(:disabled):hover { box-shadow: 0 3px 10px -6px currentColor; }
+  .action-button:hover .lucide-arrow-up-right { transform: translate(2px, -2px); }
+  .action-button:hover .lucide-arrow-right,
+  .action-button:hover .button-arrow { transform: translateX(3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .action-button, .action-button svg, .action-button .button-arrow { transition: none !important; transform: none !important; }
+}
+
+@keyframes sidebar-reveal { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.sidebar-reveal { animation: sidebar-reveal 160ms ease-out; }
+@media (prefers-reduced-motion: reduce) { .sidebar-reveal { animation: none; } }
+
+@keyframes contact-step { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.contact-step { animation: contact-step 220ms ease-out; }
+@media (prefers-reduced-motion: reduce) { .contact-step { animation: none; } }
+
+/* One page grid across the private account, matching Inicio. */
+@layer components {
+  .account-page { @apply mx-auto w-full max-w-6xl px-6 py-12 sm:py-16; }
+
+  /* Shared tabs: one blue selection, quiet inactive choices, tactile white hover. */
+  .selector-tabs { @apply flex flex-wrap items-center gap-1; }
+  .selector-tab {
+    @apply rounded-full px-4 py-2.5 text-sm text-stone-500;
+    transition: color 180ms ease, background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  }
+  .selector-tab[aria-pressed="true"],
+  .selector-tab[aria-current="page"] { @apply bg-[#E4EBFC] font-medium text-[#365DC4]; }
+  .selector-dropdown-trigger {
+    @apply flex min-h-10 max-w-full cursor-pointer list-none items-center gap-2 rounded-full border border-transparent bg-transparent px-4 py-2.5 text-sm font-medium text-stone-500;
+    transition: color 180ms ease, background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  }
+  .selector-dropdown-trigger[data-selected="true"],
+  details[open] > .selector-dropdown-trigger { @apply bg-[#E4EBFC] text-[#365DC4]; }
+  .selector-menu-active { @apply bg-[#E4EBFC] text-[#365DC4]; }
+}
+
+@media (hover: hover) {
+  .selector-tab:not([aria-pressed="true"]):not([aria-current="page"]):hover,
+  details:not([open]) > .selector-dropdown-trigger:not([data-selected="true"]):hover {
+    @apply bg-white text-stone-700;
+    box-shadow: 0 5px 14px -9px rgb(41 37 36 / 0.45);
+  }
+}
+.selector-tab:focus-visible,
+.selector-dropdown-trigger:focus-visible { outline: 2px solid #365DC4; outline-offset: 3px; }
+.selector-tab:not(:disabled):active,
+.selector-dropdown-trigger:active { transform: translateY(1px); }
+
+/* Native disclosures use the same quiet surface and blue interaction language. */
+summary:not(.selector-dropdown-trigger) {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 44px;
+  cursor: pointer;
+  list-style: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-inline: -0.75rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.875rem;
+  transition: color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+summary:not(.selector-dropdown-trigger)::-webkit-details-marker { display: none; }
+summary:not(.selector-dropdown-trigger)::after {
+  content: "";
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #E4EBFC url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23365DC4' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / 14px no-repeat;
+  transition: transform 180ms ease, filter 180ms ease;
+}
+details[open] > summary:not(.selector-dropdown-trigger) { color: #365DC4; background-color: white; }
+details[open] > summary:not(.selector-dropdown-trigger)::after { transform: rotate(180deg); }
+summary:not(.selector-dropdown-trigger):focus-visible { outline: 2px solid #365DC4; outline-offset: 3px; }
+@media (hover: hover) {
+  summary:not(.selector-dropdown-trigger):hover {
+    background-color: white;
+    box-shadow: 0 5px 14px -9px rgb(41 37 36 / 0.45);
+  }
+  summary:not(.selector-dropdown-trigger):hover::after { filter: brightness(0.96); }
+}
+
+/* One checkbox across forms; never depend on each browser's native drawing. */
+input[type="checkbox"]:not(.sr-only) {
+  appearance: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
+  border: 1px solid rgb(168 162 158);
+  border-radius: 0.4rem;
+  background-color: white;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 13px;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+input[type="checkbox"]:not(.sr-only):checked {
+  border-color: #365DC4;
+  background-color: #365DC4;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 4 4L19 6'/%3E%3C/svg%3E");
+}
+input[type="checkbox"]:not(.sr-only):focus-visible {
+  outline: 2px solid #365DC4;
+  outline-offset: 3px;
+}
+input[type="checkbox"]:not(.sr-only):disabled { cursor: not-allowed; opacity: 0.4; }
+input[type="checkbox"]:not(.sr-only):active { transform: translateY(1px); }
+
+@keyframes library-dialog-enter { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (prefers-reduced-motion: no-preference) { .library-dialog[open] { animation: library-dialog-enter 180ms ease-out; } }
+
+/* A brief, shared magnifier gesture on hover or keyboard interaction. */
+.search-icon { overflow: visible; }
+.search-icon__drawing { transform-origin: 11px 11px; }
+@keyframes search-glance {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  45% { transform: rotate(-12deg) scale(1.12); }
+  72% { transform: rotate(4deg) scale(1.04); }
+}
+/* One clean turn for the community globe, without 3D distortion. */
+.community-icon { transform-origin: center; }
+@keyframes community-icon-turn {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  :where(button, a, label, form[role="search"]):focus-within .search-icon__drawing { animation: search-glance 460ms ease-in-out; }
+  :where(a, button):focus-visible .community-icon { animation: community-icon-turn 720ms cubic-bezier(.16,1,.3,1) both; }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  :where(button, a, label, form[role="search"]):hover .search-icon__drawing { animation: search-glance 460ms ease-in-out; }
+  :where(a, button):hover .community-icon { animation: community-icon-turn 720ms cubic-bezier(.16,1,.3,1) both; }
+}
+
+@keyframes navbar-search-reveal { from { opacity: 0; clip-path: inset(0 0 0 calc(100% - 56px) round 999px); } to { opacity: 1; clip-path: inset(0 round 999px); } }
+@media (prefers-reduced-motion: no-preference) { .navbar-search-panel { animation: navbar-search-reveal 280ms cubic-bezier(.22,1,.36,1); } }
+
+/* Search grows leftwards and reserves its real width, so it never overlaps filters. */
+.expanding-search-shell { width: 56px; transition: width 280ms cubic-bezier(.22,1,.36,1); }
+.expanding-search-shell.is-open { width: min(420px, calc(100vw - 5rem)); }
+.expanding-search-shell.saved-search.is-open { width: min(340px, calc(100vw - 5rem)); }
+.expanding-search-capsule { width: 100%; opacity: 0; transition: opacity 120ms ease; }
+.expanding-search-capsule.is-open { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .expanding-search-shell, .expanding-search-capsule,
+  summary:not(.selector-dropdown-trigger), summary:not(.selector-dropdown-trigger)::after,
+  input[type="checkbox"]:not(.sr-only) { transition: none; transform: none; }
+}

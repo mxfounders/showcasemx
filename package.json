@@ -1,5 +1,5 @@
 {
-  "name": "showcasemx",
+  "name": "shwcs",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -8,39 +8,47 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit --incremental false",
-    "check": "npm run lint && npm run typecheck && npm run build"
+    "check": "npm run lint && npm run typecheck && npm run build",
+    "test": "tsx --test tests/*.test.ts",
+    "preflight": "node scripts/launch-readiness.cjs"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.51",
     "@base-ui/react": "^1.7.0",
-    "@clerk/nextjs": "^5.7.6",
     "@neondatabase/serverless": "^1.1.0",
     "ai": "^7.0.84",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.2",
     "gsap": "^3.15.0",
+    "jose": "^6.2.10",
     "lucide-react": "^1.37.0",
-    "next": "14.2.35",
+    "next": "^15.5.24",
     "pgvector": "^0.3.0",
-    "react": "^18",
-    "react-dom": "^18",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "shadcn": "^4.19.0",
+    "sharp": "^0.35.4",
     "tailwind-merge": "^3.6.0",
     "tailwindcss-animate": "^1.0.7",
     "tw-animate-css": "^1.4.0"
   },
   "devDependencies": {
     "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
     "eslint": "^8",
-    "eslint-config-next": "14.2.35",
-    "postcss": "^8",
+    "eslint-config-next": "^15.5.24",
+    "postcss": "^8.5.26",
     "tailwindcss": "^3.4.1",
     "tsx": "^4.23.13",
     "typescript": "^5"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "^8.5.26"
+    }
   }
 }

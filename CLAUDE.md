@@ -1,124 +1,1095 @@
-# CLAUDE.md — ShowcaseMX
+# CLAUDE.md — shwcs
 
-Contexto maestro del proyecto. Leer antes de trabajar y contrastar con el código.
-Las decisiones actuales del usuario sustituyen la dirección visual inicial.
+Contexto maestro vigente al 31 de agosto de 2026. Leer antes de trabajar.
+Este documento consolida las decisiones actuales y sustituye las notas históricas
+contradictorias. El código y las instrucciones más recientes del usuario prevalecen.
+Implementado no significa desplegado: distinguir siempre código, prueba local,
+base configurada y producción.
 
-## Qué es ShowcaseMX
+## 1. Producto y propósito
 
-Una plataforma de descubrimiento de tecnología B2B mexicana que ayuda a las
-empresas a encontrar soluciones y conocer a quienes las construyen. El software
-es lo que se descubre; ShowcaseMX aporta selección, contexto y conexión.
+shwcs conecta empresas mexicanas con proyectos B2B que pueden ayudarlas:
+software, agencias y servicios. No vender shwcs como un software empresarial
+ni como una certificación de proveedores. Su valor es selección, contexto para
+evaluar y acceso a quienes construyen las soluciones.
 
-Recorrido objetivo: problema → solución relevante → conocer al creador → contacto.
-Hoy existe un catálogo local mixto de soluciones reales y ejemplos, no un marketplace
-operativo ni un buscador IA conectado.
+Recorrido ya soportado:
+problema → catálogo/ficha → guardar → organizar/comparar → solicitar contacto →
+respuesta y seguimiento.
 
-## Decisiones de interfaz aprobadas
+Una sola cuenta puede comprar y publicar. Fundador, comprador, ambos y explorador
+son descripciones del perfil, no permisos. Nunca conceder revisión editorial,
+acceso a solicitudes ajenas o propiedad de proyectos por nombre, dominio, rol
+declarado o coincidencia de correo.
 
-- Base clara `#f5f5f4`, tarjetas blancas y texto stone. No volver al modo oscuro
-  que describían las primeras versiones de la documentación.
-- No añadir texto pequeño encima del título del hero.
-- Título en dos líneas: «Encuentra soluciones.» / «Conoce a sus creadores.»
-- Explorador debajo del hero, sin título visible ni tarjeta gris exterior:
-  categorías y tarjetas directamente sobre el fondo de la página.
-- Siete categorías: Cobros, Finanzas, Nómina, Ventas, Operación, Legal y Agencias.
-- Nueve tarjetas por categoría: 63 entradas, de las que 57 son ejemplos ficticios.
-  Cord y Flouvia ocupan seis entradas entre categorías. No presentar los ejemplos
-  como productos reales ni la inclusión como certificación independiente.
-- Cinco familias de acentos: azul, salvia, lavanda, terracota y ámbar.
-  Fuente única: `src/lib/brand-colors.ts`; navbar, footer y categorías comparten
-  el mapa de colores. No introducir colores independientes para esos elementos.
-- GSAP para transiciones breves y escalonadas. Mantener soporte de teclado,
-  foco visible, limpieza de animaciones y movimiento reducido en el explorador.
+Objetivos:
+- Fundador: postular, mejorar su ficha aprobada y recibir solicitudes con contexto.
+- Comprador/CFO/dueño: entender opciones, conservar una selección privada,
+  comparar y contactar conscientemente al proyecto adecuado.
+- Equipo editorial: revisar información y controlar lo publicado.
 
-## Documentos
+## 2. Estado funcional real
 
-| Documento | Contenido |
+| Área | Implementado | Límite actual |
+| --- | --- | --- |
+| Descubrimiento | Home, categorías, búsqueda local por palabras/intenciones, fichas y sitios oficiales | Sin búsqueda IA, sin catálogo masivo real |
+| Publicación | Borradores propios, envío, revisión, cambios, rechazo, aprobación y ficha pública | Control de dominio por TXT y retirada con reportes; no verificación de resultados |
+| Acceso | Registro/login por contraseña, sesiones persistentes, logout, cambio de contraseña | Verificación implementada; Google OAuth preparado, falta conexión externa |
+| Recuperación | Flujo/token y pantalla implementados | Falta activar y verificar proveedor de correo |
+| Configuración | Centro y páginas de perfil, seguridad y conexiones; foto | Vinculación/desvinculación implementada; requiere credenciales y prueba con Google |
+| Newsletter | Formulario por pasos, segmentos y consentimiento guardados | No envía campañas; baja y doble opt-in operativos pendientes |
+| Biblioteca y comunidad | Guardados privados; listas privadas/públicas, categorías y enlaces compartibles; notas siempre privadas | Sin colaboración ni moderación de listas todavía; ver docs/community-lists.md |
+| Comparador | Dos o tres proyectos de una lista, información pública actual y notas propias | Sin rankings, puntuaciones o información inventada |
+| Contactos | Solicitud con contexto, revisión de datos y consentimiento; entrega a propietario | Publicaciones con propietario, incluidos Cord/Flouvia vinculados; sin emails automáticos |
+| Bandejas | Mis contactos y Oportunidades; filtros, páginas e historial, respuesta y estados | No chat ni tiempo real; avisos internos disponibles, entrega por email pendiente |
+| Fichas enriquecidas | Capturas, demo externa, límites de encaje, preview privada y guía de información | Evidencia declarada; storage de MVP, sin hosting de video |
+| Inicio adaptativo | Comprador/fundador/ambos, siguientes pasos y actividad propia | Preferencia visual, no permisos ni métricas de conversión |
+| Métricas | Vistas/clics agregados y solicitudes reales, 30 días por proyecto propio | No personas únicas, ventas ni identidades de guardados |
+| Producción | Next actualizado, configuración Vercel, CI, preflight y builds locales | Credenciales externas, responsable editorial, políticas y despliegue remoto pendientes |
+
+El archivo de diseño contiene 63 entradas (7 × 9), con 57 ejemplos ficticios.
+La interfaz pública los oculta salvo NEXT_PUBLIC_SHOW_DEMO_PROJECTS=true.
+Los dos proyectos reales Cord/Flouvia se resuelven solo desde su publicación
+aprobada, nunca como fallback si fueron retirados. Cord primero y Flouvia segundo;
+búsqueda conserva relevancia como criterio principal. No duplicar por categorías.
+
+Cord: catalog:cord, https://cordhq.app/.
+Flouvia: catalog:flouvia, https://flouvia.com/.
+Aparecer en varias categorías no crea otra identidad de guardado.
+Cord y Flouvia ya están vinculados a la cuenta expresamente autorizada por el usuario.
+Son publicaciones gestionables en founder_solutions, con catalog_key único cord/flouvia.
+Reciben solicitudes en la bandeja del propietario. Esta asignación administrativa
+no es verificación de email ni se repite automáticamente al registrar una cuenta.
+No asignar otros proyectos por nombre, dominio o coincidencia de correo.
+
+## 3. Decisiones visuales del usuario
+
+- Marca tipográfica sin cuadrado/isotipo en navbar, footer, sidebar y acceso.
+  Nombre vigente: **shwcs**, siempre en minúsculas. Cambio de marca aplicado el
+  31 de agosto a interfaz, metadatos, correos, paquete y documentación. Sin logo
+  nuevo. No cambiar dominios, identificadores, cookies o cuentas automáticamente.
+
+- Fondo claro #f5f5f4, texto stone, tarjetas blancas solo donde aportan estructura.
+  No restaurar la dirección oscura inicial.
+- Hero en dos líneas: «Encuentra soluciones.» / «Conoce a sus creadores.».
+  Prohibido añadir texto pequeño encima del título.
+- Explorador debajo del hero, sin título visible ni tarjeta gris contenedora.
+  Categorías a la izquierda y tarjetas directamente sobre el fondo.
+- Categorías: Cobros, Finanzas, Nómina, Ventas, Operación, Legal, Agencias.
+- Cinco acentos: azul, salvia, lavanda, terracota y ámbar.
+  Fuente única: src/lib/brand-colors.ts.
+- CTA con actionButtonStyle: fondo #E4EBFC, texto #365DC4.
+  Categorías/iconos conservan sus colores; chips del hero por categoría.
+- Animaciones mínimas perceptibles: flechas, hover, presión y cambios de categoría.
+  Nada magnético ni efectos sobre el cursor. Respetar prefers-reduced-motion.
+- Foco visible, teclado funcional, etiquetas reales; errores inline en formularios,
+  sin depender de globos nativos. No quitar accesibilidad para conseguir estética.
+- Newsletter sobre el fondo, título y formulario por pasos; sin bullets ni tarjeta.
+- Login/registro «Bienvenido a shwcs», formulario centrado sobre el fondo,
+  sin tarjeta exterior; Google indica «Pendiente de conexión» sin credenciales; nunca simular login.
+- Comparador: tabla semántica con scroll horizontal contenido y foco de teclado
+  en móvil. No provocar desbordamiento horizontal de toda la página.
+- Contacto: datos → revisión explícita de lo que se comparte → consentimiento →
+  envío; no compartir notas de biblioteca automáticamente.
+
+### Sidebar y navegación de cuenta
+
+- Blanca, estética de la landing, pegada al borde izquierdo.
+- Escritorio: left:0, ancho 248px, 24px libres arriba/abajo; esquinas izquierdas
+  rectas y derechas redondeadas. Contenido con margen izquierdo de 264px.
+- CTA «Postular solución»: solo + a la derecha, sin flecha ni otro + a la izquierda.
+- Sin puntos de color para indicar activo.
+- Navegación: Inicio, Mis soluciones, Guardados, Mis listas, Mis contactos, Oportunidades;
+  Revisión editorial solo para revisores autorizados. Explorar catálogo va abajo,
+  justo encima del menú de cuenta, separado de la navegación principal.
+- Perfil abajo con desplegable ascendente: Configuración y Cerrar sesión.
+  No duplicar Configuración como enlace principal de la sidebar.
+- Menú cierra al navegar, pulsar fuera, Escape o perder foco; devuelve foco al
+  activador cuando corresponde. En móvil, navegación desplegable.
+- /account es Inicio adaptativo con selector Comprador/Fundador/Ambos persistido.
+  Mis soluciones está en /account/solutions. Elegir modo no cambia permisos ni perfil.
+
+## 4. Stack y estructura
+
+Next.js 15.5.24 App Router, React 19.2.8, TypeScript estricto, Tailwind 3, GSAP,
+lucide-react. Neon HTTP mediante @neondatabase/serverless. Sharp para avatares y capturas.
+No Clerk. AI SDK está instalado pero no conectado a un flujo del producto.
+jose valida JWT de Google. PostCSS 8.5.26 mediante override para Next; APIs dinámicas async.
+
+src/app:
+- layout.tsx: HTML, tipografía y salto al contenido.
+- (marketing)/layout.tsx: navbar/footer comercial; home y /soluciones/[id].
+- (focused)/layout.tsx: logo y vuelta al catálogo; auth, recuperación, newsletter.
+- account/layout.tsx: sidebar y contenido privado; error.tsx permite reintentar.
+- api/: rutas de auth, cuenta, newsletter, soluciones, biblioteca y contactos.
+- aplicar/page.tsx: entrada al flujo autenticado; no intake anónimo.
+
+src/lib:
+- database-url.ts: prioridad de configuración de Neon.
+- auth/: hash, sesiones, seguridad, recuperación y retorno seguro al login.
+- solutions/: modelo/validación, permisos, queries y cuerpo HTTP limitado.
+- library/: identidad de proyectos, listas y resolución de datos publicados.
+- contacts/: modelo, validación, transiciones, errores y operaciones de dominio.
+- catalog-preview.ts: catálogo estático, ejemplos y tipos.
+- catalog-search.ts: búsqueda local; no inferencia de IA.
+- brand-colors.ts: paleta compartida.
+
+src/components:
+- navigation/: sidebar y piezas compartidas de marca.
+- solutions/: editor, revisión y estados.
+- library/: guardar, listas, notas y selector del comparador.
+- contacts/: formularios de solicitud/respuesta, bandejas y actualización manual.
+- settings/: perfil/seguridad/conexiones.
+
+db/*.sql: esquema operativo del MVP mediante migraciones SQL aditivas.
+src/db/schema.ts: diseño Drizzle anterior (users/products/leads/vector).
+No tratarlo como fuente de verdad de auth_accounts/founder_solutions/contact_requests.
+No ejecutar drizzle-kit push para «sincronizar» todo sin revisar la divergencia.
+
+## 5. Rutas y límites de acceso
+
+| Ruta | Uso |
 | --- | --- |
-| [Producto](docs/product.md) | Posicionamiento, copy aprobado, recorrido y negocio |
-| [Diseño](docs/design.md) | Layout actual, interacción y decisiones visuales |
-| [Colores](docs/colors.md) | Cinco familias y reglas de uso |
-| [Entradas reales](docs/listings.md) | Cord, Flouvia, fuentes y categorías |
-| [Roadmap](docs/roadmap.md) | Implementado, pendientes y orden propuesto |
-| [Stack](docs/stack.md) | Tecnologías, estructura, validación y despliegue |
-| [Base de datos](docs/database.md) | Esquema real y ajustes pendientes |
-| [Entorno](docs/env.md) | Variables necesarias por integración |
+| / | Descubrimiento con publicaciones aprobadas; ejemplos ocultos por defecto |
+| /soluciones/[id] | Ficha pública de published_data, UUID v4 válido |
+| /newsletter | Suscripción segmentada sin cuenta obligatoria |
+| /sign-in, /sign-up | Acceso propio |
+| /forgot-password, /reset-password | Recuperación (entrega de correo pendiente) |
+| /account | Inicio adaptativo comprador/fundador/ambos |
+| /account/solutions | Mis soluciones propias |
+| /account/solutions/new | Crear borrador autenticado |
+| /account/solutions/[id] | Gestionar solución propia; revisores según reglas |
+| /account/solutions/[id]/preview | Vista previa privada del borrador guardado |
+| /account/review | Cola editorial con permiso explícito |
+| /account/saved | Guardados privados |
+| /account/lists | Listas privadas |
+| /account/lists/[id] | Proyectos y notas de la lista del propietario |
+| /account/lists/[id]/compare?project=...&project=... | Comparar 2–3 miembros de esa lista |
+| /account/contacts/new?solution=UUID | Revisar y enviar solicitud al propietario |
+| /account/contacts | Solicitudes enviadas por la cuenta |
+| /account/opportunities | Solicitudes recibidas por la cuenta propietaria |
+| /account/contacts/[id] | Seguimiento del comprador; destinatario redirige a su oportunidad |
+| /account/opportunities/[id] | Seguimiento del destinatario; comprador/terceros no acceden por esta ruta |
+| /account/settings | Centro de configuración, no redirección a perfil |
+| /account/settings/profile | Nombre, empresa, perfil, rol y foto |
+| /account/settings/security | Cambio/recuperación de contraseña y logout |
+| /account/settings/connections | Estado de métodos de acceso, Google pendiente |
+| /account/profile | Alias anterior que redirige a configuración |
 
-## Estado real
+Las páginas privadas requieren sesión y no se indexan. Un UUID ajeno no concede acceso.
+El rol de revisor no permite leer listas, notas ni contactos ajenos.
+Búsquedas del menú apuntan al catálogo; se ocultan destinos no implementados.
+Páginas informativas existen; políticas legales son borradores y necesitan revisión.
 
-- Home: `LandingDiscovery` conecta `Hero` y `CategoryExplorer`; `FounderInvitation` añade postulación. Navbar y footer viven en el layout.
-- Cambiar categorías, navegar con flechas/Home/End y abrir/cerrar fichas de
-  ejemplo funciona localmente. El diálogo se cierra con Escape y devuelve foco.
-- Búsqueda local por palabras e intenciones, sin IA: solo entradas reales, sin duplicados, con estado vacío. Los chips filtran categorías dentro de la home.
-- Muchos enlaces de navbar y footer apuntan a rutas todavía inexistentes.
-- Clerk y AI SDK están instalados, pero no integrados. No hay autenticación,
-  endpoints de búsqueda ni dashboards. El formulario de postulación envía a `/api/applications`; requiere Neon y `db/solution-applications.sql`. Sin conexión responde 503, nunca éxito ficticio.
-- Drizzle tiene cliente y esquema; la home no consulta Neon. No hay migraciones
-  versionadas en `drizzle/` en esta revisión ni verificación de la base remota.
-- `vercel.json` define Next.js, `npm run build` y salida `.next`. Esto corrige la
-  configuración que buscaba `public`; un build local no confirma el despliegue.
+authReturnTo valida una lista explícita de destinos internos. Conserva intención de
+guardar y solicitar contacto a través de login/registro. Nunca aceptar redirect
+externo, rutas arbitrarias o tokens de sesión en query. No mutar recursos de negocio desde enlaces GET; OAuth y worker son protocolos
+excepcionales, con estado de un uso o autorización Bearer respectivamente.
 
-## Comandos
+## 6. Identidad, cuenta y seguridad
 
-```bash
-npm run dev          # Servidor local
-npm run lint         # ESLint
-npm run typecheck    # TypeScript sin emitir archivos
-npm run build        # Compilación de producción
-npm run check        # Lint + tipos + build
-npm run start        # Servir un build ya generado
-npx drizzle-kit generate  # Generar migraciones, no aplicarlas
-npx drizzle-kit studio    # Inspeccionar la base configurada
-```
+- auth_accounts es la identidad operativa; email único normalizado.
+- Contraseñas con scrypt y sal aleatoria; mínimo 6 caracteres por decisión del usuario.
+  Límite técnico 4096, no anunciar «longitud infinita».
+- Sesiones: tokens aleatorios de 32 bytes; solo SHA-256 persistido.
+  Cookie HttpOnly, SameSite=Lax, path /, Secure y prefijo __Host- en producción.
+  Duración de sesión: siete días.
+- Registro devuelve resultado genérico y no inicia sesión en cuentas preexistentes.
+- Login y cambio de contraseña verifican concurrencia del hash.
+  Cambiar contraseña revoca sesiones y recuperaciones anteriores.
+- Cambios de perfil nunca cambian identidad, correo, propiedad ni privilegios.
+- Recuperación: token hash, 30 minutos, vinculado al hash de contraseña de emisión,
+  consumo atómico; token en fragmento del enlace, no devolverlo en API.
+- Google OAuth propio implementado (PKCE, state, nonce, JWT). Sin credenciales
+  externas no se activa. Vincular requiere reautenticación; desvincular revoca sesiones.
+  Nunca fusionar cuentas por coincidencia de correo. Ver docs/launch.md.
+- Avatares: JPG/PNG/WebP, 2 MB/16 MP máximo; Sharp valida, normaliza a WebP 256×256
+  y elimina metadatos. Sin SVG/animaciones; imagen comprimida privada en avatar_data.
+- Mutaciones sensibles: sesión y origen exacto, cuerpos acotados, campos validados,
+  límites persistentes por identidad/global. Nunca confiar en IDs de propietario
+  enviados por el cliente.
+- No guardar secretos, correos, mensajes, cookies o cadenas de conexión en logs.
+- email_verified_at solo cambia tras token de verificación o Google de correo
+  coincidente verificado. Token acotado a cuenta/correo, 30 minutos, un uso.
+  AUTH_REQUIRE_VERIFIED_EMAIL=true exige verificación para nuevos contactos;
+  activar tras probar entrega. Tener cuenta no implica email verificado.
 
-No ejecutar `next dev` y `next build` simultáneamente sobre la misma carpeta
-`.next`: se observó corrupción de caché y errores de estilos/vendor chunks.
-Para comprobar un build mientras el usuario usa dev, utilizar una copia aislada
-con su propia salida. Evitar varios servidores dev sobre el mismo checkout.
+## 7. Publicaciones y revisión editorial
 
-Cambiar `schema.ts` no implica aplicar cambios remotos automáticamente. Revisar
-la migración y el entorno destino; `drizzle-kit push` modifica la base configurada.
+founder_solutions: owner_id, data privado, published_data aprobado, status,
+step, version y fechas. owner_id proviene de la sesión.
 
-## Reglas de implementación
+Estados: draft, pending, changes_requested, published, rejected.
+El fundador edita borradores/cambios y envía; el revisor decide con comentario.
+solution_reviewers concede permisos explícitos. No se crea ningún revisor
+automáticamente ni por perfil. Prohibida autoaprobación.
 
-1. TypeScript estricto, sin `any`.
-2. Server Components por defecto; aislar interactividad en componentes cliente.
-3. Secretos únicamente en variables de entorno; nunca documentar valores reales.
-4. Reutilizar el stack y los tokens existentes antes de sumar dependencias.
-5. Preservar cambios del usuario y distinguir ejemplos de datos de producción.
-6. Commits descriptivos: `feat`, `fix`, `chore`, `docs`, `refactor`.
-7. No afirmar que auth, BD, CI o producción funcionan solo porque un paquete está
-   instalado o una configuración existe. Documentar qué se comprobó.
+- categories admite varias categorías conocidas sin duplicados.
+  category conserva la primera por compatibilidad con registros antiguos.
+- La ficha requiere nombre, tipo, categorías, problema, audiencia, sitio y correo
+  privado de contacto.
+- Opcionales: scope (800), pricing (400), implementation (400),
+  integrations (400), support (400), evidence (800), evidenceUrl (500).
+- Enlaces HTTP(S) sin credenciales; no ejecutar esquemas arbitrarios.
+- Modificar data no sustituye published_data. La ficha y el catálogo conservan la
+  versión aprobada anterior hasta nueva aprobación.
+- Un estado de revisión/rechazo de actualización no retira automáticamente la
+  versión pública anterior.
+- No serializar el correo privado del fundador en catálogo/comparador.
+- La resolución pública consulta solo published_data con cache:no-store.
+- solution_events registra decisiones y mensajes. version evita sobrescrituras.
+- Inclusión editorial no certifica seguridad, resultados ni calidad.
 
-## Estructura actual
+## 8. Guardados, listas y comparación
 
-```text
-src/
-  app/                  # layout.tsx, page.tsx, globals.css, fuentes y favicon
-  components/
-    hero.tsx
-    category-explorer.tsx
-    navbar.tsx
-    footer.tsx
-    ui/button.tsx
-  lib/
-    brand-colors.ts      # Paleta y colores por ruta
-    catalog-preview.ts   # Catálogo local mixto y tipos
-    utils.ts
-  db/
-    index.ts
-    schema.ts
-.github/workflows/check.yml
-vercel.json
-drizzle.config.ts
-docs/
-```
+Tablas: buyer_saved_projects, buyer_lists, buyer_list_items.
+Claves compuestas por owner_id impiden unir elementos de cuentas distintas.
 
-`drizzle/`, `/explorar`, `/p/[slug]`, `/aplicar` y dashboards son trabajo futuro,
-no archivos o rutas que ya estén implementados.
+Identidad:
+- catalog:cord y catalog:flouvia para proyectos reales estáticos.
+- solution:UUID para publicación de fundador.
+- Ejemplos ficticios no se guardan ni reciben solicitudes.
+- No copiar fichas a la biblioteca: resolver versión pública actual.
+- catalog:cord/catalog:flouvia resuelven la publicación mediante catalog_key y
+  conservan guardados/notas existentes. solutionId dirige el contacto al UUID real.
+- Publicación retirada: mostrar «Proyecto no disponible» sin leer borrador;
+  conservar notas hasta que el comprador las quite.
 
-## Postulaciones y búsqueda
+Límites: 200 guardados, 30 listas, nombre 100, propósito 400, nota 2000.
+Las inserciones son idempotentes y serializan cuotas por propietario.
+Editar nombre/propósito o nota exige versión actual.
 
-Ver `docs/discovery.md` para alcance, pruebas y activación pendiente de recepción en Neon.
+Eliminación:
+- Quitar de una lista borra su nota, conserva el guardado y otras listas.
+- Borrar lista elimina sus notas/asociaciones, conserva guardados.
+- Quitar guardado elimina todas sus asociaciones/notas con confirmación.
+- Eliminar una cuenta en BD elimina biblioteca en cascada; no hay UI de borrar cuenta.
 
-Actualización de botones: CTA y chips de búsqueda usan `actionButtonStyle` (azul suave #E4EBFC y texto #365DC4). Se conservan los cinco colores de categorías e iconos. El buscador no tiene recuadro de foco interior; el teclado señala el campo con subrayado discreto.
+Comparación:
+- Desde cada lista, seleccionar exactamente dos o tres proyectos disponibles.
+- Validar identidad, duplicados, tamaño de selección y membresía en servidor.
+- Primero comprobar propiedad de lista; nunca mostrar nombre/notas ajenas.
+- Datos: problema, cliente ideal, alcance, precio, implementación, integraciones,
+  soporte, evidencia/enlace y notas privadas de esa lista.
+- Datos desconocidos señalados como faltantes; no puntajes, recomendaciones
+  comerciales automáticas ni valores estimados inventados.
+- CTA de contacto para publicaciones con dueño, incluidos Cord/Flouvia vinculados.
+  Estáticos sin vincular conservan sitio oficial; nunca derivar UUID cortando catalog:key.
+- No persiste otra entidad «comparación»: se genera desde la lista y query.
+- Misma URL solo funciona para la cuenta propietaria; no es enlace para compartir.
+
+## 9. Solicitudes de contacto y oportunidades
+
+### Captura y consentimiento
+
+Datos: nombre (2–100), empresa (2–150), tamaño de equipo (opciones conocidas),
+plazo (opciones conocidas), necesidad (20–2000), presupuesto opcional (0–200).
+Correo tomado de la sesión, nunca de un input editable enviado al API.
+
+Antes de enviar se presenta resumen exacto, nombre del proyecto destinatario y
+casilla explícita. Se registra consent_version=contact-v1 y consent_at.
+La autorización cubre datos de la solicitud; NO incluye guardados, listas, notas
+ni suscripción al newsletter. No insertar contactos silenciosamente al comparar.
+
+El cliente envía recipientId como comprobación del destinatario mostrado; el servidor
+resuelve el dueño desde founder_solutions, exige coincidencia y lo vuelve a comprobar
+al insertar. No permite elegir arbitrariamente otra cuenta o contactar solución propia.
+Solo se puede crear mientras published_data existe.
+
+### Persistencia e idempotencia
+
+contact_requests: id, buyer_id, recipient_id, solution_id, project_name,
+buyer_email, details, consent_version, consent_at, status, version y fechas.
+Nombre del proyecto/correo/contexto son instantáneas al envío.
+El destinatario queda fijado al crear; transferir propiedad futura no debe transferir
+automáticamente conversaciones privadas.
+
+Una solicitud por comprador/proyecto (UNIQUE buyer_id,solution_id), incluso cerrada
+o retirada. Reintentos retornan la existente; no generan oportunidades duplicadas.
+La UI dirige al seguimiento existente. Retirada es terminal; recontactar tras retiro
+queda pendiente de una decisión explícita de producto.
+
+Máximo 1000 solicitudes por comprador; bloqueo de su fila serializa creación/cuota.
+Creación limitada a 20 intentos/hora por comprador, actualizaciones a 100/hora;
+securityLimit también impone 60/minuto global por cada scope.
+No equivale a protección completa contra spam. Reportes implementados;
+verificación obligatoria configurable, pendiente de activación de entrega.
+
+### Estados, respuesta e historial
+
+| Estado actual | Comprador | Cuenta destinataria |
+| --- | --- | --- |
+| new | Retirar | En conversación o cerrar |
+| conversation | Retirar | Cerrar |
+| closed | Consultar | Reabrir en conversación |
+| withdrawn | Consultar | Consultar, sin responder/reabrir |
+
+Cada cambio del destinatario exige respuesta de 10–2000 caracteres, visible para
+el comprador, y confirmación previa. Puede indicar próximo paso o motivo de cierre.
+No es chat: no hay mensajes ilimitados separados de cambios de estado.
+
+Retirar requiere confirmación e informa que no borra lo ya recibido.
+Respuesta/estado y contact_events se escriben atómicamente con CTE; version y estado
+anterior impiden cambios perdidos. Una carrera cierre/retiro produce un éxito y un
+conflicto; el usuario debe recargar antes de repetir.
+
+### Acceso y entrega
+
+- Mis contactos filtra buyer_id; Oportunidades filtra recipient_id.
+- Detalle/historial admiten exclusivamente comprador o destinatario, no terceros
+  ni revisores editoriales por su rol.
+- Filtros: todas/nuevas/en conversación/cerradas/retiradas; páginas de 20.
+- Actualizar recarga datos desde servidor. No WebSocket ni polling. Avisos internos
+  transaccionales; correo configurable solo con proveedor/worker activos.
+- «Entregada» significa persistida y accesible en bandeja, no leída ni email enviado.
+- El dato privado contactEmail del fundador sigue sin mostrarse a visitantes.
+- Tras retirar published_data, contactos existentes siguen accesibles a sus participantes.
+- Borrar solución/cuenta en BD elimina solicitudes e historial relacionados en cascada.
+  No existe aún una política operativa de retención ni exportación/eliminación en UI.
+- Sin métricas de leads, notificaciones, CRM, agenda automática ni adjuntos.
+- No enviar mensajes a personas reales mediante herramientas durante pruebas;
+  usar cuentas temporales propias del test.
+
+## 10. API operativa
+
+| Endpoint | Operaciones |
+| --- | --- |
+| POST /api/auth/[action] | register, login, logout |
+| PATCH /api/account | Perfil descriptivo de la sesión |
+| PUT/DELETE /api/account/avatar | Foto propia |
+| POST /api/account/dashboard | Preferencia de inicio de la sesión, sin cambio de permisos |
+| POST /api/account/password | Cambio de contraseña |
+| POST /api/auth/forgot-password | Emitir recuperación si correo está configurado |
+| POST /api/auth/reset-password | Consumir recuperación válida |
+| POST /api/newsletter | Segmentación y consentimiento |
+| POST /api/solutions | Crear borrador propio |
+| PATCH /api/solutions/[id] | Guardar, enviar y revisar con permisos/versiones |
+| GET/POST /api/solutions/[id]/media | Biblioteca y subida de capturas propias |
+| GET/DELETE /api/solutions/[id]/media/[assetId] | Imagen autorizada o borrado de archivo propio sin uso |
+| GET /api/library?project=... | Estado de guardado propio |
+| POST /api/library | save, unsave, create-list, update-list, delete-list, add-to-list, remove-from-list, update-note |
+| POST /api/contacts | create o update |
+
+/api/applications es legado retirado; no usarlo para postular anónimamente.
+Biblioteca/contactos usan respuestas no-store y cuerpo JSON máximo 32768 bytes.
+ContactError separa fallos esperados (400/404/409) de indisponibilidad (503).
+La API no devuelve stack ni datos del error de conexión; log genérico con requestId.
+Un timeout no confirma fracaso de la escritura: revisar bandeja antes de repetir.
+
+## 11. Base de datos y migraciones
+
+getDatabaseUrl usa, en orden: NEON_DATABASE_URL, DATABASE_URL, POSTGRES_URL.
+Son secretos solo de servidor; no imprimir valores, hosts con credenciales ni tokens.
+
+Orden de esquema operativo para base nueva:
+1. db/auth.sql
+2. db/account-profile.sql
+3. db/account-settings.sql
+4. db/founder-solutions.sql
+5. db/buyer-library.sql
+6. db/contact-requests.sql
+7. db/catalog-ownership.sql
+8. db/solution-media-dashboard.sql
+9. db/solution-profile.sql
+10. db/newsletter-subscribers.sql
+11. db/newsletter-segments.sql
+12. db/launch-foundation.sql (tras auth/settings/soluciones/contactos)
+
+Newsletter es independiente, pero segments exige subscribers.
+db/solution-applications.sql y src/db/schema.ts son diseños anteriores;
+no migrar usuarios/datos a esas tablas por suposición.
+
+Las migraciones aditivas de auth/perfil/settings/soluciones/newsletter/biblioteca
+se aplicaron previamente a la conexión local configurada. contact-requests.sql y catalog-ownership.sql
+se aplicaron y verificaron con pruebas reales en esa misma configuración previamente.
+También se aplicaron solution-media-dashboard.sql, solution-profile.sql y
+launch-foundation.sql a esta conexión. La publicación autorizada de Cord/Flouvia
+se realizó allí; versiones al publicar: 8 y 2. No se asignaron revisores reales.
+Esto NO confirma que otro proyecto/base de Vercel tenga las tablas.
+
+- Revisar SQL y destino antes de modificar una base.
+- No reescribir ni borrar datos reales para una prueba.
+- No hacer push de esquema Drizzle masivo sin conciliar el esquema operativo.
+- Rollback de contactos requiere eliminar contact_events antes de contact_requests;
+  borra esos datos, no es un rollback sin pérdida. No ejecutarlo automáticamente.
+- No separar SQL ingenuamente por punto y coma: funciones PL/pgSQL usan bloques
+  $$ y comentarios. scripts/migrate-launch.cjs respeta esos delimitadores.
+- Sin framework unificado de migraciones. El worker limpia tokens de
+  recuperación/verificación/OAuth y contadores caducados; requiere programación.
+  Limpieza de sesiones y archivos abandonados sigue pendiente.
+
+## 12. Entorno e integraciones pendientes
+
+- Neon: necesario para cuenta, publicaciones remotas, biblioteca y contactos.
+- AUTH_APP_ORIGIN: origen canónico HTTPS, sin ruta/query/credenciales.
+- AUTH_EMAIL_FROM: remitente autorizado.
+- RESEND_API_KEY: recuperación, verificación y avisos transaccionales.
+- Recuperación usa API de Resend sin SDK; activación/entrega real aún por verificar.
+- Newsletter no usa automáticamente el proveedor de recuperación.
+- GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET: faltan conexión externa y prueba real.
+- CRON_SECRET (32+ caracteres): worker de avisos, scheduler pendiente.
+- Métricas internas implementadas, sin analytics externo. Campañas, almacenamiento
+  externo y búsqueda IA no están conectados.
+- Proyecto Vercel shwcs no disponible en cuenta CLI inspeccionada (Flouvia).
+  No desplegar sobre Cord/Flouvia por confundir proyectos.
+- No inventar servicios configurados porque aparece un paquete o variable.
+- .env.local no se versiona ni copia a documentación o builds temporales.
+
+## 13. Desarrollo y verificación
+
+Comandos:
+- npm run dev: Next dev.
+- npm run lint: ESLint.
+- npm run typecheck: TypeScript sin emitir.
+- npm test: pruebas unitarias.
+- npm run preflight: configuración de lanzamiento sin secretos.
+- RUN_LAUNCH_INTEGRATION=1 node tests/integration/launch.cjs:
+  verificación/avisos/TXT/reportes/métricas/desvinculación con cuentas temporales.
+- RUN_CONTACT_INTEGRATION=1 node tests/integration/contacts.cjs:
+  integración explícita contra localhost:3000 y la BD de .env.local.
+- RUN_MEDIA_INTEGRATION=1 node tests/integration/media-dashboard.cjs:
+  integración de capturas, publicación protegida, concurrencia y dashboard.
+- npm run build: producción.
+- npm run check: lint + typecheck + build.
+- npm run start: servir build ya generado.
+
+Nunca ejecutar next dev y next build con el mismo .next a la vez. Se observaron
+errores de caché/vendor/estilos. Con dev abierto, usar copia temporal de src/public/
+config/package con node_modules enlazado y su propia salida .next. No copiar secretos.
+Evitar varios procesos dev sobre el mismo checkout.
+
+Integración de contactos:
+crea tres cuentas @example.invalid, publicaciones/lista propias del test y sesiones;
+prueba comparación privada, campos públicos actuales, consentimiento, identidad,
+destinatario, duplicados/concurrencia, rechazo de borradores/auto-contacto, bandejas,
+respuestas, cierre/reapertura, conflictos de versión, retiro e historial atómico.
+finally elimina solo cuentas del test, datos en cascada y sus contadores.
+No usar cuentas reales del usuario ni enviar emails.
+
+Pruebas unitarias actuales: 45 pasando. Lint y TypeScript correctos.
+Integraciones de capturas/dashboard y regresión de contactos pasando. Build aislado
+correcto. Verificación y límites de esta entrega en docs/launch.md y docs/media-dashboard.md;
+no inferir validación de producción de estos resultados.
+
+## 14. Estado del plan y siguiente entrega
+
+Fichas enriquecidas, comparador, contactos/bandejas, inicio adaptativo, biblioteca
+visual y formulario guiado están implementados. La entrega actual añade:
+1. Avisos privados, preferencias y verificación de email; proveedor/cron pendientes.
+2. TXT de dominio, criterios, reportes y retiro autorizado; no certifica resultados.
+3. Métricas agregadas privadas de vistas/clics y solicitudes por proyecto propio.
+4. Google OAuth preparado, navegación depurada, Next actualizado, CI y preflight.
+
+Cord y Flouvia publicados por autorización explícita; no autoaprobación vía UI.
+Siguiente paso: conectar remitente/Google/scheduler y proyecto Vercel correcto,
+designar revisor, completar políticas y probar despliegue. No ampliar a CRM/chat
+antes de validar uso real. Matriz de los 12 puntos en docs/roadmap.md.
+
+## 15. Documentación y reglas para futuros cambios
+
+Leer según área:
+- docs/launch.md: avisos/verificación, Google, TXT/reportes, métricas y activación.
+- docs/guided-solution-form.md: preguntas, creadores/redes y reanudación compatible.
+- docs/media-dashboard.md: capturas, demos, información pendiente, inicio y permisos.
+- docs/contacts.md: contrato de solicitudes, comparación y verificación.
+- docs/buyer-library.md: guardados/listas y eliminación.
+- docs/founder-workflow.md: publicación y revisión.
+- docs/account-settings.md: perfil/contraseña/recuperación.
+- docs/newsletter-auth.md: newsletter y acceso inicial.
+- docs/roadmap.md: estado consolidado del plan de producto.
+- docs/database.md, docs/env.md, docs/stack.md: referencias técnicas.
+- docs/product.md, docs/design.md, docs/colors.md, docs/listings.md: producto y estética.
+
+Algunos documentos específicos conservan notas históricas: priorizar su actualización
+vigente y esta matriz; no reintroducir navbar horizontal, Clerk, intake anónimo ni
+Configuración duplicada a partir de texto antiguo.
+
+Reglas:
+1. TypeScript estricto sin any; Server Components por defecto.
+2. Aislar interactividad y enviar al cliente solo campos necesarios.
+3. Preservar cambios existentes del usuario. No descartar archivos sin entenderlos.
+4. Reutilizar dependencias/tokens, no crear estilos o servicios paralelos.
+5. Autorizar en servidor cada lectura/mutación privada; no basta ocultar enlaces.
+6. Escribir pruebas de permisos, concurrencia y flujo cuando el riesgo lo requiere.
+7. Sin éxito simulado ante fallo de BD/proveedor. Mostrar ausencias y pendientes.
+8. No atribuir a esta entrega cambios históricos ni afirmar push/deploy no ejecutados.
+9. Actualizar documentación de estado, límites y verificación al cerrar una entrega.
+10. Commits descriptivos cuando se pidan; no publicar/desplegar por defecto.
+
+
+### Vinculación explícita de Cord y Flouvia
+
+Se crearon dos publicaciones administrables para la cuenta autorizada, sin tocar
+el borrador de otra cuenta ni modificar guardados/listas existentes. catalog_key
+solo se asigna por operación administrativa; no se acepta desde el editor/API.
+El catálogo usa los datos aprobados y conserva OG/favicon locales. El merge excluye
+el fallback estático de un catalog_key publicado, evitando duplicados incluso si
+el propietario cambia sitio o categorías. Nuevas revisiones siguen necesitando aprobación.
+No se inventaron precios, audiencia o alcance: los campos desconocidos se dejan vacíos
+y la ficha informa que falta detalle. Al editar, completar los campos requeridos.
+
+
+## 16. Capturas, información pendiente e inicio adaptativo (entrega vigente)
+
+### Contratos y rutas
+
+- `SolutionData` añade `demoUrl` (500), `notFor` (500) y `screenshots` (hasta cuatro
+  `{id,caption}` únicos). UUID v4; descripción hasta 180 caracteres, mínimo tres
+  al enviar. Se conservan modelos anteriores sin estos campos. No obligar a subir
+  capturas o demo para publicar una ficha con los campos básicos válidos.
+- `solutionErrors` valida demos HTTP(S) sin credenciales; el servidor nunca descarga
+  esa URL. Demo abre otra pestaña con `noopener noreferrer`, sin iframe ni autoplay.
+- `SolutionPresentation` es Server Component compartido entre público y preview.
+  Público recibe solo `published_data`; preview usa borrador guardado y autorización
+  de `getSolution`. No compartir preview como URL pública ni llamarlo autosave.
+- Galería cliente recibe solo IDs/descripciones y solución, nunca correo privado.
+  Miniaturas, ampliación con diálogo, navegación y Escape. Imágenes completas.
+- El revisor ve capturas desde la preview; no añadir autoaprobación por completitud.
+
+### Persistencia y autorización de archivos
+
+- `solution_media` almacena WebP en base64 con FK/cascada a founder_solutions.
+  Sharp ya instalado; no hay dependencia ni proveedor nuevo.
+- Límites: entrada 2 MiB, 16 MP, JPG/PNG/WebP estáticos; salida WebP calidad 80,
+  1600×1200 máximo sin ampliar, 400 KiB. Decodificar y eliminar metadatos; rechazar
+  SVG/animación/archivo inválido. 12 archivos por solución, 4 en una ficha.
+- POST solo dueño y nunca pending; 30 intentos/hora por cuenta y 60/minuto global.
+  Guardar/seleccionar son pasos separados; una subida sola permanece privada.
+- GET archivo público solo si está en published_data; dueño siempre; revisor solo
+  si no es draft y está referenciado en data. Un upload no seleccionado no es visible
+  para revisores. Biblioteca de archivos solo del dueño, sin devolver base64.
+- GET responde WebP con `private, no-store` y `nosniff`. Next Image unoptimized
+  evita caché pública de imágenes privadas. No cambiar eso sin diseñar permisos.
+- DELETE exige dueño/origen; solo fuera de pending y sin referencias en data ni
+  published_data. Quitar de la ficha no borra; confirmar borrado explícitamente.
+- POST media, PATCH save/submit y DELETE bloquean fila padre en transacción.
+  PATCH conserva CAS/version y valida que todos los IDs sean de esa solución.
+  Carrera guardar/borrar: una operación falla sin dejar referencias rotas.
+- La publicación anterior protege sus imágenes mientras se prepara otra versión.
+  Al aprobar se reemplaza snapshot y fecha; las imágenes retiradas dejan de ser
+  públicas aunque sigan en la biblioteca del dueño. Nunca borrar primero la versión
+  aprobada para luego subir la nueva.
+
+### Guía y fecha
+
+- `solutionChecklist`: nueve bloques de información, no ranking/certificación.
+  Permite saltar al paso que falta y abrir preview. Puede marcar bloques opcionales
+  pendientes aunque la ficha esté válida para enviar: es deliberado.
+- `published_at` se escribe exclusivamente al aprobar editorialmente. Sin backfill
+  ficticio para publicaciones antiguas. Guardar/subir no cambia la fecha.
+- Inicio sugiere revisar publicaciones con más de 90 días o fecha desconocida.
+  Prioriza changes_requested; también incluye otros estados pendientes y lagunas.
+  Máximo tres fichas en inicio, resto en Mis soluciones. No caduca fichas ni envía correo.
+
+### Inicio y privacidad
+
+- `dashboard_mode` es preferencia nullable buyer/founder/both, distinta de profile.
+  Prioridad: preferencia válida → perfil válido → fundador si tiene soluciones → comprador.
+- API POST /api/account/dashboard valida origen/sesión/modo y actualiza solo
+  dashboard_mode del usuario autenticado. Límite 100/hora y global 60/minuto.
+  No recibir owner_id confiable, no cambiar rol, reviewer ni ownership.
+- Server obtiene consultas independientes en paralelo: datos mínimos de perfil,
+  contadores propios, tres listas y hasta cuatro contactos recientes por dirección.
+  En ambos, ordena las solicitudes juntas y muestra cuatro. Sin notas privadas de
+  terceros, nombres de otras cuentas o emails en payload cliente.
+- Navegación compartida permite comprar/publicar sin cambiar de cuenta. Inicio
+  separado de Mis soluciones; no reintroducir el listado en /account por enlaces antiguos.
+- Contadores son inventario real, no métricas de conversión. Solicitudes recientes
+  no son mensajes sin leer. No llamar a guardados leads ni avisar a fundadores de ellos.
+
+### Verificación y siguientes límites
+
+37 unitarias, lint, TypeScript y build aislado sin secretos. Prueba opt-in de media
+recorre upload → guardar → preview → enviar → revisar → publicar → actualizar,
+valida IDs ajenos, privacidad y carrera guardar/borrar. Comprueba modo persistido
+sin cambiar perfil/permisos. Regresión de contactos completa pasando al repetir
+tras un fallo transitorio de HMR del dev. Usar solo cuentas @example.invalid y
+limpiar en finally; no probar con la cuenta real que posee Cord/Flouvia.
+
+Neon con imágenes base64 es una elección acotada del MVP, no hosting definitivo.
+Pendientes: storage privado de objetos antes de volumen alto, cuota global por
+cuenta, limpieza de archivos abandonados, verificación de identidad/casos y
+activación del proveedor de email/Google/worker. Verificación y preferencias
+ya están implementadas; ver docs/launch.md. No se implementó video hospedado, verificación
+automática de resultados ni recordatorios enviados. No afirmar push/deploy.
+
+
+### Ancho uniforme y acceso al catálogo
+
+Todas las páginas privadas usan `.account-page`: `w-full max-w-6xl mx-auto`,
+24 px de margen interior horizontal y la misma separación vertical que Inicio.
+Aplica también a configuración, creación/detalle de soluciones, listas/comparador,
+contactos/oportunidades, revisión, preview y errores. No añadir límites de ancho
+individuales al contenedor de página. Los párrafos/formularios pueden mantener
+anchos legibles dentro de esa estructura; no cambiar marketing o login.
+“Explorar catálogo” está en el bloque inferior de la sidebar, justo encima del
+menú de cuenta; no entre los enlaces principales. En móvil conserva ese orden.
+
+
+## 17. Ficha guiada y datos investigados (última ampliación)
+
+El editor ahora muestra 14 preguntas cortas en vez de cuatro páginas extensas.
+`src/lib/solutions/questions.ts` define IDs y fases. `step` sigue 0..3 por
+compatibilidad; `editor_question` persiste el ID exacto. Migración aditiva
+`db/solution-profile.sql` aplicada a la base configurada. API valida ID/fase juntos;
+no romper los clientes anteriores sin question, que reanudan por fase.
+
+Una pregunta visible, transición GSAP de 220 ms y respeto a reduced motion. Índice
+colapsable y Anterior guardan; Continuar valida lo relevante y persiste. Guardar y
+salir admite borrador incompleto. Enter en input y Ctrl/Cmd+Enter en texto avanzan,
+pero jamás envían a revisión automáticamente desde el último paso. Validación final
+revisa todos los campos y dirige al primero con error. Foco/scroll acompañan al
+cambio de pregunta. Estado de red real, sin autosave falso por tecla.
+
+`SolutionData` suma founders (hasta 3: name100/role80/bio400/links4) y projectLinks
+(hasta6). Cada enlace tiene label de una lista cerrada y URL<=500. Borradores permiten
+campos vacíos; envío requiere nombre si se añadió persona y URLs HTTP(S) sin
+credenciales. Descartar propiedades desconocidas, incluidos emails privados o
+flags verified. El público revalida URLs. No copiar perfil/avatar privado a la
+ficha ni otorgar permisos por la persona declarada. Pedir autorización al compartir
+información de colaboradores. Foto pública de fundador no está implementada.
+
+Presentación pública, preview y revisión incluyen creadores/redes de forma separada;
+solo aparecen públicamente al aprobar. La guía ahora tiene nueve bloques, no ocho:
+se añadió creadores y presencia pública. Completitud sigue sin equivaler a calidad.
+
+Cord/Flouvia fueron enriquecidos por solicitud expresa del propietario con fuentes
+oficiales. Archivo de copy público `docs/research/cord-flouvia-profiles.json` y
+trazabilidad `docs/research/cord-flouvia-sources.md`. Se actualizaron solo sus dos
+borradores mediante CAS, con evento, `editor_question=review` y fase3. Publicaciones
+previas, fechas, IDs, ownership y capturas existentes intactos. No autoaprobar ni
+reaplicar ese JSON como seed. El backup previo privado está fuera del repo; no subirlo.
+
+Dominio operativo corroborado: cordhq.app; crdhq.app no fue accesible. Se revisaron
+sitios, condiciones de precios, integraciones y demo; no se certificó funcionamiento
+real de todas sus promesas. Perfil público de Andre Valle en Product Hunt, enlazado
+desde Cord, declara ambos proyectos; se añadió ese enlace, no redes adivinadas.
+Pendientes capturas auténticas y enlaces personales adicionales que confirme el dueño;
+Flouvia tiene enlace de casos, no se inventó una demo interactiva.
+
+Verificación: 37 unitarias y la integración de media/dashboard ampliada con validación
+question/fase, persistencia y creadores/redes publicados. Contratos y verificación
+visual del formulario se registran en docs/guided-solution-form.md. Sin push/deploy.
+
+### Inicio sin métricas vacías y listas visuales — 30 agosto 2026
+
+Preferencia explícita del usuario: menos texto, eliminar widgets numéricos grandes y
+párrafos de propósito del home; listas inspiradas en tableros de Pinterest, con la
+estética actual. Esta actualización sustituye la presentación del home descrita arriba.
+
+- `/account`: solo saludo y selector de vista en header. Fundador: hasta cinco
+  proyectos recientes con portada, status y una indicación breve, más Postular.
+  Comprador: dos listas recientes + crear, hasta tres guardados. Actividad reciente
+  solo si hay solicitudes reales. Sin contadores grandes, "A tu ritmo" ni explicaciones
+  vacías. `dashboardData` solo consulta perfil y actividad; no cargar contadores sin uso.
+- `/account/lists`: `BoardGallery`, búsqueda por nombre, mosaicos automáticos de hasta
+  tres proyectos, nombre/cantidad/privacidad; `CreateBoard` abre formulario en diálogo.
+- `/account/lists/[id]`: `ProjectPin`, selector visual `AddSavedToList` con búsqueda,
+  notas plegadas, edición de lista y comparación existente. No borrar notas ni cambiar
+  sus límites. Acciones destructivas conservan confirmación.
+- `/account/saved`: tarjetas visuales; `ListMembership` abre selector de listas,
+  muestra asociaciones existentes y permite crear + guardar sin salir de la página.
+- Componentes nuevos: `library/board-gallery.tsx`, `library/project-cover.tsx`,
+  `library/project-pin.tsx`, `library/library-dialog.tsx`. Diálogo nativo con Escape,
+  foco contenido/restaurado, maxaltura con scroll y animación de 180 ms desactivada
+  al preferir movimiento reducido. Selectores con estados pendientes, errores y
+  confirmación accesible; bloqueo de doble envío.
+- `BuyerProject.image` es opcional. `getBoards(owner)` combina listas del propietario
+  con las tres asociaciones más recientes por lista (orden estable). Las cubiertas
+  resuelven EXCLUSIVAMENTE `published_data.screenshots[0]`, con fallback al OG estático
+  para Cord/Flouvia. Nunca usar `data` para un tablero comprador. Sin imagen se muestra
+  nombre/tono, no una captura inventada. Las notas no se serializan en BoardGallery.
+- `getOwnedSolutions` incluye `catalog_key` opcional para resolver OG del propio
+  proyecto en Inicio; las capturas privadas del fundador siguen protegidas por sesión.
+- Crear lista desde Organizar y añadir proyecto son dos operaciones idempotentes,
+  no una transacción: error parcial indica que la lista ya se creó y ofrece reintento
+  desde el selector. Conservar esta honestidad si se cambia la interacción.
+- No nuevas tablas/migraciones, permisos ni seed. No tableros públicos, drag & drop,
+  colaboración, carga de portadas de comprador o integración Pinterest en esta entrega.
+
+Verificación: 37 unitarias, lint/TypeScript/build aislado correctos; media/dashboard
+comprueba cover aprobado frente a reemplazo privado, aislamiento de listas y modos;
+contactos/comparador conserva sus pruebas. Navegador con fixture temporal para crear,
+añadir y organizar. No se modificaron borradores/publicaciones reales, no push/deploy.
+Detalles y límites vigentes: docs/buyer-library.md y docs/media-dashboard.md.
+
+### Ampliación del inicio y filtros — 30 agosto 2026
+
+- Portadas de listas: cuatro celdas iguales 2 × 2 SIEMPRE; si faltan proyectos, dejar
+  espacios vacíos. `getBoards` ahora trae hasta cuatro asociaciones; no repetir imagen
+  ni estirar una sola portada. Sustituye la indicación anterior de tres portadas.
+- Inicio añade `NextActions`: Para avanzar con tareas derivadas de fichas propias
+  (comentarios primero; no sugerir edición durante pending), guardados sin organizar
+  y listas con al menos dos proyectos disponibles en portada para comparar. A mano
+  enlaza oportunidades/contactos según vista y perfil. `ExploreNeeds` conecta cinco
+  categorías a la búsqueda real del catálogo (`/?q=…#catalogo`). Sin números grandes,
+  tarjetas vacías de actividad ni datos inventados; conservar saludo y contenido visual.
+- Guardados usa `SavedGallery` + filtro puro en `lib/library/filters.ts`: búsqueda por
+  palabras normalizadas sin acentos, tipo, todas las categorías del proyecto, lista/
+  sin organizar, orden reciente/antiguo/A–Z. Intersección de filtros y reset visible.
+  `?list=none` y `?list=ID_PROPIO` permiten abrir un filtro desde Inicio. Resto de
+  filtros locales; no persistencia de preferencias ni llamadas por tecla. No pasar
+  notas privadas al componente, solo pertenencias de lista y metadatos publicados.
+- Sin esquema nuevo ni cambios en ownership/publicación. 39 unitarias (dos nuevas
+  de filtros), lint/TypeScript y compilación aislada. Ver docs/buyer-library.md.
+
+## 18. Entrega de lanzamiento — 31 agosto 2026 (vigente)
+
+Contrato completo: docs/launch.md. Actualiza los límites de las entregas históricas.
+
+Rutas añadidas: /account/notifications, /account/settings/notifications,
+/account/metrics, /account/solutions/[id]/trust, /account/review/reports,
+/verify-email; APIs /api/notifications, /api/account/verification,
+/api/account/google, /api/auth/google/start, /api/auth/google/callback,
+/api/solutions/[id]/domain, /api/reports, /api/metrics, /api/internal/mail, /api/health.
+
+Tablas: notification_preferences, account_notifications, auth_email_verifications,
+solution_domain_proofs, solution_reports, solution_daily_metrics,
+auth_google_identities, auth_google_states; auth_accounts.email_verified_at.
+Triggers de eventos crean avisos atómicos sin notificar guardados ni notas.
+Publicaciones anteriores no se backfillean automáticamente como avisos nuevos.
+
+Seguridad:
+- JWT Google RS256, issuer/audience/azp/nonce y exp/iat/sub/email obligatorios.
+- No vincular por email; subject único. PKCE y cookie/state hash de diez minutos.
+- Reautenticación y cuenta bloqueada serializan operaciones de vinculación/sesión.
+- Verificación por fragmento, consumo concurrente produce un éxito y un rechazo.
+- TXT prueba control del host exacto, no identidad legal. Revalidar a los 90 días.
+- Reportes requieren cuenta y revisor explícito ajeno al propietario/reportante.
+  Resolver por versión; retirar quita snapshot público, conserva borrador.
+- Consulta de ficha pública resta contactEmail ANTES de renderizar componentes,
+  incluidos metadatos de depuración RSC de React 19. No basta ocultarlo en HTML visible.
+- Métricas omiten propietario autenticado y DNT/GPC; agregadas, no visitas únicas.
+- Worker con secreto, lease/reintentos e idempotencia. No afirmar entrega sin proveedor.
+
+Validación final: unitarias, lint/tipos, integración de lanzamiento/contactos/media y
+build aislado sin credenciales. Se corrigieron ambigüedad SQL al resolver reportes,
+compatibilidad ESM del config Tailwind, exposición del correo en props RSC de dev
+y lectura idempotente de fragmentos de verificación/reset en Strict Mode.
+Browser con cuenta temporal: acceso, confirmación de email, restablecimiento de
+contraseña, avisos, preferencias, métricas y navegación móvil; cuentas de
+prueba eliminadas. Cero vulnerabilidades de producción según audit actual; cuatro
+moderadas de herramientas de desarrollo. CI remoto y OAuth/correo reales no probados.
+
+Pendientes operativos: credenciales Resend y Google, origen HTTPS, CRON_SECRET y
+scheduler, proyecto shwcs en Vercel, responsable editorial y políticas legales
+completas. /privacidad y /terminos son borradores noindex hasta revisión. No usar
+LAUNCH_LEGAL_REVIEWED como sustituto de la revisión humana. No desplegar en otro
+proyecto por ausencia de acceso. Nunca copiar secretos o backups privados al repo.
+
+
+## 19. Comunidad y listas públicas — entrega 31 agosto 2026
+
+Fuente vigente: `docs/community-lists.md`. Sustituye las menciones históricas a
+«no hay listas públicas». Las notas y el propósito personal siguen privados.
+
+- `/comunidad` abre desde el globo inclinado de la navbar, footer y sidebar.
+  Tableros 2×2 con huecos vacíos, filtros por categoría, búsqueda, 24 por página.
+- `/comunidad/[id]` muestra únicamente título, descripción pública, firma
+  declarada, categorías y fichas aprobadas disponibles. Firma no verificada;
+  la colección no es aval editorial. No perfiles/correos/IDs de cuenta públicos.
+- Creación y edición en Mis listas: privada por defecto, pública opt-in,
+  multiselección de categorías, campo de descripción pública separado,
+  firma elegida y confirmación explícita de lo compartido.
+- Volver a privada o borrar revoca nuevos accesos al enlace; notas permanecen
+  salvo la eliminación explícita de la lista. No prometer retirar copias externas.
+- Consulta pública con proyección explícita, sin leer propósito/notas/owner/email;
+  resuelve fichas con `published_data`, no borradores. Las rutas privadas y el
+  comparador siguen restringidos al dueño incluso si la lista es pública.
+- Sin caché de servidor en páginas públicas de listas; detalle noindex,follow.
+- Migración aditiva `db/public-collections.sql` aplicada a la base configurada;
+  script `scripts/migrate-collections.cjs`. Todas las listas existentes privadas.
+  Otro entorno/base necesita migración antes del despliegue. No despliegue remoto.
+- Biblioteca API mantiene origen/sesión/cuota/versionado. Nuevos campos públicos
+  se validan en servidor; ninguna elección de rol da permisos adicionales.
+- 46 unitarias; integración de comunidad (dos cuentas temporales, no filtración
+  en HTML/RSC, revocación, retirada de ficha, conflictos y permisos) y regresión
+  de contactos. Lint, TypeScript y build aislado correctos.
+- Pendiente antes de promoción amplia: moderación/reportes de listas. No fingir
+  que el moderador de soluciones ya modera colecciones. Sin likes ni comunidad
+  ficticia. Seguir, clonar o colaborar quedan para siguientes entregas.
+
+
+## 20. Cambio de marca — shwcs
+
+El usuario autorizó cambiar todo el nombre a `shwcs` el 31 de agosto de 2026.
+Aplicado en navegación, footer, dashboard, acceso/registro, newsletter,
+metadatos/títulos de páginas, textos informativos, errores y asuntos de correo.
+Nombre del paquete npm y lockfile: `shwcs`. Documentación y textos de investigación
+propios actualizados. Logo/isotipo pendiente del usuario; no crear uno provisional.
+
+Se conservan las claves técnicas `showcasemx-session`,
+`__Host-showcasemx-session`, `showcasemx_google_state` y el protocolo DNS
+`_showcasemx` / `showcasemx-verification=` para no invalidar sesiones,
+OAuth en curso o desafíos ya emitidos. Son compatibilidad técnica, no marca
+comercial. No renombrar repositorio/carpeta, Vercel, dominio ni remitente verificado
+sin configurar su migración. No cambiar datos de identidad ni propietarios.
+
+Los enlaces antiguos de X/LinkedIn se retiraron del footer hasta conocer las
+cuentas oficiales nuevas; nunca suponer que @shwcs pertenece al proyecto. Se
+conserva el GitHub existente. El dominio definitivo y logo no se han proporcionado.
+Las menciones previas a «rebranding pendiente» quedan sustituidas por esta sección.
+
+Verificación del rebranding: 46 pruebas unitarias, lint y TypeScript correctos;
+build aislado de producción y revisión de landing/acceso. Se corrigió también
+la mención anterior en `evidence` de Flouvia (datos propios y publicación),
+con copia previa, control de versión y sin cambiar dueño/estado ni otros campos.
+Sin envío de correos, cambio de dominio ni despliegue remoto en esta entrega.
+
+## 21. Búsqueda flotante y microinteracciones — 31 agosto 2026
+
+La búsqueda de la navbar ya **no se extiende a la izquierda dentro de la barra**.
+Se abre como cápsula flotante debajo, conservando visible el acceso a Comunidad.
+En móvil usa 16 px a cada lado; en escritorio 420 px alineados a la lupa.
+Se monta solo abierta, enfoca el input, cierra con Escape/X/fuera y envía al
+catálogo existente. No cambiar esta decisión por el comportamiento anterior.
+
+Todas las lupas usan `src/components/icons/search-icon.tsx`, con un gesto CSS
+compartido al hover/foco. El mundo usa giro del meridiano sobre eje inclinado
+fijo, una vuelta sin bucle; no rotar el SVG completo. Respeta movimiento reducido.
+Reglas y duraciones en `docs/design.md` y `src/app/globals.css`.
+
+## 22. Buscadores que se extienden hacia la izquierda
+
+Aclaración vigente: las lupas compactas deben abrir el **campo completo**, con
+la estética de la navbar, también dentro de la app. `ExpandingSearch` sustituye
+los campos permanentes en Comunidad, Guardados, Mis listas y selectores.
+El hero es la única excepción por decisión posterior: barra grande permanente,
+lupa estática, placeholder completo y CTA «Encontrar soluciones».
+Icono cerrado → cápsula creciendo hacia la izquierda → flecha azul/X.
+Texto sin deformaciones; movimiento reducido respetado. Los filtros siguen
+funcionando (locales en app; GET y categoría conservada en comunidad).
+X/Escape limpian texto y cierran, sin resetear los demás filtros. Primera tecla
+Escape dentro de diálogo solo cierra la búsqueda. Navbar sigue flotando debajo,
+con revelado horizontal en lugar de desplazamiento vertical.
+Ver `docs/design.md` para comportamiento y pruebas. No cambia datos o permisos.
+
+## 23. Capa social de listas — 31 agosto 2026
+
+Fuente vigente: `docs/community-lists.md`. Sustituye en la sección 19 el límite
+histórico «sin likes». La actividad es real y empieza en cero; nunca sembrar cifras.
+
+- Comunidad permite ordenar por `Recientes` (creación descendente) o `Populares`:
+  `likes × 1 + guardados × 2 + comentarios × 3`, empate por creación descendente.
+  El like es la interacción más fácil; guardar expresa intención y comentar aporta
+  la señal más costosa. Mantener ese orden salvo nueva decisión explícita.
+  No llamarlo tendencia, recomendación editorial ni prueba de calidad.
+- Categorías son cápsulas con los cinco tonos de marca: suave inactiva y sólido
+  con texto blanco activa. `Todas` usa azul. No regresar a tabs de texto plano.
+- `/comunidad/[id]` integra like, guardar lista y comentarios. Like/guardado son
+  únicos por cuenta; el propietario no puede interactuar con su propia lista.
+  `/account/community` contiene las colecciones guardadas todavía públicas.
+- Comentario: sesión y mismo origen obligatorios; alias público 1–60, texto 1–500,
+  máximo 10 por hora por cuenta. UUID del cliente + inserción idempotente evita
+  duplicados en reintentos. Autor o propietario de la lista pueden borrar.
+  Nunca mostrar correo, nombre del perfil, owner_id ni author_id.
+- Volver una lista privada revoca detalle, interacción y aparición en guardados.
+  La relación guardada puede permanecer en BD, pero la consulta exige pública.
+- Migración `db/community-social.sql`, script `migrate-community-social.cjs`, aplicada
+  a la base configurada. Otros entornos requieren ambas migraciones de comunidad.
+- Validación: 49 unitarias; integración social con tres cuentas temporales comprueba
+  auth, autoactividad, atomicidad, idempotencia, privacidad, moderación y revocación.
+- Límite: todavía no hay reporte/moderador central para colecciones/comentarios,
+  bloqueo, apelaciones, reputación ni defensa sólida ante multicuentas. No promover
+  masivamente la función hasta cerrar esa operación. No reutilizar reportes de
+  soluciones como si cubrieran automáticamente las listas.
+
+## 24. Espacios disponibles del catálogo — 31 agosto 2026
+
+En navegación normal por categoría, el catálogo conserva una cuadrícula editorial
+de nueve lugares. Los lugares sin proyecto real se muestran como tarjetas grises
+con borde discontinuo, numeración, texto «Espacio disponible» y enlace directo a
+postular en esa categoría. Son llamados a participar, no ejemplos ni proveedores.
+No abrir ficha ficticia ni sumar estos lugares al contador de soluciones reales.
+En resultados de búsqueda no renderizar espacios vacíos: mostrar únicamente las
+coincidencias reales y el estado sin resultados. Animación discreta y compatible
+con movimiento reducido.
+
+## 25. Acceso contextual en navbar — 31 agosto 2026
+
+La navbar comercial recibe únicamente un booleano de sesión resuelto por el layout
+de servidor. Sin sesión válida: «Entrar» → `/sign-in`. Con sesión válida:
+«Ir a mi panel» → `/account`. Mismo copy y destino en escritorio/móvil. No volver
+a «Acceso», no consultar sesión desde el cliente y no serializar correo/ID/perfil.
+Si almacenamiento falla, la navegación pública conserva «Entrar».
+
+## 26. Filtros visuales de Guardados — 31 agosto 2026
+
+`/account/saved` conserva siempre el título «Guardados.». Debajo, tipo, categoría,
+lista y orden son cápsulas con fondo suave y dropdown flotante, siguiendo Comunidad;
+no selects nativos grandes. Check marca la opción activa. Tonos: tipo azul, categoría
+según taxonomía, lista lavanda y orden terracota. La lupa compacta queda al final.
+Solo un dropdown permanece abierto; abrir otro o usar la búsqueda cierra el anterior.
+Dejar 24 px visuales entre orden y lupa. No cambiar `filterSaved`: búsqueda,
+intersección, orden y limpieza siguen locales.
+
+## 27. Composición de Mis listas — 31 agosto 2026
+
+El header muestra solamente «Mis listas.»; no agregar enlaces sueltos a Comunidad o
+Guardados, pues ambos destinos están en la sidebar. Debajo: cápsulas Todas/Privadas/
+Públicas a la izquierda; búsqueda compacta + Crear lista agrupados a la derecha.
+Tonos azul/lavanda/salvia, misma selección visual que Comunidad. El tile Pinterest
+de crear se muestra solo sin búsqueda y en Todas. Con cero resultados, restablecer.
+
+## 28. Sistema unificado de selectores — 31 agosto 2026
+
+Usar `.selector-tabs` y `.selector-tab` para grupos mutuamente excluyentes de la
+interfaz: categorías de Comunidad, Todas/Privadas/Públicas, estados de contactos y
+oportunidades, Comprador/Fundador/Ambos y Todos/Sin leer. Activo: azul suave
+`#E4EBFC`, texto `#365DC4`, peso medio. Inactivo: transparente y stone. Hover del
+inactivo: blanco, sombra discreta y presión de 1 px. Foco siempre visible. No volver
+a asignar un color distinto a cada pestaña ni añadir X al estado seleccionado.
+
+Para filtros con menú usar `.selector-dropdown-trigger` y `.selector-menu-active`:
+predeterminado transparente; filtro aplicado o menú abierto azul. Guardados conserva
+un solo dropdown abierto. No aplicar este patrón a categorías editoriales del
+catálogo ni a chips de selección múltiple: ahí los cinco tonos siguen comunicando
+taxonomía y permiten varias selecciones simultáneas.
+
+`ExpandingSearch` reserva el ancho de `.expanding-search-shell` al abrir. La cápsula
+sigue revelándose hacia la izquierda sin cubrir controles vecinos. Guardados usa la
+variante `.saved-search` de 340 px, añade 32 px entre orden y búsqueda y no envuelve
+la fila desde `xl`; en móvil sí puede bajar para evitar overflow. No regresar a una
+cápsula absoluta que se superponga a filtros.
+
+## 29. Disclosures sin marcador nativo — 31 agosto 2026
+
+Todos los `summary` salvo `.selector-dropdown-trigger` reciben el patrón global de
+disclosure en `globals.css`: marcador nativo oculto, ancho compacto `fit-content`,
+área mínima de 44 px, chevron azul circular a la derecha, superficie blanca y sombra
+discreta en hover, texto azul y giro de 180° al abrir. Nunca estirar el summary como
+barra del contenedor. Foco visible y `prefers-reduced-motion`. Aplica a reportes,
+comparación, métricas, postulaciones, completitud, archivos, listas/notas e índice
+del editor. No añadir manualmente triángulos, caracteres ▶/▼ ni otro ChevronDown a
+estos summaries. Los filtros ya contienen su icono React y están excluidos para no
+duplicarlo.
+
+Los `input[type=checkbox]` visibles usan el patrón global: 20 px, radio 6.4 px,
+borde stone y selección azul con check blanco. Foco mediante outline externo y
+presión de 1 px; sin apariencia nativa distinta entre navegadores. Excluir `sr-only`
+porque esos inputs delegan su representación a labels personalizados.
+
+## 30. Edición flotante de listas — 31 agosto 2026
+
+En `/account/lists/[id]`, «Editar lista» no es un `details` inline. Usar
+`EditListPopover`: CTA azul alineado y de la misma altura que «Añadir proyectos»,
+con PencilLine y ChevronDown. El `ListForm` vive en tarjeta absoluta de 560 px máximo,
+72svh y scroll interno; abrirla no cambia el layout. Cierra con X, Escape o clic fuera,
+enfoca el primer campo al abrir y devuelve foco al botón al cerrar. No volver a
+insertar el formulario dentro del flujo de la página.
+
+## 31. Acciones globales y campana — 31 agosto 2026
+
+Retirar de la sidebar «Postular solución» y «Avisos». `AccountUtilities`, montado una
+sola vez por `account/layout.tsx`, muestra arriba a la derecha dos botones de 44 px:
+`+` enlaza a `/account/solutions/new`; campana abre tarjeta flotante. En móvil usar
+`top:92px` para no chocar con la navegación; escritorio `top/right:24px`.
+
+El layout consulta solo los diez avisos del propietario autenticado y serializa
+id, título, ruta interna, readAt y fecha. Sanitizar href a `/account...`; nunca pasar
+owner_id ni correo. El panel muestra punto de no leído, marca individual antes de
+navegar, permite marcar todos y enlaza a preferencias. Actualización optimista con
+rollback si POST falla. Cierra con X, Escape o clic exterior. No desplaza la página.
+`/account/notifications` solo redirige a `/account`; no restaurar la bandeja completa
+ni duplicar el acceso en sidebar. Preferencias siguen en Settings.
+
+Feed completo: GET `/api/notifications` requiere sesión, devuelve diez registros,
+unreadCount total, hasMore y cursor compuesto `{before,beforeId}`. Orden y paginación
+son `(created_at,id) DESC`; validar fecha y UUID. Cliente refresca al abrir y cada 30 s
+solo con documento visible/panel cerrado. Incluye skeleton, refresco manual, error,
+«Ver anteriores» y rollback de lecturas. El layout obtiene 11 para determinar hasMore;
+si la tabla falla, no debe perder nombre/avatar/sidebar. Main reserva `pt-14` móvil.
+
+## 32. Métricas editoriales — 31 agosto 2026
+
+`/account/metrics` usa `MetricsDashboard` y dos consultas reales paralelas: agregado
+por proyecto y serie de 30 fechas generada en PostgreSQL, completando días sin eventos
+con cero. Métricas permitidas: views, clicks, contact_requests y cocientes derivados.
+Resumen sin tarjetas genéricas, gráfica SVG accesible, embudo visita→clic→solicitud,
+filas por proyecto y tabla diaria en disclosure. Estado sin proyectos invita a
+revisar publicaciones, sin KPIs vacíos.
+
+No llamar a estas cifras usuarios únicos, leads calificados, ventas, ingresos o ROI.
+No crear score/ranking editorial. CTR = clicks/views; paso a contacto = requests/views;
+denominador cero produce 0%. Mantener aclaración sobre eventos, DNT/GPC, bloqueadores
+y privacidad de biblioteca. Scroll solo dentro de gráfica/tabla en móvil.
+
+## 33. Curvas interactivas de métricas — 31 agosto 2026
+
+La actividad de `/account/metrics` usa un componente cliente aislado sobre la serie
+diaria real calculada en servidor. Visitas se dibuja como curva azul continua con
+área azul de baja opacidad; clics como curva salvia segmentada. Ambas comparten el
+mismo eje y máximo. La curva usa interpolación visual, pero los puntos y el tooltip
+conservan exactamente los enteros recibidos: no suavizar, promediar ni desplazar los
+datos. Si dos series coinciden, el patrón segmentado permite distinguirlas sin
+inventar separación.
+
+Pointer muestra guía vertical, dos puntos y tarjeta con fecha, visitas y clics. Con
+teclado, foco activa el último día y flechas/Home/End recorren la serie; anunciar el
+valor con `aria-live`. En móvil, la gráfica tiene scroll local y acepta gesto vertical.
+No añadir animaciones continuas ni transiciones que contradigan movimiento reducido.
+
+## 34. Dominio, Recursos y contacto — 31 agosto 2026
+
+- Dominio público canónico: `https://shwcs.site`. `metadataBase` y Open Graph usan
+  ese origen. `AUTH_APP_ORIGIN` debe coincidir exactamente en producción.
+- Navbar comercial: `Recursos` es un megamenú del mismo nivel que compradores y
+  fundadores. Contiene El Proyecto, Blog, Changelog y Contacto. El Proyecto ya no
+  debe aparecer como enlace principal separado. Móvil replica el mismo acordeón.
+- `/blog` y `/changelog` existen como superficies editoriales honestas. No publicar
+  artículos, fechas, lanzamientos o promesas inventadas; el changelog registra solo
+  comportamiento disponible.
+- `/contacto` usa `contacto@shwcs.site` como canal principal y muestra
+  `hola@shwcs.site` como conversación general. El footer pone `hola@shwcs.site →`
+  debajo de la descripción de marca y enlaza a `/contacto`; no convertirlo en CTA.
+- `ops.shwcs.site` queda reservado para backoffice futuro de revisión, moderación,
+  catálogo y operación. No enlazarlo todavía desde la navegación pública ni tratar
+  un perfil founder/buyer como permiso operativo. Debe tener autenticación propia de
+  la superficie, roles explícitos, auditoría y sesiones con alcance controlado.
+- `.env.local` quedó con remitente `shwcs <hola@shwcs.site>` y origen canónico, sin
+  versionar secretos. La clave Resend ya existía. Esto no acredita entrega real ni
+  replica variables en Vercel.
+
+## 35. Wordmark oficial — 31 agosto 2026
+
+Los archivos entregados por el propietario viven en `public/brand/source/` con
+nombres normalizados. El wordmark activo es **shwcs logo 1.png**, no su SVG ni las
+variantes 2. `public/brand/shwcs-logo-1.png` es una copia optimizada del mismo PNG:
+solo recorta transparencia exterior; no cambia color, proporción ni dibujo.
+
+Renderizarlo siempre mediante `BrandLink`. Variante `navbar`: 21 px de alto;
+predeterminada: 26 px. Ancho automático, texto alternativo vacío porque el enlace ya
+tiene `aria-label`, y foco azul visible. Navbar comercial, footer, auth, sidebar y
+navbar móvil/privada comparten ese componente. No volver a escribir «shwcs» como
+wordmark con una fuente ni usar el logo cuadrado anterior.
+
+## 36. Contacto partido y formulario Typeform — 31 agosto 2026
+
+`/contacto` usa el route group `(contact)` y no hereda navbar ni footer comercial:
+es una sola pantalla dedicada. Izquierda: superficie plana azul sólido `#365DC4`,
+sin figuras decorativas, wordmark blanco `shwcs-logo-white.png`, propuesta de
+contacto, garantías operativas y correo. En escritorio imita la sidebar privada:
+pegada al borde izquierdo, margen vertical de 24 px, lado izquierdo recto y esquinas
+derechas de 28 px. La columna derecha tiene su propio scroll si el viewport es bajo.
+En móvil el panel se vuelve encabezado con margen. `ContactForm` vive directamente
+sobre el fondo, sin tarjeta contenedora.
+
+Cuatro pasos: 1) motivo; 2) nombre/correo/empresa/rol; 3) mensaje/sitio/momento;
+4) resumen y consentimiento. Motivos y urgencias vienen de
+`src/lib/contact-inquiry.ts`; cliente y servidor comparten las mismas opciones.
+Validar cada paso, conservar respuestas al volver, enfocar el título nuevo y respetar
+movimiento reducido. Opción elegida muestra check azul/blanco. En motivo, A–F elige;
+Enter avanza en todos los pasos. En textarea, Enter avanza y Shift+Enter crea línea.
+Confirmación solo después de respuesta `ok` del servidor.
+
+POST `/api/contact`: mismo origen, JSON máximo 12 KB, honeypot, límites de longitud,
+URL http(s), consentimiento obligatorio y rate limit hash por correo+origen técnico.
+Guardar primero en `contact_inquiries`; luego enviar por Resend a `CONTACT_EMAIL_TO`
+o `contacto@shwcs.site`, con reply-to del remitente e idempotencia basada en UUID.
+Si Resend falla, conservar el registro y marcar `failed` o `unavailable`. Si Neon
+falla, devolver 503 y mantener las respuestas en cliente. No crear suscripción al
+newsletter ni guardar IP en la tabla de mensajes.
+
+Migración aditiva `db/contact-inquiries.sql`, aplicada a la conexión local configurada.
+Otra base/preview/producción debe aplicarla explícitamente. La retención y operación
+de mensajes pendientes/fallidos debe definirse antes del lanzamiento general.

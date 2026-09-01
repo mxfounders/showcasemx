@@ -16,7 +16,7 @@ compradoras «Agencias y consultoras» enlazada en la navegación.
 
 Se mantienen nueve tarjetas en cada una de siete categorías: 63 entradas visuales,
 seis apariciones de dos ofertas reales y 57 ejemplos ficticios. Los datos están
-en `src/lib/catalog-preview.ts`; no se han migrado a Neon.
+en `src/lib/catalog-preview.ts`; ahora se vinculan a publicaciones de Neon mediante catalog_key.
 
 Las entradas reales tienen `website`, `provider` y `offering`. La ficha ofrece
 «Visitar sitio oficial» en una pestaña nueva. Los ejemplos mantienen «Ver ejemplo»
@@ -44,4 +44,23 @@ El icono junto al nombre usa el campo `favicon`, también con copia local:
 `https://cordhq.app/favicon.svg` → `public/images/catalog/cord-favicon.svg` y
 `https://flouvia.com/favicon-light.svg` → `public/images/catalog/flouvia-favicon.svg`.
 Se conservan los colores originales del favicon; la inicial de color queda
-como alternativa para entradas sin icono. Esto no cambia el favicon de ShowcaseMX.
+como alternativa para entradas sin icono. Esto no cambia el favicon de shwcs.
+
+
+## Propietario y solicitudes
+
+Cord y Flouvia fueron vinculados a la cuenta indicada expresamente por el usuario.
+Aparecen en Mis soluciones y reciben solicitudes en Oportunidades. Conservan OG,
+favicon, categorías e identidad de guardados. Datos adicionales todavía desconocidos
+se muestran como pendientes, sin inventar información comercial.
+
+
+## Actualización vigente: capturas e inicio adaptativo
+
+Inicio `/account` distingue comprador/fundador/ambos; listado en `/account/solutions`.
+Sidebar conserva estética y añade Inicio, sin Configuración duplicada. Fichas con
+galería de capturas reales, ampliación accesible y demo externa; preview privada
+del borrador guardado. Guía de información, límites de encaje y fecha de aprobación.
+Las pantallas mantienen fondo libre, separadores suaves, cinco tonos y botones azul
+suave, sin movimientos magnéticos. No inventar capturas para Cord/Flouvia.
+Contrato y permisos actuales: [media-dashboard.md](media-dashboard.md).

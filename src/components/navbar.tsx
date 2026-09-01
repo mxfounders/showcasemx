@@ -1,11 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { CommunityIcon } from "./library/community-icon";
+import { navigationHref,availableNavigation } from "@/lib/navigation-destinations";
+import { navbarBar, navbarPosition } from "./navigation/navbar-style";
+import { NavbarSearch } from "./navbar-search";
+import { BrandLink } from "./navigation/brand-link";
 import { useState, useRef, useEffect, useCallback } from "react";
 import gsap from "gsap";
 import { actionButtonStyle, brandColors, getAccentStyle } from "@/lib/brand-colors";
 import {
-  Search, ChevronDown,
+  ChevronDown,
   CreditCard, FileText, Users, BarChart3, Package,
   Target, HeadphonesIcon, Building2, ShoppingBag, Factory,
   Scale, HardHat, Heart, GraduationCap,
@@ -67,7 +72,7 @@ const menus: Record<string, MenuData> = {
         ],
       },
       {
-        heading: "Colecciones",
+        heading: "Tu selección",
         links: [
           { icon: Layers,     label: "Essential Stack MX",  desc: "Las herramientas mínimas para operar sin caos",         href: "/colecciones/essential" },
           { icon: Briefcase,  label: "CFO Toolkit",         desc: "Control financiero para directores de finanzas",         href: "/colecciones/cfo" },
@@ -78,11 +83,11 @@ const menus: Record<string, MenuData> = {
     ],
     featured: {
       tag: "Nuevo",
-      label: "Weekly Drop",
-      desc: "Cada martes, 5 herramientas B2B seleccionadas por el equipo. Solo software con tracción real en México.",
-      href: "/drops",
-      cta: "Ver último drop →",
-      mockupType: "drops",
+      label: "Descubre proyectos",
+      desc: "Conoce qué resuelven, guarda opciones y compara antes de contactar.",
+      href: "/#catalogo",
+      cta: "Explorar catálogo →",
+      mockupType: "catalog",
     },
   },
   fundadores: {
@@ -99,18 +104,18 @@ const menus: Record<string, MenuData> = {
       {
         heading: "Tu presencia",
         links: [
-          { icon: LayoutDashboard, label: "Dashboard de métricas", desc: "Visitas, leads y qué búsquedas llegan a tu producto",    href: "/dashboard/founder" },
-          { icon: Target,          label: "Leads corporativos",    desc: "Empresas que vieron tu solución y quieren hablar",        href: "/leads" },
-          { icon: UserCircle,      label: "Tu perfil de producto", desc: "Cómo te presentas ante compradores corporativos",         href: "/perfil" },
+          { icon: LayoutDashboard, label: "Mis soluciones", desc: "Postula, consulta avances y administra tus soluciones",    href: "/account/solutions" },
+          { icon: Target,          label: "Oportunidades",    desc: "Empresas que vieron tu solución y quieren hablar",        href: "/leads" },
+          { icon: UserCircle,      label: "Tu cuenta", desc: "Actualiza tus datos y preferencias",         href: "/account/settings" },
           { icon: Rocket,          label: "Weekly Drops",          desc: "Sé parte del lanzamiento semanal más visto del ecosistema", href: "/drops" },
         ],
       },
       {
-        heading: "Comunidad",
+        heading: "Novedades",
         links: [
           { icon: Globe,    label: "Directorio de founders",   desc: "Conoce quién más está construyendo en el catálogo",      href: "/fundadores" },
           { icon: Calendar, label: "Eventos y networking",     desc: "Encuentros B2B presenciales en CDMX y Monterrey",        href: "/eventos" },
-          { icon: Mail,     label: "Newsletter semanal",       desc: "Inteligencia de mercado: qué buscan las empresas hoy",   href: "/newsletter" },
+          { icon: Mail,     label: "Newsletter",       desc: "Inteligencia de mercado: qué buscan las empresas hoy",   href: "/newsletter" },
           { icon: Award,    label: "Founders destacados",      desc: "Los operadores más traccionados del catálogo este mes",   href: "/destacados" },
         ],
       },
@@ -118,9 +123,35 @@ const menus: Record<string, MenuData> = {
     featured: {
       tag: "Léelo",
       label: "El Proyecto",
-      desc: "Por qué construimos ShowcaseMX, cómo funciona el proceso de selección y qué significa estar en el catálogo.",
+      desc: "Por qué construimos shwcs, cómo funciona el proceso de selección y qué significa estar en el catálogo.",
       href: "/el-proyecto",
       cta: "Leer más →",
+      mockupType: "catalog",
+    },
+  },
+  recursos: {
+    columns: [
+      {
+        heading: "Conoce shwcs",
+        links: [
+          { icon: Target, label: "El Proyecto", desc: "Por qué existe shwcs y cómo elegimos qué presentar", href: "/el-proyecto" },
+          { icon: BookOpen, label: "Blog", desc: "Ideas para elegir, construir y operar mejores proyectos", href: "/blog" },
+        ],
+      },
+      {
+        heading: "Mantente cerca",
+        links: [
+          { icon: Rocket, label: "Changelog", desc: "Qué cambia en el catálogo y en la experiencia", href: "/changelog" },
+          { icon: Mail, label: "Contacto", desc: "Cuéntanos qué buscas, construyes o quieres proponer", href: "/contacto" },
+        ],
+      },
+    ],
+    featured: {
+      tag: "shwcs",
+      label: "Proyectos con contexto",
+      desc: "Una selección para entender qué resuelve cada proyecto y quién está detrás.",
+      href: "/el-proyecto",
+      cta: "Conocer el proyecto →",
       mockupType: "catalog",
     },
   },
@@ -173,6 +204,7 @@ function NavLink({ href, children }: { href: string; children: string }) {
   const tlRef   = useRef<gsap.core.Timeline | null>(null);
 
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { if (botRef.current) botRef.current.style.visibility = "hidden"; return; }
     tlRef.current = gsap.timeline({ paused: true })
       .to(topRef.current, { y: "-100%", opacity: 0, duration: 0.28, ease: "power2.inOut" }, 0)
       .fromTo(botRef.current, { y: "100%", opacity: 0 }, { y: "0%", opacity: 1, duration: 0.28, ease: "power2.inOut" }, 0);
@@ -181,7 +213,7 @@ function NavLink({ href, children }: { href: string; children: string }) {
 
   return (
     <Link
-      href={href}
+      href={navigationHref(href)}
       className="relative inline-flex overflow-hidden px-3 py-1.5 rounded-md hover:bg-stone-100/80 transition-colors"
       onMouseEnter={() => tlRef.current?.play()}
       onMouseLeave={() => tlRef.current?.reverse()}
@@ -210,6 +242,7 @@ function TriggerButton({
   const tlRef  = useRef<gsap.core.Timeline | null>(null);
 
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { if (botRef.current) botRef.current.style.visibility = "hidden"; return; }
     tlRef.current = gsap.timeline({ paused: true })
       .to(topRef.current,  { y: "-100%", opacity: 0, duration: 0.28, ease: "power2.inOut" }, 0)
       .fromTo(botRef.current, { y: "100%", opacity: 0 }, { y: "0%", opacity: 1, duration: 0.28, ease: "power2.inOut" }, 0);
@@ -237,7 +270,7 @@ function TriggerButton({
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 
-export function Navbar() {
+export function Navbar({ authenticated = false }: { authenticated?: boolean }) {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
@@ -257,6 +290,7 @@ export function Navbar() {
   const animatePanel = useCallback((show: boolean) => {
     if (!panelRef.current) return;
     gsap.killTweensOf(panelRef.current);
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { gsap.set(panelRef.current, { display: show ? "block" : "none", opacity: show ? 1 : 0, y: 0 }); return; }
     if (show) {
       gsap.fromTo(
         panelRef.current,
@@ -313,7 +347,7 @@ export function Navbar() {
   return (
     <div
       ref={navigationRef}
-      className="fixed top-0 inset-x-0 z-50 px-4"
+      className={navbarPosition}
       onMouseLeave={handleLeave}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) setActiveMenu(null);
@@ -327,49 +361,45 @@ export function Navbar() {
       }}
     >
       {/* Barra */}
-      <div className={`max-w-7xl mx-auto bg-white border border-t-0 border-stone-200/70 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.06)] px-6 h-[52px] flex items-center justify-between gap-8 transition-[border-radius] duration-200 ${(activeMenu || mobileMenuOpen) ? "rounded-b-none" : "rounded-b-2xl"}`}>
+      <div className={`${navbarBar} ${(activeMenu || mobileMenuOpen) ? "rounded-b-none" : "rounded-b-2xl"}`}>
 
         {/* LEFT */}
         <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2 shrink-0 group">
-            <div className="size-[22px] rounded-[5px] bg-stone-900 flex items-center justify-center transition-transform duration-300 group-hover:rotate-6">
-              <div className="size-2.5 rounded-[2px] bg-white/90" />
-            </div>
-            <span className="text-[15px] font-bold tracking-[-0.3px] text-stone-900">showcasemx</span>
-          </Link>
+          <BrandLink variant="navbar" />
 
           <nav className="hidden md:flex items-center gap-0.5">
-            {(["compradores","fundadores"] as const).map((key) => (
+            {(["compradores","fundadores", "recursos"] as const).map((key) => (
               <TriggerButton
                 key={key}
-                label={key === "compradores" ? "Para compradores" : "Para fundadores"}
+                label={key === "compradores" ? "Para compradores" : key === "fundadores" ? "Para fundadores" : "Recursos"}
                 active={activeMenu === key}
                 onEnter={() => handleEnter(key)}
                 onActivate={() => handleEnter(key)}
               />
             ))}
-            <NavLink href="/el-proyecto">El Proyecto</NavLink>
           </nav>
         </div>
 
         {/* RIGHT */}
         <div className="flex items-center gap-2">
-          <button type="button" aria-label="Buscar" className="p-2 rounded-md text-stone-400 hover:text-stone-700 hover:bg-stone-100/80 transition-colors">
-            <Search className="size-[15px]" />
-          </button>
+          <Link href="/comunidad" aria-label="Listas de la comunidad" title="Comunidad" onClick={()=>{setActiveMenu(null);setMobileMenuOpen(false);}} className="group flex size-10 shrink-0 items-center justify-center rounded-full text-stone-700 transition-colors hover:bg-[#EEE5F5] hover:text-[#7753A5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7753A5]"><CommunityIcon className="size-[23px]"/></Link>
+          <NavbarSearch onOpen={()=>{setActiveMenu(null);setMobileMenuOpen(false);}} />
           
           <div className="hidden md:flex items-center gap-2">
-            <NavLink href="/sign-in">Acceso</NavLink>
+            <NavLink href={authenticated ? "/account" : "/sign-in"}>{authenticated ? "Ir a mi panel" : "Entrar"}</NavLink>
             <Link
               href="/newsletter"
               style={actionButtonStyle} className="inline-flex items-center action-button text-[13.5px] font-medium px-4 py-1.5 rounded-full transition-colors duration-200"
             >
-              Suscribirse →
+              Suscribirse <span className="button-arrow" aria-hidden="true">→</span>
             </Link>
           </div>
 
           <button 
             type="button" 
+            aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-navigation"
             className="md:hidden p-2 rounded-md text-stone-600 hover:bg-stone-100/80 transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
@@ -392,18 +422,18 @@ export function Navbar() {
           <div className="flex gap-0 p-6">
             {/* Columnas */}
             <div className="flex gap-8 flex-1">
-              {currentMenu.columns.map((col) => (
+              {currentMenu.columns.filter(col=>col.links.some(link=>availableNavigation(link.href))).map((col) => (
                 <div key={col.heading} className="flex-1 min-w-0">
                   <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.12em] mb-3 px-1">
                     {col.heading}
                   </p>
                   <ul className="space-y-0.5">
-                    {col.links.map((item) => {
+                    {col.links.filter(link=>availableNavigation(link.href)).map((item) => {
                       const Icon = item.icon;
                       return (
                         <li key={item.href}>
                           <Link
-                            href={item.href}
+                            href={navigationHref(item.href)}
                             className="group/item flex items-start gap-2.5 px-1.5 py-2 rounded-lg hover:bg-stone-50 transition-colors"
                           >
                             <div style={getAccentStyle(item.href)} className="size-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
@@ -447,18 +477,18 @@ export function Navbar() {
       </div>
 
       {/* Mobile Menu Panel */}
-      <div 
+      <div id="mobile-navigation" inert={!mobileMenuOpen}
         className={`md:hidden absolute top-[52px] inset-x-4 bg-white border border-t-0 border-stone-200/70 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.14)] rounded-b-2xl overflow-hidden transition-all duration-300 ease-in-out ${mobileMenuOpen ? "max-h-[85vh] opacity-100" : "max-h-0 opacity-0 border-transparent"}`}
       >
         <div className="overflow-y-auto max-h-[85vh] px-6 py-4 flex flex-col gap-6">
-          {/* Acceso & Suscribirse (Mobile) */}
+          {/* Cuenta & Suscribirse (Mobile) */}
           <div className="flex flex-col gap-3 pb-4 border-b border-stone-100">
-            <Link href="/sign-in" className="text-[15px] font-medium text-stone-600" onClick={() => setMobileMenuOpen(false)}>Acceso</Link>
-            <Link href="/newsletter" className="inline-flex items-center justify-center bg-stone-900 text-white text-[15px] font-medium px-4 py-2.5 rounded-lg" onClick={() => setMobileMenuOpen(false)}>Suscribirse →</Link>
+            <Link href={authenticated ? "/account" : "/sign-in"} className="text-[15px] font-medium text-stone-600" onClick={() => setMobileMenuOpen(false)}>{authenticated ? "Ir a mi panel" : "Entrar"}</Link>
+            <Link href="/newsletter" style={actionButtonStyle} className="action-button inline-flex items-center justify-center text-[15px] font-medium px-4 py-2.5 rounded-lg" onClick={() => setMobileMenuOpen(false)}>Suscribirse <span className="button-arrow" aria-hidden="true">→</span></Link>
           </div>
 
           {/* Accordions */}
-          {(["compradores", "fundadores"] as const).map(key => {
+          {(["compradores", "fundadores", "recursos"] as const).map(key => {
             const menu = menus[key];
             const isOpen = mobileAccordion === key;
             return (
@@ -467,21 +497,21 @@ export function Navbar() {
                   onClick={() => setMobileAccordion(isOpen ? null : key)}
                   className="flex items-center justify-between w-full text-[16px] font-semibold text-stone-900 mb-2"
                 >
-                  {key === "compradores" ? "Para compradores" : "Para fundadores"}
+                  {key === "compradores" ? "Para compradores" : key === "fundadores" ? "Para fundadores" : "Recursos"}
                   <ChevronDown className={`size-4 text-stone-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
                 </button>
                 
                 {/* Expanded Content */}
-                <div className={`overflow-hidden transition-all duration-300 ${isOpen ? "max-h-[1500px] mt-5" : "max-h-0"}`}>
+                <div inert={!isOpen} className={`overflow-hidden transition-all duration-300 ${isOpen ? "max-h-[1500px] mt-5" : "max-h-0"}`}>
                   <div className="flex flex-col gap-6">
-                    {menu.columns.map(col => (
+                    {menu.columns.filter(col=>col.links.some(link=>availableNavigation(link.href))).map(col => (
                       <div key={col.heading}>
                         <p className="text-[11px] font-bold text-stone-400 uppercase tracking-widest mb-3">{col.heading}</p>
                         <div className="flex flex-col gap-4">
-                          {col.links.map(link => {
+                          {col.links.filter(link=>availableNavigation(link.href)).map(link => {
                             const Icon = link.icon;
                             return (
-                              <Link key={link.href} href={link.href} className="flex items-start gap-3" onClick={() => setMobileMenuOpen(false)}>
+                              <Link key={link.href} href={navigationHref(link.href)} className="flex items-start gap-3" onClick={() => setMobileMenuOpen(false)}>
                                 <div style={getAccentStyle(link.href)} className="size-7 rounded-lg flex items-center justify-center shrink-0">
                                   <Icon className="size-3.5" />
                                 </div>
@@ -501,9 +531,6 @@ export function Navbar() {
             )
           })}
           
-          <Link href="/el-proyecto" className="text-[16px] font-semibold text-stone-900 pb-4" onClick={() => setMobileMenuOpen(false)}>
-            El Proyecto
-          </Link>
         </div>
       </div>
 

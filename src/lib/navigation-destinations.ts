@@ -1,0 +1,4 @@
+// Public navigation only advertises routes that exist. Search destinations are not curated collections.
+const searches:Record<string,string>={cobros:'cobros',contratos:'contratos',nomina:'nómina',finanzas:'finanzas',inventario:'inventario',ventas:'ventas',soporte:'soporte',agencias:'agencias',retail:'ecommerce',manufactura:'manufactura',legal:'legal',construccion:'construcción',salud:'salud',educacion:'educación'};
+export function navigationHref(href:string){const match=href.match(/^\/(explorar|industria)\/([^/]+)$/);if(match)return '/?q='+encodeURIComponent(searches[match[2]]??match[2])+'#catalogo';if(href==='/explorar'||href==='/buscar')return '/#catalogo';if(href==='/leads')return '/account/opportunities';return href;}
+export function availableNavigation(href:string){return !['/drops','/fundadores','/eventos','/destacados','/colecciones'].includes(href)&&!href.startsWith('/colecciones/');}

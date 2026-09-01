@@ -1,93 +1,44 @@
-# Roadmap — ShowcaseMX
+# Roadmap — estado consolidado, 31 agosto 2026
 
-## Estado: prototipo interactivo, base aún en consolidación
+Producto: descubrir → evaluar → guardar/comparar → contactar → seguir la respuesta.
+Una misma cuenta compra y publica. El modo del inicio no concede permisos.
 
-Las casillas completas describen código o comportamiento local comprobado. No
-implican integración de backend, CI remoto aprobado o despliegue en producción.
+| # | Entrega | Estado | Pendiente |
+| --- | --- | --- | --- |
+| 1 | Fichas para decidir | Capturas, demo, creadores/redes, alcance y límites | Casos comprobados y almacenamiento a escala |
+| 2 | Comparador | 2–3 proyectos, datos aprobados y notas privadas | Iteración según uso |
+| 3 | Contacto contextual | Consentimiento, identidad/destinatario de servidor y control opcional de correo verificado | Activar verificación obligatoria tras probar correo |
+| 4 | Bandeja fundador | Respuesta, estados, historial y avisos internos | Activar entrega de avisos por email |
+| 5 | Seguimiento comprador | Historial, retiro y avisos de cambios | Recordatorios y aprendizaje de uso |
+| 6 | Inicio adaptativo | Fundador/comprador/ambos, proyectos, listas visuales y acciones concretas | Iteración con actividad real |
+| 7 | Fichas completas | Formulario de 14 preguntas, información pendiente y fecha de aprobación | Operación editorial, no más campos por defecto |
+| 8 | Confianza | TXT de dominio, señal acotada, información declarada | Identidad legal y evidencia/casos verificados |
+| 9 | Avisos configurables | Centro privado, preferencias, outbox y verificación de email | Resend/remitente/cron y prueba de entrega |
+| 10 | Métricas | Vistas/clics agregados y solicitudes reales por proyecto propio | Medición en producción; no visitantes únicos ni ventas |
+| 11 | Editorial | Criterios públicos, reportes, decisión y retirada autorizada | Designar responsable, apelaciones y escala de moderación |
+| 12 | Lanzamiento | OAuth propio preparado, navegación depurada, Next actualizado, CI y preflight | Credenciales, legal, Vercel correcto y smoke test remoto |
+| 13 | Comunidad | Listas públicas opt-in, categorías, ranking reciente/popular, likes, guardado y comentarios con alias | Reportes/moderación central, señales antiabuso y notificaciones |
 
-### Implementado
+Cord y Flouvia publicados en la base configurada por autorización del propietario.
+Orden del catálogo: Cord, Flouvia, demás proyectos. Búsqueda prioriza relevancia.
+Ejemplos ficticios ocultos por defecto y nunca presentados como proveedores reales.
 
-- [x] Next.js App Router, React, TypeScript y Tailwind.
-- [x] Home con hero de dos líneas y copy de descubrimiento/conexión.
-- [x] Navbar y footer con iconos de una paleta compartida de cinco familias.
-- [x] Explorador sin título ni fondo exterior, siete categorías y nueve tarjetas
-  por categoría; tres columnas en pantallas grandes.
-- [x] Cord (software) y Flouvia (servicio) con fichas y enlaces oficiales; ejemplos
-  restantes claramente identificados. Ver [entradas reales](listings.md).
-- [x] Cambio animado de categoría, navegación por teclado, diálogo de ejemplo,
-  movimiento reducido en el explorador y adaptación móvil de esa sección.
-- [x] Scripts de lint, typecheck, build y check; comprobados localmente.
-- [x] Workflow de GitHub Actions definido para push/pull_request.
-- [x] Configuración Vercel versionada: framework Next.js y salida `.next`.
-- [x] Cliente y esquema Drizzle/Neon escritos.
-- [x] Clerk y AI SDK instalados, sin integración.
+## Siguiente entrega útil
 
-## Orden propuesto para completar el producto
+1. Activación real: remitente Resend, dominio canónico, Google y scheduler.
+2. Responsable editorial, criterios operativos y completar políticas de privacidad.
+3. Desplegar al proyecto shwcs correcto y probar correo, acceso y contactos.
+4. Escuchar a fundadores/compradores reales; decidir mejoras a partir de solicitudes
+   y conversaciones, antes de construir CRM/chat complejo.
 
-### 1. Base estable
+No conectado: campañas newsletter, IA/vector, almacenamiento externo, monitoreo
+externo. Guardados/listas/notas siguen privados; no generan leads ni avisos al fundador.
+Código probado y migración aplicada no equivalen a un despliegue comprobado.
 
-- [ ] Confirmar despliegue real y ejecución remota de CI.
-- [ ] Completar navegación móvil y revisar footer/contrastes en pantallas pequeñas.
-- [ ] Dar tratamiento explícito a enlaces de funcionalidades todavía inexistentes.
-- [ ] Unificar tipografía y extender movimiento reducido al resto de la interfaz.
-- [ ] Alinear metadatos y texto del footer con el nuevo posicionamiento.
+Detalles: [entrega de lanzamiento](launch.md), [ficha guiada](guided-solution-form.md),
+[contactos](contacts.md), [biblioteca](buyer-library.md), [contexto maestro](../CLAUDE.md).
 
-Salida: home navegable sin acciones engañosas, interfaz revisada y despliegue verificado.
 
-### 2. Catálogo real
+## Listas de comunidad — 31 agosto 2026
 
-- [ ] Ajustar esquema para identificadores, slugs, categorías y ficha de producto.
-- [ ] Generar/revisar migraciones y confirmar su aplicación al entorno correcto.
-- [ ] Confirmar pgvector cuando se aplique el esquema que utiliza `vector(1536)`.
-- [ ] Cargar un conjunto pequeño de productos reales revisados.
-- [ ] Implementar `/explorar` y `/p/[slug]`, filtros y estados vacíos/de error.
-- [ ] Sustituir ejemplos sin perder etiquetas honestas ni navegación accesible.
-
-Salida: encontrar y entender productos reales; los no aprobados no se publican.
-
-### 3. Identidad, administración y publicación
-
-- [ ] Integrar Clerk, webhook verificado y vínculo único con `users`.
-- [ ] Implementar roles y autorización en servidor.
-- [ ] Construir `/aplicar`, revisión admin y edición de productos propios.
-- [ ] Implementar transiciones de estado y registro de revisión.
-
-Salida: un founder puede postular; solo un admin puede aprobar/publicar.
-
-### 4. Contactos y leads
-
-- [ ] Formulario de contacto con validación, consentimiento y control de abuso.
-- [ ] Evitar duplicados por reenvíos y definir entrega/notificación al founder.
-- [ ] Dashboard mínimo de productos y leads propios.
-- [ ] Separar eventos de búsqueda y solicitudes comerciales.
-
-Salida: la solicitud llega al responsable y no expone datos de otros founders.
-
-### 5. Búsqueda por problema
-
-- [ ] Recuperación de productos aprobados y evaluación de relevancia.
-- [ ] Embeddings, consultas pgvector y actualización al editar productos.
-- [ ] API de búsqueda, límites de uso y estados de carga/error/sin resultados.
-- [ ] Respuestas IA basadas en productos recuperados, sin inventar herramientas.
-
-Salida: explicar por qué una opción es relevante o admitir que no hay coincidencia.
-
-### 6. Distribución y negocio
-
-- [ ] SEO, sitemap y Open Graph para fichas reales.
-- [ ] Medición de descubrimiento → ficha → solicitud de contacto.
-- [ ] Probar hipótesis de monetización y política de productos propios/patrocinios.
-- [ ] Priorizar newsletter, colecciones, drops, perfiles y endorsements según demanda.
-
-Dashboard del comprador, guardados, eventos y métricas sofisticadas quedan después
-del recorrido principal; no son requisitos del primer catálogo útil.
-
-## Decisiones pendientes
-
-Proveedor de correo, analytics, almacenamiento de imágenes, criterios de entrada,
-modelo comercial y política de curaduría. No instalar servicios adicionales antes
-de definir el flujo que los necesita.
-
-## Actualización: búsqueda y postulaciones
-
-La búsqueda local y los chips de la home ya funcionan. Se añadió invitación y formulario con endpoint de guardado en Neon; activación de credenciales y tabla pendiente. Ver [detalle](discovery.md) para el estado vigente, que sustituye las referencias anteriores a búsqueda de interfaz o formulario futuro.
+Implementadas listas privadas/públicas opt-in, categorías, galería, enlaces compartibles y capa social real. `Recientes` y `Populares`; actividad sin números de muestra; likes/guardados únicos; comentarios públicos con alias y borrado por autor/curador; listas guardadas dentro de la cuenta. Migraciones aditivas aplicadas en base configurada. Falta moderación central y protección antiabuso antes de promoción amplia. Detalle: [community-lists.md](community-lists.md).

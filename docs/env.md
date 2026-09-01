@@ -1,44 +1,39 @@
-# Variables de entorno — ShowcaseMX
+# Variables de entorno
 
-## Qué necesita la versión actual
+Estado 31 agosto 2026. Nunca imprimir valores ni versionar .env.local. Next carga
+ese archivo; los scripts locales usan dotenv en silencio. Reiniciar dev al cambiar
+variables. Separar bases de desarrollo, preview y producción.
 
-La home muestra ejemplos locales y no importa el cliente de base de datos.
-Puede ejecutarse sin credenciales de Neon, Clerk u OpenAI. Eso no significa que
-esas integraciones estén listas.
+| Variable | Uso |
+| --- | --- |
+| NEON_DATABASE_URL, DATABASE_URL o POSTGRES_URL | URL de servidor; prioridad en ese orden. Basta una. Necesaria para catálogo aprobado, cuentas, biblioteca, contactos y avisos. |
+| AUTH_APP_ORIGIN | Origen canónico HTTPS sin ruta, query, fragmento ni credenciales. Se usa en enlaces de correo y callback Google. |
+| RESEND_API_KEY | Envío transaccional: recuperación, verificación y avisos; no campañas automáticas. |
+| AUTH_EMAIL_FROM | Remitente con dominio autorizado en Resend. |
+| CONTACT_EMAIL_TO | Destino opcional del formulario público. Por defecto `contacto@shwcs.site`. |
+| GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET | OAuth propio. Callback exacto AUTH_APP_ORIGIN/api/auth/google/callback. |
+| CRON_SECRET | Secreto servidor de mínimo 32 caracteres para /api/internal/mail. Nunca en query. |
+| AUTH_REQUIRE_VERIFIED_EMAIL | true para exigir verificación antes de crear contactos; activar tras probar entrega. |
+| NEXT_PUBLIC_SHOW_DEMO_PROJECTS | false/ausente por defecto. true muestra ejemplos de diseño no contratables. No usar en catálogo público real. |
+| LAUNCH_LEGAL_REVIEWED | true solo después de revisión humana de responsable, contacto y políticas; preflight no valida contenido legal. |
+| OPENAI_API_KEY | Opcional/futuro. No hay búsqueda IA implementada. |
 
-El archivo `.env.local.example` contiene únicamente placeholders. Copiarlo a
-`.env.local` cuando se vaya a conectar un servicio y reemplazar solo los valores
-necesarios. No commitear secretos ni incluir valores reales en documentación.
+La conexión local de Neon tiene aplicadas las migraciones operativas, incluida
+launch-foundation.sql. Eso no confirma otro entorno de Vercel. Revisar orden y
+esquema en CLAUDE.md y docs/database.md antes de aplicar nuevas migraciones.
 
-| Variable | Uso | Estado del código |
-| --- | --- | --- |
-| `NEON_DATABASE_URL` | Cliente Neon y herramientas Drizzle | Se lee al importar `src/db/index.ts` y en `drizzle.config.ts` |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clave pública de Clerk | Integración pendiente |
-| `CLERK_SECRET_KEY` | Operaciones servidor de Clerk | Integración pendiente |
-| `OPENAI_API_KEY` | Embeddings/respuestas | Integración pendiente |
+No hacen falta claves Clerk. Google admite localhost HTTP solo en NODE_ENV=development;
+correo exige origen HTTPS incluso localmente. No copiar secretos a builds de prueba.
 
-La presencia y validez de variables en Vercel o Neon no se verificaron en esta
-actualización. La documentación anterior las daba por configuradas sin evidencia
-suficiente; revisar cada entorno antes de conectar servicios.
+El envío, Google y scheduler siguen pendientes de credenciales/configuración externa.
+Ejecutar npm run preflight para ver indicadores sin valores secretos. Un build
+correcto no demuestra acceso a BD, entrega real ni callback configurado.
 
-## Configuración futura
+Operación, pruebas y activación: [launch.md](launch.md).
 
-Las rutas de login, registro, onboarding y dashboard no existen todavía.
-Definir redirecciones al implementarlas. El webhook de Clerk necesitará su
-configuración de verificación; no se ha añadido ni implementado aún.
-
-## Reglas
-
-- `NEXT_PUBLIC_` expone valores al navegador: solo usarlo para datos públicos.
-- `NEON_DATABASE_URL`, `CLERK_SECRET_KEY` y `OPENAI_API_KEY` son secretos de servidor.
-- Separar bases/credenciales de desarrollo, preview y producción.
-- Antes de migrar, comprobar el entorno al que apunta `NEON_DATABASE_URL`.
-- Drizzle carga `.env.local` mediante dotenv; Next carga su entorno al arrancar.
-- El build descarga la fuente Inter configurada en el layout, por lo que puede
-  necesitar acceso de red aun sin integraciones de negocio.
-
-## Actualización: búsqueda y postulaciones
-
-La búsqueda local y los chips de la home ya funcionan. Se añadió invitación y formulario con endpoint de guardado en Neon; activación de credenciales y tabla pendiente. Ver [detalle](discovery.md) para el estado vigente, que sustituye las referencias anteriores a búsqueda de interfaz o formulario futuro.
-
-Conexión: se acepta `NEON_DATABASE_URL`, `DATABASE_URL` o `POSTGRES_URL`, en ese orden, solo en servidor. Neon conectado en Vercel no confirma que exista `solution_applications`. La sesión CLI revisada solo accede al equipo flouvia, donde no aparece ShowcaseMX; tabla y envío remotos siguen sin verificar. No se cambiaron bases remotas.
+Para el sitio público de producción, `AUTH_APP_ORIGIN=https://shwcs.site` y el
+remitente previsto es `AUTH_EMAIL_FROM=shwcs <hola@shwcs.site>`. La configuración
+local ya tiene ambos valores y una clave Resend; repetirlos en el proyecto correcto
+de Vercel y probar recepción, rebote y enlaces antes de declarar correo activo.
+`ops.shwcs.site` no debe reutilizar este origen como callback de forma implícita:
+definir su estrategia de autenticación y alcance cuando exista esa aplicación.

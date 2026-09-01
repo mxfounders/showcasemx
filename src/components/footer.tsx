@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { navigationHref,availableNavigation } from "@/lib/navigation-destinations";
 import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { actionButtonStyle, getAccentStyle } from "@/lib/brand-colors";
+import { BrandLink } from "./navigation/brand-link";
 import {
   CreditCard, FileText, Users, BarChart3, Package,
   Target, HeadphonesIcon, Building2, ShoppingBag, Factory,
@@ -45,7 +47,7 @@ const footerSections = [
         ],
       },
       {
-        subheading: "Colecciones",
+        subheading: "Tu selección",
         links: [
           { icon: Layers,     label: "Essential Stack MX",        href: "/colecciones/essential" },
           { icon: Briefcase,  label: "CFO Toolkit",               href: "/colecciones/cfo" },
@@ -70,18 +72,18 @@ const footerSections = [
       {
         subheading: "Tu presencia",
         links: [
-          { icon: LayoutDashboard,label: "Dashboard de métricas",    href: "/dashboard/founder" },
-          { icon: Target,         label: "Leads corporativos",       href: "/leads" },
-          { icon: UserCircle,     label: "Tu perfil de producto",    href: "/perfil" },
+          { icon: LayoutDashboard,label: "Mis soluciones",    href: "/account/solutions" },
+          { icon: Target,         label: "Oportunidades",       href: "/leads" },
+          { icon: UserCircle,     label: "Tu cuenta",    href: "/account/settings" },
           { icon: Rocket,         label: "Weekly Drops",             href: "/drops" },
         ],
       },
       {
-        subheading: "Comunidad",
+        subheading: "Novedades",
         links: [
           { icon: Globe,    label: "Directorio de founders",    href: "/fundadores" },
           { icon: Calendar, label: "Eventos y networking",      href: "/eventos" },
-          { icon: Mail,     label: "Newsletter semanal",        href: "/newsletter" },
+          { icon: Mail,     label: "Newsletter",        href: "/newsletter" },
           { icon: Award,    label: "Founders destacados",       href: "/destacados" },
         ],
       },
@@ -93,11 +95,14 @@ const footerSections = [
       {
         subheading: "",
         links: [
-          { icon: Zap,          label: "Buscador IA",               href: "/buscar" },
+          { icon: Zap,          label: "Buscar proyectos",               href: "/buscar" },
           { icon: Rocket,       label: "Weekly Drops",              href: "/drops" },
-          { icon: Layers,       label: "Colecciones curadas",       href: "/colecciones" },
+          { icon: Layers,       label: "Listas de la comunidad",    href: "/comunidad" },
           { icon: Globe,        label: "Explorar catálogo",         href: "/explorar" },
           { icon: Target,       label: "El Proyecto",               href: "/el-proyecto" },
+          { icon: BookOpen,     label: "Blog",                      href: "/blog" },
+          { icon: Rocket,       label: "Changelog",                 href: "/changelog" },
+          { icon: Mail,         label: "Contacto",                  href: "/contacto" },
           { icon: Mail,         label: "Newsletter",                href: "/newsletter" },
           { icon: Calendar,     label: "Eventos",                   href: "/eventos" },
         ],
@@ -139,7 +144,7 @@ function FooterLink({ href, label, icon: Icon }: {
 
   return (
     <Link
-      href={href}
+      href={navigationHref(href)}
       className="group flex items-center gap-2.5 py-1.5 rounded-lg"
       onMouseEnter={() => tlRef.current?.play()}
       onMouseLeave={() => tlRef.current?.reverse()}
@@ -168,22 +173,20 @@ export function Footer() {
         <div className="px-6 md:px-12 pt-8 md:pt-12 pb-8 border-b border-stone-100">
           <div className="flex flex-col md:flex-row items-start justify-between gap-6">
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="size-[22px] rounded-[5px] bg-stone-900 flex items-center justify-center">
-                  <div className="size-2.5 rounded-[2px] bg-white/90" />
-                </div>
-                <span className="text-[15px] font-bold tracking-[-0.3px] text-stone-900">showcasemx</span>
-              </div>
+              <div className="mb-3"><BrandLink variant="navbar" /></div>
               <p className="text-[13.5px] text-stone-400 leading-relaxed max-w-xs">
-                El catálogo de software B2B construido por operadores mexicanos. Solo herramientas con tracción real.
+                Software, agencias y servicios para tu empresa. Conoce qué resuelven y conecta con quienes los construyen.
               </p>
+              <Link href="/contacto" className="group mt-4 inline-flex items-center gap-2 text-[13px] font-medium text-stone-600 transition-colors hover:text-stone-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#365DC4]">
+                hola@shwcs.site <span className="button-arrow text-[#365DC4]" aria-hidden="true">→</span>
+              </Link>
             </div>
             <Link
               href="/newsletter"
-              style={actionButtonStyle} className="inline-flex items-center justify-center gap-2 action-button text-[13px] font-medium px-5 py-2.5 rounded-full transition-colors duration-200 w-full md:w-auto"
+              style={actionButtonStyle} className="inline-flex w-full items-center justify-center gap-2 action-button text-[13px] font-medium px-5 py-2.5 rounded-full transition-colors duration-200 md:w-auto"
             >
               <Mail className="size-3.5" />
-              Suscribirse al newsletter →
+              Suscribirse al newsletter <span className="button-arrow" aria-hidden="true">→</span>
             </Link>
           </div>
         </div>
@@ -199,7 +202,7 @@ export function Footer() {
 
               {/* Sub-columnas */}
               <div className={`grid gap-8 grid-cols-1 sm:grid-cols-2 ${section.cols.length === 3 ? "md:grid-cols-3" : section.cols.length === 1 ? "md:grid-cols-4" : "md:grid-cols-2"}`}>
-                {section.cols.map((col, ci) => (
+                {section.cols.filter(col=>col.links.some(link=>availableNavigation(link.href))).map((col, ci) => (
                   <div key={ci}>
                     {col.subheading && (
                       <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest mb-3">
@@ -207,7 +210,7 @@ export function Footer() {
                       </p>
                     )}
                     <ul className="space-y-0.5">
-                      {col.links.map((link) => (
+                      {col.links.filter(link=>availableNavigation(link.href)).map((link) => (
                         <li key={link.href}>
                           <FooterLink
                             href={link.href}
@@ -228,31 +231,9 @@ export function Footer() {
         <div className="border-t border-stone-100 mx-6 md:mx-12" />
         <div className="px-6 md:px-12 py-6 flex flex-col md:flex-row items-center md:items-start justify-between gap-4">
           <p className="text-[12px] text-stone-400 text-center md:text-left">
-            © {new Date().getFullYear()} ShowcaseMX · Hecho en México
+            © {new Date().getFullYear()} shwcs · Hecho en México
           </p>
           <div className="flex items-center justify-center gap-5">
-            <Link
-              href="https://x.com/showcasemx"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-stone-400 hover:text-stone-900 transition-colors"
-              aria-label="X (Twitter)"
-            >
-              <svg viewBox="0 0 24 24" className="size-4" fill="currentColor">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-              </svg>
-            </Link>
-            <Link
-              href="https://linkedin.com/company/showcasemx"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-stone-400 hover:text-stone-900 transition-colors"
-              aria-label="LinkedIn"
-            >
-              <svg viewBox="0 0 24 24" className="size-4" fill="currentColor">
-                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-              </svg>
-            </Link>
             <Link
               href="https://github.com/mxfounders"
               target="_blank"

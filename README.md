@@ -1,14 +1,17 @@
-# ShowcaseMX
+# shwcs
 
-Plataforma de descubrimiento de tecnología B2B mexicana.
+Estado vigente: [entrega de lanzamiento](docs/launch.md), [roadmap](docs/roadmap.md)
+y [contexto maestro](CLAUDE.md). Avisos, verificación, confianza y métricas implementados;
+activación de proveedores y despliegue pendientes. `npm test` y `npm run preflight`
+permiten comprobar código y configuración por separado.
 
 **Encuentra soluciones. Conoce a sus creadores.**
 
-## Estado
-
-Prototipo interactivo: hero, navegación y explorador con siete categorías y nueve
-entradas por categoría, combinando Cord/Flouvia con ejemplos ficticios. La búsqueda, autenticación, publicación de
-productos y generación de leads todavía no están conectadas.
+Plataforma de descubrimiento de software, agencias y servicios B2B mexicanos.
+El MVP permite publicar proyectos con revisión editorial, guardar y comparar
+opciones, solicitar contacto con consentimiento y responder desde la cuenta
+propietaria. El catálogo mezcla Cord/Flouvia, ejemplos identificados y publicaciones
+aprobadas de Neon.
 
 ## Desarrollo
 
@@ -17,31 +20,38 @@ npm ci
 npm run dev
 ```
 
-Abrir http://localhost:3000. La home actual no necesita claves de servicios.
-Consultar [variables de entorno](docs/env.md) antes de integrar Neon, Clerk u OpenAI.
+Abrir localhost:3000. Configurar Neon según [entorno](docs/env.md) y aplicar las
+migraciones operativas en el orden de [CLAUDE.md](CLAUDE.md). No copiar secretos.
+Cuenta, publicaciones, biblioteca y contactos requieren la base configurada.
 
 ```bash
 npm run lint
 npm run typecheck
-npm run check
+npx tsx --test tests/*.test.ts
+RUN_CONTACT_INTEGRATION=1 node tests/integration/contacts.cjs
 ```
 
-`check` incluye el build: no ejecutarlo simultáneamente con dev sobre el mismo
-`.next`. Usar una copia aislada si el servidor debe seguir abierto.
+La integración es opt-in y usa el servidor local con cuentas temporales que elimina.
+Nunca ejecutar next build/check y dev sobre el mismo .next; comprobar producción
+en una copia aislada si dev debe continuar abierto.
 
 ## Documentación
 
-- [Contexto del proyecto](CLAUDE.md)
-- [Producto y copy](docs/product.md)
-- [Diseño](docs/design.md) y [paleta](docs/colors.md)
-- [Roadmap](docs/roadmap.md)
-- [Stack, validación y despliegue](docs/stack.md)
-- [Esquema de datos](docs/database.md)
-- [Variables de entorno](docs/env.md)
+- [Contexto maestro, permisos, rutas y decisiones](CLAUDE.md)
+- [Roadmap y estado de los 12 puntos](docs/roadmap.md)
+- [Comparador, contactos y oportunidades](docs/contacts.md)
+- [Guardados/listas](docs/buyer-library.md)
+- [Publicaciones/revisión](docs/founder-workflow.md)
+- [Ficha guiada y creadores](docs/guided-solution-form.md)
+- [Capturas e inicio adaptativo](docs/media-dashboard.md)
+- [Configuración de cuenta](docs/account-settings.md)
+- [Diseño](docs/design.md), [paleta](docs/colors.md), [entradas reales](docs/listings.md)
+- [Base de datos](docs/database.md), [entorno](docs/env.md), [stack](docs/stack.md)
 
-Vercel se configura mediante `vercel.json` para Next.js y salida `.next`.
-La configuración y un build local correcto no confirman el estado de producción.
+Google, verificación de email, campañas, avisos automáticos y métricas siguen
+pendientes. Recuperación está implementada pero falta activar/verificar el envío.
+La solicitud se entrega dentro de shwcs, no por correo.
+Cord/Flouvia ya están vinculados a publicaciones con propietario y reciben solicitudes internas.
 
-## Actualización: búsqueda y postulaciones
-
-La búsqueda local y los chips de la home ya funcionan. Se añadió invitación y formulario con endpoint de guardado en Neon; activación de credenciales y tabla pendiente. Ver [detalle](docs/discovery.md) para el estado vigente, que sustituye las referencias anteriores a búsqueda de interfaz o formulario futuro.
+Vercel tiene configuración de Next.js y salida .next. Build local no equivale
+a despliegue o CI remoto verificado. No se desplegó esta entrega.

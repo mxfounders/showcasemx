@@ -2,18 +2,21 @@ import type { BrandTone } from "@/lib/brand-colors";
 
 // Mixed local catalog: official offerings are explicitly distinguished from design demos.
 export type PreviewProduct = {
+  catalogId?: string;
   name: string;
   description: string;
   feature: string;
   website?: string;
   provider?: string;
-  offering?: "Software" | "Servicio";
+  offering?: "Software" | "Agencia" | "Servicio";
+  detailUrl?: string;
   ogImage?: string;
   favicon?: string;
 };
 
 // Descriptions based on the providers' official sites. No independent certification implied.
 const cord: PreviewProduct = {
+  catalogId: "cord",
   name: "Cord",
   description: "Cotiza, da seguimiento a propuestas y gestiona cobranza y facturación en una plataforma.",
   feature: "Cotizaciones, cobros y facturación",
@@ -25,6 +28,7 @@ const cord: PreviewProduct = {
 };
 
 const flouvia: PreviewProduct = {
+  catalogId: "flouvia",
   name: "Flouvia",
   description: "Desarrollo de e-commerce, portales B2B y automatizaciones a medida para tu operación.",
   feature: "Ingeniería e-commerce y B2B",
@@ -143,3 +147,6 @@ export const previewCategories: PreviewCategory[] = [
     ],
   },
 ];
+
+// Editorial order is explicit, not a trust or quality score.
+export function catalogPriority(product:Pick<PreviewProduct,'catalogId'|'website'>){return product.catalogId==='cord'?0:product.catalogId==='flouvia'?1:product.website?2:3;}

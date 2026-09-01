@@ -1,8 +1,8 @@
-# Producto — ShowcaseMX
+# Producto — shwcs
 
 ## Posicionamiento
 
-ShowcaseMX es una plataforma de descubrimiento de tecnología B2B mexicana que
+shwcs es una plataforma de descubrimiento de tecnología B2B mexicana que
 ayuda a las empresas a encontrar soluciones y conocer a quienes las construyen.
 No se presenta como un software que realiza por sí mismo cobros, nómina o CRM.
 
@@ -20,7 +20,7 @@ Sin texto pequeño encima. Título con un corte explícito en dos líneas:
 Texto de apoyo:
 
 > Descubre herramientas creadas en México para resolver los retos de tu empresa.
-> En ShowcaseMX seleccionamos productos, te ayudamos a entender qué resuelven y
+> En shwcs seleccionamos productos, te ayudamos a entender qué resuelven y
 > te acercamos a quienes los construyen.
 
 - Buscador: «¿Qué necesitas resolver en tu empresa?»

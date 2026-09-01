@@ -1,0 +1,18 @@
+"use client";
+import { useEffect,useRef,useState } from 'react';
+import Image from 'next/image';
+import { ArrowLeft,ArrowRight,Expand,X } from 'lucide-react';
+import type { SolutionScreenshot } from '@/lib/solutions/model';
+import { actionButtonStyle } from '@/lib/brand-colors';
+export function ScreenshotGallery({solutionId,images}:{solutionId:string;images:SolutionScreenshot[]}){
+ const [active,setActive]=useState(0),[expanded,setExpanded]=useState(false),[failed,setFailed]=useState(false);const dialog=useRef<HTMLDialogElement>(null),trigger=useRef<HTMLButtonElement>(null);
+ const index=Math.min(active,Math.max(0,images.length-1)),selected=images[index];
+ useEffect(()=>{setFailed(false);},[selected?.id]);
+ useEffect(()=>{if(expanded)dialog.current?.showModal();},[expanded]);
+ if(!selected)return null;
+ const source=`/api/solutions/${solutionId}/media/${selected.id}`;
+ return <section aria-label="Capturas del proyecto" className="space-y-4"><div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-stone-200 bg-white sm:aspect-video">{failed?<p role="status" className="p-6 text-sm text-stone-500">No pudimos cargar esta captura. Recarga para intentar de nuevo.</p>:<Image src={source} alt={selected.caption} fill unoptimized sizes="(max-width: 640px) 100vw, 800px" onError={()=>setFailed(true)} className="object-contain"/>}<button ref={trigger} type="button" onClick={()=>setExpanded(true)} aria-label="Ampliar captura" style={actionButtonStyle} className="action-button absolute bottom-3 right-3 rounded-full p-3"><Expand className="size-4" aria-hidden="true"/></button></div><div className="flex items-start justify-between gap-4"><p className="break-words text-sm leading-relaxed text-stone-500">{selected.caption}</p><span className="shrink-0 text-xs text-stone-400">{index+1}/{images.length}</span></div>
+ {images.length>1&&<div className="flex gap-3 overflow-x-auto pb-2">{images.map((item,i)=><button type="button" key={item.id} onClick={()=>setActive(i)} aria-label={`Ver captura ${i+1}: ${item.caption}`} aria-pressed={i===index} className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border bg-white ${i===index?'border-[#365DC4] ring-1 ring-[#365DC4]':'border-stone-200'}`}><Image src={`/api/solutions/${solutionId}/media/${item.id}`} alt="" fill unoptimized sizes="96px" className="object-contain"/></button>)}</div>}
+ <dialog ref={dialog} aria-label="Captura ampliada" onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();dialog.current?.close();}}} onClose={()=>{setExpanded(false);trigger.current?.focus();}} className="w-[94vw] max-w-6xl rounded-2xl bg-[#f5f5f4] p-4 backdrop:bg-black/60"><div className="mb-4 flex items-center justify-between gap-3"><p className="min-w-0 break-words text-sm">{selected.caption}</p><button type="button" autoFocus aria-label="Cerrar captura" onClick={()=>dialog.current?.close()} style={actionButtonStyle} className="action-button shrink-0 rounded-full p-3"><X className="size-4"/></button></div><div className="relative h-[65svh]"><Image src={source} alt={selected.caption} fill unoptimized sizes="94vw" className="object-contain"/></div>{images.length>1&&<div className="mt-4 flex justify-center gap-5"><button type="button" aria-label="Captura anterior" onClick={()=>setActive((index-1+images.length)%images.length)} className="rounded-lg p-3"><ArrowLeft className="size-5"/></button><button type="button" aria-label="Captura siguiente" onClick={()=>setActive((index+1)%images.length)} className="rounded-lg p-3"><ArrowRight className="size-5"/></button></div>}</dialog>
+ </section>;
+}

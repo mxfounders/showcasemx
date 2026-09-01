@@ -1,0 +1,2 @@
+import { isIP } from 'node:net';
+export function verificationDomain(website:unknown){if(typeof website!=='string')return null;try{const url=new URL(website),host=url.hostname.toLowerCase();if(url.protocol!=='https:'||url.username||url.password||url.port||isIP(host)||!host.includes('.')||host.endsWith('.localhost')||host.endsWith('.local')||host.endsWith('.internal')||host.length>253||!/^[a-z0-9.-]+$/.test(host))return null;return host;}catch{return null;}}

@@ -1,0 +1,6 @@
+// Explicit additive migration against the configured database; never prints credentials.
+const fs=require('node:fs'),{neon}=require('@neondatabase/serverless');
+require('dotenv').config({path:'.env.local',quiet:true});
+function statements(source){let quote=false,comment=false,chunk='',out=[];for(let i=0;i<source.length;i++){const c=source[i],next=source[i+1];if(comment){if(c==='\n')comment=false;else continue;}if(!quote&&c==='-'&&next==='-'){comment=true;i++;continue;}if(c==="'"){if(quote&&next==="'"){chunk+="''";i++;continue;}quote=!quote;}if(c===';'&&!quote){const value=chunk.trim();if(value&&!/^(BEGIN|COMMIT)$/i.test(value))out.push(value);chunk='';}else chunk+=c;}return out;}
+async function main(){const url=process.env.NEON_DATABASE_URL||process.env.DATABASE_URL||process.env.POSTGRES_URL;if(!url)throw Error('Missing database');const sql=neon(url);await sql.transaction(statements(fs.readFileSync('db/contact-inquiries.sql','utf8')).map(statement=>sql.query(statement)));console.log('Contact inquiries migration applied atomically.');}
+main().catch(()=>{console.error('Contact inquiries migration failed; inspect database access/schema without sharing secrets.');process.exitCode=1;});

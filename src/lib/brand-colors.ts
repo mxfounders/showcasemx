@@ -23,6 +23,8 @@ const routeTones: Record<string, BrandTone> = {
   "/aplicar": "blue", "/criterios": "sage", "/proceso": "amber",
   "/faq": "amber", "/dashboard/founder": "blue", "/leads": "terracotta",
   "/perfil": "lavender", "/drops": "terracotta", "/fundadores": "sage",
+  "/account/solutions": "blue", "/account/opportunities": "terracotta",
+  "/account/settings": "lavender", "/comunidad": "lavender",
   "/eventos": "lavender", "/newsletter": "blue", "/destacados": "amber",
   "/buscar": "amber", "/colecciones": "lavender", "/explorar": "sage",
   "/el-proyecto": "terracotta", "/privacidad": "lavender",
@@ -36,3 +38,5 @@ export function getAccentStyle(href: string) {
 
 // Shared treatment for action buttons; category colors remain semantic.
 export const actionButtonStyle = { backgroundColor: brandColors.blue.soft, color: brandColors.blue.solid };
+
+export const solutionCategoryTones: Record<string, BrandTone> = {Cobros:'sage',Finanzas:'blue','Nómina':'lavender',Ventas:'terracotta','Operación':'amber',Legal:'lavender',Agencias:'blue'};

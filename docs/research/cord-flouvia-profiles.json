@@ -1,0 +1,42 @@
+{
+  "checkedAt": "2026-08-30",
+  "cord": {
+    "name": "Cord",
+    "kind": "Software",
+    "category": "Cobros",
+    "categories": ["Cobros", "Finanzas", "Ventas"],
+    "website": "https://cordhq.app/",
+    "problem": "Reúne propuestas, aprobación, cobros y facturación en un mismo flujo. Permite enviar una propuesta mediante un enlace que el cliente puede revisar y aprobar sin crear una cuenta, en lugar de coordinar documentos y seguimientos separados.",
+    "audience": "Negocios que venden mediante cotizaciones: distribuidores, mayoristas, agencias y empresas de servicios. Puede utilizarse de forma independiente, sin ser cliente de Flouvia ni tener una tienda online.",
+    "scope": "Editor de cotizaciones, catálogo de productos y clientes, precios negociados, seguimiento de propuestas, aprobación por enlace y facturación. Las herramientas de cobranza, finanzas, equipo e inteligencia artificial dependen del plan contratado.",
+    "notFor": "Confirma los límites de tu plan antes de contratar. El timbrado CFDI 4.0 requiere operar en México y configurar el CSD. Integrar un ERP propio puede requerir trabajo técnico adicional.",
+    "pricing": "Free: $0. Mensual en MXN: Starter $240, Professional $590 y Scale $1,390; Developer a medida. El sitio indica impuestos incluidos y opción anual. Consulta límites, consumos y comisiones de pagos antes de contratar. Precios consultados el 30/08/2026.",
+    "implementation": "Crear una cuenta, cargar clientes y catálogo o usar líneas libres, y preparar la primera propuesta. Para facturación mexicana se requiere configurar el CSD. Las integraciones y necesidades empresariales deben revisarse con el equipo.",
+    "integrations": "API REST y webhooks para conectar un backend o flujos en Zapier, Make y n8n. Slack se presenta como integración nativa. No se anuncian conectores propios para cada ERP; los límites dependen del plan.",
+    "support": "Centro de ayuda con guías de cotizaciones, pagos, facturación y API. El sitio ofrece soporte técnico y contacto con el equipo; confirma cobertura y condiciones para tu operación.",
+    "evidence": "Demo pública del enlace de cotización y lanzamiento en Product Hunt. Permiten conocer la experiencia propuesta; no constituyen una auditoría independiente ni acreditan resultados de clientes.",
+    "evidenceUrl": "https://www.producthunt.com/products/cord-4",
+    "demoUrl": "https://cordhq.app/q/demo",
+    "founders": [{"name":"Andre Valle","role":"Fundador y CEO","bio":"Creador de Cord y fundador de Flouvia, según su presentación pública. Trabaja en software B2B e infraestructura de pagos.","links":[{"label":"Product Hunt","url":"https://www.producthunt.com/@andrevalleee"}]}],
+    "projectLinks": [{"label":"Product Hunt","url":"https://www.producthunt.com/products/cord-4"},{"label":"Documentación","url":"https://cordhq.app/en/desarrolladores/integraciones"},{"label":"Precios","url":"https://cordhq.app/en/precios"},{"label":"Contacto","url":"https://cordhq.app/en/contacto/ventas"}]
+  },
+  "flouvia": {
+    "name": "Flouvia",
+    "kind": "Servicio",
+    "category": "Operación",
+    "categories": ["Operación", "Ventas", "Agencias"],
+    "website": "https://flouvia.com/",
+    "problem": "Diseña y desarrolla infraestructura digital a medida para operaciones de e-commerce y B2B: tiendas, portales privados y automatizaciones que conectan sistemas y reducen la captura manual.",
+    "audience": "Marcas y empresas con ventas y operación establecida que necesitan mejorar su tienda, digitalizar pedidos mayoristas o conectar su operación. Firma con sede en CDMX y proyectos en México y Estados Unidos.",
+    "scope": "Ingeniería de e-commerce en Shopify, arquitectura de portales B2B, automatización de procesos y optimización de conversión. El alcance se define por proyecto e incluye desarrollo e integraciones a medida.",
+    "notFor": "No orientado a plantillas, branding, manejo de redes sociales ni proyectos sin tracción. Requiere evaluar alcance, presupuesto y disponibilidad antes de aceptar el proyecto.",
+    "pricing": "Cotización por proyecto. La página de servicios indica un presupuesto mínimo de $30,000 MXN y un diagnóstico inicial gratuito de 30 minutos. La propuesta final depende de la complejidad. Información consultada el 30/08/2026.",
+    "implementation": "Diagnóstico, arquitectura, desarrollo y despliegue. Como referencia publicada: portales B2B entre 8 y 14 semanas; con integración ERP, entre 12 y 16. El plazo se confirma según reglas de negocio y APIs disponibles.",
+    "integrations": "Shopify, APIs a medida, Airtable, Make y webhooks. Conexiones ERP como SAP, NetSuite o Microsoft Dynamics se desarrollan según el alcance; no son conectores incluidos automáticamente.",
+    "support": "Ofrece mantenimiento técnico y soporte posterior al lanzamiento, con monitoreo, actualizaciones e iteraciones. Confirmar cobertura, horarios y coste en la propuesta.",
+    "evidence": "Portafolio publicado con Cord y El Zarco como sistemas activos, y Ago Fitness en fase de lanzamiento. Son casos presentados por Flouvia; shwcs no verifica de forma independiente sus resultados.",
+    "evidenceUrl": "https://flouvia.com/casos",
+    "founders": [{"name":"Andre Valle","role":"Fundador","bio":"Se presenta públicamente como fundador de Flouvia y Cord, con foco en software B2B y arquitectura de sistemas.","links":[{"label":"Product Hunt","url":"https://www.producthunt.com/@andrevalleee"}]}],
+    "projectLinks": [{"label":"Sitio web","url":"https://flouvia.com/nosotros"},{"label":"Precios","url":"https://flouvia.com/servicios"},{"label":"Contacto","url":"https://flouvia.com/contacto"}]
+  }
+}

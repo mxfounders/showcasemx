@@ -31,4 +31,4 @@ Hay siete categorías y cinco familias: Nómina y Legal comparten lavanda.
 
 Ver [diseño](design.md) para composición y [producto](product.md) para copy.
 
-Actualización de botones: CTA y chips de búsqueda usan `actionButtonStyle` (azul suave #E4EBFC y texto #365DC4). Se conservan los cinco colores de categorías e iconos. El buscador no tiene recuadro de foco interior; el teclado señala el campo con subrayado discreto.
+Actualización de botones: Los CTA usan `actionButtonStyle` (azul suave #E4EBFC y texto #365DC4). Se conservan los cinco colores de categorías e iconos. Los chips del hero mantienen su color por categoría: Finanzas azul, Nómina lavanda y CRM terracota (`getAccentStyle`). El buscador no tiene recuadro de foco interior; el teclado señala el campo con subrayado discreto.

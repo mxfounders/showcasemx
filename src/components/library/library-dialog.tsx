@@ -1,0 +1,7 @@
+"use client";
+import { useId,useRef,useState,type ReactNode } from 'react';
+import { X } from 'lucide-react';
+export function LibraryDialog({title,trigger,children,triggerClass,triggerStyle}:{title:string;trigger:ReactNode;children:(close:()=>void)=>ReactNode;triggerClass?:string;triggerStyle?:React.CSSProperties}){
+ const dialog=useRef<HTMLDialogElement>(null),button=useRef<HTMLButtonElement>(null),id=useId();const [open,setOpen]=useState(false);
+ return <><button ref={button} type="button" className={triggerClass} style={triggerStyle} onClick={()=>{setOpen(true);dialog.current?.showModal();}}>{trigger}</button><dialog ref={dialog} aria-labelledby={id} onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();dialog.current?.close();}}} onClose={()=>{setOpen(false);button.current?.focus();}} onClick={e=>{if(e.target===e.currentTarget)dialog.current?.close();}} className="library-dialog w-[calc(100%-2rem)] max-w-lg rounded-[28px] border border-stone-200 bg-[#fafaf9] p-0 text-stone-900 shadow-xl backdrop:bg-stone-900/25 backdrop:backdrop-blur-sm"><div className="max-h-[85svh] overflow-y-auto p-6 sm:p-8"><div className="mb-7 flex items-center justify-between gap-4"><h2 id={id} className="text-2xl font-semibold tracking-tight">{title}</h2><button type="button" aria-label="Cerrar" className="rounded-full p-2 text-stone-500 transition-colors hover:bg-stone-200" onClick={()=>dialog.current?.close()}><X className="size-5"/></button></div>{open&&children(()=>dialog.current?.close())}</div></dialog></>;
+}
