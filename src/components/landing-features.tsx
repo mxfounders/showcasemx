@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { brandColors } from "@/lib/brand-colors";
 
@@ -112,11 +112,110 @@ const features = [
       { name: "Gorgias", category: "Soporte Ecommerce", users: "5,400", score: "91%" },
       { name: "Front", category: "Bandeja Compartida", users: "4,100", score: "89%" },
     ]
+  },
+  {
+    id: "ecommerce",
+    label: "E-commerce",
+    title: "Vende en piloto automático",
+    color: brandColors.sage,
+    mockup: [
+      { name: "Shopify", category: "Tienda Online", users: "24,500", score: "99%" },
+      { name: "VTEX", category: "Enterprise Commerce", users: "3,200", score: "94%" },
+      { name: "WooCommerce", category: "WordPress Plugin", users: "12,100", score: "88%" },
+      { name: "Magento", category: "Open Source", users: "2,800", score: "85%" },
+    ]
+  },
+  {
+    id: "proyectos",
+    label: "Gestión de Proyectos",
+    title: "Alinea a todo tu equipo",
+    color: brandColors.amber,
+    mockup: [
+      { name: "Asana", category: "Gestión Visual", users: "16,800", score: "96%" },
+      { name: "Monday", category: "Work OS", users: "13,200", score: "94%" },
+      { name: "Jira", category: "Desarrollo Ágil", users: "18,400", score: "95%" },
+      { name: "Notion", category: "Wikis y Tareas", users: "21,000", score: "98%" },
+    ]
+  },
+  {
+    id: "diseno",
+    label: "Diseño & UX",
+    title: "Prototipa el futuro",
+    color: brandColors.lavender,
+    mockup: [
+      { name: "Figma", category: "Diseño Colaborativo", users: "28,300", score: "99%" },
+      { name: "Canva", category: "Creación Rápida", users: "45,000", score: "97%" },
+      { name: "Miro", category: "Pizarras Virtuales", users: "12,500", score: "94%" },
+      { name: "Framer", category: "Web Design", users: "6,200", score: "91%" },
+    ]
+  },
+  {
+    id: "automatizacion",
+    label: "IA & Automatización",
+    title: "Multiplica tus manos",
+    color: brandColors.blue,
+    mockup: [
+      { name: "Zapier", category: "Integraciones", users: "19,200", score: "98%" },
+      { name: "Make", category: "Automatización Visual", users: "8,700", score: "95%" },
+      { name: "ChatGPT", category: "IA Generativa", users: "55,000", score: "99%" },
+      { name: "Claude", category: "Análisis y Textos", users: "14,300", score: "97%" },
+    ]
+  },
+  {
+    id: "comunicacion",
+    label: "Comunicación B2B",
+    title: "Conecta a tu empresa",
+    color: brandColors.terracotta,
+    mockup: [
+      { name: "Slack", category: "Chat de Equipos", users: "32,100", score: "98%" },
+      { name: "Zoom", category: "Videollamadas", users: "40,500", score: "96%" },
+      { name: "Teams", category: "Suite Corporativa", users: "28,900", score: "92%" },
+      { name: "Loom", category: "Mensajes en Video", users: "11,400", score: "95%" },
+    ]
+  },
+  {
+    id: "desarrollo",
+    label: "Desarrollo & Nube",
+    title: "Construye tu infraestructura",
+    color: brandColors.blue,
+    mockup: [
+      { name: "AWS", category: "Cloud Services", users: "42,000", score: "97%" },
+      { name: "Vercel", category: "Frontend Cloud", users: "18,300", score: "99%" },
+      { name: "GitHub", category: "Repositorios", users: "50,200", score: "98%" },
+      { name: "Docker", category: "Contenedores", users: "22,100", score: "95%" },
+    ]
   }
 ];
 
 export function LandingFeatures() {
-  const [activeTab, setActiveTab] = useState(features[0]);
+  const [activeTab, setActiveTab] = useState(features[7]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Center the active tab on mount
+  useEffect(() => {
+    if (scrollRef.current) {
+      const activeElement = scrollRef.current.querySelector('[aria-selected="true"]') as HTMLElement;
+      if (activeElement) {
+        const containerCenter = scrollRef.current.offsetWidth / 2;
+        const elementCenter = activeElement.offsetLeft + (activeElement.offsetWidth / 2);
+        scrollRef.current.scrollTo({ left: elementCenter - containerCenter, behavior: 'instant' });
+      }
+    }
+  }, []);
+
+  const handleTabClick = (feature: typeof features[0], event: React.MouseEvent<HTMLButtonElement>) => {
+    setActiveTab(feature);
+    if (scrollRef.current) {
+      const container = scrollRef.current;
+      const button = event.currentTarget;
+      const containerCenter = container.offsetWidth / 2;
+      const buttonCenter = button.offsetLeft + (button.offsetWidth / 2);
+      container.scrollTo({
+        left: buttonCenter - containerCenter,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   return (
     <section className="py-24 sm:py-32 overflow-hidden bg-white">
@@ -131,10 +230,11 @@ export function LandingFeatures() {
           </p>
         </div>
 
-        {/* Scrolling Tabs */}
+        {/* Scrolling Tabs with Gradient Mask */}
         <div className="relative mx-auto max-w-5xl mb-12">
           <div 
-            className="flex overflow-x-auto hide-scrollbar pb-6 pt-2 px-6 sm:px-12 items-center justify-start sm:justify-center gap-2"
+            ref={scrollRef}
+            className="flex overflow-x-auto hide-scrollbar pb-6 pt-2 px-6 sm:px-12 items-center justify-start gap-2"
             style={{
               maskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
               WebkitMaskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)'
@@ -145,7 +245,8 @@ export function LandingFeatures() {
               return (
                 <button
                   key={feature.id}
-                  onClick={() => setActiveTab(feature)}
+                  aria-selected={isActive}
+                  onClick={(e) => handleTabClick(feature, e)}
                   className={`whitespace-nowrap px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
                     isActive
                       ? "shadow-sm ring-1 ring-inset"
