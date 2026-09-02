@@ -100,8 +100,9 @@ export async function POST(req: NextRequest, props: { params: Promise<{ action: 
     const res = NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
     res.cookies.set({ ...cookieOptions(SESSION_SECONDS), value: token });
     return res;
-  } catch (err) {
+  } catch (err: any) {
     console.error('[ops/auth]', err);
-    return fail('Error interno.', 503);
+    if (err?.message === 'NO_DATABASE_URL') return fail('Falta la variable DATABASE_URL en Vercel.', 503);
+    return fail('Error interno. Intenta más tarde.', 503);
   }
 }
