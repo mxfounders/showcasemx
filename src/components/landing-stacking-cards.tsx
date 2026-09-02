@@ -188,7 +188,13 @@ export function LandingStackingCards() {
 
 const RightVisual = ({ id, color }: { id: string; color: string }) => {
   return (
-    <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+    <div 
+      className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden"
+      style={{
+        maskImage: 'linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)',
+        WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)'
+      }}
+    >
       {/* Unified 2-Column Floating Grid */}
       <MockupGridVisual color={color} />
     </div>
@@ -197,13 +203,7 @@ const RightVisual = ({ id, color }: { id: string; color: string }) => {
 
 const MockupGridVisual = ({ color }: { color: string }) => {
   return (
-    <div 
-      className="absolute inset-[-30%] flex gap-4 sm:gap-6 items-center justify-center rotate-[-6deg] scale-105"
-      style={{
-        maskImage: 'radial-gradient(ellipse at center, black 40%, transparent 70%)',
-        WebkitMaskImage: 'radial-gradient(ellipse at center, black 40%, transparent 70%)'
-      }}
-    >
+    <div className="absolute inset-[-30%] flex gap-4 sm:gap-6 items-center justify-center rotate-[-6deg] scale-105">
       {/* Column 1 - Scrolling Down */}
       <motion.div 
         animate={{ y: ["-25%", "0%"] }} 
