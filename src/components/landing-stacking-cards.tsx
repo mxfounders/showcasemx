@@ -189,14 +189,6 @@ export function LandingStackingCards() {
 const RightVisual = ({ id, color }: { id: string; color: string }) => {
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-      {/* Background glowing orb */}
-      <motion.div 
-        animate={{ scale: [1, 1.15, 1], opacity: [0.3, 0.5, 0.3] }} 
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute w-[32rem] h-[32rem] rounded-full blur-[100px] mix-blend-multiply"
-        style={{ backgroundColor: color }}
-      />
-      
       {/* Unified 2-Column Floating Grid */}
       <MockupGridVisual color={color} />
     </div>
