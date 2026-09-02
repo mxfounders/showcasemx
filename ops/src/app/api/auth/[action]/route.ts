@@ -1,5 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { randomBytes } from 'node:crypto';
+import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import {
   verifyPassword, DUMMY_HASH, hashToken, generateToken,

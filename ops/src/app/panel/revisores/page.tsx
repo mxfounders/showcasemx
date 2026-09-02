@@ -19,7 +19,7 @@ export default function ReviewersPage() {
       // Re-use users endpoint (first page is enough for reviewers since there are very few)
       const res = await fetch('/api/users?page=1');
       const data = await res.json();
-      const list = (data.items ?? []).filter((u: any) => u.isReviewer);
+      const list = (data.items ?? []).filter((u: { isReviewer: boolean }) => u.isReviewer);
       setReviewers(list);
     } catch { /* ignore */ } finally {
       setLoading(false);
