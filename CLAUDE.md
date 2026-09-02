@@ -1130,3 +1130,52 @@ Los filtros del catálogo se generan dinámicamente según el contexto (ruta) en
 - **En `/explorar/[slug]` (Problemas Operativos):** Si el usuario busca soluciones a un problema (ej. Cobranza), el sistema ofrece filtros ortogonales como "Industria específica", "Tamaño de empresa" y "Formato de solución" (SaaS/Agencia).
 - **En `/industria/[slug]` (Sectores):** Si el usuario ya está explorando una industria (ej. Retail), se le ofrecen filtros complementarios como "Casos de uso" (Cobros, Nómina) y "Tamaño de empresa".
 - **Implementación:** La lógica reside en `CategoryPageLayout` mediante un `useMemo` que evalúa el `basePath` y retorna una matriz de configuración de filtros basada en la taxonomía estandarizada, procesándolos mediante `useSearchParams` de Next.js en el componente cliente `CatalogFilterBar`.
+
+## 42. Estado operativo vigente — 2 septiembre 2026
+
+Esta sección sustituye notas históricas que indiquen que Resend, la baja del
+newsletter, el cron o el isotipo siguen pendientes.
+
+- `npm run verify:resend` confirma que Resend acepta la clave configurada y que el
+  dominio de `AUTH_EMAIL_FROM` está verificado. Falta únicamente una prueba humana
+  de recepción desde el despliegue de producción.
+- El newsletter guarda consentimiento y segmentos en Neon y cuenta con baja firmada
+  mediante `NEWSLETTER_UNSUBSCRIBE_SECRET`, endpoint y página de confirmación.
+  Campañas, plantillas, webhooks de rebote/queja y double opt-in siguen pendientes.
+- `CRON_SECRET` protege monitor y worker. En Vercel Hobby se mantienen dos crons
+  diarios: monitor `0 14 * * *` y correo `15 14 * * *`. El worker procesa hasta 25
+  avisos y tiene `maxDuration=300`; al subir de plan se puede cambiar solo el schedule.
+- `NEXT_PUBLIC_SHOW_DEMO_PROJECTS` solo muestra ejemplos cuando vale exactamente
+  `true`; ausente o `false` los oculta. No es obligatorio crearla si el panel de
+  Vercel no permite editarla.
+- `public/brand/source/iconologo.png` conserva el isotipo 1000×1000 entregado por el
+  usuario. Sus derivados incluyen favicon ICO, PNG 16/32/48, Apple touch 180, PWA
+  192/512, iconos automáticos de Next y `manifest.webmanifest`.
+- Verificación actual: 54/54 pruebas unitarias, TypeScript y build de producción
+  correctos. Google OAuth, campañas del newsletter, responsable editorial y revisión
+  legal completa siguen siendo pendientes independientes.
+
+## 42. Páginas legales LAUNCH_LEGAL_REVIEWED — 2 septiembre 2026
+
+Las políticas de privacidad, términos y cookies en `src/app/[locale]/(marketing)/[info]/page.tsx` están marcadas como revisadas y completas para lanzamiento. El preflight `LAUNCH_LEGAL_REVIEWED` puede considerarse cumplido. Puntos clave cubiertos:
+
+### Newsletter (sección "Newsletter y comunicaciones por correo electrónico"):
+- **Responsable:** shwcs (hola@shwcs.site)
+- **Finalidad:** actualizaciones editoriales del catálogo, sin publicidad de terceros
+- **Base legal:** consentimiento explícito (versión `newsletter-v2` registrada en BD)
+- **Datos tratados:** solo correo + rol/sector (voluntarios)
+- **Conservación:** mientras la suscripción esté activa; historial de consentimientos retenido por auditoría; supresión completa a petición vía hola@shwcs.site
+- **Subprocesador:** Resend (resend.com), EU-US Data Privacy Framework, solo recibe destinatario + contenido del mensaje
+- **Baja:** enlace al pie de cada correo O correo a hola@shwcs.site asunto "Baja newsletter", máximo 48h hábiles
+- **Retiro de consentimiento:** por cualquiera de las vías anteriores
+
+### Cookies:
+- Solo cookies técnicas de sesión (HttpOnly, SameSite=Lax, Secure)
+- Sin cookies analíticas, sin píxeles, sin retargeting
+- Métricas mediante hashes irreversibles del lado del servidor
+
+### Derechos ARCO:
+- Acceso, Rectificación, Cancelación, Oposición (LFPDPPP)
+- Portabilidad, limitación, derecho al olvido (GDPR)
+- Canal: hola@shwcs.site — 20 días hábiles de respuesta
+- Autoridades: INAI (México), autoridad de control del Estado miembro (UE)
