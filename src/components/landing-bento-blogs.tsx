@@ -11,10 +11,10 @@ const getToneColors = (tone?: string) => {
 };
 
 export function LandingBentoBlogs() {
-  const postA = blogPosts[0];
-  const postB = blogPosts[1];
-  const postD = blogPosts[2];
-  const postE = extraPosts[0];
+  const postA = blogPosts[0]; // blue
+  const postB = blogPosts[2]; // green (sage)
+  const postD = blogPosts[3]; // lavender (purple)
+  const postE = blogPosts[4]; // terracotta (orange)
 
   const colorA = getToneColors(postA.tone);
   const colorB = getToneColors(postB.tone);
