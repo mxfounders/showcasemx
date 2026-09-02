@@ -6,6 +6,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { motion } from "framer-motion";
 import { brandColors } from "@/lib/brand-colors";
+import type { PublishedProduct } from "@/lib/solutions/public";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -29,11 +30,13 @@ const stackData = [
     id: "agents",
     badge: "RECOMENDACIONES",
     title: "Encuentra la aguja en el pajar al instante",
-    button: "Explorar directorio",
-    icons: ["⚡", "🔍", "📈"],
+    description: "Nuestra IA analiza tu industria, tamaño y presupuesto para recomendarte el stack tecnológico exacto que usan las empresas más exitosas de tu sector.",
+    color: { soft: brandColors.terracotta.soft, solid: brandColors.terracotta.solid },
+    button: "Ver recomendaciones",
+    icons: ["K", "C", "M"],
     testimonial: {
-      bold: "Stripe",
-      text: " ahorró 40 horas al mes automatizando la revisión de contratos legales a través de una de nuestras soluciones verificadas."
+      bold: "Kueski",
+      text: " ahorró 40 horas de investigación usando nuestro motor de recomendaciones para escalar su stack de ciberseguridad."
     }
   },
   {

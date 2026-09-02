@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { brandColors } from "@/lib/brand-colors";
+import type { PublishedProduct } from "@/lib/solutions/public";
 
 const features = [
   {
