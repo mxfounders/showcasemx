@@ -115,28 +115,32 @@ export function LandingStackingCards() {
           style={{ backgroundColor: item.color.soft, zIndex: index + 10 }}
         >
           {/* Left Content */}
-          <div className="flex-1 p-8 sm:p-12 md:p-16 flex flex-col justify-center relative z-10">
-            <div className="mb-6 inline-flex items-center gap-3">
-              <span 
-                className="px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider text-white shadow-sm"
-                style={{ backgroundColor: item.color.solid }}
+          <div className="flex-1 p-8 sm:p-12 md:p-16 flex flex-col relative z-10">
+            {/* Top Text Block */}
+            <div>
+              <div className="mb-4 inline-flex items-center gap-3">
+                <span 
+                  className="px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white shadow-sm"
+                  style={{ backgroundColor: item.color.solid }}
+                >
+                  {item.badge}
+                </span>
+              </div>
+              
+              <h2 
+                className="text-3xl sm:text-4xl lg:text-[2.75rem] font-semibold tracking-tight mb-4 leading-[1.15]"
+                style={{ color: item.color.solid }}
               >
-                {item.badge}
-              </span>
+                {item.title}
+              </h2>
+              
+              <p className="text-base sm:text-lg text-stone-700/90 leading-relaxed max-w-md">
+                {item.description}
+              </p>
             </div>
             
-            <h2 
-              className="text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight mb-6 leading-[1.1]"
-              style={{ color: item.color.solid }}
-            >
-              {item.title}
-            </h2>
-            
-            <p className="text-lg sm:text-xl text-stone-700 leading-relaxed mb-10 max-w-lg">
-              {item.description}
-            </p>
-            
-            <div className="mt-auto md:mt-0">
+            {/* Bottom Action Block */}
+            <div className="mt-auto pt-10">
               {/* Overlapping Mockups & Testimonial */}
               <div className="flex items-center -space-x-3 mb-4">
                 {[1, 2, 3].map((_, i) => (
@@ -156,7 +160,7 @@ export function LandingStackingCards() {
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-4 items-center">
                 <button 
-                  className="px-7 py-3 rounded-full text-white font-medium shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-2 group"
+                  className="px-7 py-3 rounded-full text-white font-medium shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-2 group text-sm sm:text-base"
                   style={{ backgroundColor: item.color.solid }}
                 >
                   {item.button}
@@ -164,7 +168,7 @@ export function LandingStackingCards() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                   </svg>
                 </button>
-                <button className="px-7 py-3 rounded-full bg-white text-stone-800 font-medium shadow-sm transition-all hover:bg-stone-50 hover:shadow-md">
+                <button className="px-7 py-3 rounded-full bg-white text-stone-800 font-medium shadow-sm transition-all hover:bg-stone-50 hover:shadow-md text-sm sm:text-base">
                   Conocer más
                 </button>
               </div>
