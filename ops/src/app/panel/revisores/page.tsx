@@ -79,8 +79,8 @@ export default function ReviewersPage() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white border-b border-stone-200 px-8 h-14 flex items-center">
-        <h1 className="text-[17px] font-semibold">Revisores autorizados</h1>
+      <header className="sticky top-0 z-40 bg-stone-50/80 backdrop-blur-md border-b border-stone-200/70 px-4 sm:px-8 h-[60px] flex items-center">
+        <h1 className="text-[16px] font-bold tracking-tight text-stone-800">Revisores autorizados</h1>
       </header>
 
       <div className="p-8 max-w-4xl">

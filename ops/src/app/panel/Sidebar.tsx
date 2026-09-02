@@ -2,20 +2,23 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { ClipboardCheck, Grid, Users, Shield, LogOut } from 'lucide-react';
+
+const focusStyle = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#365DC4]';
 
 const navItems = [
   {
     section: 'Cola editorial',
     items: [
-      { href: '/panel', label: 'Pendientes', icon: ClipboardIcon, exact: true },
-      { href: '/panel/postulaciones', label: 'Todas las postulaciones', icon: GridIcon },
+      { href: '/panel', label: 'Pendientes', Icon: ClipboardCheck, exact: true },
+      { href: '/panel/postulaciones', label: 'Postulaciones', Icon: Grid },
     ],
   },
   {
     section: 'Plataforma',
     items: [
-      { href: '/panel/usuarios', label: 'Usuarios', icon: UsersIcon },
-      { href: '/panel/revisores', label: 'Revisores', icon: ShieldIcon },
+      { href: '/panel/usuarios', label: 'Usuarios', Icon: Users },
+      { href: '/panel/revisores', label: 'Revisores', Icon: Shield },
     ],
   },
 ];
@@ -35,98 +38,69 @@ export default function Sidebar({ userEmail }: { userEmail: string }) {
   }
 
   return (
-    <aside className="fixed top-0 left-0 bottom-0 w-60 bg-white border-r border-stone-200 flex flex-col z-50 overflow-y-auto">
-      {/* Logo */}
-      <div className="px-5 pt-5 pb-4 border-b border-stone-200">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/shwcs-logo-white.png" alt="shwcs"
-          className="h-[18px] w-auto"
-          style={{ filter: 'invert(1)', opacity: 0.85 }}
-        />
-        <p className="text-[10px] font-bold tracking-widest uppercase text-stone-400 mt-1">Operaciones</p>
-      </div>
+    <aside aria-label="Navegación de operaciones" className="sticky top-0 z-40 px-4 pt-4 lg:fixed lg:inset-y-6 lg:left-0 lg:w-[248px] lg:px-0 lg:pt-0">
+      <div className="flex flex-col rounded-2xl border border-stone-200/70 bg-white shadow-[4px_4px_28px_-12px_rgba(0,0,0,0.12)] h-full lg:rounded-l-none lg:rounded-r-2xl lg:border-l-0">
+        
+        {/* Logo area */}
+        <div className="flex shrink-0 items-center justify-between px-6 py-5 lg:pb-7 lg:pt-7">
+          <Link href="/panel" className="flex items-center gap-2 outline-none">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/shwcs-logo-blue.png" alt="shwcs" className="h-4 w-auto" />
+            <span className="text-[10px] font-bold tracking-widest uppercase text-stone-400 mt-0.5">Ops</span>
+          </Link>
+        </div>
 
-      {/* Nav */}
-      <nav className="flex-1 py-3">
-        {navItems.map(group => (
-          <div key={group.section}>
-            <p className="px-5 py-2 text-[10px] font-bold tracking-widest uppercase text-stone-400">{group.section}</p>
-            {group.items.map(item => {
-              const active = isActive(item.href, item.exact);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-2.5 px-5 py-2.5 text-sm font-medium transition-colors
-                    ${active
-                      ? 'bg-[#e4ebfc] text-[#365dc4] font-semibold'
-                      : 'text-stone-500 hover:bg-stone-100 hover:text-stone-800'
-                    }`}
-                >
-                  <item.icon className={`w-4 h-4 flex-shrink-0 ${active ? 'opacity-100' : 'opacity-60'}`} />
-                  {item.label}
-                </Link>
-              );
-            })}
+        {/* Nav */}
+        <div className="flex-1 flex-col overflow-y-auto px-3">
+          {navItems.map(group => (
+            <div key={group.section} className="mb-6">
+              <p className="px-3 pb-2 text-[10px] font-bold tracking-widest uppercase text-stone-400">{group.section}</p>
+              <nav aria-label={group.section} className="space-y-1">
+                {group.items.map(({ href, label, Icon, exact }) => {
+                  const active = isActive(href, exact);
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      aria-current={active ? 'page' : undefined}
+                      className={`group flex min-h-12 items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-colors duration-200 ${
+                        active ? 'bg-[#e4ebfc] text-[#365dc4]' : 'text-stone-500 hover:bg-stone-50 hover:text-stone-900'
+                      } ${focusStyle}`}
+                    >
+                      <span
+                        className="flex size-7 shrink-0 items-center justify-center rounded-lg transition-transform duration-200 group-hover:-translate-y-px motion-reduce:transform-none"
+                        style={{ backgroundColor: active ? 'rgba(255,255,255,0.6)' : 'transparent', color: active ? '#365dc4' : 'currentColor' }}
+                      >
+                        <Icon aria-hidden="true" strokeWidth={1.7} className="size-4" />
+                      </span>
+                      {label}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div className="px-3 pb-3 mt-auto">
+          <div className="mx-3 mb-3 border-t border-stone-100" />
+          <div className="px-3 py-3 rounded-xl bg-stone-50 mb-2">
+            <p className="text-[11px] font-semibold text-stone-800 truncate">{userEmail}</p>
+            <p className="text-[10px] text-stone-400">Revisor autorizado</p>
           </div>
-        ))}
-      </nav>
+          <button
+            onClick={handleLogout}
+            className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium text-stone-500 transition-colors hover:bg-stone-50 hover:text-stone-900 ${focusStyle}`}
+          >
+            <span className="flex size-7 items-center justify-center rounded-lg text-stone-400 group-hover:text-stone-600">
+              <LogOut className="size-4" />
+            </span>
+            Cerrar sesión
+          </button>
+        </div>
 
-      {/* Footer */}
-      <div className="px-5 py-4 border-t border-stone-200 space-y-2">
-        <p className="text-xs text-stone-500 truncate">{userEmail}</p>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-stone-200 text-stone-500 text-xs font-medium hover:bg-stone-100 transition-colors"
-        >
-          <LogoutIcon className="w-3.5 h-3.5" />
-          Cerrar sesión
-        </button>
       </div>
     </aside>
-  );
-}
-
-function ClipboardIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 0 2-2h2a2 2 0 0 0 2 2"/>
-    </svg>
-  );
-}
-
-function GridIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-      <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-    </svg>
-  );
-}
-
-function UsersIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-      <circle cx="9" cy="7" r="4"/>
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-    </svg>
-  );
-}
-
-function ShieldIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-    </svg>
-  );
-}
-
-function LogoutIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-      <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-    </svg>
   );
 }

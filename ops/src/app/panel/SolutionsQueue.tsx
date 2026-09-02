@@ -69,23 +69,22 @@ export default function SolutionsQueue({ defaultStatus = 'pending', title, showA
 
   return (
     <>
-      {/* Top bar */}
-      <header className="sticky top-0 z-40 bg-white border-b border-stone-200 px-8 h-14 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-40 bg-stone-50/80 backdrop-blur-md border-b border-stone-200/70 px-4 sm:px-8 h-[60px] flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <h1 className="text-[17px] font-semibold">{title}</h1>
+          <h1 className="text-[16px] font-bold tracking-tight text-stone-800">{title}</h1>
           {/* Pending badge */}
           {(statusCounts.pending ?? 0) + (statusCounts.changes_requested ?? 0) > 0 && (
-            <span className="px-2 py-0.5 rounded-full bg-red-500 text-white text-xs font-bold">
+            <span className="px-2 py-0.5 rounded-full bg-[#3562cc] text-white text-[10px] font-bold">
               {(statusCounts.pending ?? 0) + (statusCounts.changes_requested ?? 0)}
             </span>
           )}
         </div>
         <input
           type="search"
-          placeholder="Buscar por nombre o email…"
+          placeholder="Buscar postulaciones…"
           value={searchInput}
           onChange={e => setSearchInput(e.target.value)}
-          className="w-56 px-3 py-1.5 text-sm rounded-lg border border-stone-200 bg-stone-50 outline-none focus:border-[#3562cc] focus:bg-white transition"
+          className="w-48 sm:w-64 px-4 py-1.5 text-[13px] rounded-full border border-stone-200/70 bg-white shadow-sm outline-none focus:border-[#3562cc] focus:ring-2 focus:ring-[#3562cc]/10 transition"
         />
       </header>
 

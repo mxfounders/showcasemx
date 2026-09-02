@@ -44,10 +44,10 @@ export default function UsersPage() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white border-b border-stone-200 px-8 h-14 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-40 bg-stone-50/80 backdrop-blur-md border-b border-stone-200/70 px-4 sm:px-8 h-[60px] flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <h1 className="text-[17px] font-semibold">Usuarios registrados</h1>
-          <span className="px-2.5 py-0.5 rounded-full bg-stone-100 border border-stone-200 text-stone-600 text-xs font-semibold">
+          <h1 className="text-[16px] font-bold tracking-tight text-stone-800">Usuarios registrados</h1>
+          <span className="px-2.5 py-0.5 rounded-full bg-[#3562cc]/10 text-[#365dc4] text-[10px] font-bold">
             {total}
           </span>
         </div>
@@ -56,7 +56,7 @@ export default function UsersPage() {
           placeholder="Buscar por correo…"
           value={searchInput}
           onChange={e => setSearchInput(e.target.value)}
-          className="w-56 px-3 py-1.5 text-sm rounded-lg border border-stone-200 bg-stone-50 outline-none focus:border-[#3562cc] focus:bg-white transition"
+          className="w-48 sm:w-64 px-4 py-1.5 text-[13px] rounded-full border border-stone-200/70 bg-white shadow-sm outline-none focus:border-[#3562cc] focus:ring-2 focus:ring-[#3562cc]/10 transition"
         />
       </header>
 
