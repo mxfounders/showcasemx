@@ -1179,3 +1179,9 @@ Las políticas de privacidad, términos y cookies en `src/app/[locale]/(marketin
 - Portabilidad, limitación, derecho al olvido (GDPR)
 - Canal: hola@shwcs.site — 20 días hábiles de respuesta
 - Autoridades: INAI (México), autoridad de control del Estado miembro (UE)
+
+## 43. Rediseño de configuración (Estética de Tarjetas) — 2 septiembre 2026
+
+Todas las páginas dentro de `/account/settings/*` (Seguridad, Cuentas Vinculadas, etc.) implementan un diseño estricto basado en "tarjetas" (`rounded-2xl border border-stone-200 bg-white p-6 shadow-sm`). Se prohíbe dejar elementos de formulario o textos flotando directamente sobre el fondo gris de la página. 
+- La arquitectura asegura que los campos de confirmación de contraseña (como en la vinculación de Google) se mantengan ocultos inicialmente para mantener la tarjeta limpia, desplegándose de manera elegante solo cuando el usuario requiere realizar la acción.
+- Los botones de toggle interactivos y botones de "submit" adyacentes deben estar encapsulados en contenedores flex horizontales o verticales adecuados (`flex flex-col-reverse sm:flex-row`) para evitar el solapamiento que causaban las clases de margen verticales como `space-y-*` en elementos *inline* y de posición absoluta.

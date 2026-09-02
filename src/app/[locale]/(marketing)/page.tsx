@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { LandingDiscovery } from "@/components/landing-discovery";
 import { LandingFeatures } from "@/components/landing-features";
 import { LandingStackingCards } from "@/components/landing-stacking-cards";
+import { LandingBentoBlogs } from "@/components/landing-bento-blogs";
 import { FounderInvitation } from "@/components/founder-invitation";
 import { getDictionary } from "@/i18n/get-dictionary";
 import type { Locale } from "@/i18n/config";
@@ -24,6 +25,7 @@ export default async function Home(
       </Suspense>
       <LandingFeatures />
       <LandingStackingCards />
+      <LandingBentoBlogs />
       <FounderInvitation dict={dict.landing} />
     </div>
   );
