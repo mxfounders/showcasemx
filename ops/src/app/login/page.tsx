@@ -10,7 +10,7 @@ export default async function LoginPage() {
   if (user) redirect('/panel');
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-stone-50 p-6">
+    <main className="min-h-screen flex flex-col items-center justify-center bg-white p-6">
       <div className="w-full max-w-[400px] flex flex-col items-center">
         {/* Logo */}
         <div className="mb-10">
@@ -18,12 +18,7 @@ export default async function LoginPage() {
           <img src="/brand/shwcs-logo-blue.png" alt="shwcs" className="h-8 w-auto" />
         </div>
         
-        <div className="w-full bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-stone-100 p-8 sm:p-10">
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <span className="w-2 h-2 rounded-full bg-[#3562cc] shadow-[0_0_0_4px_#e4ebfc]" />
-            <span className="text-[13px] font-semibold tracking-wide text-stone-500 uppercase">Panel operativo</span>
-          </div>
-          
+        <div className="w-full">
           <h2 className="text-2xl font-bold text-center text-stone-900 mb-2 tracking-tight">
             Iniciar sesión
           </h2>
