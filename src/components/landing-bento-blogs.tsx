@@ -67,7 +67,7 @@ export function LandingBentoBlogs() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/40" />
             
             <div className="relative z-10 p-8 flex flex-col flex-1 h-full">
-              <span className="text-[11px] font-bold tracking-widest text-white/90 uppercase mb-4 drop-shadow-md">Recomendación</span>
+              <span className="text-[11px] font-bold tracking-widest text-white/90 uppercase mb-4 drop-shadow-md">Promoción</span>
               <h3 className="text-2xl font-medium text-white leading-tight mb-4 drop-shadow-md">Cómo cobrar más rápido tus cotizaciones</h3>
               <div className="mt-auto pt-4 flex items-center text-sm font-medium text-white transition-colors group-hover:text-white/80 drop-shadow-md">
                 Ir a cordhq.app <ArrowIcon />
