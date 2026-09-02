@@ -143,7 +143,7 @@ export function LandingFeatures() {
   };
 
   return (
-    <section className="py-24 sm:py-32 overflow-hidden bg-white">
+    <section className="py-24 sm:py-32 overflow-hidden bg-transparent">
       <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-12">
@@ -175,7 +175,7 @@ export function LandingFeatures() {
                   className={`whitespace-nowrap px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
                     isActive
                       ? "shadow-sm ring-1 ring-inset"
-                      : "bg-[#F5F5F4] text-stone-600 hover:bg-[#E5E5E4] ring-1 ring-inset ring-transparent"
+                      : "bg-[#E5E5E4] text-stone-600 hover:bg-[#D5D5D4] ring-1 ring-inset ring-transparent"
                   }`}
                   style={
                     isActive 
@@ -219,7 +219,7 @@ export function LandingFeatures() {
                   {Array.from({ length: 16 }).map((_, i) => (
                     <div 
                       key={i} 
-                      className="rounded-3xl p-6 flex flex-col h-48 sm:h-52 bg-stone-200/45 border border-dashed border-stone-300 transition-all hover:-translate-y-0.5 hover:border-stone-400 hover:bg-stone-200/70 group cursor-pointer"
+                      className="rounded-3xl p-6 flex flex-col h-48 sm:h-52 bg-white/60 border border-dashed border-stone-300 backdrop-blur-md transition-all hover:bg-white hover:shadow-sm group cursor-pointer"
                     >
                       <div className="flex justify-between text-[10px] font-bold text-stone-400 tracking-widest uppercase mb-auto">
                         <span>Espacio Disponible</span>
