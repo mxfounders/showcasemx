@@ -4,6 +4,7 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
+import { motion } from "framer-motion";
 import { brandColors } from "@/lib/brand-colors";
 
 if (typeof window !== "undefined") {
