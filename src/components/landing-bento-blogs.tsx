@@ -22,7 +22,7 @@ export function LandingBentoBlogs() {
   const colorE = getToneColors(postE.tone);
 
   return (
-    <section className="w-full bg-white py-24 sm:py-32">
+    <section className="w-full py-24 sm:py-32">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-center mb-16 text-stone-900">
           Aprende más sobre<br />tecnología B2B
