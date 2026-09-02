@@ -139,13 +139,13 @@ export function LandingStackingCards() {
             <div className="mt-auto md:mt-0">
               {/* Overlapping Mockups & Testimonial */}
               <div className="flex items-center -space-x-3 mb-4">
-                {item.icons.map((icon, i) => (
+                {[1, 2, 3].map((_, i) => (
                   <div 
                     key={i} 
-                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-[0.8rem] bg-white shadow-sm border border-stone-100 flex items-center justify-center text-stone-700 font-bold text-sm sm:text-base relative"
-                    style={{ zIndex: item.icons.length - i }}
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-[0.8rem] bg-stone-200/50 border border-dashed border-stone-300 flex items-center justify-center text-stone-400 text-lg sm:text-xl relative hover:bg-stone-200/80 transition-colors"
+                    style={{ zIndex: 3 - i }}
                   >
-                    {icon}
+                    +
                   </div>
                 ))}
               </div>
