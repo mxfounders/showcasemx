@@ -212,36 +212,35 @@ const MockupGridVisual = ({ color }: { color: string }) => {
         WebkitMaskImage: 'radial-gradient(ellipse at center, black 40%, transparent 70%)'
       }}
     >
-      {/* Column 1 */}
+      {/* Column 1 - Scrolling Down */}
       <motion.div 
-        animate={{ y: ["-5%", "-15%", "-5%"] }} 
-        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+        animate={{ y: ["-25%", "0%"] }} 
+        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
         className="flex flex-col gap-4 sm:gap-6 w-48 sm:w-56"
       >
-        {[...Array(6)].map((_, i) => <MiniMockupCard key={`col1-${i}`} color={color} />)}
+        {[...Array(8)].map((_, i) => <MiniMockupCard key={`col1-${i}`} />)}
       </motion.div>
 
-      {/* Column 2 - Staggered */}
+      {/* Column 2 - Scrolling Up */}
       <motion.div 
-        animate={{ y: ["-15%", "-5%", "-15%"] }} 
-        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-        className="flex flex-col gap-4 sm:gap-6 w-48 sm:w-56 mt-24"
+        animate={{ y: ["0%", "-25%"] }} 
+        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+        className="flex flex-col gap-4 sm:gap-6 w-48 sm:w-56 mt-12"
       >
-        {[...Array(6)].map((_, i) => <MiniMockupCard key={`col2-${i}`} color={color} />)}
+        {[...Array(8)].map((_, i) => <MiniMockupCard key={`col2-${i}`} />)}
       </motion.div>
     </div>
   );
 };
 
-const MiniMockupCard = ({ color }: { color: string }) => (
-  <div className="bg-white/50 backdrop-blur-md border border-dashed border-stone-300/80 rounded-[1.5rem] p-6 flex flex-col h-44 w-full shadow-sm">
-    <div className="flex justify-between text-[10px] font-bold text-stone-400 tracking-widest uppercase mb-auto">
+const MiniMockupCard = () => (
+  <div className="bg-transparent border border-dashed border-black/10 rounded-[1.5rem] p-6 flex flex-col h-44 w-full">
+    <div className="flex justify-between text-[10px] font-bold text-black/20 tracking-widest uppercase mb-auto">
       <span>Espacio</span>
-      <span className="text-stone-300 text-lg leading-none">+</span>
+      <span className="text-black/20 text-lg leading-none">+</span>
     </div>
     <div>
-      <h4 className="text-[15px] font-medium text-stone-600 mb-4 leading-tight">Tu solución<br/>puede estar aquí.</h4>
-      <div className="w-16 h-1.5 rounded-full" style={{ backgroundColor: color, opacity: 0.7 }} />
+      <h4 className="text-[15px] font-medium text-black/40 leading-tight">Tu solución<br/>puede estar aquí.</h4>
     </div>
   </div>
 );
