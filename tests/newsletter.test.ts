@@ -3,6 +3,7 @@ import test from 'node:test';
 import { NextRequest } from 'next/server';
 import { validateNewsletter } from '../src/lib/newsletter';
 import { POST } from '../src/app/api/newsletter/route';
+import { createNewsletterUnsubscribeToken, readNewsletterUnsubscribeToken } from '../src/lib/newsletter-unsubscribe';
 const valid = { email: ' TEST@Example.com ', consent: true, company: '', profile: 'founder', role: 'leadership' };
 function req(value: unknown, origin = 'http://localhost:3000') { return new NextRequest('http://localhost:3000/api/newsletter', { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify(value) }); }
 test('newsletter requires explicit consent and valid normalized email', () => {
@@ -20,4 +21,14 @@ test('newsletter does not simulate persistence', async () => {
   keys.forEach(key => { delete process.env[key]; });
   try { assert.equal((await POST(req(valid))).status, 503); }
   finally { keys.forEach((key, i) => { if (previous[i] !== undefined) process.env[key] = previous[i]; else delete process.env[key]; }); }
+});
+test('unsubscribe links are signed, normalized and reject tampering', () => {
+  const secret = 'a-secure-test-secret-with-at-least-32-characters';
+  const token = createNewsletterUnsubscribeToken(' TEST@Example.com ', secret);
+  assert.ok(token);
+  assert.equal(readNewsletterUnsubscribeToken(token, secret), 'test@example.com');
+  assert.equal(readNewsletterUnsubscribeToken(`${token}x`, secret), null);
+  assert.equal(readNewsletterUnsubscribeToken(token, `${secret}x`), null);
+  assert.equal(createNewsletterUnsubscribeToken('invalid', secret), null);
+  assert.equal(createNewsletterUnsubscribeToken('test@example.com', 'short'), null);
 });

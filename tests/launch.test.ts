@@ -49,10 +49,10 @@ test('new mutations reject cross origin and metrics respect privacy signals befo
   for (const header of ['dnt', 'sec-gpc']) assert.equal((await metrics(new NextRequest('https://example.com/api/metrics', { method: 'POST', headers: { origin: 'https://example.com', [header]: '1' } }))).status, 204);
 });
 
-test('navigation sends discovery to real catalog and hides unimplemented destinations', () => {
-  assert.equal(navigationHref('/explorar/nomina'), '/?q=n%C3%B3mina#catalogo');
+test('navigation uses dedicated catalog pages and hides unimplemented destinations', () => {
+  assert.equal(navigationHref('/explorar/nomina'), '/explorar/nomina');
   assert.equal(navigationHref('/leads'), '/account/opportunities');
-  assert.equal(availableNavigation('/drops'), false); assert.equal(availableNavigation('/colecciones/test'), false);
+  assert.equal(availableNavigation('/drops'), false); assert.equal(availableNavigation('/colecciones/test'), true);
   assert.equal(availableNavigation('/criterios'), true);
 });
 

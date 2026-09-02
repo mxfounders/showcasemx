@@ -41,11 +41,11 @@ con NEXT_PUBLIC_SHOW_DEMO_PROJECTS=true y siguen sin ser proyectos contratables.
 ### Cola y operación
 
 /api/internal/mail requiere Authorization: Bearer CRON_SECRET (mínimo 32 caracteres).
-Un operador debe programar una llamada cada cinco minutos en el entorno correcto;
-no se creó un cron ni automatización externa. Verificar límites del plan Vercel o
-usar un scheduler compatible. No pegar el secreto en URLs/logs.
+Vercel Cron lo ejecuta diariamente a las 14:15 UTC mientras el proyecto permanezca
+en Hobby. Al migrar a un plan que permita mayor frecuencia, cambiar únicamente el
+schedule a cada cinco minutos. No pegar el secreto en URLs/logs.
 
-Procesa cinco mensajes por ejecución, con FOR UPDATE SKIP LOCKED, lease de cinco
+Procesa hasta 25 mensajes por ejecución, con FOR UPDATE SKIP LOCKED, lease de cinco
 minutos, máximo cinco intentos y backoff. Resend recibe una clave idempotente por
 aviso. No se reintenta automáticamente una entrega incierta de más de 23 horas:
 pasa a failed para no exceder la ventana de idempotencia del proveedor. Observar
@@ -141,7 +141,7 @@ Pendientes para activar producción:
    preflight ya reconoce la configuración de email, pero eso no prueba producción.
 3. GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET y redirect autorizado exacto:
    <AUTH_APP_ORIGIN>/api/auth/google/callback; consent screen y prueba real.
-4. CRON_SECRET, scheduler, monitoreo de cola y comprobación de recuperación/avisos.
+4. Replicar CRON_SECRET en Vercel, comprobar la ejecución diaria y monitorear la cola.
 5. Responsable editorial explícito y revisión de políticas/contacto/retención.
 6. Activar verificación obligatoria para contactos y probar el recorrido completo
    en el despliegue final. Separar bases de desarrollo, preview y producción.

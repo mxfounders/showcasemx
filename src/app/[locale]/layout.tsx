@@ -11,6 +11,18 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://shwcs.site"),
   title: "shwcs | Proyectos para tu empresa",
   description: "Descubre software, agencias y servicios para tu empresa. Conoce qué resuelven y conecta con sus creadores.",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icons/icon-16.png", type: "image/png", sizes: "16x16" },
+      { url: "/icons/icon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/icons/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/icons/icon-512.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon-180.png", sizes: "180x180", type: "image/png" }],
+    shortcut: "/favicon.ico",
+  },
   openGraph: {
     type: "website",
     locale: "es_MX",
