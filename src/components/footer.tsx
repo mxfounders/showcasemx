@@ -241,7 +241,7 @@ export function Footer({ dict }: { dict?: any }) {
         <div className="px-6 md:px-12 py-6 flex flex-col md:flex-row items-center md:items-start justify-between gap-4">
           <div className="flex items-center gap-3">
             <p className="text-[12px] text-stone-400 text-center md:text-left">
-              © {new Date().getFullYear()} shwcs · {dict?.madeIn || "Hecho en México"}
+              © {new Date().getFullYear()} shwcs
             </p>
             <div className="h-3 w-px bg-stone-300" />
             <LanguageSelector />

@@ -8,7 +8,7 @@ import { CatalogFilterBar } from './catalog-filter-bar';
 import { ProductVisual } from '@/components/product-visual';
 import { getAccentStyle } from '@/lib/brand-colors';
 
-type Product = any;
+type Product = Record<string, any>;
 
 const taxonomy = {
   industria: [

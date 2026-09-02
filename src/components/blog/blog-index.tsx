@@ -3,7 +3,7 @@
 
 import { useMemo, useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronLeft, ChevronRight, Grid2X2, List, ListFilter } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, ChevronDown, Grid2X2, List, ListFilter } from 'lucide-react';
 import { ExpandingSearch } from '@/components/search/expanding-search';
 import { blogPosts as initialPosts, extraPosts, blogTones, formatBlogDate } from '@/lib/blog';
 import { actionButtonStyle } from '@/lib/brand-colors';
