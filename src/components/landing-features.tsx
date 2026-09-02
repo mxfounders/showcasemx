@@ -219,7 +219,7 @@ export function LandingFeatures() {
                   {Array.from({ length: 16 }).map((_, i) => (
                     <div 
                       key={i} 
-                      className="rounded-3xl p-6 flex flex-col h-48 sm:h-52 bg-white/60 border border-dashed border-stone-300 backdrop-blur-md transition-all hover:bg-white hover:shadow-sm group cursor-pointer"
+                      className="rounded-3xl p-6 flex flex-col h-48 sm:h-52 bg-stone-200/45 border border-dashed border-stone-300 transition-all hover:-translate-y-0.5 hover:border-stone-400 hover:bg-stone-200/70 group cursor-pointer"
                     >
                       <div className="flex justify-between text-[10px] font-bold text-stone-400 tracking-widest uppercase mb-auto">
                         <span>Espacio Disponible</span>
