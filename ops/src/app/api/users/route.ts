@@ -16,9 +16,11 @@ export async function GET(req: Request) {
   try {
     const sql = getDb();
     const offset = (page - 1) * PAGE_SIZE;
-    const searchFilter = q ? sql`WHERE lower(a.email) LIKE ${'%' + q.toLowerCase() + '%'}` : sql``;
+    
+    let rows;
+    let total;
 
-    const rows = await sql`
+    const querySelect = `
       SELECT
         a.id, a.email, a.created_at, a.email_verified_at,
         (SELECT count(*)::int FROM founder_solutions fs WHERE fs.owner_id = a.id) AS solution_count,
@@ -29,12 +31,16 @@ export async function GET(req: Request) {
         (SELECT count(*)::int FROM auth_sessions s WHERE s.account_id = a.id AND s.expires_at > now()) AS active_sessions,
         EXISTS(SELECT 1 FROM solution_reviewers r WHERE r.account_id = a.id) AS is_reviewer
       FROM auth_accounts a
-      ${searchFilter}
-      ORDER BY a.created_at DESC
-      LIMIT ${PAGE_SIZE + 1} OFFSET ${offset}
     `;
 
-    const total = await sql`SELECT count(*)::int AS n FROM auth_accounts`;
+    if (q) {
+      const qStr = '%' + q.toLowerCase() + '%';
+      rows = await sql(querySelect + ` WHERE lower(a.email) LIKE $1 ORDER BY a.created_at DESC LIMIT $2 OFFSET $3`, [qStr, PAGE_SIZE + 1, offset]);
+      total = await sql(`SELECT count(*)::int AS n FROM auth_accounts a WHERE lower(a.email) LIKE $1`, [qStr]);
+    } else {
+      rows = await sql(querySelect + ` ORDER BY a.created_at DESC LIMIT $1 OFFSET $2`, [PAGE_SIZE + 1, offset]);
+      total = await sql(`SELECT count(*)::int AS n FROM auth_accounts`);
+    }
     const hasMore = rows.length > PAGE_SIZE;
 
     return NextResponse.json({
