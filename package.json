@@ -18,6 +18,7 @@
     "@ai-sdk/openai": "^4.0.51",
     "@base-ui/react": "^1.7.0",
     "@formatjs/intl-localematcher": "^0.8.13",
+    "@gsap/react": "^2.1.2",
     "@neondatabase/serverless": "^1.1.0",
     "@tailwindcss/typography": "^0.5.20",
     "@vercel/analytics": "^2.0.1",
