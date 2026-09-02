@@ -17,7 +17,7 @@ import {
   Layers, Briefcase, TrendingUp, BookOpen,
   Send, LayoutDashboard, UserCircle, Rocket,
   Globe, Calendar, Mail, Award,
-  ClipboardCheck, HelpCircle, Settings, Menu, X
+  ClipboardCheck, HelpCircle, Settings, Menu, X, Zap
 } from "lucide-react";
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
@@ -270,7 +270,14 @@ function TriggerButton({
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 
-export function Navbar({ authenticated = false }: { authenticated?: boolean }) {
+const iconMap: Record<string, React.ElementType> = {
+  CreditCard, FileText, Users, BarChart3, Package, Target, HeadphonesIcon,
+  Building2, ShoppingBag, Factory, Scale, HardHat, Heart, GraduationCap,
+  Layers, Briefcase, TrendingUp, BookOpen, Send, ClipboardCheck, Settings,
+  HelpCircle, LayoutDashboard, UserCircle, Rocket, Globe, Calendar, Mail, Award, Zap
+};
+
+export function Navbar({ authenticated = false, dict }: { authenticated?: boolean, dict?: any }) {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
@@ -285,7 +292,8 @@ export function Navbar({ authenticated = false }: { authenticated?: boolean }) {
   }, [mobileMenuOpen]);
 
   // Animar el panel con GSAP cuando cambia activeMenu
-  const currentMenu = activeMenu ? menus[activeMenu] : null;
+  const rawMenus = dict?.menus || menus;
+  const currentMenu = activeMenu ? rawMenus[activeMenu] : null;
 
   const animatePanel = useCallback((show: boolean) => {
     if (!panelRef.current) return;
@@ -371,7 +379,7 @@ export function Navbar({ authenticated = false }: { authenticated?: boolean }) {
             {(["compradores","fundadores", "recursos"] as const).map((key) => (
               <TriggerButton
                 key={key}
-                label={key === "compradores" ? "Para compradores" : key === "fundadores" ? "Para fundadores" : "Recursos"}
+                label={rawMenus[key]?.heading || (key === "compradores" ? "Para compradores" : key === "fundadores" ? "Para fundadores" : "Recursos")}
                 active={activeMenu === key}
                 onEnter={() => handleEnter(key)}
                 onActivate={() => handleEnter(key)}
@@ -386,12 +394,12 @@ export function Navbar({ authenticated = false }: { authenticated?: boolean }) {
           <NavbarSearch onOpen={()=>{setActiveMenu(null);setMobileMenuOpen(false);}} />
           
           <div className="hidden md:flex items-center gap-2">
-            <NavLink href={authenticated ? "/account" : "/sign-in"}>{authenticated ? "Ir a mi panel" : "Entrar"}</NavLink>
+            <NavLink href={authenticated ? "/account" : "/sign-in"}>{authenticated ? (dict?.dashboard || "Ir a mi panel") : (dict?.login || "Entrar")}</NavLink>
             <Link
               href="/newsletter"
               style={actionButtonStyle} className="inline-flex items-center action-button text-[13.5px] font-medium px-4 py-1.5 rounded-full transition-colors duration-200"
             >
-              Suscribirse <span className="button-arrow" aria-hidden="true">→</span>
+              {dict?.subscribe || "Suscribirse"} <span className="button-arrow" aria-hidden="true">→</span>
             </Link>
           </div>
 
@@ -422,14 +430,14 @@ export function Navbar({ authenticated = false }: { authenticated?: boolean }) {
           <div className="flex gap-0 p-6">
             {/* Columnas */}
             <div className="flex gap-8 flex-1">
-              {currentMenu.columns.filter(col=>col.links.some(link=>availableNavigation(link.href))).map((col) => (
+              {currentMenu.columns.filter((col: any)=>col.links.some((link: any)=>availableNavigation(link.href))).map((col: any) => (
                 <div key={col.heading} className="flex-1 min-w-0">
                   <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.12em] mb-3 px-1">
                     {col.heading}
                   </p>
                   <ul className="space-y-0.5">
-                    {col.links.filter(link=>availableNavigation(link.href)).map((item) => {
-                      const Icon = item.icon;
+                    {col.links.filter((link: any)=>availableNavigation(link.href)).map((item: any) => {
+                      const Icon = typeof item.icon === "string" ? iconMap[item.icon] : item.icon;
                       return (
                         <li key={item.href}>
                           <Link
@@ -483,13 +491,13 @@ export function Navbar({ authenticated = false }: { authenticated?: boolean }) {
         <div className="overflow-y-auto max-h-[85vh] px-6 py-4 flex flex-col gap-6">
           {/* Cuenta & Suscribirse (Mobile) */}
           <div className="flex flex-col gap-3 pb-4 border-b border-stone-100">
-            <Link href={authenticated ? "/account" : "/sign-in"} className="action-button inline-flex items-center justify-center rounded-lg bg-stone-100 px-4 py-2.5 text-[15px] font-medium text-stone-700 hover:bg-stone-200" onClick={() => setMobileMenuOpen(false)}>{authenticated ? "Ir a mi panel" : "Entrar"}</Link>
-            <Link href="/newsletter" style={actionButtonStyle} className="action-button inline-flex items-center justify-center text-[15px] font-medium px-4 py-2.5 rounded-lg" onClick={() => setMobileMenuOpen(false)}>Suscribirse <span className="button-arrow" aria-hidden="true">→</span></Link>
+            <Link href={authenticated ? "/account" : "/sign-in"} className="action-button inline-flex items-center justify-center rounded-lg bg-stone-100 px-4 py-2.5 text-[15px] font-medium text-stone-700 hover:bg-stone-200" onClick={() => setMobileMenuOpen(false)}>{authenticated ? (dict?.dashboard || "Ir a mi panel") : (dict?.login || "Entrar")}</Link>
+            <Link href="/newsletter" style={actionButtonStyle} className="action-button inline-flex items-center justify-center text-[15px] font-medium px-4 py-2.5 rounded-lg" onClick={() => setMobileMenuOpen(false)}>{dict?.subscribe || "Suscribirse"} <span className="button-arrow" aria-hidden="true">→</span></Link>
           </div>
 
           {/* Accordions */}
           {(["compradores", "fundadores", "recursos"] as const).map(key => {
-            const menu = menus[key];
+            const menu = rawMenus[key];
             const isOpen = mobileAccordion === key;
             return (
               <div key={key} className="border-b border-stone-100 pb-4 last:border-0">
@@ -497,19 +505,19 @@ export function Navbar({ authenticated = false }: { authenticated?: boolean }) {
                   onClick={() => setMobileAccordion(isOpen ? null : key)}
                   className="flex items-center justify-between w-full text-[16px] font-semibold text-stone-900 mb-2"
                 >
-                  {key === "compradores" ? "Para compradores" : key === "fundadores" ? "Para fundadores" : "Recursos"}
+                  {rawMenus[key]?.heading || (key === "compradores" ? "Para compradores" : key === "fundadores" ? "Para fundadores" : "Recursos")}
                   <ChevronDown className={`size-4 text-stone-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
                 </button>
                 
                 {/* Expanded Content */}
                 <div inert={!isOpen} className={`overflow-hidden transition-all duration-300 ${isOpen ? "max-h-[1500px] mt-5" : "max-h-0"}`}>
                   <div className="flex flex-col gap-6">
-                    {menu.columns.filter(col=>col.links.some(link=>availableNavigation(link.href))).map(col => (
+                    {menu.columns.filter((col: any)=>col.links.some((link: any)=>availableNavigation(link.href))).map((col: any) => (
                       <div key={col.heading}>
                         <p className="text-[11px] font-bold text-stone-400 uppercase tracking-widest mb-3">{col.heading}</p>
                         <div className="flex flex-col gap-4">
-                          {col.links.filter(link=>availableNavigation(link.href)).map(link => {
-                            const Icon = link.icon;
+                          {col.links.filter((link: any)=>availableNavigation(link.href)).map((link: any) => {
+                            const Icon = typeof link.icon === "string" ? iconMap[link.icon] : link.icon;
                             return (
                               <Link key={link.href} href={navigationHref(link.href)} className="flex items-start gap-3" onClick={() => setMobileMenuOpen(false)}>
                                 <div style={getAccentStyle(link.href)} className="size-7 rounded-lg flex items-center justify-center shrink-0">

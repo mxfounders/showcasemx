@@ -10,7 +10,7 @@ type Values = { reason: InquiryReason | ""; name: string; email: string; organiz
 const initial: Values = { reason: "", name: "", email: "", organization: "", role: "", website: "", message: "", urgency: "", consent: false };
 const field = "w-full border-0 border-b-2 border-stone-200 bg-transparent px-0 py-3 text-xl text-stone-900 outline-none transition-colors placeholder:text-stone-300 focus:border-[#365DC4] sm:text-2xl";
 
-export function ContactForm() {
+export function ContactForm({ dict }: { dict?: any }) {
   const [step, setStep] = useState(0), [values, setValues] = useState<Values>(initial), [error, setError] = useState(""), [pending, setPending] = useState(false), [sent, setSent] = useState(false);
   const busy = useRef(false), heading = useRef<HTMLHeadingElement>(null), form = useRef<HTMLFormElement>(null);
   useEffect(() => { heading.current?.focus({ preventScroll: true }); }, [step, sent]);

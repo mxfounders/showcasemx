@@ -1093,3 +1093,40 @@ newsletter ni guardar IP en la tabla de mensajes.
 Migración aditiva `db/contact-inquiries.sql`, aplicada a la conexión local configurada.
 Otra base/preview/producción debe aplicarla explícitamente. La retención y operación
 de mensajes pendientes/fallidos debe definirse antes del lanzamiento general.
+
+## 37. Encabezados y títulos sin punto final — 1 septiembre 2026
+
+Nunca agregar un punto final (`.`) a los títulos, encabezados principales (H1, H2, hero sections, labels de cards) ni textos de tamaño `text-5xl` o superior en ninguna parte de la aplicación. Esta es una decisión de estilo estricta; los encabezados deben quedar limpios, sin puntuación de cierre, para mantener un formato editorial y moderno en todo el proyecto.
+
+## 38. Páginas editoriales dinámicas — 1 septiembre 2026
+
+La ruta `[info]/page.tsx` maneja las páginas informativas del sitio, pero usa componentes distintos según la intención estética:
+- `/terminos`, `/privacidad`, `/cookies`: Usan `LegalStory` (layout de barra lateral "sticky").
+- `/faq`: Usa `FaqStory` (layout de acordeones y diseño de tarjetas divididas).
+- `/el-proyecto`: Usa `ProjectStory` (tarjetas gigantes).
+- `/changelog`: Usa `ChangelogStory` (lista de versiones interactiva).
+- `/proceso`: Usa `ProcesoStory` (layout de pasos numerados enormes y tarjetas a color).
+- `/criterios`: Usa `CriteriosStory` (grid de principios a color).
+
+## 39. Acordeón de pasos interactivo (StepsAccordion) — 1 septiembre 2026
+
+La sección de "Cómo funciona shwcs para ti" en el Home (`/`) implementa un acordeón horizontal fluido mediante `src/components/ui/steps-accordion.tsx`.
+- **Estética Editorial:** Utiliza 5 pasos inspirados en el flujo de publicación de fundadores, usando fondos apastelados (azul, verde, morado, ámbar, terracota) y textos en su versión oscura de la misma paleta. Los números son enormes, ocupan gran parte del espacio y mantienen el tono ligero.
+- **Responsividad CSS Nativa:** El layout no usa JS ni librerías de terceros (como Framer Motion `layout`) para calcular los anchos. Utiliza flexbox nativo (`flex-grow: 5` para activo, `flex-grow: 1` para inactivo) combinado con `transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]` para un efecto de expansión/contracción sumamente elegante y de alto rendimiento.
+- **Mobile First:** En dispositivos móviles (`flex-col`), se comporta como un acordeón vertical donde las tarjetas inactivas se apilan horizontalmente mostrando el título a lo largo. En pantallas de escritorio (`lg:flex-row`), se comportan como paneles estrechos con texto vertical (`writing-mode: vertical-rl; transform: rotate(180deg)`).
+- Nunca romper las restricciones de diseño: Se deben respetar las paletas predefinidas y la tipografía editorial, sin inventar animaciones estridentes.
+
+## 40. Paginación de colecciones (Blog) — 1 septiembre 2026
+
+Toda paginación (como la implementada en `/blog`) debe cumplir con los siguientes lineamientos de UI y UX:
+- **Estética:** Todos los controles interactivos de paginación (botones "Anterior"/"Siguiente" y el número de página activo) deben utilizar el estilo primario de la marca a través de `style={actionButtonStyle}` (importado de `@/lib/brand-colors`) y la clase `action-button`. Esto garantiza el fondo azul pastel (`#E4EBFC`) con texto azul profundo (`#365DC4`) consistente con el botón de "Suscribirse" en la barra de navegación.
+- **Formato:** Los botones de navegación deben ser píldoras (`rounded-full`) con íconos `ArrowLeft` / `ArrowRight`. Los números inactivos son círculos de solo texto que cambian de fondo en hover (`hover:bg-stone-100`).
+- **UX (Auto-Scroll):** Al hacer clic en cualquier control de página, el cliente debe hacer scroll suave (`scrollIntoView({ behavior: 'smooth', block: 'start' })`) hacia el ancla superior de la lista de elementos (`#blog-posts-top` con `scroll-mt-24` o similar) para que el usuario no se quede atrapado en el footer de la página anterior.
+- **Manejo de estados:** Se utilizan puntos suspensivos (`...`) inactivos cuando la cantidad de páginas supera 5, colapsando lógicamente los elementos para no quebrar el layout horizontal.
+
+## 41. Arquitectura de Filtros Segmentados en el Catálogo — 1 septiembre 2026
+
+Los filtros del catálogo se generan dinámicamente según el contexto (ruta) en el que se encuentre el usuario, para evitar mostrar filtros irrelevantes:
+- **En `/explorar/[slug]` (Problemas Operativos):** Si el usuario busca soluciones a un problema (ej. Cobranza), el sistema ofrece filtros ortogonales como "Industria específica", "Tamaño de empresa" y "Formato de solución" (SaaS/Agencia).
+- **En `/industria/[slug]` (Sectores):** Si el usuario ya está explorando una industria (ej. Retail), se le ofrecen filtros complementarios como "Casos de uso" (Cobros, Nómina) y "Tamaño de empresa".
+- **Implementación:** La lógica reside en `CategoryPageLayout` mediante un `useMemo` que evalúa el `basePath` y retorna una matriz de configuración de filtros basada en la taxonomía estandarizada, procesándolos mediante `useSearchParams` de Next.js en el componente cliente `CatalogFilterBar`.

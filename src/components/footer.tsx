@@ -15,6 +15,7 @@ import {
   Globe, Calendar, Mail, Award,
   ClipboardCheck, HelpCircle, Settings, Zap
 } from "lucide-react";
+import { LanguageSelector } from "./language-selector";
 
 // ─── Datos ────────────────────────────────────────────────────────────────────
 
@@ -164,7 +165,15 @@ function FooterLink({ href, label, icon: Icon }: {
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
 
-export function Footer() {
+
+const iconMap: Record<string, React.ElementType> = {
+  CreditCard, FileText, Users, BarChart3, Package, Target, HeadphonesIcon,
+  Building2, ShoppingBag, Factory, Scale, HardHat, Heart, GraduationCap,
+  Layers, Briefcase, TrendingUp, BookOpen, Send, ClipboardCheck, Settings,
+  HelpCircle, LayoutDashboard, UserCircle, Rocket, Globe, Calendar, Mail, Award, Zap
+};
+
+export function Footer({ dict }: { dict?: any }) {
   return (
     <footer className="px-4 mt-24">
       <div className="max-w-7xl mx-auto bg-white rounded-t-2xl border border-b-0 border-stone-200/70 shadow-[0_-4px_32px_-4px_rgba(0,0,0,0.06)]">
@@ -175,7 +184,7 @@ export function Footer() {
             <div>
               <div className="mb-3"><BrandLink variant="navbar" /></div>
               <p className="text-[13.5px] text-stone-400 leading-relaxed max-w-xs">
-                Software, agencias y servicios para tu empresa. Conoce qué resuelven y conecta con quienes los construyen.
+                {dict?.description || "Software, agencias y servicios para tu empresa. Conoce qué resuelven y conecta con quienes los construyen."}
               </p>
               <Link href="/contacto" className="group mt-4 inline-flex items-center gap-2 text-[13px] font-medium text-stone-600 transition-colors hover:text-stone-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#365DC4]">
                 hola@shwcs.site <span className="button-arrow text-[#365DC4]" aria-hidden="true">→</span>
@@ -186,14 +195,14 @@ export function Footer() {
               style={actionButtonStyle} className="inline-flex w-full items-center justify-center gap-2 action-button text-[13px] font-medium px-5 py-2.5 rounded-full transition-colors duration-200 md:w-auto"
             >
               <Mail className="size-3.5" />
-              Suscribirse al newsletter <span className="button-arrow" aria-hidden="true">→</span>
+              {dict?.newsletter || "Suscribirse al newsletter"} <span className="button-arrow" aria-hidden="true">→</span>
             </Link>
           </div>
         </div>
 
         {/* Mega grid de columnas */}
         <div className="px-6 md:px-12 py-8 md:py-10">
-          {footerSections.map((section) => (
+          {(dict?.sections || footerSections).map((section: any) => (
             <div key={section.heading} className="mb-10 last:mb-0">
               {/* Heading de sección */}
               <p className="text-[10.5px] font-bold text-stone-900 uppercase tracking-[0.15em] mb-5 pb-2 border-b border-stone-100">
@@ -202,7 +211,7 @@ export function Footer() {
 
               {/* Sub-columnas */}
               <div className={`grid gap-8 grid-cols-1 sm:grid-cols-2 ${section.cols.length === 3 ? "md:grid-cols-3" : section.cols.length === 1 ? "md:grid-cols-4" : "md:grid-cols-2"}`}>
-                {section.cols.filter(col=>col.links.some(link=>availableNavigation(link.href))).map((col, ci) => (
+                {section.cols.filter((col: any)=>col.links.some((link: any)=>availableNavigation(link.href))).map((col: any, ci: number) => (
                   <div key={ci}>
                     {col.subheading && (
                       <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest mb-3">
@@ -210,12 +219,12 @@ export function Footer() {
                       </p>
                     )}
                     <ul className="space-y-0.5">
-                      {col.links.filter(link=>availableNavigation(link.href)).map((link) => (
+                      {col.links.filter((link: any)=>availableNavigation(link.href)).map((link: any) => (
                         <li key={link.href}>
                           <FooterLink
                             href={link.href}
                             label={link.label}
-                            icon={link.icon}
+                            icon={typeof link.icon === "string" ? iconMap[link.icon] : link.icon}
                           />
                         </li>
                       ))}
@@ -230,19 +239,23 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-stone-100 mx-6 md:mx-12" />
         <div className="px-6 md:px-12 py-6 flex flex-col md:flex-row items-center md:items-start justify-between gap-4">
-          <p className="text-[12px] text-stone-400 text-center md:text-left">
-            © {new Date().getFullYear()} shwcs · Hecho en México
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="text-[12px] text-stone-400 text-center md:text-left">
+              © {new Date().getFullYear()} shwcs · {dict?.madeIn || "Hecho en México"}
+            </p>
+            <div className="h-3 w-px bg-stone-300" />
+            <LanguageSelector />
+          </div>
           <div className="flex items-center justify-center gap-5">
             <Link
-              href="https://github.com/mxfounders"
+              href="https://x.com/shwcshq"
               target="_blank"
               rel="noopener noreferrer"
               className="text-stone-400 hover:text-stone-900 transition-colors"
-              aria-label="GitHub"
+              aria-label="X (Twitter)"
             >
               <svg viewBox="0 0 24 24" className="size-4" fill="currentColor">
-                <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
               </svg>
             </Link>
           </div>
