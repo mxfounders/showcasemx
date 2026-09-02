@@ -190,41 +190,57 @@ export function LandingFeatures() {
           </div>
         </div>
 
-        {/* Content Area - Clean Colored Rectangle */}
-        <div className="relative mx-auto max-w-6xl">
-          <div className="rounded-[2.5rem] p-4 sm:p-8 bg-white">
-            <div className="rounded-[2rem] overflow-hidden shadow-2xl ring-1 ring-stone-900/5 h-[400px] sm:h-[500px] relative">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeTab.id}
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.02 }}
-                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  className="absolute inset-0 flex flex-col items-center justify-center p-8 sm:p-16 text-center"
-                  style={{ backgroundColor: activeTab.color.soft }}
-                >
-                  <div 
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-[1.5rem] mb-8 flex items-center justify-center text-white text-3xl sm:text-4xl font-bold shadow-xl"
-                    style={{ backgroundColor: activeTab.color.solid }}
-                  >
-                    {activeTab.label.charAt(0)}
-                  </div>
-                  <h3 
-                    className="text-3xl sm:text-5xl font-semibold tracking-tight mb-6" 
-                    style={{ color: activeTab.color.solid }}
-                  >
-                    {activeTab.title}
-                  </h3>
-                  <p 
-                    className="text-lg sm:text-2xl font-medium opacity-80 max-w-3xl leading-relaxed" 
-                    style={{ color: activeTab.color.solid }}
-                  >
-                    {activeTab.description}
-                  </p>
-                </motion.div>
-              </AnimatePresence>
-            </div>
+        {/* Content Area - Floating Mockup Grid */}
+        <div className="relative mx-auto max-w-7xl mt-8 pt-4 px-4 sm:px-6 lg:px-8">
+          {/* Animated Background */}
+          <div 
+            className="absolute top-16 bottom-0 left-4 right-4 sm:left-6 sm:right-6 lg:left-8 lg:right-8 rounded-[2.5rem] transition-colors duration-700 shadow-xl" 
+            style={{ backgroundColor: activeTab.color.soft }} 
+          />
+          
+          {/* Grid Container (Fading at the bottom) */}
+          <div 
+            className="relative z-10 h-[600px] sm:h-[750px] w-full pointer-events-auto" 
+            style={{
+              maskImage: 'linear-gradient(to bottom, black 65%, transparent 100%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, black 65%, transparent 100%)'
+            }}
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                className="absolute inset-0 px-4 sm:px-12 pb-24"
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                  {Array.from({ length: 16 }).map((_, i) => (
+                    <div 
+                      key={i} 
+                      className="rounded-3xl p-6 flex flex-col h-48 sm:h-52 bg-white/60 border border-dashed border-stone-300 backdrop-blur-md transition-all hover:bg-white hover:shadow-sm group cursor-pointer"
+                    >
+                      <div className="flex justify-between text-[10px] font-bold text-stone-400 tracking-widest uppercase mb-auto">
+                        <span>Espacio Disponible</span>
+                        <span>{(i + 1).toString().padStart(2, '0')}</span>
+                      </div>
+                      <div>
+                        <h4 className="text-lg font-medium text-stone-600 mb-4 leading-tight group-hover:text-stone-900 transition-colors">
+                          Tu solución puede estar aquí.
+                        </h4>
+                        <div 
+                          className="text-[11px] font-bold flex items-center gap-1.5 transition-colors opacity-80 group-hover:opacity-100 uppercase tracking-wide"
+                          style={{ color: activeTab.color.solid }}
+                        >
+                          Postular en {activeTab.label.split(' ')[0]} <span className="text-base font-medium leading-none mb-0.5">+</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
       </div>
