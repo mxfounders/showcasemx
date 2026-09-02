@@ -175,24 +175,153 @@ export function LandingStackingCards() {
             </div>
           </div>
 
-          {/* Right Content (Visuals) */}
+          {/* Right Content (Visuals) - Premium UI Mockups */}
           <div className="flex-1 relative hidden md:block opacity-90 overflow-hidden">
-            {/* Just a cool decorative abstract graphic based on the category color to mimic the 3D clay look */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div 
-                className="w-96 h-96 rounded-full blur-3xl opacity-30 mix-blend-multiply"
-                style={{ backgroundColor: item.color.solid }}
-              />
-              <div 
-                className="absolute w-64 h-64 rounded-[3rem] rotate-12 shadow-2xl border-8 border-white/20 backdrop-blur-sm flex items-center justify-center text-[10rem] font-bold text-white/50"
-                style={{ backgroundColor: item.color.solid }}
-              >
-                {item.badge.charAt(0)}
-              </div>
-            </div>
+            <RightVisual id={item.id} color={item.color.solid} />
           </div>
         </div>
       ))}
     </section>
   );
 }
+
+const RightVisual = ({ id, color }: { id: string; color: string }) => {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-12">
+      {/* Background glowing orb */}
+      <motion.div 
+        animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.4, 0.2] }} 
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute w-[28rem] h-[28rem] rounded-full blur-[100px] mix-blend-multiply"
+        style={{ backgroundColor: color }}
+      />
+      
+      {/* Dynamic UI based on feature */}
+      {id === "data" && <DataVisual color={color} />}
+      {id === "agents" && <AgentsVisual color={color} />}
+      {id === "enrichment" && <EnrichmentVisual color={color} />}
+      {id === "outbound" && <OutboundVisual color={color} />}
+    </div>
+  );
+};
+
+const DataVisual = ({ color }: { color: string }) => (
+  <motion.div 
+    animate={{ y: [0, -15, 0], rotate: [0, 1, 0] }} 
+    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+    className="relative w-full max-w-sm h-96 bg-white/40 backdrop-blur-xl border border-white/60 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.15)] rounded-[2rem] p-6 flex flex-col gap-4 overflow-hidden z-10"
+  >
+    <div className="w-full h-12 bg-white/80 rounded-2xl border border-white/50 flex items-center px-4 gap-3 shadow-sm">
+      <div className="w-4 h-4 rounded-full bg-stone-300" />
+      <div className="w-32 h-2 rounded-full bg-stone-200" />
+    </div>
+    <div className="grid grid-cols-2 gap-4 flex-1">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="bg-white/60 rounded-2xl border border-white/40 p-4 flex flex-col gap-3 shadow-sm">
+          <div className="w-10 h-10 rounded-xl opacity-80" style={{ backgroundColor: i % 2 === 0 ? color : '#d6d3d1' }} />
+          <div className="w-16 h-2 rounded-full bg-stone-400" />
+          <div className="w-10 h-2 rounded-full bg-stone-300" />
+        </div>
+      ))}
+    </div>
+  </motion.div>
+);
+
+const AgentsVisual = ({ color }: { color: string }) => (
+  <div className="relative w-full max-w-sm h-96 flex items-center justify-center">
+    <motion.div 
+      animate={{ y: [0, -15, 0] }} 
+      transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+      className="absolute z-20 w-56 h-72 bg-white/60 backdrop-blur-2xl border border-white/60 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] rounded-[2rem] p-6 flex flex-col items-center justify-center gap-6"
+    >
+      <motion.div 
+        animate={{ scale: [1, 1.15, 1] }} 
+        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+        className="w-24 h-24 rounded-full shadow-[0_0_40px_rgba(0,0,0,0.15)] flex items-center justify-center text-4xl text-white"
+        style={{ backgroundColor: color }}
+      >
+        ✨
+      </motion.div>
+      <div className="flex flex-col items-center gap-2 w-full mt-2">
+        <div className="w-24 h-3 rounded-full bg-stone-400" />
+        <div className="w-16 h-2 rounded-full bg-stone-300" />
+      </div>
+      <div className="w-full h-12 rounded-xl flex items-center justify-center text-sm font-bold text-white shadow-md mt-auto" style={{ backgroundColor: color }}>
+        98% Match
+      </div>
+    </motion.div>
+    
+    <motion.div 
+      animate={{ y: [0, 10, 0], x: [0, -10, 0] }} 
+      transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+      className="absolute top-8 left-0 w-32 h-32 bg-white/40 backdrop-blur-xl border border-white/50 rounded-2xl shadow-lg z-10"
+    />
+    <motion.div 
+      animate={{ y: [0, -10, 0], x: [0, 10, 0] }} 
+      transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+      className="absolute bottom-8 right-0 w-40 h-40 bg-white/40 backdrop-blur-xl border border-white/50 rounded-2xl shadow-lg z-10"
+    />
+  </div>
+);
+
+const EnrichmentVisual = ({ color }: { color: string }) => (
+  <motion.div 
+    animate={{ y: [0, -10, 0] }} 
+    transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}
+    className="relative w-full max-w-sm h-96 bg-white/50 backdrop-blur-xl border border-white/60 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.15)] rounded-[2rem] p-6 flex flex-col gap-6 z-10"
+  >
+    <div className="flex justify-between items-end h-32 border-b border-stone-200/60 pb-2">
+      {[40, 70, 50, 90, 65, 80].map((h, i) => (
+        <motion.div 
+          initial={{ height: 0 }}
+          animate={{ height: `${h}%` }}
+          transition={{ duration: 1.5, delay: i * 0.1, ease: "easeOut" }}
+          key={i} 
+          className="w-10 rounded-t-lg" 
+          style={{ backgroundColor: i === 3 ? color : '#e7e5e4' }} 
+        />
+      ))}
+    </div>
+    <div className="flex flex-col gap-3 flex-1">
+      {[1, 2, 3].map((_, i) => (
+        <div key={i} className="flex items-center justify-between bg-white/70 rounded-xl p-3 shadow-sm border border-white/50">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg opacity-90" style={{ backgroundColor: i === 0 ? color : '#d6d3d1' }} />
+            <div className="flex flex-col gap-1.5">
+              <div className="w-16 h-2 rounded-full bg-stone-400" />
+              <div className="w-10 h-1.5 rounded-full bg-stone-300" />
+            </div>
+          </div>
+          <div className="w-12 h-3 rounded-full bg-stone-800" />
+        </div>
+      ))}
+    </div>
+  </motion.div>
+);
+
+const OutboundVisual = ({ color }: { color: string }) => (
+  <div className="relative w-full max-w-sm h-96 flex items-center justify-center">
+    {/* Connection line */}
+    <div className="absolute w-full h-1 border-t-[3px] border-dashed border-stone-300 z-10" />
+
+    <motion.div 
+      animate={{ y: [0, -15, 0] }} 
+      transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
+      className="absolute left-2 z-20 w-44 h-52 bg-white/80 backdrop-blur-xl border border-white/60 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] rounded-[2rem] p-5 flex flex-col items-center justify-center gap-4"
+    >
+      <div className="w-20 h-20 rounded-full bg-stone-100 flex items-center justify-center text-3xl shadow-inner">🏢</div>
+      <div className="w-24 h-3 rounded-full bg-stone-400 mt-2" />
+      <div className="w-16 h-2 rounded-full bg-stone-300" />
+    </motion.div>
+
+    <motion.div 
+      animate={{ y: [0, 15, 0] }} 
+      transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+      className="absolute right-2 z-20 w-44 h-52 bg-white/80 backdrop-blur-xl border border-white/60 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] rounded-[2rem] p-5 flex flex-col items-center justify-center gap-4"
+    >
+      <div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl text-white shadow-lg" style={{ backgroundColor: color }}>👨‍💻</div>
+      <div className="w-24 h-3 rounded-full bg-stone-800 mt-2" />
+      <div className="w-16 h-2 rounded-full bg-stone-400" />
+    </motion.div>
+  </div>
+);
