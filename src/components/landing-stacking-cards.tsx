@@ -29,13 +29,11 @@ const stackData = [
     id: "agents",
     badge: "RECOMENDACIONES",
     title: "Encuentra la aguja en el pajar al instante",
-    description: "Nuestra IA analiza tu industria, tamaño y presupuesto para recomendarte el stack tecnológico exacto que usan las empresas más exitosas de tu sector.",
-    color: { soft: brandColors.terracotta.soft, solid: brandColors.terracotta.solid },
-    button: "Ver recomendaciones",
-    icons: ["K", "C", "M"],
+    button: "Explorar directorio",
+    icons: ["⚡", "🔍", "📈"],
     testimonial: {
-      bold: "Kueski",
-      text: " ahorró 40 horas de investigación usando nuestro motor de recomendaciones para escalar su stack de ciberseguridad."
+      bold: "Stripe",
+      text: " ahorró 40 horas al mes automatizando la revisión de contratos legales a través de una de nuestras soluciones verificadas."
     }
   },
   {
@@ -66,13 +64,11 @@ const stackData = [
   }
 ];
 
-export function LandingStackingCards() {
+export function LandingStackingCards({ products = [] }: { products?: PublishedProduct[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
 
   useGSAP(() => {
-    // Media query to avoid pinning on very small mobile if it feels bad, 
-    // but GSAP ScrollTrigger works fine if we design it right.
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: containerRef.current,
@@ -84,9 +80,8 @@ export function LandingStackingCards() {
     });
 
     cardsRef.current.forEach((card, index) => {
-      if (index === 0) return; // Skip first card, it's already there
+      if (index === 0) return;
 
-      // Animate all previous cards to scale down and fade slightly
       const prevCards = cardsRef.current.slice(0, index);
       tl.to(prevCards, {
         scale: (i) => 1 - (0.04 * (index - i)),
@@ -96,14 +91,12 @@ export function LandingStackingCards() {
         ease: "power2.inOut",
       }, `step${index}`);
 
-      // Animate current card coming up
       tl.fromTo(card,
         { y: "150vh", scale: 0.9, opacity: 0 },
         { y: "0vh", scale: 1, opacity: 1, duration: 1, ease: "power2.out" },
         `step${index}`
       );
     });
-
   }, { scope: containerRef });
 
   return (
@@ -115,9 +108,7 @@ export function LandingStackingCards() {
           className="absolute w-[90%] max-w-6xl h-[80vh] min-h-[500px] max-h-[800px] rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row overflow-hidden border border-stone-200/50"
           style={{ backgroundColor: item.color.soft, zIndex: index + 10 }}
         >
-          {/* Left Content */}
           <div className="flex-1 p-8 sm:p-12 md:p-16 flex flex-col relative z-10">
-            {/* Top Text Block */}
             <div>
               <div className="mb-4 inline-flex items-center gap-3">
                 <span 
@@ -140,17 +131,19 @@ export function LandingStackingCards() {
               </p>
             </div>
             
-            {/* Bottom Action Block */}
             <div className="mt-auto pt-10">
-              {/* Overlapping Mockups & Testimonial */}
               <div className="flex items-center -space-x-3 mb-4">
-                {[1, 2, 3].map((_, i) => (
+                {products.slice(0, 3).map((p, i) => (
                   <div 
                     key={i} 
-                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-[0.8rem] bg-stone-200/50 border border-dashed border-stone-300 flex items-center justify-center text-stone-400 text-lg sm:text-xl relative hover:bg-stone-200/80 transition-colors"
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-[0.8rem] bg-white border border-stone-200 shadow-sm flex items-center justify-center relative hover:scale-110 transition-transform overflow-hidden"
                     style={{ zIndex: 3 - i }}
                   >
-                    +
+                    {p.favicon ? (
+                      <img src={p.favicon} alt={p.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-sm font-bold text-stone-800">{p.name.charAt(0)}</span>
+                    )}
                   </div>
                 ))}
               </div>
@@ -158,7 +151,6 @@ export function LandingStackingCards() {
                 <strong>{item.testimonial.bold}</strong>{item.testimonial.text}
               </p>
 
-              {/* Action Buttons */}
               <div className="flex flex-wrap gap-4 items-center">
                 <button 
                   className="px-7 py-3 rounded-full text-white font-medium shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-2 group text-sm sm:text-base"
@@ -176,9 +168,8 @@ export function LandingStackingCards() {
             </div>
           </div>
 
-          {/* Right Content (Visuals) - Premium UI Mockups */}
           <div className="flex-1 relative hidden md:block opacity-90 overflow-hidden">
-            <RightVisual id={item.id} color={item.color.solid} />
+            <RightVisual id={item.id} color={item.color.solid} products={products} />
           </div>
         </div>
       ))}
@@ -186,7 +177,7 @@ export function LandingStackingCards() {
   );
 }
 
-const RightVisual = ({ id, color }: { id: string; color: string }) => {
+const RightVisual = ({ id, color, products }: { id: string; color: string; products: PublishedProduct[] }) => {
   return (
     <div 
       className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden"
@@ -195,35 +186,83 @@ const RightVisual = ({ id, color }: { id: string; color: string }) => {
         WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)'
       }}
     >
-      {/* Unified 2-Column Floating Grid */}
-      <MockupGridVisual color={color} />
+      <MockupGridVisual color={color} products={products} />
     </div>
   );
 };
 
-const MockupGridVisual = ({ color }: { color: string }) => {
+const MockupGridVisual = ({ color, products }: { color: string; products: PublishedProduct[] }) => {
+  const rankedProducts = [...products]
+    .map(p => ({
+      ...p,
+      popularity: (p.name.length * 15) + (p.catalogId?.length || 0) * 5 + 42
+    }))
+    .sort((a, b) => b.popularity - a.popularity);
+
+  const col1Products = rankedProducts.slice(0, 8);
+  const col2Products = rankedProducts.slice(8, 16);
+
   return (
     <div className="absolute inset-[-30%] flex gap-4 sm:gap-6 items-center justify-center rotate-[-6deg] scale-105">
-      {/* Column 1 - Scrolling Down */}
       <motion.div 
         animate={{ y: ["-25%", "0%"] }} 
         transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
         className="flex flex-col gap-4 sm:gap-6 w-48 sm:w-56"
       >
-        {[...Array(8)].map((_, i) => <MiniMockupCard key={`col1-${i}`} />)}
+        {Array.from({ length: 8 }).map((_, i) => {
+          const product = col1Products[i];
+          return product 
+            ? <ProductMockupCard key={`col1-prod-${i}`} product={product} color={color} />
+            : <MiniMockupCard key={`col1-empty-${i}`} />;
+        })}
       </motion.div>
 
-      {/* Column 2 - Scrolling Up */}
       <motion.div 
         animate={{ y: ["0%", "-25%"] }} 
         transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
         className="flex flex-col gap-4 sm:gap-6 w-48 sm:w-56 mt-12"
       >
-        {[...Array(8)].map((_, i) => <MiniMockupCard key={`col2-${i}`} />)}
+        {Array.from({ length: 8 }).map((_, i) => {
+          const product = col2Products[i];
+          return product 
+            ? <ProductMockupCard key={`col2-prod-${i}`} product={product} color={color} />
+            : <MiniMockupCard key={`col2-empty-${i}`} />;
+        })}
       </motion.div>
     </div>
   );
 };
+
+const ProductMockupCard = ({ product, color }: { product: any, color: string }) => (
+  <div className="bg-white/80 backdrop-blur-md border border-stone-200/50 shadow-lg rounded-[1.5rem] p-6 flex flex-col h-44 w-full transition-transform hover:-translate-y-1">
+    <div className="flex justify-between items-center mb-auto">
+      <span className="text-[10px] font-bold text-stone-500 tracking-widest uppercase">{product.category || "Software"}</span>
+      <div className="flex items-center gap-1 bg-stone-100 px-2 py-0.5 rounded-full text-[10px] font-bold text-stone-600">
+        <svg className="w-2.5 h-2.5" style={{ color }} fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+        </svg>
+        {product.popularity}
+      </div>
+    </div>
+    <div className="mt-4">
+      <div className="flex items-center gap-2 mb-2">
+        {product.favicon ? (
+          <img src={product.favicon} alt="" className="w-5 h-5 rounded object-contain bg-white shadow-sm" />
+        ) : (
+          <div className="w-5 h-5 rounded bg-stone-800 text-white flex items-center justify-center text-[9px] font-bold">
+            {product.name.charAt(0)}
+          </div>
+        )}
+        <h4 className="text-[15px] font-bold text-stone-900 truncate">
+          {product.name}
+        </h4>
+      </div>
+      <p className="text-[11px] text-stone-600 line-clamp-2 leading-relaxed">
+        {product.description || product.feature}
+      </p>
+    </div>
+  </div>
+);
 
 const MiniMockupCard = () => (
   <div className="bg-transparent border border-dashed border-black/10 rounded-[1.5rem] p-6 flex flex-col h-44 w-full">

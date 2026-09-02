@@ -23,8 +23,8 @@ export default async function Home(
       <Suspense fallback={<div className="min-h-[70vh]" aria-label={dict.landing.loadingCatalog} />}>
         <LandingDiscovery published={published} dict={dict.landing} />
       </Suspense>
-      <LandingFeatures />
-      <LandingStackingCards />
+      <LandingFeatures products={published} />
+      <LandingStackingCards products={published} />
       <LandingBentoBlogs />
       <FounderInvitation dict={dict.landing} />
     </div>
