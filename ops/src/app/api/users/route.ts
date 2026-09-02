@@ -55,8 +55,8 @@ export async function GET(req: Request) {
         isReviewer: Boolean(r.is_reviewer),
       })),
     }, { headers: { 'Cache-Control': 'no-store' } });
-  } catch (err) {
+  } catch (err: any) {
     console.error('[ops/users]', err);
-    return NextResponse.json({ error: 'Error al cargar usuarios.' }, { status: 503 });
+    return NextResponse.json({ error: err.message, stack: err.stack }, { status: 503 });
   }
 }
