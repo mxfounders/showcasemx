@@ -1411,11 +1411,11 @@ Sustituye lo que decían la sección 7 y el §44 sobre el revisor dentro de la a
   `solution_reviewers`: aun así `/account/review` y `/account/review/reports`
   responden 404, la sidebar no menciona la revisión y las dos acciones de API
   devuelven 400. El permiso ya solo sirve para entrar a `ops.shwcs.site`.
-- Quedan como archivos muertos, pendientes de borrar a mano:
-  `src/app/[locale]/account/review/` (dos páginas reducidas a `notFound()`),
-  `src/components/solutions/review-form.tsx` y
-  `src/components/settings/settings-back-link.tsx`. No se pudieron eliminar por
-  permisos de la sesión; ninguno se importa desde ningún sitio.
+- Se eliminaron los archivos que quedaban sin uso: `src/app/[locale]/account/review/`
+  (sus dos páginas), `src/components/solutions/review-form.tsx` y
+  `src/components/settings/settings-back-link.tsx`, este último sustituido por
+  `SettingsNav` (§49). `/account/review` y `/account/review/reports` responden
+  404 porque la ruta ya no existe, no por una guarda. No reintroducirlas.
 
 ## 49. Configuración con seguridad y control de datos — 3 septiembre 2026
 
