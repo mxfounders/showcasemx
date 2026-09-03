@@ -1242,3 +1242,29 @@ publicación con `actor_id`, permisos revisor/admin, guarda del último admin, f
 de privacidad y todas las superficies del panel, con cuentas `@example.invalid`
 desechables. No usar la cuenta real dueña de Cord/Flouvia para probar. Pendiente:
 credenciales de Vercel para el proyecto `shwcs-ops` y revisión legal del nuevo dominio.
+
+## 45. Producción real y estado corregido — 3 septiembre 2026
+
+Con acceso confirmado al proyecto Vercel correcto (`mxfounders/shwcs` y
+`mxfounders/shwcs-ops`, dominios `shwcs.site`/`ops.shwcs.site` ya desplegados),
+se auditó y corrigió: las variables de entorno de Production/Preview de `shwcs`
+estaban en cadena vacía (detalle completo en `docs/operations.md`), y
+`db/ops-console.sql` no estaba aplicada en `shwcs_production`. Ambos corregidos
+y redeployados el 3 de septiembre; verificado en vivo tras el redeploy.
+
+**Estado real de `shwcs_production` a esa fecha, distinto de lo que sugerían
+notas históricas de este documento**: una sola cuenta (`hola@shwcs.site`,
+ahora admin de ops ahí) y una sola solución, "Cord", en estado `pending`,
+**nunca publicada**, sin `catalog_key` asignado. Flouvia no existe como fila.
+Nadie más se ha registrado. Las menciones previas a "Cord y Flouvia ya
+publicados, versiones 8 y 2" describían el estado de una base de desarrollo,
+no el de producción; no repetir esa afirmación como si fuera el estado en vivo.
+Publicar/asignar `catalog_key` a Cord o crear Flouvia en producción sigue
+pendiente de una acción explícita del propietario, igual que antes.
+
+Dos bases Neon reales en el mismo host: `neondb` (desarrollo, rol
+`neondb_owner`) y `shwcs_production` (real, rol de aplicación
+`shwcs_app_production` sin permisos DDL — usar `neondb_owner` con la base
+`/shwcs_production` solo para migraciones, nunca en runtime). `shwcs-ops`
+usa `NEON_DATABASE_URL` propia apuntando a `shwcs_production`, ya no depende
+del enlace cruzado `shwcs_POSTGRES_URL` (que apuntaba a `neondb`).

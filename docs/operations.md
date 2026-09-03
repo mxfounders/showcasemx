@@ -31,5 +31,31 @@ Requiere que `DATABASE_URL` en `.env.local` pertenezca al rol propietario de Neo
   newsletter, métricas, equipo y bitácora. Login propio en dos pasos (contraseña +
   TOTP obligatorio), sesiones en `ops_sessions` separadas de `auth_sessions`, y
   autorización por `solution_reviewers.level` (`reviewer`/`admin`). Ver CLAUDE.md §44
-  y `tests/integration/ops.cjs`. Pendiente: variables de entorno del proyecto en
-  Vercel (`OPS_TOTP_KEY`, `DATABASE_URL` de producción) y dominio conectado.
+  y `tests/integration/ops.cjs`. Desplegado y con `OPS_TOTP_KEY`/`NEON_DATABASE_URL`
+  configuradas apuntando a `shwcs_production` desde el 3 de septiembre de 2026.
+
+## Incidente del 3 de septiembre de 2026 — variables de entorno vacías en producción
+
+Las variables de entorno de Production del proyecto `shwcs` (`NEON_DATABASE_URL`,
+`DATABASE_URL`, `POSTGRES_URL` y toda la familia `PG*`, más `AUTH_APP_ORIGIN`,
+`AUTH_EMAIL_FROM`, `RESEND_API_KEY`, `GOOGLE_CLIENT_ID/SECRET`, `CRON_SECRET`,
+`CONTACT_EMAIL_TO`, `MONITOR_EMAIL_TO`, `NEWSLETTER_UNSUBSCRIBE_SECRET`,
+`NEXT_PUBLIC_SHOW_DEMO_PROJECTS`, `LAUNCH_LEGAL_REVIEWED`,
+`AUTH_REQUIRE_VERIFIED_EMAIL`) estaban guardadas como cadena vacía, no ausentes.
+Same en Preview. La portada seguía cargando porque `/` cae al catálogo estático
+de `src/lib/catalog-preview.ts` cuando no hay fila publicada; rutas privadas
+(`/account`, forzadas a `dynamic='force-dynamic'`) fallaban de inmediato porque
+`getDatabaseUrl()` devolvía cadena vacía. `db/ops-console.sql` tampoco estaba
+aplicada en `shwcs_production` (sí lo estaba en `neondb`, la base de
+desarrollo), así que el código que ya consulta `suspended_at`/`disabled_at`
+habría vuelto a romper `/account` aunque solo se hubieran arreglado las
+variables. Corregido: valores reales cargados desde `.env.production.local`
+(los propios de producción) y desde `.env.local` (Resend/Google, mismas
+credenciales de siempre), migración aplicada a `shwcs_production` con el rol
+propietario (`neondb_owner`, no el rol de la app en runtime), `hola@shwcs.site`
+repromovido a admin de ops ahí, y redeploy de ambos proyectos. Verificado en
+vivo tras el redeploy: `/api/health` 200, login con contraseña incorrecta
+devuelve 401 genérico (antes 503 «Storage unavailable»), y el arranque de
+Google OAuth redirige correctamente. Pendiente de confirmar por el propietario:
+que la URI `https://shwcs.site/api/auth/google/callback` esté autorizada en
+Google Cloud Console — eso no se configura desde Vercel.
