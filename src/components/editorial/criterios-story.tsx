@@ -1,7 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, TextSelect, Cpu, LayoutTemplate, CircleDollarSign, Fingerprint, LineChart, ShieldCheck, Scale } from 'lucide-react';
+import { ArrowRight, TextSelect, Cpu, LayoutTemplate, CircleDollarSign, Fingerprint, LineChart, ShieldCheck, Scale, MessageCircle, Bookmark, Heart, Eye } from 'lucide-react';
+
+const rankingWeights = [
+  { Icon: MessageCircle, weight: '× 3', label: 'Comentario', desc: 'La señal más costosa de dar: alguien se tomó el tiempo de escribir.' },
+  { Icon: Bookmark, weight: '× 2', label: 'Guardado', desc: 'Expresa intención de volver o comparar más adelante.' },
+  { Icon: Heart, weight: '× 1', label: 'Like', desc: 'La interacción más fácil de dar.' },
+  { Icon: Eye, weight: '× 0.1', label: 'Vista', desc: 'Tráfico real, la señal más débil de las cuatro.' },
+];
 
 const criterios = [
   {
@@ -138,6 +145,34 @@ export function CriteriosStory() {
               </div>
             );
           })}
+        </div>
+      </section>
+
+      {/* ── ORDEN DEL CATÁLOGO ───────────────────────────────── */}
+      <section className="mx-auto max-w-[1500px] px-5 pt-16 sm:px-10 lg:px-16 lg:pt-24">
+        <div className="grid gap-8 border-t border-stone-200 pt-10 lg:grid-cols-[1fr_1fr] lg:gap-16 lg:pt-14">
+          <div>
+            <h2 className="max-w-lg text-4xl font-semibold leading-[0.98] tracking-[-0.05em] sm:text-5xl">
+              Cómo se ordena el catálogo
+            </h2>
+            <p className="mt-5 max-w-md text-base leading-relaxed text-stone-600 sm:text-lg">
+              Dentro de cada categoría, el orden refleja interacción real de compradores — comentar,
+              guardar, dar like — no una puntuación de calidad ni un aval editorial. Todo empieza en
+              cero. Es una señal auxiliar, no una certificación: puede manipularse creando cuentas.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {rankingWeights.map(({ Icon, weight, label, desc }) => (
+              <div key={label} className="rounded-2xl border border-stone-200 bg-stone-50 p-5">
+                <div className="mb-3 flex items-center justify-between">
+                  <Icon className="size-5 text-stone-500" aria-hidden="true" />
+                  <span className="text-sm font-semibold text-stone-400">{weight}</span>
+                </div>
+                <p className="text-sm font-medium text-stone-800">{label}</p>
+                <p className="mt-1 text-xs leading-relaxed text-stone-500">{desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     </article>

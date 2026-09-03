@@ -2,11 +2,13 @@ import { PublicMetrics } from '@/components/metrics/public-metrics';
 import { ReportForm } from '@/components/trust/report-form';
 import { ScreenshotGallery } from './screenshot-gallery';
 import { SaveProjectButton } from '@/components/library/save-project-button';
+import { SolutionSocial } from './solution-social';
 import Link from 'next/link';
 import { ArrowLeft,ArrowUpRight,Play } from 'lucide-react';
 import { getSolutionCategories,safeSolutionUrl,solutionEvaluationFields,type SolutionData } from '@/lib/solutions/model';
 import { actionButtonStyle,brandColors,solutionCategoryTones } from '@/lib/brand-colors';
-export function SolutionPresentation({data,id,catalogKey,publishedAt,verifiedDomain,preview=false}:{data:SolutionData;id:string;catalogKey?:string|null;publishedAt?:string|null;verifiedDomain?:string|null;preview?:boolean}){
+import type { SolutionComment } from '@/lib/solutions/social';
+export function SolutionPresentation({data,id,catalogKey,publishedAt,verifiedDomain,preview=false,social,comments,viewerName,own=false}:{data:SolutionData;id:string;catalogKey?:string|null;publishedAt?:string|null;verifiedDomain?:string|null;preview?:boolean;social?:{likes:number;liked:boolean;commentsCount:number};comments?:SolutionComment[];viewerName?:string;own?:boolean}){
  const website=safeSolutionUrl(data.website),evidence=safeSolutionUrl(data.evidenceUrl),demo=safeSolutionUrl(data.demoUrl);
  const evaluation=solutionEvaluationFields.filter(field=>!['scope','evidence'].includes(field.key));
  return <article className={preview?"account-page":"mx-auto max-w-6xl px-6 py-12 sm:py-20"}>
@@ -28,5 +30,6 @@ export function SolutionPresentation({data,id,catalogKey,publishedAt,verifiedDom
    </div>
    <aside className="border-t border-stone-200 pt-6 lg:sticky lg:top-24 lg:border-t-0 lg:pt-0"><h2 className="text-lg font-medium">¿Encaja con lo que necesitas?</h2><p className="mt-3 text-sm leading-relaxed text-stone-500">Conoce al equipo desde su sitio y confirma alcance, precio y tiempos para tu empresa.</p>{website&&<a data-official-site href={website} target="_blank" rel="noopener noreferrer" style={actionButtonStyle} className="action-button mt-6 inline-flex w-full items-center justify-between gap-2 rounded-full px-5 py-3 text-sm font-medium">Visitar sitio oficial<ArrowUpRight className="size-4" aria-hidden="true"/><span className="sr-only"> (otra pestaña)</span></a>}{!preview&&<><Link href={`/account/contacts/new?solution=${id}`} style={actionButtonStyle} className="action-button mt-5 inline-flex w-full justify-center rounded-full px-5 py-3 text-sm font-medium">Quiero conocer esta solución →</Link><div className="mt-5"><SaveProjectButton projectKey={catalogKey?`catalog:${catalogKey}`:`solution:${id}`} /></div></>}<p className="mt-6 text-xs leading-relaxed text-stone-400">Información proporcionada por el proyecto. La revisión editorial para aparecer en el catálogo no certifica sus resultados, seguridad ni calidad del servicio.</p>{!preview&&<details className="mt-6 border-t border-stone-200 pt-5"><summary className="cursor-pointer text-xs text-stone-500">Reportar esta ficha</summary><div className="mt-4"><ReportForm solutionId={id}/></div></details>}</aside>
   </div>
+  {!preview&&social&&<SolutionSocial id={id} initialLikes={social.likes} liked={social.liked} initialCommentsCount={social.commentsCount} comments={comments??[]} initialName={viewerName} own={own}/>}
  </article>;
 }

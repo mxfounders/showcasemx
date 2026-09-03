@@ -98,26 +98,45 @@ export function CategoryExplorer({ categories = previewCategories, selected, onC
             {results !== null && <div className="mb-5 flex flex-wrap items-center justify-between gap-3 text-sm text-stone-600"><p role="status">{results.length} {results.length === 1 ? (dict?.solution || "solución") : (dict?.solutions || "soluciones")} {dict?.solutionFor || "para"} “{query}”</p><button type="button" onClick={onClear} style={actionButtonStyle} className="action-button rounded-full px-4 py-2">{dict?.clearBtn || "Limpiar búsqueda"}</button></div>}
             {results?.length === 0 && <div className="rounded-3xl border border-dashed border-stone-300 p-8 sm:p-12"><h2 className="text-2xl font-medium tracking-tight">{dict?.emptyTitle || "Todavía no tenemos una solución para eso."}</h2><p className="mt-3 max-w-md text-sm leading-relaxed text-stone-500">{dict?.emptyDesc || "El catálogo está creciendo. Prueba con cobros, tienda online o automatización, o explora otra categoría."}</p></div>}
             <div id="category-products" role="region" aria-label={results !== null ? "Resultados de búsqueda" : `Soluciones de ${category.label}`} className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3" ref={gridRef}>
-              {products.map((product, index) => (
-                <button key={product.detailUrl ?? `${category.id}-${product.name}`} type="button" onClick={() => setDetail(product)} aria-label={`${product.website ? (dict?.seeSolution || "Conocer solución") : (dict?.seeExample || "Ver ejemplo")}: ${product.name}`} className="group flex h-[328px] min-w-0 flex-col rounded-[20px] border border-stone-200/80 bg-white p-3.5 text-left shadow-[0_2px_6px_rgba(0,0,0,0.015)] transition-[box-shadow,border-color] duration-300 hover:border-stone-300 hover:shadow-[0_12px_28px_-12px_rgba(0,0,0,0.16)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800 sm:h-[340px]">
-                  {product.website ? (
-                    <div className="relative flex h-36 shrink-0 flex-col items-center justify-center gap-3 overflow-hidden rounded-xl sm:h-40" style={{ backgroundColor: palette.soft, color: palette.solid }}>
-                      {product.ogImage ? <Image src={product.ogImage} alt={`Portada de ${product.name}`} fill sizes="(min-width: 1600px) 400px, (min-width: 1280px) 30vw, (min-width: 640px) 45vw, 90vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.03] motion-reduce:transform-none" /> : <>
-                        <span className="text-[38px] font-semibold tracking-[-0.06em]">{product.name}</span>
-                        <span className="text-xs">{new URL(product.website).hostname}</span>
-                      </>}
-                      <span className="absolute right-3 top-3 rounded-full bg-white/90 px-2 py-1 text-[10px] font-medium">{product.offering}</span>
+              {products.map((product, index) => {
+                const key = product.detailUrl ?? `${category.id}-${product.name}`;
+                const label = `${product.website ? (dict?.seeSolution || "Conocer solución") : (dict?.seeExample || "Ver ejemplo")}: ${product.name}`;
+                const className = "group flex h-[328px] min-w-0 flex-col rounded-[20px] border border-stone-200/80 bg-white p-3.5 text-left shadow-[0_2px_6px_rgba(0,0,0,0.015)] transition-[box-shadow,border-color] duration-300 hover:border-stone-300 hover:shadow-[0_12px_28px_-12px_rgba(0,0,0,0.16)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800 sm:h-[340px]";
+                const content = (
+                  <>
+                    {product.website ? (
+                      <div className="relative flex h-36 shrink-0 flex-col items-center justify-center gap-3 overflow-hidden rounded-xl sm:h-40" style={{ backgroundColor: palette.soft, color: palette.solid }}>
+                        {product.ogImage ? <Image src={product.ogImage} alt={`Portada de ${product.name}`} fill sizes="(min-width: 1600px) 400px, (min-width: 1280px) 30vw, (min-width: 640px) 45vw, 90vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.03] motion-reduce:transform-none" /> : <>
+                          <span className="text-[38px] font-semibold tracking-[-0.06em]">{product.name}</span>
+                          <span className="text-xs">{new URL(product.website).hostname}</span>
+                        </>}
+                        <span className="absolute right-3 top-3 rounded-full bg-white/90 px-2 py-1 text-[10px] font-medium">{product.offering}</span>
+                      </div>
+                    ) : <ProductVisual variant={index % 4} color={palette.soft} />}
+                    <div className="flex items-center gap-2.5 px-1 pt-4">
+                      {product.favicon ? <Image src={product.favicon} alt="" width={32} height={32} unoptimized className="size-8 shrink-0 rounded-[9px] object-contain" /> : <span aria-hidden="true" style={{ backgroundColor: palette.solid }} className="flex size-8 shrink-0 items-center justify-center rounded-[9px] text-sm font-semibold text-white">{product.name.slice(0, 1)}</span>}
+                      <span className="text-[20px] font-semibold tracking-[-0.03em] text-stone-900">{product.name}</span>
+                      <ArrowUpRight aria-hidden="true" className="ml-auto size-4 text-stone-400 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transform-none" />
                     </div>
-                  ) : <ProductVisual variant={index % 4} color={palette.soft} />}
-                  <div className="flex items-center gap-2.5 px-1 pt-4">
-                    {product.favicon ? <Image src={product.favicon} alt="" width={32} height={32} unoptimized className="size-8 shrink-0 rounded-[9px] object-contain" /> : <span aria-hidden="true" style={{ backgroundColor: palette.solid }} className="flex size-8 shrink-0 items-center justify-center rounded-[9px] text-sm font-semibold text-white">{product.name.slice(0, 1)}</span>}
-                    <span className="text-[20px] font-semibold tracking-[-0.03em] text-stone-900">{product.name}</span>
-                    <ArrowUpRight aria-hidden="true" className="ml-auto size-4 text-stone-400 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transform-none" />
-                  </div>
-                  <p className="line-clamp-2 px-1 pt-2 text-[13px] leading-relaxed text-stone-500">{product.description}</p>
-                  <div className="mt-auto flex items-center justify-between gap-2 px-1 pt-3 text-[11px] text-stone-400"><span className="truncate">{product.website ? `${dict?.byLabel || "Por"} ${product.provider}` : product.feature}</span><span className="inline-flex shrink-0 items-center gap-1 text-stone-600">{product.website ? (dict?.seeSolution || "Conocer solución") : (dict?.seeExample || "Ver ejemplo")} <Plus aria-hidden="true" className="size-3" /></span></div>
-                </button>
-              ))}
+                    <p className="line-clamp-2 px-1 pt-2 text-[13px] leading-relaxed text-stone-500">{product.description}</p>
+                    <div className="mt-auto flex items-center justify-between gap-2 px-1 pt-3 text-[11px] text-stone-400">
+                      <span className="truncate">{product.website ? `${dict?.byLabel || "Por"} ${product.provider}` : product.feature}</span>
+                      {product.detailUrl ? (
+                        <span className="shrink-0 text-stone-600">{dict?.seeSolution || "Conocer solución"}</span>
+                      ) : (
+                        <span className="inline-flex shrink-0 items-center gap-1 text-stone-600">{dict?.seeExample || "Ver ejemplo"} <Plus aria-hidden="true" className="size-3" /></span>
+                      )}
+                    </div>
+                  </>
+                );
+                // Real published solutions navigate straight to their ficha; static
+                // examples (no detailUrl) open the preview dialog instead.
+                return product.detailUrl ? (
+                  <Link key={key} href={product.detailUrl} aria-label={label} className={className}>{content}</Link>
+                ) : (
+                  <button key={key} type="button" onClick={() => setDetail(product)} aria-label={label} className={className}>{content}</button>
+                );
+              })}
               {Array.from({ length: availableSlots }, (_, index) => (
                 <Link key={`available-${category.id}-${index}`} href="/account/solutions/new" aria-label={`Postular una solución para ${category.label}, espacio ${index + 1}`} className="group flex h-[328px] min-w-0 flex-col justify-between rounded-[20px] border border-dashed border-stone-300 bg-stone-200/45 p-5 text-left transition-[background-color,border-color,transform] duration-300 hover:-translate-y-0.5 hover:border-stone-400 hover:bg-stone-200/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800 motion-reduce:transform-none sm:h-[340px]">
                   <span className="flex items-center justify-between text-[11px] uppercase tracking-[0.12em] text-stone-400"><span>{dict?.availableSpace || "Espacio disponible"}</span><span className="tabular-nums">{String(products.length + index + 1).padStart(2, "0")}</span></span>

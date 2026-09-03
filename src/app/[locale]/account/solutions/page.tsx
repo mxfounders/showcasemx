@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowUpRight,Layers,ArrowRight,Clock3,PanelsTopLeft,BriefcaseBusiness } from 'lucide-react';
-import { requireFounder,getOwnedSolutions,isReviewer } from '@/lib/solutions/server';
+import { requireFounder,getOwnedSolutions } from '@/lib/solutions/server';
 import { getSolutionCategories,statuses,type SolutionStatus } from '@/lib/solutions/model';
 import { solutionChecklist } from '@/lib/solutions/completeness';
 import { NewSolutionButton } from '@/components/solutions/new-solution-button';
@@ -15,7 +15,7 @@ const statusTone:Record<SolutionStatus,keyof typeof brandColors>={draft:'lavende
 
 export default async function AccountPage(){
  const account=await requireFounder();
- const [solutions,reviewer]=await Promise.all([getOwnedSolutions(account.id),isReviewer(account.id)]);
+ const solutions=await getOwnedSolutions(account.id);
  const overview=[
   {label:'Publicadas',value:solutions.filter(item=>Boolean(item.published_data)).length,tone:'sage' as const},
   {label:'En revisión',value:solutions.filter(item=>item.status==='pending').length,tone:'amber' as const},
@@ -23,8 +23,6 @@ export default async function AccountPage(){
  ];
  return <section className="account-page">
   <header className="mb-10 flex flex-wrap items-end justify-between gap-7"><div><p className="mb-3 text-xs font-medium uppercase tracking-[0.18em] text-[#416B50]">Tu portafolio</p><h1 className="text-4xl font-semibold tracking-[-0.045em] sm:text-5xl">Mis soluciones.</h1><p className="mt-4 max-w-xl text-base leading-relaxed text-stone-500">Postula lo que construyes, consulta su revisión y mantén cada ficha lista para quien la descubre.</p></div>{solutions.length>0&&<NewSolutionButton />}</header>
-
-  {reviewer&&<Link href="/account/review" className="mb-7 inline-flex items-center gap-2 rounded-full bg-[#F4ECD5] px-4 py-2.5 text-sm font-medium text-[#88631B] transition-[filter] hover:brightness-95">Abrir revisión editorial<ArrowUpRight className="size-4" /></Link>}
 
   {!solutions.length?<div className="overflow-hidden rounded-[28px] border border-stone-200 bg-stone-50/70 px-6 py-14 sm:px-10 sm:py-16"><span style={{backgroundColor:brandColors.lavender.soft,color:brandColors.lavender.solid}} className="mb-7 flex size-12 items-center justify-center rounded-2xl"><Layers aria-hidden="true" className="size-6" /></span><h2 className="max-w-xl text-3xl font-medium leading-tight tracking-tight">Dale un lugar a lo que estás construyendo.</h2><p className="mb-8 mt-4 max-w-lg leading-relaxed text-stone-500">Software, agencia o servicio: prepara tu información a tu ritmo. Nada se publica sin pasar antes por revisión.</p><NewSolutionButton /><p className="mt-5 text-xs text-stone-400">Puedes guardar el borrador y volver cuando quieras.</p></div>:<>
    <section aria-label="Estado de las soluciones" className="mb-10 border-y border-stone-200 py-7"><dl className="space-y-4">{overview.map(item=>{const tone=brandColors[item.tone],percentage=item.value/solutions.length*100;return <div key={item.label} className="grid grid-cols-[88px_minmax(0,1fr)_24px] items-center gap-3 sm:grid-cols-[110px_minmax(0,1fr)_28px]"><dt className="text-xs font-medium" style={{color:tone.solid}}>{item.label}</dt><dd className="contents"><div className="h-2 overflow-hidden rounded-full" style={{backgroundColor:tone.soft}} role="progressbar" aria-label={`${item.label}: ${item.value} de ${solutions.length}`} aria-valuemin={0} aria-valuemax={solutions.length} aria-valuenow={item.value}><div className="h-full rounded-full transition-[width] duration-300 motion-reduce:transition-none" style={{width:`${percentage}%`,backgroundColor:tone.solid}}/></div><span className="text-right text-sm font-semibold tabular-nums text-stone-700">{item.value}</span></dd></div>;})}</dl></section>

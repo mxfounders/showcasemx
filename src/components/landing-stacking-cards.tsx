@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -21,10 +22,6 @@ const stackData = [
     color: { soft: brandColors.blue.soft, solid: brandColors.blue.solid },
     button: "Explorar catálogo",
     icons: ["S", "H", "P"],
-    testimonial: {
-      bold: "Deel",
-      text: " comparó 15 plataformas de HR en minutos y eligió la mejor opción para su equipo en toda la región."
-    }
   },
   {
     id: "agents",
@@ -34,10 +31,6 @@ const stackData = [
     color: { soft: brandColors.terracotta.soft, solid: brandColors.terracotta.solid },
     button: "Ver recomendaciones",
     icons: ["K", "C", "M"],
-    testimonial: {
-      bold: "Kueski",
-      text: " ahorró 40 horas de investigación usando nuestro motor de recomendaciones para escalar su stack de ciberseguridad."
-    }
   },
   {
     id: "enrichment",
@@ -47,10 +40,6 @@ const stackData = [
     color: { soft: brandColors.sage.soft, solid: brandColors.sage.solid },
     button: "Optimizar gastos",
     icons: ["💰", "📉", "⚡"],
-    testimonial: {
-      bold: "Kavak",
-      text: " detectó y eliminó $12,000 USD en licencias duplicadas de software durante su primer mes de uso en la plataforma."
-    }
   },
   {
     id: "outbound",
@@ -60,10 +49,6 @@ const stackData = [
     color: { soft: brandColors.lavender.soft, solid: brandColors.lavender.solid },
     button: "Contactar expertos",
     icons: ["🤝", "🚀", "💡"],
-    testimonial: {
-      bold: "Clara",
-      text: " redujo su tiempo de implementación de ERP de 3 meses a solo 2 semanas gracias a un partner certificado."
-    }
   }
 ];
 
@@ -150,12 +135,10 @@ export function LandingStackingCards({ products = [] }: { products?: PublishedPr
                   </div>
                 ))}
               </div>
-              <p className="text-sm sm:text-base text-stone-800 max-w-md mb-8 leading-relaxed">
-                <strong>{item.testimonial.bold}</strong>{item.testimonial.text}
-              </p>
 
-              <div className="flex flex-wrap gap-4 items-center">
-                <button 
+              <div className="mb-8 flex flex-wrap gap-4 items-center">
+                <a
+                  href="#catalogo"
                   className="px-7 py-3 rounded-full text-white font-medium shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-2 group text-sm sm:text-base"
                   style={{ backgroundColor: item.color.solid }}
                 >
@@ -163,10 +146,10 @@ export function LandingStackingCards({ products = [] }: { products?: PublishedPr
                   <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                   </svg>
-                </button>
-                <button className="px-7 py-3 rounded-full bg-white text-stone-800 font-medium shadow-sm transition-all hover:bg-stone-50 hover:shadow-md text-sm sm:text-base">
+                </a>
+                <Link href="/criterios" className="px-7 py-3 rounded-full bg-white text-stone-800 font-medium shadow-sm transition-all hover:bg-stone-50 hover:shadow-md text-sm sm:text-base">
                   Conocer más
-                </button>
+                </Link>
               </div>
             </div>
           </div>
@@ -195,12 +178,8 @@ const RightVisual = ({ id, color, products }: { id: string; color: string; produ
 };
 
 const MockupGridVisual = ({ color, products }: { color: string; products: PublishedProduct[] }) => {
-  const rankedProducts = [...products]
-    .map(p => ({
-      ...p,
-      popularity: (p.name.length * 15) + (p.catalogId?.length || 0) * 5 + 42
-    }))
-    .sort((a, b) => b.popularity - a.popularity);
+  // Ranked by real interaction, not a fabricated number. See src/lib/solutions/ranking.ts.
+  const rankedProducts = [...products].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 
   const col1Products = rankedProducts.slice(0, 8);
   const col2Products = rankedProducts.slice(8, 16);
@@ -244,7 +223,7 @@ const ProductMockupCard = ({ product, color }: { product: any, color: string }) 
         <svg className="w-2.5 h-2.5" style={{ color }} fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
         </svg>
-        {product.popularity}
+        {product.likes ?? 0}
       </div>
     </div>
     <div className="mt-4">

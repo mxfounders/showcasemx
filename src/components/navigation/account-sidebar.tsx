@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { House, ChartNoAxesCombined, Inbox, Send, Bookmark, FolderOpen, LibraryBig, Layers, Compass, Menu, X, ClipboardCheck, Settings2, ChevronsUpDown } from 'lucide-react';
+import { House, ChartNoAxesCombined, Inbox, Send, Bookmark, FolderOpen, LibraryBig, Layers, Compass, Menu, X, Settings2, ChevronsUpDown } from 'lucide-react';
 import { LogoutButton } from '@/components/logout-button';
 import { CommunityIcon } from '@/components/library/community-icon';
 import { BrandLink } from './brand-link';
@@ -12,7 +12,7 @@ import { actionButtonStyle, brandColors } from '@/lib/brand-colors';
 
 const focusStyle = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#365DC4]';
 
-export function AccountSidebar({ name, avatar, reviewer = false }: { name: string; avatar: string | null; reviewer?: boolean }) {
+export function AccountSidebar({ name, avatar }: { name: string; avatar: string | null }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -36,7 +36,6 @@ export function AccountSidebar({ name, avatar, reviewer = false }: { name: strin
     { href: '/account/contacts', label: 'Mis contactos', Icon: Send, tone: brandColors.blue },
     { href: '/account/opportunities', label: 'Oportunidades', Icon: Inbox, tone: brandColors.terracotta },
     { href: '/account/metrics', label: 'Métricas', Icon: ChartNoAxesCombined, tone: brandColors.blue },
-    ...(reviewer ? [{ href: '/account/review', label: 'Revisión editorial', Icon: ClipboardCheck, tone: brandColors.amber }] : []),
   ];
   const isActive = (href: string) => href === '/account' ? path === '/account' : href === '/account/solutions' ? path === href || (path.startsWith(href+'/') && path !== href+'/new') : path === href || path.startsWith(`${href}/`);
 

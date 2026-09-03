@@ -5,21 +5,25 @@ import ReasonDialog from '@/components/ReasonDialog';
 
 interface ListItem { id: string; name: string; publicDescription: string; curatorName: string; categories: string[]; updatedAt: string; ownerEmail: string; likeCount: number; saveCount: number; commentCount: number; }
 interface CommentItem { id: string; listId: string; listName: string; authorName: string; body: string; createdAt: string; }
+interface SolutionCommentItem { id: string; solutionId: string; solutionName: string; authorName: string; body: string; createdAt: string; }
+
+type Dialog = { action: 'unpublish_list' | 'delete_comment' | 'delete_solution_comment'; id: string; title: string };
 
 export default function ComunidadClient() {
   const [lists, setLists] = useState<ListItem[]>([]);
   const [comments, setComments] = useState<CommentItem[]>([]);
+  const [solutionComments, setSolutionComments] = useState<SolutionCommentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [tab, setTab] = useState<'lists' | 'comments'>('lists');
-  const [dialog, setDialog] = useState<null | { action: 'unpublish_list' | 'delete_comment'; id: string; title: string }>(null);
+  const [tab, setTab] = useState<'lists' | 'comments' | 'solutionComments'>('lists');
+  const [dialog, setDialog] = useState<Dialog | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
     setError('');
     fetch('/api/community')
       .then(r => r.json())
-      .then(d => { if (d.ok) { setLists(d.lists ?? []); setComments(d.comments ?? []); } else setError(d.error ?? 'Error al cargar.'); })
+      .then(d => { if (d.ok) { setLists(d.lists ?? []); setComments(d.comments ?? []); setSolutionComments(d.solutionComments ?? []); } else setError(d.error ?? 'Error al cargar.'); })
       .catch(() => setError('No se pudo conectar.'))
       .finally(() => setLoading(false));
   }, []);
@@ -45,9 +49,10 @@ export default function ComunidadClient() {
         <h1 className="text-[16px] font-bold tracking-tight text-stone-800">Comunidad</h1>
       </header>
       <div className="p-8 space-y-4">
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button onClick={() => setTab('lists')} className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition ${tab === 'lists' ? 'bg-[#e4ebfc] border-[#e4ebfc] text-[#365dc4] font-semibold' : 'bg-white border-stone-200 text-stone-500'}`}>Listas públicas ({lists.length})</button>
-          <button onClick={() => setTab('comments')} className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition ${tab === 'comments' ? 'bg-[#e4ebfc] border-[#e4ebfc] text-[#365dc4] font-semibold' : 'bg-white border-stone-200 text-stone-500'}`}>Comentarios ({comments.length})</button>
+          <button onClick={() => setTab('comments')} className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition ${tab === 'comments' ? 'bg-[#e4ebfc] border-[#e4ebfc] text-[#365dc4] font-semibold' : 'bg-white border-stone-200 text-stone-500'}`}>Comentarios de listas ({comments.length})</button>
+          <button onClick={() => setTab('solutionComments')} className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition ${tab === 'solutionComments' ? 'bg-[#e4ebfc] border-[#e4ebfc] text-[#365dc4] font-semibold' : 'bg-white border-stone-200 text-stone-500'}`}>Comentarios de fichas ({solutionComments.length})</button>
         </div>
 
         {error && <p className="text-sm text-red-500">{error}</p>}
@@ -69,7 +74,7 @@ export default function ComunidadClient() {
               ))}
             </div>
           )
-        ) : (
+        ) : tab === 'comments' ? (
           comments.length === 0 ? <p className="text-sm text-stone-400 py-10 text-center">Sin comentarios.</p> : (
             <div className="space-y-2">
               {comments.map(c => (
@@ -79,6 +84,20 @@ export default function ComunidadClient() {
                     <p className="text-xs text-stone-400 mt-1">{c.authorName} en {c.listName} · {fmtDate(c.createdAt)}</p>
                   </div>
                   <button onClick={() => setDialog({ action: 'delete_comment', id: c.id, title: 'Borrar comentario' })} className="px-3 py-1.5 rounded-full bg-red-50 text-red-700 text-xs font-semibold hover:bg-red-100 transition whitespace-nowrap">Borrar</button>
+                </div>
+              ))}
+            </div>
+          )
+        ) : (
+          solutionComments.length === 0 ? <p className="text-sm text-stone-400 py-10 text-center">Sin comentarios en fichas.</p> : (
+            <div className="space-y-2">
+              {solutionComments.map(c => (
+                <div key={c.id} className="rounded-xl border border-stone-200 bg-white p-4 flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm text-stone-800">{c.body}</p>
+                    <p className="text-xs text-stone-400 mt-1">{c.authorName} en {c.solutionName} · {fmtDate(c.createdAt)}</p>
+                  </div>
+                  <button onClick={() => setDialog({ action: 'delete_solution_comment', id: c.id, title: 'Borrar comentario de ficha' })} className="px-3 py-1.5 rounded-full bg-red-50 text-red-700 text-xs font-semibold hover:bg-red-100 transition whitespace-nowrap">Borrar</button>
                 </div>
               ))}
             </div>

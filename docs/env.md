@@ -14,6 +14,7 @@ variables. Separar bases de desarrollo, preview y producción.
 | MONITOR_EMAIL_TO | Destino interno de las alertas de salud de producción. |
 | GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET | OAuth propio. Callback exacto AUTH_APP_ORIGIN/api/auth/google/callback. |
 | CRON_SECRET | Secreto servidor de mínimo 32 caracteres para /api/internal/mail. Nunca en query. |
+| AUTH_TOTP_KEY | Exactamente 32 bytes hex (`openssl rand -hex 32`). Cifra en reposo el secreto TOTP de la verificación en dos pasos del producto, igual que OPS_TOTP_KEY hace en el backoffice. Sin ella, Configuración muestra la función como no disponible y nadie puede activarla; el acceso con contraseña no cambia. Rotarla dejaría ilegibles los secretos ya guardados: quien tuviera la verificación activa debería volver a activarla. |
 | NEWSLETTER_UNSUBSCRIBE_SECRET | Secreto servidor de mínimo 32 caracteres para firmar enlaces permanentes de baja. |
 | AUTH_REQUIRE_VERIFIED_EMAIL | true para exigir verificación antes de crear contactos; activar tras probar entrega. |
 | NEXT_PUBLIC_SHOW_DEMO_PROJECTS | false/ausente por defecto. true muestra ejemplos de diseño no contratables. No usar en catálogo público real. |

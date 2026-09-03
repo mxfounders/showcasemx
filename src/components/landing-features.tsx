@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { Heart, Bookmark, MessageCircle } from "lucide-react";
 import { brandColors } from "@/lib/brand-colors";
 import type { PublishedProduct } from "@/lib/solutions/public";
 
@@ -143,21 +145,24 @@ export function LandingFeatures({ products = [] }: { products?: PublishedProduct
     }
   };
 
-  const rankedProducts = products
-    .map(p => ({
-      ...p,
-      popularity: (p.name.length * 15) + (p.catalogId?.length || 0) * 5 + 42
-    }))
-    .sort((a, b) => b.popularity - a.popularity);
+  // Ranked by real interaction (comments > saves > likes > views), not a fabricated
+  // number. See src/lib/solutions/ranking.ts and src/lib/solutions/public.ts.
+  const rankedProducts = [...products].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 
-  const categoryProducts = rankedProducts.filter(p => {
-    const pCat = p.category?.toLowerCase() || '';
-    const tabLbl = activeTab.label.toLowerCase();
-    if (tabLbl.includes('finanzas') && pCat.includes('finanzas')) return true;
-    if (tabLbl.includes('comunicacion') && pCat.includes('ventas')) return true;
-    if (tabLbl.includes('desarrollo') && pCat.includes('operación')) return true;
-    return true;
-  }).slice(0, 16);
+  // These tabs are an editorial marketing narrative, not the product taxonomy
+  // (CLAUDE.md §3: Cobros, Finanzas, Nómina, Ventas, Operación, Legal, Agencias).
+  // Best-effort mapping to the closest real category(ies); a tab with no
+  // matching published solution correctly shows only empty slots.
+  const tabCategories: Record<string, string[]> = {
+    crm: ["Ventas"], marketing: ["Agencias"], rh: ["Nómina"],
+    finanzas: ["Finanzas", "Cobros"], operaciones: ["Operación"], legal: ["Legal"],
+    datos: ["Operación"], ti: ["Operación"], soporte: ["Operación"],
+    ecommerce: ["Ventas"], proyectos: ["Operación"], diseno: ["Agencias"],
+    automatizacion: ["Operación"], comunicacion: ["Ventas"], desarrollo: ["Operación"],
+  };
+  const categoryProducts = rankedProducts.filter(p =>
+    p.categories?.some(category => tabCategories[activeTab.id]?.includes(category))
+  ).slice(0, 16);
 
   return (
     <section className="py-24 sm:py-32 overflow-hidden bg-transparent">
@@ -232,14 +237,13 @@ export function LandingFeatures({ products = [] }: { products?: PublishedProduct
                     const product = categoryProducts[i];
                     if (product) {
                       return (
-                        <div key={`prod-${i}`} className="rounded-3xl p-6 flex flex-col h-48 sm:h-52 bg-white/95 border border-stone-200/60 shadow-lg transition-transform hover:-translate-y-1 hover:shadow-xl group cursor-pointer">
+                        <Link key={`prod-${i}`} href={product.detailUrl || "#"} className="rounded-3xl p-6 flex flex-col h-48 sm:h-52 bg-white/95 border border-stone-200/60 shadow-lg transition-transform hover:-translate-y-1 hover:shadow-xl group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800">
                           <div className="flex justify-between items-center mb-auto">
                             <span className="text-[10px] font-bold text-stone-500 tracking-widest uppercase">{product.category || "Software"}</span>
-                            <div className="flex items-center gap-1.5 bg-stone-100 px-2 py-1 rounded-full text-xs font-semibold text-stone-700">
-                              <svg className="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                              </svg>
-                              {product.popularity}
+                            <div className="flex items-center gap-2 bg-stone-100 px-2 py-1 rounded-full text-[11px] font-semibold text-stone-700">
+                              <span className="inline-flex items-center gap-0.5"><Heart className="size-3 text-red-500" aria-hidden="true" />{product.likes ?? 0}</span>
+                              <span className="inline-flex items-center gap-0.5"><Bookmark className="size-3 text-stone-500" aria-hidden="true" />{product.saves ?? 0}</span>
+                              <span className="inline-flex items-center gap-0.5"><MessageCircle className="size-3 text-stone-500" aria-hidden="true" />{product.comments ?? 0}</span>
                             </div>
                           </div>
                           <div>
@@ -255,11 +259,11 @@ export function LandingFeatures({ products = [] }: { products?: PublishedProduct
                             </div>
                             <p className="text-[13px] text-stone-600 line-clamp-2 leading-relaxed">{product.description || product.feature}</p>
                           </div>
-                        </div>
+                        </Link>
                       );
                     }
                     return (
-                      <div key={`empty-${i}`} className="rounded-3xl p-6 flex flex-col h-48 sm:h-52 bg-white/60 border border-dashed border-stone-300 backdrop-blur-md transition-all hover:bg-white hover:shadow-sm group cursor-pointer">
+                      <Link key={`empty-${i}`} href="/account/solutions/new" className="rounded-3xl p-6 flex flex-col h-48 sm:h-52 bg-white/60 border border-dashed border-stone-300 backdrop-blur-md transition-all hover:bg-white hover:shadow-sm group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800">
                         <div className="flex justify-between text-[10px] font-bold text-stone-400 tracking-widest uppercase mb-auto">
                           <span>Espacio Disponible</span>
                           <span>{(i + 1).toString().padStart(2, '0')}</span>
@@ -268,14 +272,14 @@ export function LandingFeatures({ products = [] }: { products?: PublishedProduct
                           <h4 className="text-lg font-medium text-stone-600 mb-4 leading-tight group-hover:text-stone-900 transition-colors">
                             Tu solución puede estar aquí.
                           </h4>
-                          <div 
+                          <div
                             className="text-[11px] font-bold flex items-center gap-1.5 transition-colors opacity-80 group-hover:opacity-100 uppercase tracking-wide"
                             style={{ color: activeTab.color.solid }}
                           >
                             Postular en {activeTab.label.split(' ')[0]} <span className="text-base font-medium leading-none mb-0.5">+</span>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                     );
                   })}
                 </div>

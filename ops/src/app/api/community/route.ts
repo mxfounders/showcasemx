@@ -39,6 +39,15 @@ export async function GET(req: NextRequest) {
       LIMIT 100
     `;
 
+    const solutionComments = await sql`
+      SELECT c.id, c.solution_id, c.author_name, c.body, c.created_at,
+        COALESCE(s.published_data->>'name', s.data->>'name') AS solution_name
+      FROM solution_comments c
+      JOIN founder_solutions s ON s.id = c.solution_id
+      ORDER BY c.created_at DESC
+      LIMIT 100
+    `;
+
     return NextResponse.json({
       ok: true,
       lists: lists.map(l => ({
@@ -49,6 +58,10 @@ export async function GET(req: NextRequest) {
       })),
       comments: comments.map(c => ({
         id: String(c.id), listId: String(c.list_id), listName: String(c.list_name),
+        authorName: String(c.author_name), body: String(c.body), createdAt: String(c.created_at),
+      })),
+      solutionComments: solutionComments.map(c => ({
+        id: String(c.id), solutionId: String(c.solution_id), solutionName: c.solution_name ?? '(sin nombre)',
         authorName: String(c.author_name), body: String(c.body), createdAt: String(c.created_at),
       })),
     }, { headers: { 'Cache-Control': 'no-store' } });
@@ -85,6 +98,14 @@ export async function POST(req: NextRequest) {
       const rows = await sql`DELETE FROM community_list_comments WHERE id = ${body.commentId} RETURNING id`;
       if (!rows.length) return failure('El comentario ya no existe.', 404);
       await audit({ actorId: user.id, actorEmail: user.email, action: 'community_delete_comment', subjectType: 'comment', subjectId: String(body.commentId), reason, ip: requestIp(req.headers) });
+      return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
+    }
+
+    if (action === 'delete_solution_comment') {
+      if (!isUuid(body?.commentId)) return failure('ID inválido.', 400);
+      const rows = await sql`DELETE FROM solution_comments WHERE id = ${body.commentId} RETURNING id`;
+      if (!rows.length) return failure('El comentario ya no existe.', 404);
+      await audit({ actorId: user.id, actorEmail: user.email, action: 'solution_delete_comment', subjectType: 'comment', subjectId: String(body.commentId), reason, ip: requestIp(req.headers) });
       return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
     }
 

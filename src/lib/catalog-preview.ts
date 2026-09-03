@@ -12,6 +12,14 @@ export type PreviewProduct = {
   detailUrl?: string;
   ogImage?: string;
   favicon?: string;
+  // Real interaction counters, present only for published solutions (see
+  // src/lib/solutions/public.ts and src/lib/solutions/ranking.ts). Static
+  // examples never carry these — there is nothing real to count.
+  likes?: number;
+  saves?: number;
+  comments?: number;
+  views?: number;
+  score?: number;
 };
 
 // Descriptions based on the providers' official sites. No independent certification implied.

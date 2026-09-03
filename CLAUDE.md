@@ -99,9 +99,10 @@ No asignar otros proyectos por nombre, dominio o coincidencia de correo.
   rectas y derechas redondeadas. Contenido con margen izquierdo de 264px.
 - CTA «Postular solución»: solo + a la derecha, sin flecha ni otro + a la izquierda.
 - Sin puntos de color para indicar activo.
-- Navegación: Inicio, Mis soluciones, Guardados, Mis listas, Mis contactos, Oportunidades;
-  Revisión editorial solo para revisores autorizados. Explorar catálogo va abajo,
-  justo encima del menú de cuenta, separado de la navegación principal.
+- Navegación: Inicio, Mis soluciones, Guardados, Mis listas, Mis contactos, Oportunidades.
+  Ya no existe «Revisión editorial» en la sidebar: toda revisión vive en ops (ver §48).
+  Explorar catálogo va abajo, justo encima del menú de cuenta, separado de la
+  navegación principal.
 - Perfil abajo con desplegable ascendente: Configuración y Cerrar sesión.
   No duplicar Configuración como enlace principal de la sidebar.
 - Menú cierra al navegar, pulsar fuera, Escape o perder foco; devuelve foco al
@@ -158,9 +159,8 @@ No ejecutar drizzle-kit push para «sincronizar» todo sin revisar la divergenci
 | /account | Inicio adaptativo comprador/fundador/ambos |
 | /account/solutions | Mis soluciones propias |
 | /account/solutions/new | Crear borrador autenticado |
-| /account/solutions/[id] | Gestionar solución propia; revisores según reglas |
+| /account/solutions/[id] | Gestionar solución propia; solo el dueño |
 | /account/solutions/[id]/preview | Vista previa privada del borrador guardado |
-| /account/review | Cola editorial con permiso explícito |
 | /account/saved | Guardados privados |
 | /account/lists | Listas privadas |
 | /account/lists/[id] | Proyectos y notas de la lista del propietario |
@@ -174,10 +174,12 @@ No ejecutar drizzle-kit push para «sincronizar» todo sin revisar la divergenci
 | /account/settings/profile | Nombre, empresa, perfil, rol y foto |
 | /account/settings/security | Cambio/recuperación de contraseña y logout |
 | /account/settings/connections | Estado de métodos de acceso, Google pendiente |
+| /account/settings/data | Idioma, copia de datos y eliminación de cuenta |
 | /account/profile | Alias anterior que redirige a configuración |
 
 Las páginas privadas requieren sesión y no se indexan. Un UUID ajeno no concede acceso.
-El rol de revisor no permite leer listas, notas ni contactos ajenos.
+Pertenecer a `solution_reviewers` ya no cambia nada dentro del producto: no abre
+fichas ajenas, capturas, listas, notas ni contactos. Solo da acceso a ops (§48).
 Búsquedas del menú apuntan al catálogo; se ocultan destinos no implementados.
 Páginas informativas existen; políticas legales son borradores y necesitan revisión.
 
@@ -354,8 +356,12 @@ conflicto; el usuario debe recargar antes de repetir.
 
 | Endpoint | Operaciones |
 | --- | --- |
-| POST /api/auth/[action] | register, login, logout |
+| POST /api/auth/[action] | register, login, logout, totp (segundo paso del acceso) |
 | PATCH /api/account | Perfil descriptivo de la sesión |
+| POST /api/account/totp | start, confirm, regenerate, disable de la verificación en dos pasos |
+| POST /api/account/sessions | revoke y revoke-others de las sesiones propias |
+| GET /api/account/export | Copia JSON de los datos propios |
+| POST /api/account/delete | Eliminación permanente con contraseña y confirmación escrita |
 | PUT/DELETE /api/account/avatar | Foto propia |
 | POST /api/account/dashboard | Preferencia de inicio de la sesión, sin cambio de permisos |
 | POST /api/account/password | Cambio de contraseña |
@@ -363,7 +369,7 @@ conflicto; el usuario debe recargar antes de repetir.
 | POST /api/auth/reset-password | Consumir recuperación válida |
 | POST /api/newsletter | Segmentación y consentimiento |
 | POST /api/solutions | Crear borrador propio |
-| PATCH /api/solutions/[id] | Guardar, enviar y revisar con permisos/versiones |
+| PATCH /api/solutions/[id] | Guardar y enviar a revisión, con versiones. Ya no aprueba ni rechaza |
 | GET/POST /api/solutions/[id]/media | Biblioteca y subida de capturas propias |
 | GET/DELETE /api/solutions/[id]/media/[assetId] | Imagen autorizada o borrado de archivo propio sin uso |
 | GET /api/library?project=... | Estado de guardado propio |
@@ -394,6 +400,7 @@ Orden de esquema operativo para base nueva:
 10. db/newsletter-subscribers.sql
 11. db/newsletter-segments.sql
 12. db/launch-foundation.sql (tras auth/settings/soluciones/contactos)
+13. db/account-security.sql (tras auth.sql; segundo factor y sesiones con dispositivo)
 
 Newsletter es independiente, pero segments exige subscribers.
 db/solution-applications.sql y src/db/schema.ts son diseños anteriores;
@@ -1268,3 +1275,209 @@ Dos bases Neon reales en el mismo host: `neondb` (desarrollo, rol
 `/shwcs_production` solo para migraciones, nunca en runtime). `shwcs-ops`
 usa `NEON_DATABASE_URL` propia apuntando a `shwcs_production`, ya no depende
 del enlace cruzado `shwcs_POSTGRES_URL` (que apuntaba a `neondb`).
+
+## 46. Capa social en fichas y ranking real del catálogo — 3 septiembre 2026
+
+Fuente vigente: `docs/solution-social.md`. Las fichas de solución ganan like y
+comentarios, espejo exacto del patrón ya probado en listas de comunidad
+(`db/community-social.sql`, `src/app/api/community/route.ts`), y el catálogo
+deja de ordenarse por prioridad editorial fija.
+
+- `db/solution-social.sql` crea `solution_likes` (clave compuesta
+  `solution_id,owner_id`, así de simple es la unicidad) y `solution_comments`
+  (`id` lo genera el cliente, así de simple es el reintento idempotente).
+  Aplicada a `neondb` y a `shwcs_production` con el rol propietario.
+- `POST /api/solutions/social` (`like`, `comment`, `delete-comment`) reutiliza
+  `communityComment()` sin cambios y el mismo orden de guardas: origen exacto,
+  sesión, `securityLimit('solution-social',...,60)` y
+  `securityLimit('solution-comment',...,10)`. El dueño de la ficha no puede
+  darle like ni comentar la suya (`owner_id<>account.id` en el CTE), igual que
+  ya bloqueaba la auto-revisión.
+- **Diferencia deliberada frente a listas**: `delete-comment` solo acepta al
+  autor (`author_id=account.id`). El dueño de la ficha **nunca** puede borrar
+  un comentario ajeno — la moderación de comentarios en fichas es exclusiva de
+  `level='admin'` en ops (`ops/panel/comunidad`, pestaña «Comentarios de
+  fichas»), no del fundador. Es intencional: un fundador borrando críticas de
+  su propio producto rompe la credibilidad del catálogo.
+- El alias del comentario se precarga con `auth_accounts.name` (el mismo
+  nombre que ahora captura el onboarding, ver §47) y queda editable en el
+  campo; no reintroducir un input vacío como en listas. La regla de §23
+  («nunca mostrar correo, nombre del perfil, owner_id ni author_id») sigue
+  vigente tal cual para **listas**; en fichas el nombre del perfil sí se
+  ofrece como alias inicial porque el usuario lo edita antes de publicarlo —
+  la fila guardada sigue siendo un alias declarado, no una referencia viva al
+  perfil.
+- **Ranking real**: `src/lib/solutions/ranking.ts` exporta
+  `solutionScore(likes,saves,comments,views)=likes+saves*2+comments*3+views*0.1`.
+  `src/lib/solutions/public.ts` ordena por esa fórmula en SQL (contando
+  guardados con la misma doble identidad `solution:UUID`/`catalog:key` que ya
+  usa `community.ts`) y expone `likes/saves/comments/views/score` en cada
+  producto. El desempate sigue siendo `catalog_key` (Cord, Flouvia, con sitio,
+  ejemplo) — ya no el criterio principal. Se explica en la interfaz: disclosure
+  «Cómo se ordena» junto al selector de orden de categorías
+  (`catalog-filter-bar.tsx`) y sección nueva en `/criterios`
+  (`criterios-story.tsx`). Nunca describir el orden como calidad, tendencia o
+  aval editorial — es interacción bruta, empieza en cero y es manipulable.
+- Se eliminó un número de «popularidad» que estaba **inventado**
+  (`nombre.length*15+catalogId.length*5+42`) junto a un ícono de corazón en
+  `landing-features.tsx` y duplicado en `landing-stacking-cards.tsx`; ambos
+  usan ahora `score`/`likes` reales. El filtro de pestañas de
+  `landing-features.tsx` (antes un `return true` incondicional pese a tener
+  ramas condicionales) ahora compara contra la taxonomía real de categorías
+  con un mapa explícito, editorial, documentado en el propio archivo. El sort
+  «Más populares» de `/explorar`, `/industria`, `/colecciones`
+  (`category-page-layout.tsx`) estaba sin implementar; ahora ordena por
+  `score` real.
+- El clic en una ficha real desde el landing (`category-explorer.tsx`) navega
+  directo a `/soluciones/[id]` con un `Link`; el modal de vista previa queda
+  reservado exclusivamente a los ejemplos estáticos sin `detailUrl`. Las
+  tarjetas y espacios disponibles de `landing-features.tsx` que antes eran
+  `<div cursor-pointer>` sin `onClick` ni `href` ahora son enlaces reales.
+- **No tocado en esta entrega, marcado pendiente**:
+  `landing-stacking-cards.tsx` tenía testimonios inventados atribuidos a
+  empresas reales (Deel, Kueski, Kavak, Clara) con cifras falsas y funciones
+  que no existen (IA de recomendaciones, alertas automáticas de gasto,
+  marketplace de expertos verificados). Se retiraron los testimonios y se
+  conectaron los dos botones (antes sin `href`) a `#catalogo` y `/criterios`.
+  El resto de la copy de esas 4 tarjetas sigue describiendo funciones no
+  construidas; el propietario indicó que arriba de esa sección van 3 mockups
+  reales (ya alimentados por `products`, ver la fila de favicons antes del
+  texto) que cambiarán conforme se suban apps reales, y que el texto debe
+  describir esas apps — pendiente de contenido real, no inventar mientras tanto.
+- Verificación: 56 unitarias (dos nuevas: pesos de `solutionScore` con el 0.1
+  de vistas, y origen/sesión de `/api/solutions/social`), lint, TypeScript y
+  build de producción limpios.
+  `RUN_SOLUTION_SOCIAL_INTEGRATION=1 node tests/integration/solution-social.cjs`
+  con tres cuentas temporales confirma auto-like bloqueado, toggle atómico,
+  comentario idempotente, alias público sin correo, y que el dueño de la ficha
+  no puede borrar un comentario ajeno. Se corrigió de paso un bug de
+  infraestructura preexistente y no relacionado: `tailwind.config.ts` usaba
+  `require()` dentro de un archivo `.ts`, lo que tumbaba por completo
+  `next dev` (no `next build`) al compilar la primera página bajo Next
+  15.5.24; ahora usa `import`.
+
+## 47. Onboarding obligatorio tipo Typeform — 3 septiembre 2026
+
+El registro solo pedía correo y contraseña; `auth_accounts.name` quedaba
+`NULL` hasta que alguien entrara manualmente a Configuración. Nuevo flujo en
+`/onboarding` (`src/app/[locale]/(focused)/onboarding/`), mismo patrón visual
+e interacción que `ContactForm` (`.contact-step`, 220 ms, `key={step}` para
+reiniciar la animación, foco en `<h1 tabIndex={-1}>` por paso, atajo de letra
+A–F, Enter avanza) — no el patrón GSAP del editor guiado de soluciones.
+
+- Tres pasos, **sin botón de saltar**: 1) nombre y empresa; 2) perfil, las
+  cuatro opciones de `newsletterProfiles`; 3) rol, las seis de
+  `newsletterRoles`. Un solo envío al final a `PATCH /api/account` (sin tocar
+  el endpoint: sigue siendo todo-o-nada) y, si el perfil es
+  `founder`/`buyer`/`both`, `POST /api/account/dashboard` — `exploring` no es
+  un `DashboardMode` válido y se omite esa llamada a propósito.
+- Puerta única en `src/app/[locale]/account/page.tsx`, justo después del
+  `Promise.all` que ya trae `dashboardData` (que ya seleccionaba `name`):
+  `if(!dashboard.profile.name?.trim())redirect('/onboarding')`. No se tocó
+  `authReturnTo`/`return-to.ts`: el onboarding nunca es un destino `next=`, se
+  dispara solo al visitar `/account`, porque el registro no inicia sesión
+  (siempre hay un login de por medio antes de llegar ahí). Las cuentas de
+  Google ya traen `name` desde el callback y saltan el paso 1 sin código
+  adicional. `/onboarding` en sí redirige a `/account` si ya hay nombre.
+- Verificado funcionalmente con una cuenta `@example.invalid` real: antes del
+  onboarding `/account` redirige a `/onboarding`; tras el `PATCH`, `/account`
+  saluda por nombre y `/onboarding` redirige de vuelta a `/account`. No hay
+  prueba unitaria/integración dedicada porque reutiliza endpoints y
+  validadores ya cubiertos (`validateAccount`, `isDashboardMode`); el flujo
+  completo se comprobó a mano, no solo por inspección de código.
+
+## 48. Toda la revisión editorial vive en ops — 3 septiembre 2026
+
+Decisión explícita del usuario: «quiero que todas las revisiones sean en ops,
+para eso es ops». El producto ya no tiene ninguna superficie de revisión.
+Sustituye lo que decían la sección 7 y el §44 sobre el revisor dentro de la app.
+
+- Se retiró de la sidebar «Revisión editorial» y con ello el `isReviewer()` que
+  el layout de cuenta consultaba en cada carga. `AccountSidebar` ya no recibe
+  la prop `reviewer`.
+- `getSolution(id, owner)` perdió el tercer parámetro: una ficha se lee solo si
+  `owner_id` coincide. Antes un revisor podía abrir cualquier solución que no
+  fuera `draft` desde `/account/solutions/[id]` y su preview.
+- `PATCH /api/solutions/[id]` perdió `action:'review'` y `POST /api/reports`
+  perdió `action:'review'`; ambas responden 400 «Acción no válida». Crear un
+  reporte desde la ficha pública sigue igual: eso lo hace cualquier visitante
+  con cuenta, no un revisor.
+- `GET /api/solutions/[id]/media/[assetId]` dejó de tener la cláusula que dejaba
+  a un revisor ver capturas no publicadas. Ops lee las suyas por
+  `ops/api/media/[assetId]`, con su propia sesión.
+- `ReportForm` era doble (crear y resolver); quedó solo con la mitad pública.
+- Verificado con una cuenta temporal a la que se le dio `level='admin'` en
+  `solution_reviewers`: aun así `/account/review` y `/account/review/reports`
+  responden 404, la sidebar no menciona la revisión y las dos acciones de API
+  devuelven 400. El permiso ya solo sirve para entrar a `ops.shwcs.site`.
+- Quedan como archivos muertos, pendientes de borrar a mano:
+  `src/app/[locale]/account/review/` (dos páginas reducidas a `notFound()`),
+  `src/components/solutions/review-form.tsx` y
+  `src/components/settings/settings-back-link.tsx`. No se pudieron eliminar por
+  permisos de la sesión; ninguno se importa desde ningún sitio.
+
+## 49. Configuración con seguridad y control de datos — 3 septiembre 2026
+
+Fuente vigente: `docs/account-settings.md`. Migración `db/account-security.sql`
+(aditiva), script `scripts/migrate-account-security.cjs`, aplicada a `neondb` y
+a `shwcs_production` con el rol `neondb_owner`. Ninguna cuenta existente cambió.
+
+- Configuración deja de ser un índice de cuatro enlaces. `SettingsNav` fija
+  pestañas persistentes (`.selector-tabs`, §28) en las seis secciones, así que
+  ya no hay que volver al hub entre una y otra; desapareció `SettingsBackLink`.
+  El resumen ahora lee estado real —nombre, foto, correo confirmado, segundo
+  factor, sesiones abiertas, Google— y destaca lo que falta, en vez de repetir
+  descripciones genéricas. Si la base falla, avisa y no inventa estado.
+- **Verificación en dos pasos opcional** (`/account/settings/security`).
+  `src/lib/auth/totp.ts` replica el TOTP ya probado en ops —RFC 6238, SHA1,
+  30 s, ventana ±1— para que ambas cuentas quepan en la misma app
+  autenticadora. El secreto se guarda cifrado con AES-256-GCM bajo
+  `AUTH_TOTP_KEY`; sin esa variable la interfaz dice que la función no está
+  disponible y **nadie puede activarla**, en lugar de fingir protección.
+  Activar y desactivar piden la contraseña otra vez: la cookie de sesión no
+  basta. El secreto se marca confirmado solo cuando un código generado con él
+  se acepta, así que abandonar el alta a medias no deja a nadie fuera.
+  Diez códigos de respaldo de 8 dígitos, de un solo uso, hash SHA-256.
+- **Acceso en dos pasos**: si la cuenta tiene segundo factor, `POST /api/auth/login`
+  ya **no** crea sesión: escribe `auth_login_challenges` (5 minutos, guarda el
+  hash de contraseña del momento) y responde `{step:'totp'}`. `POST /api/auth/totp`
+  consume el reto. `totp_last_step` impide repetir un código dentro de su
+  ventana; un código de respaldo se elimina con `array_remove` en la misma
+  transacción que abre la sesión. Cinco intentos fallidos queman el reto.
+  Cambiar la contraseña invalida el reto porque el hash deja de coincidir.
+- **Sesiones abiertas**: `auth_sessions` gana `created_at`, `last_seen_at` y
+  `user_agent`. **A propósito no hay columna de IP**: el aviso de privacidad
+  revisado (§42) se compromete a cookies técnicas de sesión, y una etiqueta de
+  dispositivo basta para reconocerla; añadir la dirección sería una categoría
+  nueva de dato personal y necesita su propia decisión y su línea en la
+  política. `deviceLabel()` deriva algo como «Chrome en macOS», nunca el
+  user agent completo. Al cliente solo viaja el hash del token, que identifica
+  la fila sin ser usable. La sesión actual no se puede cerrar desde ahí: para
+  eso está cerrar sesión.
+- **Datos y privacidad** (`/account/settings/data`, ruta nueva): idioma,
+  `GET /api/account/export` y eliminación de cuenta. La exportación entrega
+  perfil, publicaciones, biblioteca, listas y conversaciones de contacto; nunca
+  el hash de la contraseña, el secreto TOTP ni datos privados de terceros.
+  El selector de idioma cambia el segmento de locale y **dice la verdad sobre su
+  alcance**: catálogo, inicio y páginas informativas están traducidos; la cuenta
+  y los correos siguen en español.
+- **Eliminar cuenta**: `POST /api/account/delete` exige contraseña **y** escribir
+  `ELIMINAR`. La interfaz enumera antes las consecuencias reales contando filas:
+  cuántas publicaciones se retiran del catálogo y cuántas conversaciones
+  desaparecen —también para la otra persona, porque `contact_requests` cascadea
+  por `buyer_id` y por `recipient_id`. No hay borrado suave ni periodo de
+  recuperación; si algún día se decide una política de retención, hay que
+  construirla ahí y no darla por supuesta.
+- Verificación: 62 unitarias (6 nuevas: base32 ida y vuelta, ventana de deriva y
+  no repetición del paso TOTP, forma de los códigos de respaldo, contenido del
+  URI otpauth, `deviceLabel` sin eco del user agent, y origen/sesión de las tres
+  rutas nuevas). Lint y TypeScript limpios. Recorrido completo contra el dev con
+  una cuenta `@example.invalid`: alta, seis páginas de configuración, QR real en
+  base64, activación solo tras código válido, contraseña sola ya sin sesión,
+  código correcto abriendo sesión, respaldo de un solo uso, cierre de las otras
+  sesiones conservando la propia, exportación sin contraseña ni secreto,
+  desactivación y borrado en cascada. Cuenta eliminada al terminar.
+- Pendiente operativo: `AUTH_TOTP_KEY` **no está en Vercel**. Hasta que se
+  configure allí, producción muestra la verificación en dos pasos como no
+  disponible. No desplegar el código sin haber aplicado antes la migración: el
+  login consulta `totp_confirmed_at` (ya aplicada en `shwcs_production`).

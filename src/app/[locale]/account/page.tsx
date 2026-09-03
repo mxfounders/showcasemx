@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { ArrowRight,Plus } from 'lucide-react';
 import { requireFounder,getOwnedSolutions } from '@/lib/solutions/server';
 import { dashboardData } from '@/lib/dashboard/server';
@@ -18,6 +19,7 @@ export const metadata={title:'Tu inicio | shwcs',robots:{index:false,follow:fals
 export const dynamic='force-dynamic';
 export default async function AccountPage(){
  const account=await requireFounder(),[dashboard,solutions]=await Promise.all([dashboardData(account.id),getOwnedSolutions(account.id)]);
+ if(!dashboard.profile.name?.trim())redirect('/onboarding');
  const mode=resolveDashboardMode(dashboard.profile.dashboard_mode,dashboard.profile.profile,solutions.length>0),buyer=mode!=='founder',founder=mode!=='buyer';
  const [boards,saved,memberships]=buyer?await Promise.all([getBoards(account.id),getSaved(account.id),getMemberships(account.id)]):[[],[],[]];
  const organized=new Set(memberships.map(item=>item.project_key));

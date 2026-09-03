@@ -105,9 +105,17 @@ export function CategoryPageLayout({
     if (searchParams.sort === 'az') {
       result.sort((a, b) => a.name.localeCompare(b.name));
     } else if (searchParams.sort === 'newest') {
+      // No publish-date field is exposed on these product rows yet; this is an
+      // approximation of "newest first" over the server's default order, not a
+      // real date sort. See src/lib/solutions/public.ts if that's ever added.
       result.reverse();
-    } 
-    
+    } else {
+      // 'popular' (the default): real interaction — comments > saves > likes >
+      // views. See src/lib/solutions/ranking.ts. Static examples score 0 and
+      // sink to the bottom, which is correct: nothing real has happened yet.
+      result.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+    }
+
     return result;
   }, [products, searchParams]);
 

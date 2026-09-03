@@ -6,6 +6,73 @@
 > Proveedores externos y despliegue siguen pendientes; las notas inferiores sobre
 > estas funciones describen entregas anteriores.
 
+## Estado vigente — 3 septiembre 2026
+
+Sustituye la estructura descrita más abajo. Contrato resumido en CLAUDE.md §49.
+
+Seis secciones con pestañas persistentes (`SettingsNav`, patrón `.selector-tabs`):
+Resumen, Perfil, Seguridad, Conexiones, Avisos y Datos. Ya no hay enlace «volver
+al centro»: se salta de una a otra sin pasar por el índice. El Resumen lee estado
+real de la base —nombre, foto, correo confirmado, segundo factor, sesiones
+abiertas, Google— y señala lo que falta; si la consulta falla lo dice y no
+inventa estado.
+
+### Verificación en dos pasos (opcional)
+
+- TOTP RFC 6238 en `src/lib/auth/totp.ts`: SHA1, 6 dígitos, pasos de 30 s y
+  ventana ±1, los mismos parámetros que ops, para que una sola app autenticadora
+  sirva para ambas cuentas.
+- Secreto cifrado en reposo con AES-256-GCM bajo `AUTH_TOTP_KEY`. **Sin esa
+  variable la función se muestra como no disponible y no se puede activar**; no
+  se simula protección. Rotarla obliga a volver a dar de alta el factor.
+- Activar, desactivar y regenerar códigos piden la contraseña: la cookie de
+  sesión no basta para tocar el segundo factor.
+- El secreto queda `totp_confirmed_at IS NULL` hasta que un código generado con
+  él se acepta, así que abandonar el alta a la mitad no bloquea a nadie.
+- Diez códigos de respaldo de 8 dígitos, guardados como SHA-256, de un solo uso.
+  Regenerarlos invalida los anteriores, incluidos los no usados.
+
+### Acceso en dos pasos
+
+`POST /api/auth/login` deja de crear sesión cuando la cuenta tiene el factor
+activo: escribe `auth_login_challenges` (5 minutos, con el hash de contraseña
+del momento) y responde `{step:'totp'}`. `POST /api/auth/totp` lo consume.
+`totp_last_step` impide repetir un código dentro de su ventana; un código de
+respaldo se borra con `array_remove` en la misma transacción que abre la sesión.
+Cinco fallos queman el reto. Cambiar la contraseña lo invalida, porque el hash
+guardado deja de coincidir.
+
+### Sesiones abiertas
+
+`auth_sessions` guarda `created_at`, `last_seen_at` y `user_agent`.
+**No guarda IP a propósito**: el aviso de privacidad revisado se compromete a
+cookies técnicas de sesión, y una etiqueta de dispositivo alcanza para
+reconocerla. `deviceLabel()` produce «Chrome en macOS» y nunca el user agent
+completo. Al cliente solo viaja el hash del token. La sesión actual no se cierra
+desde esa lista: para eso está el botón de cerrar sesión.
+
+### Datos y privacidad
+
+`/account/settings/data` reúne idioma, copia de datos y eliminación.
+
+- `GET /api/account/export` devuelve un JSON con perfil, publicaciones,
+  biblioteca, listas y conversaciones de contacto. Nunca el hash de contraseña,
+  el secreto TOTP ni datos privados de terceros.
+- El idioma cambia el segmento de locale y declara su alcance real: catálogo,
+  inicio y páginas informativas están traducidos; la cuenta y los correos siguen
+  en español.
+- `POST /api/account/delete` exige contraseña y escribir `ELIMINAR`. Antes se
+  enumeran las consecuencias contando filas reales: publicaciones que se retiran
+  del catálogo y conversaciones que desaparecen **también para la otra persona**,
+  porque `contact_requests` cascadea por `buyer_id` y por `recipient_id`. Sin
+  borrado suave ni periodo de recuperación.
+
+Migración `db/account-security.sql` (aditiva), aplicada a `neondb` y a
+`shwcs_production`. Otro entorno la necesita antes de servir este código: el
+login consulta `totp_confirmed_at`. `AUTH_TOTP_KEY` sigue pendiente en Vercel.
+
+---
+
 Implementado el 30 de agosto de 2026. `/account/settings` reúne perfil, seguridad y cuentas vinculadas, directamente sobre el fondo. El menú de usuario incluye Configuración y muestra el nombre y foto guardados. `/account/profile` redirige a la nueva ruta.
 
 ## Perfil y foto
