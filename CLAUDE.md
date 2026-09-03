@@ -401,6 +401,7 @@ Orden de esquema operativo para base nueva:
 11. db/newsletter-segments.sql
 12. db/launch-foundation.sql (tras auth/settings/soluciones/contactos)
 13. db/account-security.sql (tras auth.sql; segundo factor y sesiones con dispositivo)
+14. db/solution-site-image.sql (tras founder-solutions.sql; portada og:image del sitio)
 
 Newsletter es independiente, pero segments exige subscribers.
 db/solution-applications.sql y src/db/schema.ts son diseños anteriores;
@@ -1481,3 +1482,60 @@ a `shwcs_production` con el rol `neondb_owner`. Ninguna cuenta existente cambió
   configure allí, producción muestra la verificación en dos pasos como no
   disponible. No desplegar el código sin haber aplicado antes la migración: el
   login consulta `totp_confirmed_at` (ya aplicada en `shwcs_production`).
+
+## 50. Logos de redes y portada automática del sitio — 3 septiembre 2026
+
+Dos peticiones del usuario sobre la ficha. Detalle de la portada en
+`docs/listings.md`.
+
+### Logos de las redes
+
+lucide retiró los iconos de marca, así que `src/components/icons/social-icons.tsx`
+dibuja los siete logos como SVG en línea sobre rejilla 24×24 con `currentColor`:
+LinkedIn, X, Instagram, YouTube, GitHub, TikTok y Product Hunt. Los cuatro tipos
+genéricos de `publicLinkKinds` (Sitio web, Documentación, Precios, Contacto)
+siguen usando lucide para no abrir un set paralelo. Se usan en los dos sitios de
+la ficha donde había solo texto: los enlaces de cada creador y las cápsulas de
+«Sigue al proyecto». El logo acompaña al texto, no lo sustituye: un icono suelto
+de «Documentación» o «Precios» no se entiende. Cada glifo es `aria-hidden`; el
+nombre accesible lo da el enlace. Antes de darlos por buenos se rasterizaron con
+Sharp y se revisaron a ojo, porque un `path` mal copiado se ve como una mancha y
+compila igual. Añadir una marca nueva exige repetir esa comprobación visual.
+
+### Portada automática desde el sitio
+
+Al escribir el sitio, la ficha ya tiene imagen: se lee la `og:image` que ese
+sitio publica. Funciona **en borrador**, que era el punto de la petición.
+
+- Orden de portada: captura propia → arte local de Cord/Flouvia → `og:image`.
+  Aplicado en `/account` (portadas del fundador), `library/server.ts` (guardados
+  y listas) y `solutions/public.ts` (catálogo público).
+- **Se guarda una copia reencodificada, nunca un enlace remoto**: Sharp la
+  normaliza a WebP ≤1200×900 y ≤400 KB en `solution_site_images`. Un `<img>`
+  remoto haría que cada visitante pidiera el archivo al servidor de un tercero,
+  que es el píxel externo que §42 dice que el sitio no incrusta. No cambiar esto
+  por «simplificar» a una URL directa.
+- `GET /api/solutions/[id]/site-image` es público solo con la solución publicada;
+  en borrador responde únicamente al dueño, para no confirmar que existe un
+  borrador en ese UUID. `POST` la busca: dueño, mismo origen, 20 por hora.
+  `SiteImageCard` lo intenta una sola vez automáticamente y luego deja un botón;
+  no se relee el servidor ajeno en cada visita. El fallo se guarda y se muestra
+  con su motivo, no como un hueco.
+- Descargar una URL escrita por una persona es SSRF: `src/lib/solutions/site-image.ts`
+  valida cada salto —solo http(s), sin credenciales, DNS resuelto y rechazo de
+  loopback/privadas/link-local (incluida `169.254.169.254`)/CGNAT y sus
+  equivalentes IPv6, máximo tres redirecciones revalidando el host, 6 s y 8 s de
+  espera, 512 KB de HTML y 5 MB de imagen. `safeSolutionUrl` ya descartaba antes
+  los hosts sin punto, o sea `localhost`. **Límite conocido**: la comprobación de
+  DNS es previa a la conexión, así que queda un TOCTOU; está anotado en
+  `docs/listings.md` y no se disimula.
+- Migración `db/solution-site-image.sql`, script
+  `scripts/migrate-solution-site-image.cjs`, aplicada a `neondb` y a
+  `shwcs_production`.
+- Verificación: 65 unitarias (3 nuevas: rangos privados incluidos IPv4 mapeados,
+  lectura de og:image resuelta contra la página e ignorando el body, y
+  origen/sesión de la ruta). Recorrido en vivo contra un sitio real
+  (`cordhq.app`, og:image 1200×630 → 11 KB WebP) desde un borrador: guardada como
+  copia propia, servida como WebP desde nuestro dominio, 404 para anónimos
+  mientras es borrador y pública al publicarse; `127.0.0.1`, `localhost` y
+  `169.254.169.254` rechazados sin guardar nada. Fichas de prueba eliminadas.

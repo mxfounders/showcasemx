@@ -11,7 +11,8 @@ export async function publicProducts():Promise<PublishedProduct[]>{const url=get
  (SELECT count(*)::int FROM solution_likes x WHERE x.solution_id=s.id) likes,
  (SELECT count(*)::int FROM solution_comments x WHERE x.solution_id=s.id) comments,
  (SELECT count(*)::int FROM buyer_saved_projects x WHERE x.project_key='solution:'||s.id::text OR (s.catalog_key IS NOT NULL AND x.project_key='catalog:'||s.catalog_key)) saves,
- COALESCE((SELECT sum(views)::int FROM solution_daily_metrics x WHERE x.solution_id=s.id),0) views
+ COALESCE((SELECT sum(views)::int FROM solution_daily_metrics x WHERE x.solution_id=s.id),0) views,
+ EXISTS(SELECT 1 FROM solution_site_images i WHERE i.solution_id=s.id AND i.content_base64 IS NOT NULL) has_site_image
  FROM founder_solutions s WHERE s.published_data IS NOT NULL
  ORDER BY (
   (SELECT count(*)::int FROM solution_likes x WHERE x.solution_id=s.id)
@@ -19,4 +20,8 @@ export async function publicProducts():Promise<PublishedProduct[]>{const url=get
   +(SELECT count(*)::int FROM buyer_saved_projects x WHERE x.project_key='solution:'||s.id::text OR (s.catalog_key IS NOT NULL AND x.project_key='catalog:'||s.catalog_key))*2
   +COALESCE((SELECT sum(views)::int FROM solution_daily_metrics x WHERE x.solution_id=s.id),0)*0.1
  ) DESC,
- CASE s.catalog_key WHEN 'cord' THEN 0 WHEN 'flouvia' THEN 1 ELSE 2 END,s.published_at DESC NULLS LAST,s.id`;return rows.map(row=>({...previewCategories.flatMap(category=>category.products).find(product=>product.catalogId===row.catalog_key),catalogId:row.catalog_key?String(row.catalog_key):undefined,name:String(row.name),description:String(row.problem),feature:String(row.audience),website:String(row.website),provider:row.catalog_key==='cord'?'Flouvia':String(row.name),offering:row.kind as 'Software'|'Agencia'|'Servicio',category:String(row.category),categories:getSolutionCategories({category:String(row.category??''),categories:Array.isArray(row.categories)?row.categories as string[]:undefined}),detailUrl:`/soluciones/${row.id}`,likes:Number(row.likes),saves:Number(row.saves),comments:Number(row.comments),views:Number(row.views),score:solutionScore(Number(row.likes),Number(row.saves),Number(row.comments),Number(row.views))}));}catch(error){console.error('Public catalogue unavailable',error instanceof Error?error.name:'UnknownError');return [];}}
+ CASE s.catalog_key WHEN 'cord' THEN 0 WHEN 'flouvia' THEN 1 ELSE 2 END,s.published_at DESC NULLS LAST,s.id`;return rows.map(row=>{const staticProduct=previewCategories.flatMap(category=>category.products).find(product=>product.catalogId===row.catalog_key);
+ // Cover order: the local art we already ship for Cord/Flouvia, then the og:image
+ // read from the project's own site. Never a remote URL; we serve our own copy.
+ const ogImage=staticProduct?.ogImage??(row.has_site_image?`/api/solutions/${row.id}/site-image`:undefined);
+ return {...staticProduct,ogImage,catalogId:row.catalog_key?String(row.catalog_key):undefined,name:String(row.name),description:String(row.problem),feature:String(row.audience),website:String(row.website),provider:row.catalog_key==='cord'?'Flouvia':String(row.name),offering:row.kind as 'Software'|'Agencia'|'Servicio',category:String(row.category),categories:getSolutionCategories({category:String(row.category??''),categories:Array.isArray(row.categories)?row.categories as string[]:undefined}),detailUrl:`/soluciones/${row.id}`,likes:Number(row.likes),saves:Number(row.saves),comments:Number(row.comments),views:Number(row.views),score:solutionScore(Number(row.likes),Number(row.saves),Number(row.comments),Number(row.views))};});}catch(error){console.error('Public catalogue unavailable',error instanceof Error?error.name:'UnknownError');return [];}}

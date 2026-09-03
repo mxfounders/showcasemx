@@ -23,9 +23,10 @@ test('a TOTP code verifies inside the drift window and never replays a used step
   // cannot be reused inside its own 30-second window.
   assert.equal(verifyTotp(secret, code, step), null);
   // A code from a neighbouring step still passes: clocks drift.
-  assert.equal(verifyTotp(secret, generateTotp(secret, step - 1n), null), step - 1n);
-  // Two steps away is outside the window.
-  assert.equal(verifyTotp(secret, generateTotp(secret, step - 3n), null), null);
+  const previous = step - BigInt(1);
+  assert.equal(verifyTotp(secret, generateTotp(secret, previous), null), previous);
+  // Three steps away is outside the window.
+  assert.equal(verifyTotp(secret, generateTotp(secret, step - BigInt(3)), null), null);
   // Anything that is not six digits is rejected without touching the secret.
   assert.equal(verifyTotp(secret, '12345', null), null);
   assert.equal(verifyTotp(secret, 'abcdef', null), null);

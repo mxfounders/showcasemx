@@ -64,3 +64,51 @@ del borrador guardado. Guía de información, límites de encaje y fecha de apro
 Las pantallas mantienen fondo libre, separadores suaves, cinco tonos y botones azul
 suave, sin movimientos magnéticos. No inventar capturas para Cord/Flouvia.
 Contrato y permisos actuales: [media-dashboard.md](media-dashboard.md).
+
+## Portada automática desde el sitio del proyecto — 3 septiembre 2026
+
+Una ficha ya no depende de que su autor suba capturas para tener imagen: al
+escribir el sitio, se lee la `og:image` que ese sitio ya publica.
+
+- Orden de portada: captura propia (`published_data.screenshots[0]`) → arte local
+  de Cord/Flouvia (`ogImage` en `catalog-preview.ts`) → `og:image` del sitio.
+- **Guardamos una copia, no un enlace remoto.** Los bytes se descargan una vez,
+  se reescalan a 1200×900 como máximo y se reencodifican a WebP (≤400 KB) con
+  Sharp, igual que las capturas. Apuntar el catálogo a un `<img>` remoto haría
+  que cada visitante pidiera un archivo al servidor de un tercero, que es
+  justamente el píxel externo que el aviso de privacidad dice no incrustar.
+- Tabla `solution_site_images` (una fila por solución), migración
+  `db/solution-site-image.sql`, aplicada a `neondb` y a `shwcs_production`.
+- `GET /api/solutions/[id]/site-image` sirve el WebP: público solo si la solución
+  está publicada; mientras es borrador responde únicamente a su dueño, para que
+  un UUID ajeno no confirme que ahí existe un borrador.
+- `POST` en esa misma ruta la busca o la actualiza; solo el dueño, mismo origen,
+  20 por hora. `SiteImageCard` lo intenta **una vez** de forma automática cuando
+  hay sitio y todavía no hay portada; después es un botón manual. No se relee el
+  servidor ajeno en cada visita.
+- Cuando falla se guarda el motivo y se le muestra al dueño («el sitio no declara
+  og:image», «no pudimos abrirlo»), en vez de dejar un hueco silencioso: el
+  arreglo casi siempre está de su lado.
+
+### Petición saliente con URL de un tercero
+
+Descargar una dirección que escribió una persona es territorio de SSRF, así que
+cada salto se valida en `src/lib/solutions/site-image.ts`:
+
+- Solo `http:`/`https:`, sin credenciales en la URL. Además `safeSolutionUrl` ya
+  exige un punto en el host, lo que descarta `localhost` antes de tocar la red.
+- Resolución DNS previa y rechazo de loopback, privadas, link-local (incluida
+  `169.254.169.254`, la de metadatos de nube), CGNAT y las equivalentes IPv6,
+  incluidas las direcciones IPv4 mapeadas.
+- Redirecciones seguidas a mano, máximo tres, revalidando el host en cada salto.
+- Tiempos de espera de 6 s (HTML) y 8 s (imagen); topes de 512 KB de HTML y 5 MB
+  de imagen, cortando el flujo al superarlos.
+- Solo se leen `og:image`, sus variantes y `twitter:image`, y únicamente dentro
+  del `<head>`.
+
+**Límite conocido y no disimulado**: la comprobación de DNS ocurre antes de la
+petición, y un nombre podría resolver a otra dirección entre la comprobación y la
+conexión (TOCTOU). Cerrarlo del todo exige conectar contra la IP ya validada con
+la cabecera Host correcta; no está hecho. El riesgo queda acotado por el resto de
+guardas y porque la respuesta nunca se devuelve al cliente: solo se guarda una
+imagen reencodificada.

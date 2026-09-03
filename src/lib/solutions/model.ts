@@ -5,7 +5,9 @@ export const emptySolution:SolutionData={name:'',kind:'',category:'',problem:'',
 export const solutionCategories=['Cobros','Finanzas','Nómina','Ventas','Operación','Legal','Agencias'] as const;
 export const statuses={draft:{label:'Borrador',next:'Completa los datos y envía tu solución.'},pending:{label:'En revisión',next:'El equipo está revisando tu postulación. Puedes consultar lo que enviaste.'},changes_requested:{label:'Necesita cambios',next:'Revisa los comentarios, corrige y vuelve a enviar.'},published:{label:'Publicada',next:'Tu ficha está disponible. Las modificaciones necesitan una nueva revisión.'},rejected:{label:'No aceptada',next:'Consulta el motivo. Puedes preparar una versión corregida.'}} as const;
 export type SolutionStatus=keyof typeof statuses;
-export type FounderSolution={id:string;catalog_key?:string|null;owner_id:string;data:SolutionData;status:SolutionStatus;step:number;version:number;published_data:SolutionData|null;updated_at:string;published_at?:string|null;editor_question?:string|null};
+// has_site_image: whether the og:image read from the project's own website is
+// stored, so a draft already has a cover. See src/lib/solutions/site-image.ts.
+export type FounderSolution={id:string;catalog_key?:string|null;owner_id:string;data:SolutionData;status:SolutionStatus;step:number;version:number;published_data:SolutionData|null;updated_at:string;published_at?:string|null;editor_question?:string|null;has_site_image?:boolean;site_image_failure?:string|null};
 export type SolutionEvent={id:string;status:SolutionStatus;message:string;created_at:string};
 export const isSolutionId=(value:string)=>/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(value);
 export function readSolutionData(value:unknown):SolutionData|null{
