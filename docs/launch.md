@@ -151,10 +151,11 @@ Pendientes para activar producción:
 Las campañas del newsletter, reseñas verificadas, almacenamiento externo de capturas,
 monitoreo externo y CRM/chat completo siguen fuera de esta entrega.
 
-## Superficie operativa futura
+## Superficie operativa (`ops.shwcs.site`)
 
-Reservar `ops.shwcs.site` para revisión editorial, moderación, publicación, reportes
-y operación del catálogo. Antes de construirla: definir roles mínimos, acceso de
-emergencia, auditoría de cada decisión, separación de sesiones y base/entorno de
-producción. No exponerla como una ruta escondida del dashboard público ni conceder
-acceso por seleccionar «fundador» o «comprador» en el perfil.
+Construida en `ops/`: roles `reviewer`/`admin` sobre `solution_reviewers`, login con
+TOTP obligatorio, sesiones propias (`ops_sessions`) separadas del producto, y
+auditoría de cada decisión en `ops_audit_log`. Ver CLAUDE.md §44 y
+`docs/operations.md`. No expuesta desde el dashboard público; el acceso nunca se
+concede por seleccionar «fundador» o «comprador» en el perfil. Pendiente: variables
+de entorno del proyecto Vercel `shwcs-ops`, dominio conectado y revisión legal.

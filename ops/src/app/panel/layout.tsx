@@ -1,16 +1,15 @@
-import { redirect } from 'next/navigation';
-import { getOpsSession } from '@/lib/auth';
+import { requireOps } from '@/lib/auth';
 import Sidebar from './Sidebar';
+import CommandPalette from '@/components/CommandPalette';
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
-  const user = await getOpsSession();
-  if (!user) redirect('/login');
+  const user = await requireOps();
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900">
-      <Sidebar userEmail={user.email} />
+      <Sidebar userEmail={user.email} level={user.level} />
+      <CommandPalette />
       <div className="flex flex-col min-h-screen lg:pl-[248px]">
-        {/* We keep main full width in the remaining space */}
         <main className="flex-1 w-full relative">
           {children}
         </main>

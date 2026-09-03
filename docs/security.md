@@ -49,10 +49,21 @@ Google, Resend o Neon ni sustituye una prueba de penetración independiente.
   `sslmode=require`, rotación de credenciales, PITR/backups comprobados y el menor
   privilegio posible. La URL de Neon nunca debe tener prefijo `NEXT_PUBLIC_`.
 
+## Backoffice de operaciones
+
+`ops/` (ver CLAUDE.md §44) es una app y una identidad de sesión separadas del
+producto: cookie, tabla de sesiones (`ops_sessions`) y contraseña compartida con
+`auth_accounts` pero **TOTP obligatorio** además de la contraseña, con códigos de
+respaldo de un solo uso y anti-repetición por paso. Toda mutación exige `Origin`
+exacto, motivo ≥10 caracteres y queda en `ops_audit_log` (actor, acción, sujeto, IP).
+Dos niveles (`reviewer`/`admin`); solo `admin` suspende cuentas, cambia roles o lee
+la bitácora. El producto sigue sin MFA propio; solo el backoffice lo exige.
+
 ## Límites de esta revisión
 
-- No hay MFA/TOTP todavía. Google puede reducir dependencia de contraseña, pero no
-  equivale a MFA obligatorio.
+- No hay MFA/TOTP en el producto todavía. Google puede reducir dependencia de
+  contraseña, pero no equivale a MFA obligatorio. El backoffice de operaciones sí
+  exige TOTP (ver arriba).
 - No hay WAF/captcha adaptativo ni detección central de credenciales filtradas.
 - Falta probar producción después del primer deploy: cookies Secure, OAuth real,
   entrega/recuperación, cron, cabeceras, separación de bases y restauración.

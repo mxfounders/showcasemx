@@ -12,20 +12,17 @@ export default async function LoginPage() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-white p-6">
       <div className="w-full max-w-[400px] flex flex-col items-center">
-        {/* Logo */}
-        <div className="mb-10">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/shwcs-logo-blue.png" alt="shwcs" className="h-8 w-auto" />
-        </div>
-        
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/shwcs-logo-blue.png" alt="shwcs" className="h-8 w-auto mb-10" />
+
         <div className="w-full">
           <h2 className="text-2xl font-bold text-center text-stone-900 mb-2 tracking-tight">
             Iniciar sesión
           </h2>
           <p className="text-sm text-center text-stone-500 mb-8">
-            Acceso exclusivo para revisores.
+            Acceso exclusivo para el equipo de operaciones.
           </p>
-          
+
           <LoginForm />
         </div>
       </div>

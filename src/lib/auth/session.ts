@@ -9,6 +9,6 @@ export async function getSession(token: string | undefined): Promise<{ id: strin
   const url = getDatabaseUrl();
   if (!url) throw new Error('Storage unavailable');
   const sql = neon(url);
-  const rows = await sql`SELECT a.id, a.email FROM auth_sessions s JOIN auth_accounts a ON a.id = s.account_id WHERE s.token_hash = ${hashToken(token)} AND s.expires_at > now() LIMIT 1`;
+  const rows = await sql`SELECT a.id, a.email FROM auth_sessions s JOIN auth_accounts a ON a.id = s.account_id WHERE s.token_hash = ${hashToken(token)} AND s.expires_at > now() AND a.suspended_at IS NULL LIMIT 1`;
   return rows.length ? { id: String(rows[0].id), email: String(rows[0].email) } : null;
 }

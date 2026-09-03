@@ -1,0 +1,6 @@
+// Explicit administrative migration against the configured database; never prints credentials.
+const fs=require('node:fs'),{neon}=require('@neondatabase/serverless');
+require('dotenv').config({path:'.env.local',quiet:true});
+function statements(source){let quote=false,dollar=false,comment=false,chunk='',out=[];for(let i=0;i<source.length;i++){const c=source[i],next=source[i+1];if(comment){if(c==='\n')comment=false;else continue;}if(!quote&&!dollar&&c==='-'&&next==='-'){comment=true;i++;continue;}if(!quote&&c==='$'&&next==='$'){dollar=!dollar;chunk+='$$';i++;continue;}if(!dollar&&c==="'"){if(quote&&next==="'"){chunk+="''";i++;continue;}quote=!quote;}if(c===';'&&!quote&&!dollar){const sql=chunk.trim();if(sql&&!/^(BEGIN|COMMIT)$/i.test(sql))out.push(sql);chunk='';}else chunk+=c;}return out;}
+async function main(){const url=process.env.NEON_DATABASE_URL||process.env.DATABASE_URL||process.env.POSTGRES_URL;if(!url)throw Error('Missing database');const sql=neon(url);await sql.transaction(statements(fs.readFileSync('db/ops-console.sql','utf8')).map(statement=>sql.query(statement)));console.log('Ops console migration applied atomically.');}
+main().catch((err)=>{console.error('Ops console migration failed:',err.message);process.exitCode=1;});

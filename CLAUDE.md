@@ -1042,10 +1042,10 @@ No añadir animaciones continuas ni transiciones que contradigan movimiento redu
 - `/contacto` usa `contacto@shwcs.site` como canal principal y muestra
   `hola@shwcs.site` como conversación general. El footer pone `hola@shwcs.site →`
   debajo de la descripción de marca y enlaza a `/contacto`; no convertirlo en CTA.
-- `ops.shwcs.site` queda reservado para backoffice futuro de revisión, moderación,
-  catálogo y operación. No enlazarlo todavía desde la navegación pública ni tratar
-  un perfil founder/buyer como permiso operativo. Debe tener autenticación propia de
-  la superficie, roles explícitos, auditoría y sesiones con alcance controlado.
+- `ops.shwcs.site` es el backoffice de revisión, moderación, cuentas y operación,
+  implementado como app Next.js independiente en `ops/` (proyecto Vercel `shwcs-ops`).
+  Ver §44. No enlazarlo desde la navegación pública ni tratar un perfil founder/buyer
+  como permiso operativo: el acceso depende exclusivamente de `solution_reviewers`.
 - `.env.local` quedó con remitente `shwcs <hola@shwcs.site>` y origen canónico, sin
   versionar secretos. La clave Resend ya existía. Esto no acredita entrega real ni
   replica variables en Vercel.
@@ -1185,3 +1185,60 @@ Las políticas de privacidad, términos y cookies en `src/app/[locale]/(marketin
 Todas las páginas dentro de `/account/settings/*` (Seguridad, Cuentas Vinculadas, etc.) implementan un diseño estricto basado en "tarjetas" (`rounded-2xl border border-stone-200 bg-white p-6 shadow-sm`). Se prohíbe dejar elementos de formulario o textos flotando directamente sobre el fondo gris de la página. 
 - La arquitectura asegura que los campos de confirmación de contraseña (como en la vinculación de Google) se mantengan ocultos inicialmente para mantener la tarjeta limpia, desplegándose de manera elegante solo cuando el usuario requiere realizar la acción.
 - Los botones de toggle interactivos y botones de "submit" adyacentes deben estar encapsulados en contenedores flex horizontales o verticales adecuados (`flex flex-col-reverse sm:flex-row`) para evitar el solapamiento que causaban las clases de margen verticales como `space-y-*` en elementos *inline* y de posición absoluta.
+
+## 44. Backoffice de operaciones (`ops/`) — 2 septiembre 2026
+
+App Next.js independiente en `ops/` (proyecto Vercel `shwcs-ops`, dominio previsto
+`ops.shwcs.site`), con su propio `package.json`, `.next` y despliegue. Comparte la
+misma base Neon que el producto pero **no comparte identidad de sesión** con él.
+
+### Identidad y acceso
+
+- Autorización: pertenencia activa (`disabled_at IS NULL`) en `solution_reviewers`,
+  con `level` en `('reviewer','admin')`. Sin nivel implícito por perfil/rol del producto.
+- TOTP obligatorio para toda cuenta de ops, con 10 códigos de respaldo de un solo uso.
+  Login en dos pasos: `POST /api/auth/login` valida contraseña y crea un
+  `ops_login_challenge` de 5 minutos (nunca una sesión); `POST /api/auth/totp` consume
+  el código; `POST /api/auth/enroll` atiende el alta inicial (`/login/enroll`) y crea
+  la sesión al confirmar. `totp_last_step` impide reutilizar un código dentro de la
+  ventana. `OPS_TOTP_KEY` (32 bytes hex) cifra el secreto en reposo (AES-256-GCM);
+  sin esa variable la app no puede validar códigos.
+- Sesiones propias en `ops_sessions` (no `auth_sessions`), cookie `ops-session`
+  (`__Host-` en producción), 8 horas. Una sesión de producto nunca abre ops y viceversa.
+- Revocar sesiones desde el drawer de cuenta borra `auth_sessions` **y** `ops_sessions`
+  de esa cuenta. Suspender una cuenta (`auth_accounts.suspended_at`) bloquea su login
+  en el producto y revoca ambas tablas de sesión; reactivar limpia esas columnas.
+- Alta: `scripts/add-reviewer.cjs <email>` (nivel `reviewer`) o
+  `scripts/promote-ops-admin.cjs <email>` (nivel `admin`), sobre una cuenta ya
+  registrada en el producto. Ninguna alta es automática por perfil o rol.
+
+### Alcance de datos
+
+Ops ve cuentas, perfiles, fichas (borrador y publicada), capturas, reportes,
+dominios, métricas, listas públicas, comentarios y newsletter completos, más
+METADATOS de contacto (destinatario, proyecto, estado, fechas). **Nunca** consulta
+`buyer_list_items.note`, `buyer_lists.purpose`, `contact_requests.details` ni
+`contact_events.message`: son las notas y el propósito personal del comprador y el
+contenido de sus solicitudes, y permanecen fuera del backoffice. No añadir esas
+columnas a ninguna consulta de `ops/` sin decisión explícita del usuario.
+
+### Acciones y auditoría
+
+`ops_audit_log` registra cada mutación (actor, acción, sujeto, motivo obligatorio
+≥10 caracteres, metadata, IP). Es de solo inserción; no se borran filas al eliminar
+cuentas de prueba. `solution_events.actor_id` registra quién decidió cada revisión.
+Un revisor no puede aprobar ni reportar su propia solución
+(`owner_id<>account.id`/`reporter_id IS DISTINCT FROM`), igual que en el producto.
+Solo `level='admin'` accede a `/panel/equipo`, `/panel/bitacora` y a suspender,
+despublicar o verificar cuentas; nadie puede quitarse a sí mismo el último `admin`
+ni auto-suspenderse/revocarse. `despublicar todo` retira `published_data` de sus
+fichas y vuelve privadas sus listas públicas, sin suspender la cuenta.
+
+### Verificación
+
+`RUN_OPS_INTEGRATION=1 OPS_PORT=<puerto> node tests/integration/ops.cjs` recorre
+login/TOTP/enrolamiento, aislamiento de sesión producto↔ops, auto-revisión bloqueada,
+publicación con `actor_id`, permisos revisor/admin, guarda del último admin, frontera
+de privacidad y todas las superficies del panel, con cuentas `@example.invalid`
+desechables. No usar la cuenta real dueña de Cord/Flouvia para probar. Pendiente:
+credenciales de Vercel para el proyecto `shwcs-ops` y revisión legal del nuevo dominio.

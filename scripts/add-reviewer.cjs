@@ -68,7 +68,8 @@ async function main() {
   console.log(`✓ ${email} added as reviewer.`);
   console.log(`  Total reviewers now: ${verify[0].n}`);
   console.log('');
-  console.log('Next step: log in at ops.shwcs.site with this email and your shwcs password.');
+  console.log('Next step: they must enroll a TOTP authenticator at ops.shwcs.site/login/enroll');
+  console.log('before their first sign-in — a valid password alone does not grant ops access.');
 }
 
 main().catch(err => {

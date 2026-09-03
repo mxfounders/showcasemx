@@ -1,10 +1,9 @@
-import { NextResponse } from 'next/server';
-import { getOpsSession } from '@/lib/auth';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireOpsApi, isUuid, sameOrigin, opsLimit, requestIdentity, audit, requestIp } from '@/lib/auth';
 import { getDb } from '@/lib/db';
+import { failure, opsBody } from '@/lib/http';
 
 export const runtime = 'nodejs';
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const ALLOWED_FROM: Record<string, string[]> = {
   publish: ['pending', 'changes_requested'],
@@ -17,50 +16,65 @@ const NEW_STATUS: Record<string, string> = {
   publish: 'published',
   reject: 'rejected',
   changes_requested: 'changes_requested',
-  withdraw: 'rejected',
+  withdraw: 'changes_requested',
 };
 
-export async function POST(req: Request) {
-  const user = await getOpsSession();
-  if (!user) return NextResponse.json({ error: 'No autenticado.' }, { status: 401 });
+export async function POST(req: NextRequest) {
+  const user = await requireOpsApi();
+  if (user instanceof Response) return user;
+  if (!sameOrigin(req)) return failure('Origen no autorizado.', 403);
+  if (!(await opsLimit('review', requestIdentity(req.headers), 60, 400))) return failure('Demasiados cambios. Intenta más tarde.', 429);
 
-  let body: Record<string, unknown>;
-  try { body = await req.json(); } catch { return NextResponse.json({ error: 'JSON inválido.' }, { status: 400 }); }
+  const body = await opsBody(req);
+  const solutionId = body?.solutionId;
+  const action = body?.action;
+  const message = body?.message;
+  const version = body?.version;
 
-  const { solutionId, action, message, version } = body;
-
-  if (!UUID_RE.test(String(solutionId ?? ''))) return NextResponse.json({ error: 'ID inválido.' }, { status: 400 });
-  if (!Object.keys(ALLOWED_FROM).includes(String(action ?? ''))) return NextResponse.json({ error: 'Acción inválida.' }, { status: 400 });
-  if (typeof message !== 'string' || message.trim().length < 5 || message.length > 2000)
-    return NextResponse.json({ error: 'El mensaje debe tener 5-2000 caracteres.' }, { status: 400 });
-  if (typeof version !== 'number') return NextResponse.json({ error: 'Versión requerida.' }, { status: 400 });
+  if (!isUuid(solutionId)) return failure('ID inválido.', 400);
+  if (typeof action !== 'string' || !Object.keys(ALLOWED_FROM).includes(action)) return failure('Acción inválida.', 400);
+  if (typeof message !== 'string' || message.trim().length < 5 || message.length > 2000) {
+    return failure('El mensaje debe tener 5-2000 caracteres.', 400);
+  }
+  if (typeof version !== 'number' || !Number.isSafeInteger(version)) return failure('Versión requerida.', 400);
 
   try {
     const sql = getDb();
-
-    const rows = await sql`
-      SELECT id, owner_id, status, version FROM founder_solutions WHERE id = ${String(solutionId)} FOR UPDATE LIMIT 1
-    `;
-    if (!rows.length) return NextResponse.json({ error: 'Postulación no encontrada.' }, { status: 404 });
-    const sol = rows[0];
-
-    if (String(sol.owner_id) === user.id) return NextResponse.json({ error: 'No puedes revisar tu propia postulación.' }, { status: 403 });
-    if (Number(sol.version) !== version) return NextResponse.json({ error: 'Versión desactualizada. Recarga e intenta de nuevo.' }, { status: 409 });
-    if (!ALLOWED_FROM[String(action)]?.includes(String(sol.status)))
-      return NextResponse.json({ error: `No se puede "${action}" desde estado "${sol.status}".` }, { status: 422 });
-
-    const targetStatus = NEW_STATUS[String(action)];
     const isPublishing = action === 'publish';
-    const publishPart = isPublishing ? sql`, published_data = data, published_at = now()` : sql``;
+    const isWithdrawing = action === 'withdraw';
+    const targetStatus = NEW_STATUS[action];
+    const allowedStatuses = ALLOWED_FROM[action];
 
-    await sql.transaction([
-      sql`UPDATE founder_solutions SET status=${targetStatus}, version=version+1, updated_at=now() ${publishPart} WHERE id=${String(solutionId)} AND version=${version}`,
-      sql`INSERT INTO solution_events (solution_id, status, message) VALUES (${String(solutionId)}, ${targetStatus}, ${message.trim()})`,
+    const result = await sql.transaction([
+      sql`SELECT id FROM founder_solutions WHERE id = ${solutionId} FOR UPDATE`,
+      sql`WITH changed AS (
+        UPDATE founder_solutions SET
+          status = ${targetStatus},
+          version = version + 1,
+          updated_at = now(),
+          published_at = CASE WHEN ${isPublishing} THEN now() WHEN ${isWithdrawing} THEN NULL ELSE published_at END,
+          published_data = CASE WHEN ${isPublishing} THEN data WHEN ${isWithdrawing} THEN NULL ELSE published_data END
+        WHERE id = ${solutionId} AND owner_id <> ${user.id} AND version = ${version}
+          AND status = ANY(${allowedStatuses}::text[])
+        RETURNING id, status, version
+      ), event AS (
+        INSERT INTO solution_events (solution_id, status, message, actor_id)
+        SELECT id, status, ${message.trim()}, ${user.id} FROM changed
+      )
+      SELECT * FROM changed`,
     ]);
 
-    return NextResponse.json({ ok: true, newStatus: targetStatus }, { headers: { 'Cache-Control': 'no-store' } });
+    const rows = result[1];
+    if (!rows.length) return failure('La postulación cambió, no admite esta acción, o es tuya. Recarga e intenta de nuevo.', 409);
+
+    await audit({
+      actorId: user.id, actorEmail: user.email, action: `solution_${action}`,
+      subjectType: 'solution', subjectId: solutionId, reason: message.trim(), ip: requestIp(req.headers),
+    });
+
+    return NextResponse.json({ ok: true, newStatus: String(rows[0].status) }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (err) {
     console.error('[ops/review]', err);
-    return NextResponse.json({ error: 'Error interno.' }, { status: 503 });
+    return failure('Error interno.', 503);
   }
 }

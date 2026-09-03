@@ -26,4 +26,10 @@ Requiere que `DATABASE_URL` en `.env.local` pertenezca al rol propietario de Neo
 ## Dominios
 
 - `shwcs.site`: producto y comunidad públicos.
-- `ops.shwcs.site`: proyecto Vercel independiente para operación interna; permanece sin formularios ni datos hasta implementar autenticación y autorización administrativa.
+- `ops.shwcs.site`: proyecto Vercel independiente (`shwcs-ops`, carpeta `ops/`) para
+  operación interna: revisión, reportes, cuentas, comunidad, mensajes, correo,
+  newsletter, métricas, equipo y bitácora. Login propio en dos pasos (contraseña +
+  TOTP obligatorio), sesiones en `ops_sessions` separadas de `auth_sessions`, y
+  autorización por `solution_reviewers.level` (`reviewer`/`admin`). Ver CLAUDE.md §44
+  y `tests/integration/ops.cjs`. Pendiente: variables de entorno del proyecto en
+  Vercel (`OPS_TOTP_KEY`, `DATABASE_URL` de producción) y dominio conectado.

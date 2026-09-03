@@ -68,9 +68,9 @@ export async function POST(request: NextRequest, props: { params: Promise<{ acti
       // Generic registration result; never authenticate an existing account.
       return NextResponse.json({ ok: true, registered: true }, { headers: { 'Cache-Control': 'no-store' } });
     } else {
-      const rows = await sql`SELECT id, password_hash FROM auth_accounts WHERE email = ${email} LIMIT 1`;
+      const rows = await sql`SELECT id, password_hash, suspended_at FROM auth_accounts WHERE email = ${email} LIMIT 1`;
       const valid = await verifyPassword(password, rows.length ? String(rows[0].password_hash) : dummyHash);
-      if (!rows.length || !valid) return fail('Correo o contraseña incorrectos.', 401);
+      if (!rows.length || !valid || rows[0].suspended_at) return fail('Correo o contraseña incorrectos.', 401);
       accountId = String(rows[0].id);
       verifiedHash = String(rows[0].password_hash);
     }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import ReviewDrawer from './ReviewDrawer';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -19,7 +20,7 @@ const STATUS_COLORS: Record<string, string> = {
 interface SolutionItem {
   id: string; status: string; version: number;
   updatedAt: string; createdAt: string; solutionName: string;
-  category: string; ownerEmail: string; ownerId: string;
+  category: string; catalogKey: string | null; ownerEmail: string; ownerId: string;
   hasPublished: boolean; eventCount: number;
 }
 
@@ -27,10 +28,13 @@ interface Props {
   defaultStatus?: string;
   title: string;
   showAllStatuses?: boolean;
+  showCatalogFilter?: boolean;
 }
 
-export default function SolutionsQueue({ defaultStatus = 'pending', title, showAllStatuses = false }: Props) {
+export default function SolutionsQueue({ defaultStatus = 'pending', title, showAllStatuses = false, showCatalogFilter = false }: Props) {
+  const searchParams = useSearchParams();
   const [status, setStatus] = useState(defaultStatus);
+  const [catalogKey, setCatalogKey] = useState('');
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
@@ -38,26 +42,31 @@ export default function SolutionsQueue({ defaultStatus = 'pending', title, showA
   const [hasMore, setHasMore] = useState(false);
   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const [selectedId, setSelectedId] = useState<string | null>(searchParams.get('solution'));
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError('');
     try {
       const params = new URLSearchParams({ status, page: String(page) });
       if (search) params.set('q', search);
+      if (catalogKey) params.set('catalogKey', catalogKey);
       const res = await fetch(`/api/solutions?${params}`);
       const data = await res.json();
+      if (!res.ok) { setError(data.error ?? 'Error al cargar.'); setItems([]); return; }
       setItems(data.items ?? []);
       setHasMore(data.hasMore ?? false);
       setStatusCounts(data.statusCounts ?? {});
-    } catch { /* ignore */ } finally {
+    } catch {
+      setError('No se pudo conectar.');
+    } finally {
       setLoading(false);
     }
-  }, [status, page, search]);
+  }, [status, page, search, catalogKey]);
 
   useEffect(() => { load(); }, [load]);
 
-  // Debounce search
   useEffect(() => {
     const t = setTimeout(() => { setSearch(searchInput); setPage(1); }, 350);
     return () => clearTimeout(t);
@@ -69,10 +78,9 @@ export default function SolutionsQueue({ defaultStatus = 'pending', title, showA
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-stone-50/80 backdrop-blur-md border-b border-stone-200/70 px-4 sm:px-8 h-[60px] flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-30 bg-stone-50/80 backdrop-blur-md border-b border-stone-200/70 px-4 sm:px-8 h-[60px] flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <h1 className="text-[16px] font-bold tracking-tight text-stone-800">{title}</h1>
-          {/* Pending badge */}
           {(statusCounts.pending ?? 0) + (statusCounts.changes_requested ?? 0) > 0 && (
             <span className="px-2 py-0.5 rounded-full bg-[#3562cc] text-white text-[10px] font-bold">
               {(statusCounts.pending ?? 0) + (statusCounts.changes_requested ?? 0)}
@@ -89,27 +97,36 @@ export default function SolutionsQueue({ defaultStatus = 'pending', title, showA
       </header>
 
       <div className="p-8 space-y-4">
-        {/* Filter tabs */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {filterTabs.map(s => (
-            <button
-              key={s}
-              onClick={() => { setStatus(s); setPage(1); }}
-              className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition
-                ${status === s
-                  ? 'bg-[#e4ebfc] border-[#e4ebfc] text-[#365dc4] font-semibold'
-                  : 'bg-white border-stone-200 text-stone-500 hover:border-[#3562cc] hover:text-[#365dc4]'
-                }`}
+        <div className="flex items-center gap-2 flex-wrap justify-between">
+          <div className="flex items-center gap-2 flex-wrap">
+            {filterTabs.map(s => (
+              <button
+                key={s}
+                onClick={() => { setStatus(s); setPage(1); }}
+                className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition
+                  ${status === s
+                    ? 'bg-[#e4ebfc] border-[#e4ebfc] text-[#365dc4] font-semibold'
+                    : 'bg-white border-stone-200 text-stone-500 hover:border-[#3562cc] hover:text-[#365dc4]'
+                  }`}
+              >
+                {STATUS_LABELS[s] ?? s}
+                {s !== 'all' && statusCounts[s] ? <span className="ml-1.5 text-xs opacity-70">({statusCounts[s]})</span> : null}
+              </button>
+            ))}
+          </div>
+          {showCatalogFilter && (
+            <select
+              value={catalogKey}
+              onChange={e => { setCatalogKey(e.target.value); setPage(1); }}
+              className="px-3 py-1.5 text-sm rounded-full border border-stone-200 bg-white text-stone-600 outline-none focus:border-[#3562cc]"
             >
-              {STATUS_LABELS[s] ?? s}
-              {s !== 'all' && statusCounts[s] ? (
-                <span className="ml-1.5 text-xs opacity-70">({statusCounts[s]})</span>
-              ) : null}
-            </button>
-          ))}
+              <option value="">Todos los proyectos</option>
+              <option value="cord">Cord</option>
+              <option value="flouvia">Flouvia</option>
+            </select>
+          )}
         </div>
 
-        {/* Table */}
         <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -124,24 +141,19 @@ export default function SolutionsQueue({ defaultStatus = 'pending', title, showA
                 </tr>
               </thead>
               <tbody>
-                {loading ? (
+                {error ? (
+                  <tr><td colSpan={6} className="px-5 py-10 text-center text-red-500 text-sm">{error}</td></tr>
+                ) : loading ? (
                   <tr><td colSpan={6} className="px-5 py-10 text-center text-stone-400 text-sm">Cargando…</td></tr>
                 ) : items.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-5 py-16 text-center">
-                      <div className="text-stone-400 space-y-1">
-                        <svg className="w-10 h-10 mx-auto opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                          <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 0 2-2h2a2 2 0 0 0 2 2"/>
-                        </svg>
-                        <p className="text-sm">Sin postulaciones en este filtro</p>
-                      </div>
-                    </td>
-                  </tr>
+                  <tr><td colSpan={6} className="px-5 py-16 text-center text-stone-400 text-sm">Sin postulaciones en este filtro</td></tr>
                 ) : items.map(item => (
                   <tr key={item.id} className="border-b border-stone-100 last:border-0 hover:bg-stone-50 transition-colors">
                     <td className="px-5 py-4">
                       <p className="font-semibold text-stone-900">{item.solutionName}</p>
-                      {item.category && <p className="text-xs text-stone-400 mt-0.5">{item.category}</p>}
+                      <p className="mt-0.5 text-xs text-stone-400">
+                        {item.category}{item.catalogKey ? ` · ${item.catalogKey}` : ''}
+                      </p>
                     </td>
                     <td className="px-5 py-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLORS[item.status] ?? 'bg-stone-100 text-stone-600'}`}>
@@ -156,7 +168,7 @@ export default function SolutionsQueue({ defaultStatus = 'pending', title, showA
                         onClick={() => setSelectedId(item.id)}
                         className="px-3 py-1.5 rounded-lg bg-[#e4ebfc] text-[#365dc4] text-xs font-semibold hover:bg-[#d1dfff] transition-colors"
                       >
-                        Revisar →
+                        Ver →
                       </button>
                     </td>
                   </tr>
@@ -166,34 +178,22 @@ export default function SolutionsQueue({ defaultStatus = 'pending', title, showA
           </div>
         </div>
 
-        {/* Pagination */}
         {(page > 1 || hasMore) && (
           <div className="flex items-center justify-center gap-3 pt-2">
-            <button
-              disabled={page === 1}
-              onClick={() => setPage(p => p - 1)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-stone-200 text-sm font-medium text-stone-600 disabled:opacity-40 hover:border-[#3562cc] hover:text-[#365dc4] transition"
-            >
+            <button disabled={page === 1} onClick={() => setPage(p => p - 1)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-stone-200 text-sm font-medium text-stone-600 disabled:opacity-40 hover:border-[#3562cc] hover:text-[#365dc4] transition">
               ← Anterior
             </button>
             <span className="text-sm text-stone-400">Página {page}</span>
-            <button
-              disabled={!hasMore}
-              onClick={() => setPage(p => p + 1)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-stone-200 text-sm font-medium text-stone-600 disabled:opacity-40 hover:border-[#3562cc] hover:text-[#365dc4] transition"
-            >
+            <button disabled={!hasMore} onClick={() => setPage(p => p + 1)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-stone-200 text-sm font-medium text-stone-600 disabled:opacity-40 hover:border-[#3562cc] hover:text-[#365dc4] transition">
               Siguiente →
             </button>
           </div>
         )}
       </div>
 
-      {/* Review drawer */}
-      <ReviewDrawer
-        solutionId={selectedId}
-        onClose={() => setSelectedId(null)}
-        onReviewed={() => { setSelectedId(null); load(); }}
-      />
+      <ReviewDrawer solutionId={selectedId} onClose={() => setSelectedId(null)} onReviewed={() => { setSelectedId(null); load(); }} />
     </>
   );
 }

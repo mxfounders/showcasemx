@@ -24,7 +24,7 @@ export default function LoginForm() {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.ok) {
-        router.replace('/panel');
+        router.replace(data.step === 'enroll' ? '/login/enroll' : '/login/totp');
       } else {
         setError(data.error ?? 'Error al iniciar sesión.');
       }
@@ -78,7 +78,7 @@ export default function LoginForm() {
       >
         {loading ? 'Verificando…' : (
           <>
-            Entrar al panel
+            Continuar
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
