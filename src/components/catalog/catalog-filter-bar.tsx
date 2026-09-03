@@ -122,14 +122,6 @@ export function CatalogFilterBar({
             <span>{sortOptions.find(o => o.value === (searchParams.get('sort') || 'popular'))?.label}</span>
             <ChevronDown className="size-3 text-stone-400" />
           </div>
-        </div>
-
-        <details className="ml-2 shrink-0">
-          <summary>Cómo se ordena</summary>
-          <div className="mt-2 w-72 rounded-xl border border-stone-200 bg-white p-4 text-[12.5px] leading-relaxed text-stone-500 shadow-sm">
-            <p>Un comentario pesa como 3, un guardado como 2, un like como 1, y las vistas 0.1 cada una. El orden refleja interacción real, empieza en cero y no es un aval de calidad ni un puntaje editorial — puede manipularse creando cuentas.</p>
-          </div>
-        </details>
       </div>
     </div>
   );
