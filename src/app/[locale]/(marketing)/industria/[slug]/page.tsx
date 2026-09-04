@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { publicProducts } from '@/lib/solutions/public';
 import { CategoryPageLayout } from '@/components/catalog/category-page-layout';
 import { CategoryPageSkeleton } from '@/components/catalog/category-page-skeleton';
+import { i18n } from '@/i18n/config';
 
 const industryMap: Record<string, { title: string; desc: string; label: string }> = {
   'agencias': { title: 'Software para Agencias', desc: 'Sistemas operativos para facturar horas, gestionar proyectos de clientes y asegurar la rentabilidad por cuenta.', label: 'Agencias' },
@@ -14,7 +15,10 @@ const industryMap: Record<string, { title: string; desc: string; label: string }
   'educacion': { title: 'Educación y EdTech', desc: 'Sistemas de control escolar, plataformas LMS, cobranza de colegiaturas y comunicación efectiva con padres.', label: 'Educación' },
 };
 
-export function generateStaticParams() { return Object.keys(industryMap).map(slug => ({ slug })); }
+// See explorar/[slug]/page.tsx for why {locale, slug} pairs (not just slug)
+// and dynamicParams=false both matter here.
+export function generateStaticParams() { return i18n.locales.flatMap(locale => Object.keys(industryMap).map(slug => ({ locale, slug }))); }
+export const dynamicParams = false;
 
 export default async function IndustriaCategoryPage(props: {
   params: Promise<{ slug: string; locale: string }>;

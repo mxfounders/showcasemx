@@ -6,5 +6,5 @@ export const metadata={title:'Vista previa privada | shwcs',robots:{index:false,
 export default async function PreviewPage(props:{params: Promise<{id:string}>}) {
  const params = await props.params;
  if(!isSolutionId(params.id))notFound();const account=await requireFounder(),solution=await getSolution(params.id,account.id);if(!solution)notFound();
- return <SolutionPresentation data={solution.data} id={solution.id} preview/>;
+ return <SolutionPresentation data={solution.data} id={solution.id} hasSiteImage={Boolean(solution.has_site_image)} preview/>;
 }

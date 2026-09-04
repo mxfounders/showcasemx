@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { publicProducts } from '@/lib/solutions/public';
 import { CategoryPageLayout } from '@/components/catalog/category-page-layout';
 import { CategoryPageSkeleton } from '@/components/catalog/category-page-skeleton';
+import { i18n } from '@/i18n/config';
 
 const collectionMap: Record<string, { title: string; desc: string }> = {
   'essential': { title: 'Essential Stack MX', desc: 'Las herramientas mínimas e indispensables para operar una empresa en México sin caos.' },
@@ -11,7 +12,10 @@ const collectionMap: Record<string, { title: string; desc: string }> = {
   'legal': { title: 'Stack legal moderno', desc: 'El kit completo de transformación digital para tu departamento legal interno o despacho.' },
 };
 
-export function generateStaticParams() { return Object.keys(collectionMap).map(slug => ({ slug })); }
+// See explorar/[slug]/page.tsx for why {locale, slug} pairs (not just slug)
+// and dynamicParams=false both matter here.
+export function generateStaticParams() { return i18n.locales.flatMap(locale => Object.keys(collectionMap).map(slug => ({ locale, slug }))); }
+export const dynamicParams = false;
 
 export default async function ColeccionesCategoryPage(props: {
   params: Promise<{ slug: string; locale: string }>;

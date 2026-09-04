@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     url: "https://shwcs.site",
     images: [
       {
-        url: "/og-image.png",
+        url: "https://shwcs.site/og-image.png",
         width: 1920,
         height: 1080,
         alt: "shwcs — Explora proyectos, descubre herramientas y conecta con sus operadores.",
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "shwcs | Proyectos para tu empresa",
     description: "Descubre software, agencias y servicios para tu empresa. Conoce qué resuelven y conecta con sus creadores.",
-    images: ["/og-image.png"],
+    images: ["https://shwcs.site/og-image.png"],
   },
 };
 

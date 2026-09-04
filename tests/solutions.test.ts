@@ -28,3 +28,10 @@ test('decision fields are optional, bounded and evidence links cannot execute sc
  for(const evidenceUrl of ['javascript:alert(1)','data:text/html,test','https://user:pass@example.com','invalid'])assert.ok(solutionErrors({...details,evidenceUrl}).evidenceUrl);
  assert.deepEqual(solutionErrors({...details,evidenceUrl:''}),{});
 });
+
+test('hideSiteImage is a real boolean opt-out, absent by default so no existing ficha changes',()=>{
+ assert.equal(readSolutionData(full)?.hideSiteImage,undefined);
+ assert.equal(readSolutionData({...full,hideSiteImage:true})?.hideSiteImage,true);
+ assert.equal(readSolutionData({...full,hideSiteImage:false})?.hideSiteImage,false);
+ for(const value of ['true',1,null])assert.equal(readSolutionData({...full,hideSiteImage:value}),null);
+});

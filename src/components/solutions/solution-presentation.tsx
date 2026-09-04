@@ -1,26 +1,45 @@
 import { PublicMetrics } from '@/components/metrics/public-metrics';
 import { ReportForm } from '@/components/trust/report-form';
-import { ScreenshotGallery } from './screenshot-gallery';
+import { SolutionGallery } from './solution-gallery';
 import { SaveProjectButton } from '@/components/library/save-project-button';
 import { SolutionSocial } from './solution-social';
+import { SimilarSolutions } from './similar-solutions';
 import Link from 'next/link';
-import { ArrowLeft,ArrowUpRight,Play } from 'lucide-react';
+import { ArrowLeft,ArrowUpRight,Play,CircleAlert } from 'lucide-react';
 import { SocialIcon } from '@/components/icons/social-icons';
 import { getSolutionCategories,safeSolutionUrl,solutionEvaluationFields,type SolutionData } from '@/lib/solutions/model';
+import { solutionSlides } from '@/lib/solutions/gallery';
+import { solutionChecklist } from '@/lib/solutions/completeness';
 import { actionButtonStyle,brandColors,solutionCategoryTones } from '@/lib/brand-colors';
 import type { SolutionComment } from '@/lib/solutions/social';
-export function SolutionPresentation({data,id,catalogKey,publishedAt,verifiedDomain,preview=false,social,comments,viewerName,own=false}:{data:SolutionData;id:string;catalogKey?:string|null;publishedAt?:string|null;verifiedDomain?:string|null;preview?:boolean;social?:{likes:number;liked:boolean;commentsCount:number};comments?:SolutionComment[];viewerName?:string;own?:boolean}){
+import type { PublishedProduct } from '@/lib/solutions/public';
+export function SolutionPresentation({data,id,catalogKey,publishedAt,verifiedDomain,preview=false,social,comments,viewerName,own=false,hasSiteImage=false,similar=[]}:{data:SolutionData;id:string;catalogKey?:string|null;publishedAt?:string|null;verifiedDomain?:string|null;preview?:boolean;social?:{likes:number;liked:boolean;commentsCount:number};comments?:SolutionComment[];viewerName?:string;own?:boolean;hasSiteImage?:boolean;similar?:PublishedProduct[]}){
  const website=safeSolutionUrl(data.website),evidence=safeSolutionUrl(data.evidenceUrl),demo=safeSolutionUrl(data.demoUrl);
  const evaluation=solutionEvaluationFields.filter(field=>!['scope','evidence'].includes(field.key));
+ const slides=solutionSlides(id,data.name,{screenshots:data.screenshots,hasSiteImage,hideSiteImage:data.hideSiteImage});
+ // "Antes de decidir" already asks for every field below; this is the same
+ // information surfaced high, compact, and only where it was actually declared —
+ // never a value that isn't there.
+ const keyFacts=[['Precio',data.pricing],['Implementación',data.implementation],['Integraciones',data.integrations]].filter((row):row is [string,string]=>!!row[1]?.trim());
+ // Shown to whoever reads the ficha, not just its owner: solutionChecklist
+ // already exists to guide the founder, and being honest about a gap here is
+ // exactly the information a buyer needs before deciding whether to reach out.
+ // completeness is never equated with quality — see the copy below.
+ const missing=solutionChecklist(data).filter(item=>!item.done);
  return <article className={preview?"account-page":"mx-auto max-w-6xl px-6 py-12 sm:py-20"}>
   {!preview&&<PublicMetrics solutionId={id}/>}
   <Link href={preview?'/account/solutions/'+id:'/#catalogo'} className="mb-8 inline-flex items-center gap-2 text-sm text-stone-500 hover:text-stone-900"><ArrowLeft className="size-4" aria-hidden="true"/>{preview?'Volver a la postulación':'Volver al catálogo'}</Link>
   {preview&&<p className="mb-6 rounded-xl border border-dashed border-stone-300 p-4 text-sm text-stone-500">Vista previa privada del borrador guardado. Todavía no sustituye la ficha aprobada.</p>}
   <header className="border-b border-stone-200 pb-10"><div className="mb-5 flex flex-wrap gap-2"><span className="rounded-full bg-white px-3 py-1.5 text-xs text-stone-500">{data.kind}</span>{getSolutionCategories(data).map(category=>{const tone=brandColors[solutionCategoryTones[category]??'blue'];return <span key={category} className="rounded-full px-3 py-1.5 text-xs" style={{backgroundColor:tone.soft,color:tone.solid}}>{category}</span>})}</div><h1 className="break-words text-4xl font-semibold tracking-tight sm:text-6xl">{data.name||'Nombre pendiente'}</h1><p className="mt-5 max-w-3xl whitespace-pre-wrap break-words text-lg leading-relaxed text-stone-600">{data.problem||'Descripción pendiente.'}</p><p className="mt-5 text-xs text-stone-400">Información declarada por el proyecto · {preview?'Borrador privado':publishedAt?'Publicación actualizada el '+new Date(publishedAt).toLocaleDateString('es-MX',{timeZone:'America/Mexico_City',day:'numeric',month:'long',year:'numeric'}):'Fecha de actualización no registrada'}</p>{!preview&&verifiedDomain&&<p className="mt-4 text-xs text-[#416B50]">Control de dominio comprobado: {verifiedDomain}. No certifica resultados.</p>}</header>
+
+  {slides.length?<div className="mt-10"><SolutionGallery slides={slides}/></div>:<p className="mt-10 text-sm text-stone-500">Este proyecto aún no ha compartido imágenes. Puedes pedirle una demostración.</p>}
+
+  {(keyFacts.length>0||demo)&&<div className="mt-8 flex flex-wrap items-center gap-x-10 gap-y-4 border-y border-stone-200 py-6">{keyFacts.map(([label,value])=><div key={label} className="min-w-0"><dt className="text-xs text-stone-400">{label}</dt><dd className="mt-1 max-w-xs truncate text-sm font-medium text-stone-800" title={value}>{value}</dd></div>)}{demo&&<a href={demo} target="_blank" rel="noopener noreferrer" style={actionButtonStyle} className="action-button ml-auto inline-flex items-center gap-3 rounded-full px-6 py-3 text-sm font-medium"><Play className="size-4" aria-hidden="true"/>Ver demo o recorrido<ArrowUpRight className="size-4" aria-hidden="true"/><span className="sr-only"> (otra pestaña)</span></a>}</div>}
+
+  {!!missing.length&&<details className="mt-6"><summary>Qué falta por declarar en esta ficha ({missing.length})</summary><div className="mt-4 rounded-2xl border border-stone-200 bg-stone-50/70 p-5"><p className="flex items-start gap-2 text-xs leading-relaxed text-stone-500"><CircleAlert aria-hidden="true" className="mt-0.5 size-3.5 shrink-0"/>Que falte información no significa que la solución sea mala: es simplemente lo que el proyecto todavía no ha compartido públicamente.</p><ul className="mt-4 space-y-2">{missing.map(item=><li key={item.key} className="text-sm text-stone-600"><span className="font-medium text-stone-800">{item.label}.</span> {item.hint}</li>)}</ul></div></details>}
+
   <div className="mt-10 grid items-start gap-12 lg:grid-cols-[minmax(0,1fr)_280px]">
    <div className="min-w-0 space-y-10">
-    {data.screenshots?.length?<ScreenshotGallery solutionId={id} images={data.screenshots}/>:<section className="border-b border-stone-200 pb-6"><h2 className="text-xl font-medium">Conoce la solución por dentro</h2><p className="mt-3 text-sm text-stone-500">Este proyecto aún no ha compartido capturas. Puedes pedirle una demostración.</p></section>}
-    {demo&&<a href={demo} target="_blank" rel="noopener noreferrer" style={actionButtonStyle} className="action-button inline-flex items-center gap-3 rounded-full px-6 py-3 text-sm font-medium"><Play className="size-4" aria-hidden="true"/>Ver demo o recorrido<ArrowUpRight className="size-4" aria-hidden="true"/><span className="sr-only"> (otra pestaña)</span></a>}
     <section><h2 className="text-xl font-medium">Para quién está pensada</h2><p className="mt-4 whitespace-pre-wrap break-words leading-relaxed text-stone-600">{data.audience||'El proyecto todavía no ha detallado para quién está pensado. Confírmalo con su equipo.'}</p></section>
     <section className="border-t border-stone-200 pt-8"><h2 className="text-xl font-medium">Cuándo puede no encajar</h2><p className="mt-4 whitespace-pre-wrap break-words leading-relaxed text-stone-600">{data.notFor||'El proyecto no ha indicado limitaciones específicas. Confirma si cubre tus requisitos.'}</p></section>
     <section className="border-t border-stone-200 pt-8"><h2 className="text-xl font-medium">Qué incluye</h2><p className="mt-4 whitespace-pre-wrap break-words leading-relaxed text-stone-600">{data.scope||'El proyecto todavía no ha detallado el alcance. Consulta qué incluye antes de contratar.'}</p></section>
@@ -32,5 +51,6 @@ export function SolutionPresentation({data,id,catalogKey,publishedAt,verifiedDom
    <aside className="border-t border-stone-200 pt-6 lg:sticky lg:top-24 lg:border-t-0 lg:pt-0"><h2 className="text-lg font-medium">¿Encaja con lo que necesitas?</h2><p className="mt-3 text-sm leading-relaxed text-stone-500">Conoce al equipo desde su sitio y confirma alcance, precio y tiempos para tu empresa.</p>{website&&<a data-official-site href={website} target="_blank" rel="noopener noreferrer" style={actionButtonStyle} className="action-button mt-6 inline-flex w-full items-center justify-between gap-2 rounded-full px-5 py-3 text-sm font-medium">Visitar sitio oficial<ArrowUpRight className="size-4" aria-hidden="true"/><span className="sr-only"> (otra pestaña)</span></a>}{!preview&&<><Link href={`/account/contacts/new?solution=${id}`} style={actionButtonStyle} className="action-button mt-5 inline-flex w-full justify-center rounded-full px-5 py-3 text-sm font-medium">Quiero conocer esta solución →</Link><div className="mt-5"><SaveProjectButton projectKey={catalogKey?`catalog:${catalogKey}`:`solution:${id}`} /></div></>}<p className="mt-6 text-xs leading-relaxed text-stone-400">Información proporcionada por el proyecto. La revisión editorial para aparecer en el catálogo no certifica sus resultados, seguridad ni calidad del servicio.</p>{!preview&&<details className="mt-6 border-t border-stone-200 pt-5"><summary className="cursor-pointer text-xs text-stone-500">Reportar esta ficha</summary><div className="mt-4"><ReportForm solutionId={id}/></div></details>}</aside>
   </div>
   {!preview&&social&&<SolutionSocial id={id} initialLikes={social.likes} liked={social.liked} initialCommentsCount={social.commentsCount} comments={comments??[]} initialName={viewerName} own={own}/>}
+  {!preview&&!!similar.length&&<SimilarSolutions products={similar}/>}
  </article>;
 }

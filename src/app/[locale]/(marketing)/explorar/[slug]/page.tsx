@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { publicProducts } from '@/lib/solutions/public';
 import { CategoryPageLayout } from '@/components/catalog/category-page-layout';
 import { CategoryPageSkeleton } from '@/components/catalog/category-page-skeleton';
+import { i18n } from '@/i18n/config';
 
 const categoryMap: Record<string, { title: string; desc: string; label: string }> = {
   'cobros': { title: 'Cobros y cuentas por cobrar', desc: 'Sistemas para reducir tu ciclo de cobranza de semanas a días. Conciliación automática, recordatorios y portales de pago B2B.', label: 'Cobros' },
@@ -14,7 +15,21 @@ const categoryMap: Record<string, { title: string; desc: string; label: string }
   'soporte': { title: 'Atención al cliente', desc: 'Mesa de ayuda omnicanal, ticketing y automatización de respuestas para escalar tu soporte B2B sin caos.', label: 'Operación' },
 };
 
-export function generateStaticParams() { return Object.keys(categoryMap).map(slug => ({ slug })); }
+// Must enumerate {locale, slug} pairs, not just slug: this is the innermost
+// dynamic segment, so Next needs the full combination to prerender each
+// locale correctly (an outer [locale] with no generateStaticParams of its own
+// does not get one inferred). Getting this wrong doesn't just skip locales —
+// combined with dynamicParams=false below it 404s even the known-good slugs,
+// because none of them cleanly match a {slug}-only manifest at serve time.
+export function generateStaticParams() { return i18n.locales.flatMap(locale => Object.keys(categoryMap).map(slug => ({ locale, slug }))); }
+// The slugs are a fixed, closed set (see categoryMap above): an unknown one
+// should 404 at the routing layer, never attempt an on-demand dynamic render.
+// (An on-demand render here previously crashed outright — the route commits
+// fully static at build time since cookies() resolves to nothing during
+// prerendering, and a real per-request cookies() read during the fallback
+// trips Next's static→dynamic guard: "Page changed from static to dynamic at
+// runtime … reason: cookies".)
+export const dynamicParams = false;
 
 export default async function ExplorarCategoryPage(props: {
   params: Promise<{ slug: string; locale: string }>;

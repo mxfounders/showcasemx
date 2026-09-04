@@ -1,6 +1,10 @@
 import {readPublicLinks,readFounders,type PublicLink,type SolutionFounder} from './profile';
 export type SolutionScreenshot={id:string;caption:string};
-export type SolutionData = { name:string; kind:string; category:string; categories?:string[]; problem:string; audience:string; website:string; contactEmail:string; scope?:string; pricing?:string; implementation?:string; integrations?:string; support?:string; evidence?:string; evidenceUrl?:string;demoUrl?:string;notFor?:string;screenshots?:SolutionScreenshot[];founders?:SolutionFounder[];projectLinks?:PublicLink[] };
+// hideSiteImage: the founder's opt-out of showing the auto-fetched og:image of
+// their own site as a ficha slide. Absent/false = shown, so no existing ficha
+// changes. Named in the negative on purpose: an absent boolean must mean
+// "show", and a jsonb key that is merely false already means that.
+export type SolutionData = { name:string; kind:string; category:string; categories?:string[]; problem:string; audience:string; website:string; contactEmail:string; scope?:string; pricing?:string; implementation?:string; integrations?:string; support?:string; evidence?:string; evidenceUrl?:string;demoUrl?:string;notFor?:string;screenshots?:SolutionScreenshot[];founders?:SolutionFounder[];projectLinks?:PublicLink[];hideSiteImage?:boolean };
 export const emptySolution:SolutionData={name:'',kind:'',category:'',problem:'',audience:'',website:'',contactEmail:''};
 export const solutionCategories=['Cobros','Finanzas','Nómina','Ventas','Operación','Legal','Agencias'] as const;
 export const statuses={draft:{label:'Borrador',next:'Completa los datos y envía tu solución.'},pending:{label:'En revisión',next:'El equipo está revisando tu postulación. Puedes consultar lo que enviaste.'},changes_requested:{label:'Necesita cambios',next:'Revisa los comentarios, corrige y vuelve a enviar.'},published:{label:'Publicada',next:'Tu ficha está disponible. Las modificaciones necesitan una nueva revisión.'},rejected:{label:'No aceptada',next:'Consulta el motivo. Puedes preparar una versión corregida.'}} as const;
@@ -30,6 +34,7 @@ export function readSolutionData(value:unknown):SolutionData|null{
  }
  if(input.founders!==undefined){const founders=readFounders(input.founders);if(!founders)return null;result.founders=founders;}
  if(input.projectLinks!==undefined){const links=readPublicLinks(input.projectLinks,6);if(!links)return null;result.projectLinks=links;}
+ if(input.hideSiteImage!==undefined){if(typeof input.hideSiteImage!=='boolean')return null;result.hideSiteImage=input.hideSiteImage;}
  return result;
 }
 export function solutionErrors(data:SolutionData,step?:number){
