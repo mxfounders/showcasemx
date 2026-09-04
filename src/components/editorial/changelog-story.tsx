@@ -2,10 +2,18 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, BookOpen, ChartNoAxesCombined, Layers3, ShieldCheck } from 'lucide-react';
+import { ArrowRight, BookOpen, ChartNoAxesCombined, Layers3, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const releases = [
+  {
+    date: '4 de septiembre de 2026',
+    label: 'Nuevo', category: 'Producto',
+    title: 'Filtros de catálogo reales, y un orden más difícil de manipular',
+    summary: 'Industria y tamaño de empresa ahora son datos que cada proyecto declara, no una adivinanza — y el orden del catálogo pesa menos la actividad reciente y sin correo verificado.',
+    items: ['Filtra por industria específica y tamaño de empresa, con resultados reales en /explorar, /industria y /colecciones.', 'Cada proyecto declara en qué industrias y tamaños de empresa encaja, o que sirve a cualquiera — visible en su ficha.', 'El orden del catálogo ya no se infla con vistas repetidas ni con actividad de cuentas sin correo verificado, y pesa menos con el tiempo.'],
+    accent: '#88631B', icon: SlidersHorizontal,
+  },
   {
     date: '1 de septiembre de 2026',
     label: 'Ahora',
