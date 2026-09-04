@@ -1833,10 +1833,11 @@ desincronizadas se reducen a una.
   indexarla con trigramas es un cambio de infraestructura mayor (extensión
   `pg_trgm`) que no se hizo en esta entrega.
 - Migraciones `db/community-search.sql` y (Fase 4, ver abajo)
-  `db/ranking-integrity.sql` aplicadas a `neondb`. **Pendiente**: aplicarlas
-  también a `shwcs_production` con `neondb_owner` antes de desplegar el
-  código que las consulta — no se tenía acceso directo a esa conexión desde
-  esta sesión.
+  `db/ranking-integrity.sql` aplicadas a `neondb` **y a `shwcs_production`**
+  (4 de septiembre, con el rol `neondb_owner`; conexión obtenida vía
+  `neonctl` autenticado por OAuth interactivo, no manualmente desde el
+  console de Neon). Verificado en vivo tras aplicar: `solution_view_visitors`
+  y su índice existen, `buyer_lists_public_created` existe.
 - Verificación: 72 unitarias (dos nuevas, tri-estado de
   `industries`/`companySizes`), lint, TypeScript y build de producción
   aislado limpios (las 18 rutas de categoría siguen prerenderizadas `●`).
@@ -1906,11 +1907,30 @@ verificado o un empujón inicial que fija la posición para siempre.
   no tiene un tercer cron disponible (§42), y el borrado es best-effort: un
   fallo ahí nunca tumba la revisión de salud.
 - Migración `db/ranking-integrity.sql`, script
-  `scripts/migrate-ranking-integrity.cjs`, aplicada a `neondb`.
-  **Pendiente, igual que `db/community-search.sql`**: aplicarla a
-  `shwcs_production` con `neondb_owner` antes de desplegar este código, y
-  configurar `VIEW_HASH_SECRET` en Vercel para activar la deduplicación de
-  vistas en producción.
+  `scripts/migrate-ranking-integrity.cjs`, aplicada a `neondb` **y a
+  `shwcs_production`** (4 de septiembre, ver §54). `VIEW_HASH_SECRET`
+  configurada por el propietario en Vercel el mismo día (Production);
+  activación en producción no verificada en vivo desde esta sesión —
+  las variables de Vercel solo se leen al construir/arrancar, así que si se
+  configuró después del último deploy hace falta un redeploy para que tome
+  efecto. Sin ella, `/api/metrics` sigue contando vistas como antes (sin
+  deduplicar), a propósito: ver el párrafo de arriba.
+- **Corrección encontrada al revisar esta fase, no una adición nueva**: el
+  comentario propio nunca estuvo bloqueado — solo el like. §46 decía lo
+  contrario («el dueño de la ficha no puede darle like ni comentar la
+  suya»); el código real de `POST /api/solutions/social` (`action:'comment'`)
+  no tenía el `owner_id<>account.id` que sí tiene `action:'like'`, y se
+  confirmó en vivo que un fundador podía comentar su propia ficha.
+  Corregido para que combine: mismo guard en el INSERT, y
+  `SolutionSocial` ya no muestra el formulario al dueño (`own` prop nueva),
+  solo un aviso de que no puede comentar la suya.
+- **Transparencia del correo verificado**: no había ninguna señal de que
+  solo cuenta la actividad de cuentas verificadas. La ficha pública ahora le
+  dice a un visitante logueado, no dueño y sin correo verificado, que su
+  like/guardado/comentario se guarda pero no cuenta para el orden hasta que
+  verifique — con enlace a Configuración. `/criterios` también se actualizó:
+  ya no dice «puede manipularse creando cuentas» sin más, ahora explica el
+  requisito de correo verificado y el decaimiento.
 - **Límite conocido, no cerrado en esta fase:** ordenar depende de traer
   todas las publicadas y calcular el score en TS (§52, 4.6 del plan) — con
   el catálogo actual es irrelevante; si crece mucho toca paginar y ordenar
@@ -1923,4 +1943,9 @@ verificado o un empujón inicial que fija la posición para siempre.
   La query decayed de `public.ts` y la CTE de deduplicación de vistas se
   validaron directamente contra `neondb` con datos de prueba desechables
   (tres solicitudes de vista idénticas → una sola fila de visitante y
-  `views=1`), eliminados al terminar.
+  `views=1`), eliminados al terminar. `tests/integration/solution-social.cjs`
+  gana la aserción de auto-comentario bloqueado (409), corrida contra el dev
+  real y pasando junto al resto de la suite existente. Migraciones
+  verificadas en vivo contra `shwcs_production` tras aplicarlas: la tabla
+  `solution_view_visitors` (con su índice) y `buyer_lists_public_created`
+  existen.

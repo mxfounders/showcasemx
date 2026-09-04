@@ -13,6 +13,10 @@ async function social(data,status,who){const response=await post('/api/solutions
 
  // Self-like is blocked, matching the reviewer self-approval guard elsewhere.
  await social({action:'like',solutionId},409,0);
+ // Self-comment is blocked too — found missing during Fase 4's review (see
+ // CLAUDE.md §55): only the like guard existed before, comment's INSERT had
+ // no owner_id<>account.id at all.
+ await social({action:'comment',solutionId,commentId:randomUUID(),name:'Fundador',comment:'No debería poder comentar mi propia ficha'},409,0);
  // Anonymous is rejected before touching storage.
  assert.equal((await post('/api/solutions/social',{action:'like',solutionId})).status,401);
  // A reader can like; the toggle is atomic and returns the fresh count.
@@ -40,7 +44,7 @@ async function social(data,status,who){const response=await post('/api/solutions
  const after=(await sql`SELECT count(*)::int n FROM solution_comments WHERE solution_id=${solutionId}`)[0];
  assert.equal(after.n,0);
 
- console.log('PASS: same-origin/session gates, self-like blocked, atomic like toggle, idempotent comments, public alias without email, and comment deletion restricted to the author (never the ficha owner).');
+ console.log('PASS: same-origin/session gates, self-like and self-comment blocked, atomic like toggle, idempotent comments, public alias without email, and comment deletion restricted to the author (never the ficha owner).');
 }catch(error){console.error(error instanceof assert.AssertionError?error.stack:'Integration failed (connection details omitted).');process.exitCode=1;}finally{
  await sql`DELETE FROM auth_accounts WHERE email=ANY(${emails})`;const keys=accounts.flatMap(id=>['solution-social','solution-comment'].map(scope=>scope+':'+createHash('sha256').update(String(id)).digest('hex')));await sql`DELETE FROM auth_rate_limits WHERE key=ANY(${keys})`;console.log('Temporary social fixtures removed.');
 }})();
