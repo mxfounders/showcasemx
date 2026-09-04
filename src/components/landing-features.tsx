@@ -248,8 +248,8 @@ export function LandingFeatures({ products = [] }: { products?: PublishedProduct
                           </div>
                           <div>
                             <div className="flex items-center gap-3 mb-2">
-                              {product.favicon ? (
-                                <img src={product.favicon} alt="" className="w-6 h-6 rounded-md object-contain bg-white shadow-sm" />
+                              {product.favicon || product.website ? (
+                                <img src={product.favicon || `https://www.google.com/s2/favicons?domain=${product.website}&sz=128`} alt="" className="w-6 h-6 rounded-md object-contain bg-white shadow-sm" />
                               ) : (
                                 <div className="w-6 h-6 rounded-md bg-stone-900 text-white flex items-center justify-center text-[10px] font-bold">
                                   {product.name.charAt(0)}

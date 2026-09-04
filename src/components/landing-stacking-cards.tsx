@@ -228,8 +228,8 @@ const ProductMockupCard = ({ product, color }: { product: any, color: string }) 
     </div>
     <div className="mt-4">
       <div className="flex items-center gap-2 mb-2">
-        {product.favicon ? (
-          <img src={product.favicon} alt="" className="w-5 h-5 rounded object-contain bg-white shadow-sm" />
+        {product.favicon || product.website ? (
+          <img src={product.favicon || `https://www.google.com/s2/favicons?domain=${product.website}&sz=128`} alt="" className="w-5 h-5 rounded object-contain bg-white shadow-sm" />
         ) : (
           <div className="w-5 h-5 rounded bg-stone-800 text-white flex items-center justify-center text-[9px] font-bold">
             {product.name.charAt(0)}

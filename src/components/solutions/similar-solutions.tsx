@@ -14,8 +14,8 @@ export function SimilarSolutions({ products }: { products: PublishedProduct[] })
       {products.map(product => <Link key={product.detailUrl || product.name} href={product.detailUrl || '#'} className="group flex flex-col justify-between rounded-[20px] border border-stone-200 bg-white p-5 transition-colors hover:border-stone-300">
         <div>
           <div className="flex items-center gap-3">
-            {product.favicon
-              ? <Image src={product.favicon} alt="" width={28} height={28} unoptimized className="size-7 shrink-0 rounded-[7px] object-contain" />
+            {product.favicon || product.website
+              ? <img src={product.favicon || `https://www.google.com/s2/favicons?domain=${product.website}&sz=128`} alt="" className="size-7 shrink-0 rounded-[7px] object-contain" />
               : <span aria-hidden="true" className="flex size-7 shrink-0 items-center justify-center rounded-[7px] bg-stone-100 text-xs font-semibold text-stone-500">{product.name.slice(0, 1)}</span>}
             <span className="truncate text-base font-medium tracking-tight text-stone-900">{product.name}</span>
           </div>

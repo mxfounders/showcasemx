@@ -184,8 +184,8 @@ export function CategoryPageLayout({
                 )}
                 
                 <div className="flex items-center gap-3 pt-5">
-                  {product.favicon ? (
-                    <Image src={product.favicon} alt="" width={32} height={32} unoptimized className="size-8 shrink-0 rounded-[8px] object-contain" />
+                  {product.favicon || product.website ? (
+                    <img src={product.favicon || `https://www.google.com/s2/favicons?domain=${product.website}&sz=128`} alt="" className="size-8 shrink-0 rounded-[8px] object-contain" />
                   ) : (
                     <span aria-hidden="true" style={{ backgroundColor: palette.color }} className="flex size-8 shrink-0 items-center justify-center rounded-[8px] text-xs font-semibold text-white">
                       {product.name.slice(0, 1)}

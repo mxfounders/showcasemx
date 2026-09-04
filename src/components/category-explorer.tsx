@@ -114,7 +114,7 @@ export function CategoryExplorer({ categories = previewCategories, selected, onC
                       </div>
                     ) : <ProductVisual variant={index % 4} color={palette.soft} />}
                     <div className="flex items-center gap-2.5 px-1 pt-4">
-                      {product.favicon ? <Image src={product.favicon} alt="" width={32} height={32} unoptimized className="size-8 shrink-0 rounded-[9px] object-contain" /> : <span aria-hidden="true" style={{ backgroundColor: palette.solid }} className="flex size-8 shrink-0 items-center justify-center rounded-[9px] text-sm font-semibold text-white">{product.name.slice(0, 1)}</span>}
+                      {product.favicon || product.website ? <img src={product.favicon || `https://www.google.com/s2/favicons?domain=${product.website}&sz=128`} alt="" className="size-8 shrink-0 rounded-[9px] object-contain" /> : <span aria-hidden="true" style={{ backgroundColor: palette.solid }} className="flex size-8 shrink-0 items-center justify-center rounded-[9px] text-sm font-semibold text-white">{product.name.slice(0, 1)}</span>}
                       <span className="text-[20px] font-semibold tracking-[-0.03em] text-stone-900">{product.name}</span>
                       <ArrowUpRight aria-hidden="true" className="ml-auto size-4 text-stone-400 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transform-none" />
                     </div>

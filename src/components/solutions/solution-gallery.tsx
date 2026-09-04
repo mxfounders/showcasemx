@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Image from 'next/image';
-import { ArrowLeft, ArrowRight, Expand, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Expand, X, Images } from 'lucide-react';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import type { SolutionSlide } from '@/lib/solutions/gallery';
 
@@ -14,6 +14,12 @@ const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('
  * slide on purpose: cropping a screenshot of an interface hides the very thing
  * it was meant to show, and it's what makes an arbitrary-ratio og:image and a
  * founder's arbitrary-ratio screenshot sit together without a visible jump.
+ *
+ * Deliberately small and off to the side of the text, Product Hunt's gallery
+ * style: a supporting visual, not a dominant hero. A "1/1" badge shows even
+ * with a single slide, so the format reads as a gallery that can grow, not a
+ * one-off banner — first version of this spanned the full content width and
+ * read as a giant cinematic hero instead.
  *
  * The strip is snap-scroll (mechanics copied from blog-index.tsx, the only
  * other carousel in the repo); the zoomed <dialog> is screenshot-gallery.tsx's
@@ -60,7 +66,7 @@ export function SolutionGallery({ slides }: { slides: SolutionSlide[] }) {
 
   if (!count || !selected) return null;
 
-  return <section aria-label={`Imágenes del proyecto, ${count} en total`} className="space-y-3">
+  return <section aria-label={`Imágenes del proyecto, ${count} en total`} className="max-w-md">
     <div className="relative">
       <div
         ref={track}
@@ -71,30 +77,31 @@ export function SolutionGallery({ slides }: { slides: SolutionSlide[] }) {
           if (event.key === 'ArrowRight') { event.preventDefault(); scrollTo(active + 1); }
           if (event.key === 'ArrowLeft') { event.preventDefault(); scrollTo(active - 1); }
         }}
-        className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto scroll-smooth rounded-2xl border border-stone-200 motion-reduce:scroll-auto"
+        className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto scroll-smooth rounded-xl border border-stone-200 motion-reduce:scroll-auto"
       >
-        {slides.map(slide => <div key={slide.key} className="relative aspect-[16/10] w-full shrink-0 snap-center snap-always bg-white">
+        {slides.map(slide => <div key={slide.key} className="relative aspect-[16/10] w-full shrink-0 snap-center snap-always bg-stone-50">
           {failed[slide.key]
-            ? <p role="status" className="flex h-full items-center justify-center p-6 text-sm text-stone-500">No pudimos cargar esta imagen.</p>
-            : <Image src={slide.src} alt={slide.alt} fill unoptimized sizes="(max-width: 640px) 100vw, 800px" className="object-contain" onError={() => setFailed(current => ({ ...current, [slide.key]: true }))} />}
+            ? <p role="status" className="flex h-full items-center justify-center p-4 text-xs text-stone-500">No pudimos cargar esta imagen.</p>
+            : <Image src={slide.src} alt={slide.alt} fill unoptimized sizes="448px" className="object-contain" onError={() => setFailed(current => ({ ...current, [slide.key]: true }))} />}
         </div>)}
       </div>
-      <button ref={trigger} type="button" onClick={() => setExpanded(true)} aria-label="Ampliar imagen" style={actionButtonStyle} className="action-button absolute bottom-3 right-3 rounded-full p-3">
-        <Expand className="size-4" aria-hidden="true" />
+
+      <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-1 text-[11px] font-medium text-white backdrop-blur">
+        <Images aria-hidden="true" className="size-3" />{active + 1}/{count}
+      </span>
+      <button ref={trigger} type="button" onClick={() => setExpanded(true)} aria-label="Ampliar imagen" className="absolute bottom-2 right-2 flex size-8 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur transition-colors hover:bg-black/70">
+        <Expand className="size-3.5" aria-hidden="true" />
       </button>
       {count > 1 && <>
-        <button type="button" onClick={() => scrollTo(active - 1)} disabled={active === 0} aria-label="Imagen anterior" className="absolute left-2 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-stone-200 bg-white/90 text-stone-700 shadow-sm backdrop-blur disabled:opacity-0">
-          <ArrowLeft className="size-4" aria-hidden="true" />
+        <button type="button" onClick={() => scrollTo(active - 1)} disabled={active === 0} aria-label="Imagen anterior" className="absolute left-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full border border-stone-200 bg-white/90 text-stone-700 shadow-sm backdrop-blur disabled:opacity-0">
+          <ArrowLeft className="size-3.5" aria-hidden="true" />
         </button>
-        <button type="button" onClick={() => scrollTo(active + 1)} disabled={active >= count - 1} aria-label="Siguiente imagen" className="absolute right-2 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-stone-200 bg-white/90 text-stone-700 shadow-sm backdrop-blur disabled:opacity-0">
-          <ArrowRight className="size-4" aria-hidden="true" />
+        <button type="button" onClick={() => scrollTo(active + 1)} disabled={active >= count - 1} aria-label="Siguiente imagen" className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full border border-stone-200 bg-white/90 text-stone-700 shadow-sm backdrop-blur disabled:opacity-0">
+          <ArrowRight className="size-3.5" aria-hidden="true" />
         </button>
       </>}
     </div>
-    <div className="flex items-start justify-between gap-4">
-      <p className="break-words text-sm leading-relaxed text-stone-500">{selected.caption}</p>
-      {count > 1 && <span className="shrink-0 text-xs text-stone-400" aria-live="polite">{active + 1}/{count}</span>}
-    </div>
+    {selected.caption && <p className="mt-2 break-words text-xs leading-relaxed text-stone-500">{selected.caption}</p>}
 
     <dialog ref={dialog} aria-label="Imagen ampliada" onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); dialog.current?.close(); } }} onClose={() => { setExpanded(false); trigger.current?.focus(); }} className="w-[94vw] max-w-6xl rounded-2xl bg-[#f5f5f4] p-4 backdrop:bg-black/60">
       <div className="mb-4 flex items-center justify-between gap-3">
