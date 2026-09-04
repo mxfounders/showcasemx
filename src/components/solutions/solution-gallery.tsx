@@ -79,10 +79,10 @@ export function SolutionGallery({ slides }: { slides: SolutionSlide[] }) {
         }}
         className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto scroll-smooth rounded-xl border border-stone-200 motion-reduce:scroll-auto"
       >
-        {slides.map(slide => <div key={slide.key} className="relative aspect-[16/10] w-full shrink-0 snap-center snap-always bg-stone-50">
+        {slides.map(slide => <div key={slide.key} className="relative aspect-[16/10] w-full shrink-0 snap-center snap-always bg-stone-900/5">
           {failed[slide.key]
             ? <p role="status" className="flex h-full items-center justify-center p-4 text-xs text-stone-500">No pudimos cargar esta imagen.</p>
-            : <Image src={slide.src} alt={slide.alt} fill unoptimized sizes="448px" className="object-contain" onError={() => setFailed(current => ({ ...current, [slide.key]: true }))} />}
+            : <Image src={slide.src} alt={slide.alt} fill unoptimized sizes="448px" className="object-cover" onError={() => setFailed(current => ({ ...current, [slide.key]: true }))} />}
         </div>)}
       </div>
 
