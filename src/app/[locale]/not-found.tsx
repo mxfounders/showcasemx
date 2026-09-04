@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { getSession,sessionCookie } from '@/lib/auth/session';
+import { actionButtonStyle } from '@/lib/brand-colors';
 import { getDictionary } from '@/i18n/get-dictionary';
 import type { Locale } from '@/i18n/config';
 
@@ -30,7 +31,8 @@ export default async function NotFound() {
         <div className="mt-10">
           <Link
             href="/"
-            className="inline-flex h-12 items-center justify-center rounded-full bg-stone-900 px-8 text-sm font-medium text-white transition-transform hover:scale-105 active:scale-95"
+            style={actionButtonStyle}
+            className="action-button inline-flex h-12 items-center justify-center rounded-full px-8 text-sm font-medium transition-transform hover:scale-105 active:scale-95"
           >
             Volver al inicio
           </Link>
