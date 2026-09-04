@@ -32,8 +32,9 @@ export function LikeButton({ id, initialLikes, liked, own = false }: { id: strin
   }
 
   return <div>
-    <button type="button" aria-pressed={like} disabled={pending || own} title={own ? 'Es tu ficha' : undefined} onClick={() => void toggle()} className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-stone-200 px-5 py-3 text-sm font-medium transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-60" style={like ? { backgroundColor: '#F6E5DD', color: '#A94E35', borderColor: '#F6E5DD' } : undefined}>
-      <Heart className="size-4" aria-hidden="true" fill={like ? 'currentColor' : 'none'} />{likes} me gusta
+    <button type="button" aria-pressed={like} disabled={pending || own} title={own ? 'Es tu ficha' : undefined} onClick={() => void toggle()} className="flex w-full items-center justify-between gap-2 rounded-full border border-stone-200 bg-white px-5 py-3 text-sm font-medium transition-colors hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-60" style={like ? { backgroundColor: '#FCE7F3', color: '#BE185D', borderColor: '#FCE7F3' } : undefined}>
+      <span>{likes} me gusta</span>
+      <Heart className="size-4" aria-hidden="true" fill={like ? 'currentColor' : 'none'} />
     </button>
     {login && <p className="mt-3 text-xs leading-relaxed text-stone-500"><Link href={`/sign-in?next=${encodeURIComponent('/soluciones/' + id)}`} className="font-medium text-[#365DC4] underline underline-offset-4">Inicia sesión o crea una cuenta</Link> para darle like.</p>}
     {error && <p role="alert" className="mt-3 text-xs text-[#A94E35]">{error}</p>}
