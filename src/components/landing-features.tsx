@@ -237,7 +237,7 @@ export function LandingFeatures({ products = [] }: { products?: PublishedProduct
                     const product = categoryProducts[i];
                     if (product) {
                       return (
-                        <Link key={`prod-${i}`} href={product.detailUrl || "#"} className={`relative overflow-hidden rounded-3xl p-6 flex flex-col h-48 sm:h-52 ${product.ogImage ? 'border-none' : 'bg-white/95 border border-stone-200/60'} shadow-lg transition-transform hover:-translate-y-1 hover:shadow-xl group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800`}>
+                        <Link key={`prod-${i}`} href={product.detailUrl || "#"} className={`relative overflow-hidden rounded-3xl p-6 flex flex-col h-48 sm:h-52 ${product.ogImage ? 'border-none' : 'bg-white/95 border border-stone-200/60'} shadow-lg transition-all hover:shadow-xl group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800`}>
                           {product.ogImage && (
                             <>
                               <img src={product.ogImage} alt="" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
