@@ -74,25 +74,6 @@ export function AplicarStory() {
         </div>
       </section>
 
-      {/* ── CTA GIGANTE ──────────────────────────────────────── */}
-      <section className="mx-auto max-w-[1500px] px-5 pt-16 sm:px-10 lg:px-16 lg:pt-24">
-        <div className="flex flex-col items-center justify-center rounded-[32px] bg-stone-900 px-6 py-20 text-center text-white sm:px-10 sm:py-32">
-          <h2 className="max-w-3xl text-4xl font-semibold tracking-[-0.04em] sm:text-5xl lg:text-6xl">
-            Empieza tu borrador ahora
-          </h2>
-          <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-stone-400 sm:text-xl">
-            Crea tu cuenta corporativa, diseña tu ficha sin presiones y envíala a revisión cuando estés listo para destacar.
-          </p>
-          <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-            <Link
-              href="/account/solutions/new"
-              className="inline-flex h-14 items-center justify-center rounded-full bg-white px-8 text-base font-medium text-stone-900 transition-transform hover:scale-105 active:scale-95"
-            >
-              Crear cuenta y postular
-            </Link>
-          </div>
-        </div>
-      </section>
     </article>
   );
 }
