@@ -1,6 +1,8 @@
+import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { publicProducts } from '@/lib/solutions/public';
 import { CategoryPageLayout } from '@/components/catalog/category-page-layout';
+import { CategoryPageSkeleton } from '@/components/catalog/category-page-skeleton';
 
 const industryMap: Record<string, { title: string; desc: string; label: string }> = {
   'agencias': { title: 'Software para Agencias', desc: 'Sistemas operativos para facturar horas, gestionar proyectos de clientes y asegurar la rentabilidad por cuenta.', label: 'Agencias' },
@@ -12,32 +14,33 @@ const industryMap: Record<string, { title: string; desc: string; label: string }
   'educacion': { title: 'Educación y EdTech', desc: 'Sistemas de control escolar, plataformas LMS, cobranza de colegiaturas y comunicación efectiva con padres.', label: 'Educación' },
 };
 
+export function generateStaticParams() { return Object.keys(industryMap).map(slug => ({ slug })); }
+
 export default async function IndustriaCategoryPage(props: {
   params: Promise<{ slug: string; locale: string }>;
-  searchParams: Promise<{ [key: string]: string | undefined }>;
 }) {
   const params = await props.params;
-  const searchParams = await props.searchParams;
 
   const info = industryMap[params.slug];
   if (!info) return notFound();
 
   const products = await publicProducts();
-  
-  const categoryProducts = products.filter(p => 
-    p.category === info.label || 
+
+  const categoryProducts = products.filter(p =>
+    p.category === info.label ||
     p.categories?.includes(info.label) ||
     p.description.toLowerCase().includes(info.label.toLowerCase())
   );
 
   return (
-    <CategoryPageLayout
-      title={info.title}
-      description={info.desc}
-      categorySlug={params.slug}
-      basePath="/industria"
-      products={categoryProducts}
-      searchParams={searchParams}
-    />
+    <Suspense fallback={<CategoryPageSkeleton />}>
+      <CategoryPageLayout
+        title={info.title}
+        description={info.desc}
+        categorySlug={params.slug}
+        basePath="/industria"
+        products={categoryProducts}
+      />
+    </Suspense>
   );
 }

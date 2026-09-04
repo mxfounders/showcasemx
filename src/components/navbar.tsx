@@ -198,7 +198,7 @@ function MockupVisual({ type }: { type: FeaturedCard["mockupType"] }) {
 
 // ─── GSAP NavLink — slide-up text on hover ────────────────────────────────────
 
-function NavLink({ href, children }: { href: string; children: string }) {
+function NavLink({ href, children, locale }: { href: string; children: string; locale: string }) {
   const topRef  = useRef<HTMLSpanElement>(null);
   const botRef  = useRef<HTMLSpanElement>(null);
   const tlRef   = useRef<gsap.core.Timeline | null>(null);
@@ -213,7 +213,7 @@ function NavLink({ href, children }: { href: string; children: string }) {
 
   return (
     <Link
-      href={navigationHref(href)}
+      href={navigationHref(href,locale)}
       className="relative inline-flex overflow-hidden px-3 py-1.5 rounded-md hover:bg-stone-100/80 transition-colors"
       onMouseEnter={() => tlRef.current?.play()}
       onMouseLeave={() => tlRef.current?.reverse()}
@@ -277,7 +277,7 @@ const iconMap: Record<string, React.ElementType> = {
   HelpCircle, LayoutDashboard, UserCircle, Rocket, Globe, Calendar, Mail, Award, Zap
 };
 
-export function Navbar({ authenticated = false, dict }: { authenticated?: boolean, dict?: any }) {
+export function Navbar({ authenticated = false, dict, locale = 'es' }: { authenticated?: boolean, dict?: any, locale?: string }) {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
@@ -373,7 +373,7 @@ export function Navbar({ authenticated = false, dict }: { authenticated?: boolea
 
         {/* LEFT */}
         <div className="flex items-center gap-6">
-          <BrandLink variant="navbar" />
+          <BrandLink variant="navbar" locale={locale} />
 
           <nav className="hidden md:flex items-center gap-0.5">
             {(["compradores","fundadores", "recursos"] as const).map((key) => (
@@ -390,13 +390,13 @@ export function Navbar({ authenticated = false, dict }: { authenticated?: boolea
 
         {/* RIGHT */}
         <div className="flex items-center gap-2">
-          <Link href="/comunidad" aria-label="Listas de la comunidad" title="Comunidad" onClick={()=>{setActiveMenu(null);setMobileMenuOpen(false);}} className="group flex size-10 shrink-0 items-center justify-center rounded-full text-stone-700 transition-colors hover:bg-[#EEE5F5] hover:text-[#7753A5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7753A5]"><CommunityIcon className="size-[23px]"/></Link>
+          <Link href={`/${locale}/comunidad`} aria-label="Listas de la comunidad" title="Comunidad" onClick={()=>{setActiveMenu(null);setMobileMenuOpen(false);}} className="group flex size-10 shrink-0 items-center justify-center rounded-full text-stone-700 transition-colors hover:bg-[#EEE5F5] hover:text-[#7753A5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7753A5]"><CommunityIcon className="size-[23px]"/></Link>
           <NavbarSearch onOpen={()=>{setActiveMenu(null);setMobileMenuOpen(false);}} />
           
           <div className="hidden md:flex items-center gap-2">
-            <NavLink href={authenticated ? "/account" : "/sign-in"}>{authenticated ? (dict?.dashboard || "Ir a mi panel") : (dict?.login || "Entrar")}</NavLink>
+            <NavLink href={authenticated ? "/account" : "/sign-in"} locale={locale}>{authenticated ? (dict?.dashboard || "Ir a mi panel") : (dict?.login || "Entrar")}</NavLink>
             <Link
-              href="/newsletter"
+              href={`/${locale}/newsletter`}
               style={actionButtonStyle} className="inline-flex items-center action-button text-[13.5px] font-medium px-4 py-1.5 rounded-full transition-colors duration-200"
             >
               {dict?.subscribe || "Suscribirse"} <span className="button-arrow" aria-hidden="true">→</span>
@@ -441,7 +441,7 @@ export function Navbar({ authenticated = false, dict }: { authenticated?: boolea
                       return (
                         <li key={item.href}>
                           <Link
-                            href={navigationHref(item.href)}
+                            href={navigationHref(item.href,locale)}
                             className="group/item flex items-start gap-2.5 px-1.5 py-2 rounded-lg hover:bg-stone-50 transition-colors"
                           >
                             <div style={getAccentStyle(item.href)} className="size-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
@@ -492,7 +492,7 @@ export function Navbar({ authenticated = false, dict }: { authenticated?: boolea
           {/* Cuenta & Suscribirse (Mobile) */}
           <div className="flex flex-col gap-3 pb-4 border-b border-stone-100">
             <Link href={authenticated ? "/account" : "/sign-in"} className="action-button inline-flex items-center justify-center rounded-lg bg-stone-100 px-4 py-2.5 text-[15px] font-medium text-stone-700 hover:bg-stone-200" onClick={() => setMobileMenuOpen(false)}>{authenticated ? (dict?.dashboard || "Ir a mi panel") : (dict?.login || "Entrar")}</Link>
-            <Link href="/newsletter" style={actionButtonStyle} className="action-button inline-flex items-center justify-center text-[15px] font-medium px-4 py-2.5 rounded-lg" onClick={() => setMobileMenuOpen(false)}>{dict?.subscribe || "Suscribirse"} <span className="button-arrow" aria-hidden="true">→</span></Link>
+            <Link href={`/${locale}/newsletter`} style={actionButtonStyle} className="action-button inline-flex items-center justify-center text-[15px] font-medium px-4 py-2.5 rounded-lg" onClick={() => setMobileMenuOpen(false)}>{dict?.subscribe || "Suscribirse"} <span className="button-arrow" aria-hidden="true">→</span></Link>
           </div>
 
           {/* Accordions */}
@@ -519,7 +519,7 @@ export function Navbar({ authenticated = false, dict }: { authenticated?: boolea
                           {col.links.filter((link: any)=>availableNavigation(link.href)).map((link: any) => {
                             const Icon = typeof link.icon === "string" ? iconMap[link.icon] : link.icon;
                             return (
-                              <Link key={link.href} href={navigationHref(link.href)} className="flex items-start gap-3" onClick={() => setMobileMenuOpen(false)}>
+                              <Link key={link.href} href={navigationHref(link.href,locale)} className="flex items-start gap-3" onClick={() => setMobileMenuOpen(false)}>
                                 <div style={getAccentStyle(link.href)} className="size-7 rounded-lg flex items-center justify-center shrink-0">
                                   <Icon className="size-3.5" />
                                 </div>

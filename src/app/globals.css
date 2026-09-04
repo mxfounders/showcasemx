@@ -6,6 +6,26 @@
   .text-balance {
     text-wrap: balance;
   }
+  /* Was referenced in three places (blog carousel, catalog filter bar) without
+     ever being defined, so those horizontal scrollers showed the native
+     scrollbar. Hides it while keeping the element scrollable by wheel/touch/
+     keyboard — scroll-snap and arrow buttons remain the visible affordance. */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* Same dead-class gap, different name (landing-features.tsx). Alias rather
+     than a second implementation. */
+  .hide-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @layer base {

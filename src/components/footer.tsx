@@ -127,10 +127,11 @@ const footerSections = [
 
 // ─── FooterLink con GSAP slide-up ─────────────────────────────────────────────
 
-function FooterLink({ href, label, icon: Icon }: {
+function FooterLink({ href, label, icon: Icon, locale }: {
   href: string;
   label: string;
   icon: React.ElementType;
+  locale: string;
 }) {
   const topRef = useRef<HTMLSpanElement>(null);
   const botRef = useRef<HTMLSpanElement>(null);
@@ -145,7 +146,7 @@ function FooterLink({ href, label, icon: Icon }: {
 
   return (
     <Link
-      href={navigationHref(href)}
+      href={navigationHref(href,locale)}
       className="group flex items-center gap-2.5 py-1.5 rounded-lg"
       onMouseEnter={() => tlRef.current?.play()}
       onMouseLeave={() => tlRef.current?.reverse()}
@@ -173,7 +174,7 @@ const iconMap: Record<string, React.ElementType> = {
   HelpCircle, LayoutDashboard, UserCircle, Rocket, Globe, Calendar, Mail, Award, Zap
 };
 
-export function Footer({ dict }: { dict?: any }) {
+export function Footer({ dict, locale = 'es' }: { dict?: any, locale?: string }) {
   return (
     <footer className="px-4 mt-24">
       <div className="max-w-7xl mx-auto bg-white rounded-t-2xl border border-b-0 border-stone-200/70 shadow-[0_-4px_32px_-4px_rgba(0,0,0,0.06)]">
@@ -182,16 +183,16 @@ export function Footer({ dict }: { dict?: any }) {
         <div className="px-6 md:px-12 pt-8 md:pt-12 pb-8 border-b border-stone-100">
           <div className="flex flex-col md:flex-row items-start justify-between gap-6">
             <div>
-              <div className="mb-3"><BrandLink variant="navbar" /></div>
+              <div className="mb-3"><BrandLink variant="navbar" locale={locale} /></div>
               <p className="text-[13.5px] text-stone-400 leading-relaxed max-w-xs">
                 {dict?.description || "Software, agencias y servicios para tu empresa. Conoce qué resuelven y conecta con quienes los construyen."}
               </p>
-              <Link href="/contacto" className="group mt-4 inline-flex items-center gap-2 text-[13px] font-medium text-stone-600 transition-colors hover:text-stone-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#365DC4]">
+              <Link href={`/${locale}/contacto`} className="group mt-4 inline-flex items-center gap-2 text-[13px] font-medium text-stone-600 transition-colors hover:text-stone-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#365DC4]">
                 hola@shwcs.site <span className="button-arrow text-[#365DC4]" aria-hidden="true">→</span>
               </Link>
             </div>
             <Link
-              href="/newsletter"
+              href={`/${locale}/newsletter`}
               style={actionButtonStyle} className="inline-flex w-full items-center justify-center gap-2 action-button text-[13px] font-medium px-5 py-2.5 rounded-full transition-colors duration-200 md:w-auto"
             >
               <Mail className="size-3.5" />
@@ -225,6 +226,7 @@ export function Footer({ dict }: { dict?: any }) {
                             href={link.href}
                             label={link.label}
                             icon={typeof link.icon === "string" ? iconMap[link.icon] : link.icon}
+                            locale={locale}
                           />
                         </li>
                       ))}

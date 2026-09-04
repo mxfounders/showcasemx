@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowUpRight } from 'lucide-react';
@@ -45,16 +46,39 @@ export function CategoryPageLayout({
   categorySlug,
   basePath,
   products,
-  searchParams
 }: {
   title: string;
   description: string;
   categorySlug: string;
   basePath: string;
   products: Product[];
-  searchParams: { [key: string]: string | undefined };
 }) {
-  
+  // Filtering was already 100% client-side (see below) — the only thing a
+  // router.push() on every filter click bought us was a full server round-trip
+  // for a re-render whose result never depended on the server. State now lives
+  // here and the URL is a mirror of it via history.replaceState, which never
+  // triggers Next navigation or a server request. See CatalogFilterBar.
+  const initial = useSearchParams();
+  const [searchParams, setSearchParams] = useState<{ [key: string]: string | undefined }>(() => Object.fromEntries(initial.entries()));
+
+  const setFilter = useCallback((id: string, value: string | null) => {
+    setSearchParams(current => {
+      const next = { ...current };
+      if (value === null) delete next[id]; else next[id] = value;
+      return next;
+    });
+  }, []);
+  const clearFilters = useCallback(() => setSearchParams({}), []);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(searchParams)) if (value) params.set(key, value);
+    const query = params.toString();
+    const url = query ? `${window.location.pathname}?${query}` : window.location.pathname;
+    window.history.replaceState(null, '', url);
+  }, [searchParams]);
+
+
   // Dynamic Contextual Filters depending on where the user is
   const filters = useMemo(() => {
     if (basePath === '/explorar') {
@@ -132,7 +156,7 @@ export function CategoryPageLayout({
         </p>
       </div>
 
-      <CatalogFilterBar filters={filters} totalItems={filteredProducts.length} />
+      <CatalogFilterBar filters={filters} totalItems={filteredProducts.length} values={searchParams} onChange={setFilter} onClear={clearFilters} />
 
       {filteredProducts.length > 0 ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

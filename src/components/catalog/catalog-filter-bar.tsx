@@ -1,8 +1,6 @@
 'use client';
 
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { ChevronDown, X, SlidersHorizontal } from 'lucide-react';
-import { useCallback } from 'react';
 
 type FilterOption = {
   id: string;
@@ -10,9 +8,16 @@ type FilterOption = {
   options: { value: string; label: string }[];
 };
 
+// Controlled by CategoryPageLayout: a plain {id: value} map plus setters, no
+// router/searchParams here. Filtering was already 100% client-side, so this
+// component only needs to report intent — the parent decides what happens,
+// including how (or whether) the URL reflects it.
 export function CatalogFilterBar({
   filters,
   totalItems,
+  values,
+  onChange,
+  onClear,
   sortOptions = [
     { value: 'popular', label: 'Más populares' },
     { value: 'newest', label: 'Más recientes' },
@@ -21,42 +26,27 @@ export function CatalogFilterBar({
 }: {
   filters: FilterOption[];
   totalItems: number;
+  values: { [key: string]: string | undefined };
+  onChange: (id: string, value: string | null) => void;
+  onClear: () => void;
   sortOptions?: { value: string; label: string }[];
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const createQueryString = useCallback(
-    (name: string, value: string | null) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (value === null) {
-        params.delete(name);
-      } else {
-        params.set(name, value);
-      }
-      return params.toString();
-    },
-    [searchParams]
-  );
-
-  const activeFiltersCount = Array.from(searchParams.keys()).filter(k => k !== 'sort').length;
+  const activeFiltersCount = Object.keys(values).filter(k => k !== 'sort' && values[k]).length;
 
   return (
     <div className="sticky top-[72px] z-30 -mx-5 px-5 sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-12 py-4 mb-6 flex items-center justify-between gap-4 overflow-x-auto no-scrollbar">
       <div className="flex items-center gap-2.5 shrink-0">
         {filters.map((filter) => {
-          const activeValue = searchParams.get(filter.id);
+          const activeValue = values[filter.id];
           const activeLabel = filter.options.find(o => o.value === activeValue)?.label;
-          
+
           return (
             <div key={filter.id} className="relative group">
               <select
+                aria-label={filter.label}
                 className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                 value={activeValue || ''}
-                onChange={(e) => {
-                  router.push(pathname + '?' + createQueryString(filter.id, e.target.value || null), { scroll: false });
-                }}
+                onChange={(e) => onChange(filter.id, e.target.value || null)}
               >
                 <option value="">Cualquiera</option>
                 {filter.options.map(opt => (
@@ -64,18 +54,20 @@ export function CatalogFilterBar({
                 ))}
               </select>
               <div className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13.5px] font-medium transition-colors pointer-events-none ${
-                activeValue 
-                  ? 'bg-[#E4EBFC] text-[#365DC4]' 
+                activeValue
+                  ? 'bg-[#E4EBFC] text-[#365DC4]'
                   : 'bg-stone-100 text-stone-600 group-hover:bg-stone-200 group-hover:text-stone-900'
               }`}>
                 <span>{activeValue ? activeLabel : filter.label}</span>
                 {activeValue ? (
-                  <button 
+                  <button
+                    type="button"
+                    aria-label={`Quitar filtro de ${filter.label.toLowerCase()}`}
                     className="pointer-events-auto relative z-10 ml-1 -mr-1 p-0.5 rounded-full hover:bg-black/10"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      router.push(pathname + '?' + createQueryString(filter.id, null), { scroll: false });
+                      onChange(filter.id, null);
                     }}
                     onPointerDown={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
@@ -92,7 +84,8 @@ export function CatalogFilterBar({
 
         {activeFiltersCount > 0 && (
           <button
-            onClick={() => router.push(pathname, { scroll: false })}
+            type="button"
+            onClick={onClear}
             className="flex items-center gap-1.5 ml-2 px-2 py-1 text-[12px] font-medium text-stone-400 hover:text-stone-900 transition-colors shrink-0"
           >
             <SlidersHorizontal className="size-3.5" />
@@ -105,23 +98,23 @@ export function CatalogFilterBar({
         <span className="text-[12.5px] text-stone-400 mr-6">
           Mostrando {totalItems} {totalItems === 1 ? 'solución' : 'soluciones'}
         </span>
-        
+
         <div className="relative group cursor-pointer">
           <select
+            aria-label="Ordenar por"
             className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-            value={searchParams.get('sort') || 'popular'}
-            onChange={(e) => {
-              router.push(pathname + '?' + createQueryString('sort', e.target.value), { scroll: false });
-            }}
+            value={values.sort || 'popular'}
+            onChange={(e) => onChange('sort', e.target.value)}
           >
             {sortOptions.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
           <div className="flex items-center gap-1.5 text-[13.5px] font-medium text-stone-700 pointer-events-none group-hover:text-stone-900 transition-colors">
-            <span>{sortOptions.find(o => o.value === (searchParams.get('sort') || 'popular'))?.label}</span>
+            <span>{sortOptions.find(o => o.value === (values.sort || 'popular'))?.label}</span>
             <ChevronDown className="size-3 text-stone-400" />
           </div>
+        </div>
       </div>
     </div>
   );

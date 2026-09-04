@@ -1,4 +1,5 @@
 import { NextRequest,NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { getSession,sessionCookie } from '@/lib/auth/session';
 import { securityLimit } from '@/lib/auth/security';
 import { solutionsSql } from '@/lib/solutions/server';
@@ -33,9 +34,9 @@ export async function POST(request:NextRequest){
   if(body.action==='save'){
    const projects=await resolveProjects([key]);if(!projects[key])return failure('Este proyecto ya no está disponible para guardar.',404);
    const results=await sql.transaction([sql`SELECT id FROM auth_accounts WHERE id=${owner} FOR UPDATE`,sql`INSERT INTO buyer_saved_projects(owner_id,project_key) SELECT ${owner},${key} WHERE (SELECT count(*) FROM buyer_saved_projects WHERE owner_id=${owner})<200 ON CONFLICT DO NOTHING`,sql`SELECT project_key FROM buyer_saved_projects WHERE owner_id=${owner} AND project_key=${key}`]);
-   return results[2].length?ok({saved:true}):failure('Puedes guardar hasta 200 proyectos. Quita alguno antes de añadir otro.',409);
+   if(!results[2].length)return failure('Puedes guardar hasta 200 proyectos. Quita alguno antes de añadir otro.',409);revalidateTag('catalog');return ok({saved:true});
   }
-  if(body.action==='unsave'){await sql`DELETE FROM buyer_saved_projects WHERE owner_id=${owner} AND project_key=${key}`;return ok({saved:false});}
+  if(body.action==='unsave'){await sql`DELETE FROM buyer_saved_projects WHERE owner_id=${owner} AND project_key=${key}`;revalidateTag('catalog');return ok({saved:false});}
   if(!['add-to-list','remove-from-list','update-note'].includes(body.action))return failure('Acción no disponible.',400);
   if(typeof body.listId!=='string'||!isSolutionId(body.listId))return failure('Lista no válida.',400);
   if(body.action==='add-to-list'){

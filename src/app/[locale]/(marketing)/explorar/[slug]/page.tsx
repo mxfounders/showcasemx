@@ -1,6 +1,8 @@
+import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { publicProducts } from '@/lib/solutions/public';
 import { CategoryPageLayout } from '@/components/catalog/category-page-layout';
+import { CategoryPageSkeleton } from '@/components/catalog/category-page-skeleton';
 
 const categoryMap: Record<string, { title: string; desc: string; label: string }> = {
   'cobros': { title: 'Cobros y cuentas por cobrar', desc: 'Sistemas para reducir tu ciclo de cobranza de semanas a días. Conciliación automática, recordatorios y portales de pago B2B.', label: 'Cobros' },
@@ -12,31 +14,35 @@ const categoryMap: Record<string, { title: string; desc: string; label: string }
   'soporte': { title: 'Atención al cliente', desc: 'Mesa de ayuda omnicanal, ticketing y automatización de respuestas para escalar tu soporte B2B sin caos.', label: 'Operación' },
 };
 
+export function generateStaticParams() { return Object.keys(categoryMap).map(slug => ({ slug })); }
+
 export default async function ExplorarCategoryPage(props: {
   params: Promise<{ slug: string; locale: string }>;
-  searchParams: Promise<{ [key: string]: string | undefined }>;
 }) {
   const params = await props.params;
-  const searchParams = await props.searchParams;
-  
+
   const categoryInfo = categoryMap[params.slug];
   if (!categoryInfo) return notFound();
 
   const products = await publicProducts();
-  
-  const categoryProducts = products.filter(p => 
-    p.category === categoryInfo.label || 
+
+  const categoryProducts = products.filter(p =>
+    p.category === categoryInfo.label ||
     p.categories?.includes(categoryInfo.label)
   );
 
   return (
-    <CategoryPageLayout
-      title={categoryInfo.title}
-      description={categoryInfo.desc}
-      categorySlug={params.slug}
-      basePath="/explorar"
-      products={categoryProducts}
-      searchParams={searchParams}
-    />
+    // Filters read the URL client-side (useSearchParams), so this boundary is
+    // required — it's also what lets the page stay static instead of forcing
+    // dynamic rendering just because a query string might exist.
+    <Suspense fallback={<CategoryPageSkeleton />}>
+      <CategoryPageLayout
+        title={categoryInfo.title}
+        description={categoryInfo.desc}
+        categorySlug={params.slug}
+        basePath="/explorar"
+        products={categoryProducts}
+      />
+    </Suspense>
   );
 }

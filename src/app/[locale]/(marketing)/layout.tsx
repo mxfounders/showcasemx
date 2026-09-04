@@ -17,5 +17,5 @@ export default async function MarketingLayout(
   
   const dict = await getDictionary(locale as Locale);
 
-  return <><Navbar authenticated={authenticated} dict={dict.navbar}/><main id="main-content" className="pt-14">{children}</main><Footer dict={dict.footer} /></>;
+  return <><Navbar authenticated={authenticated} dict={dict.navbar} locale={locale}/><main id="main-content" className="pt-14">{children}</main><Footer dict={dict.footer} locale={locale}/></>;
 }

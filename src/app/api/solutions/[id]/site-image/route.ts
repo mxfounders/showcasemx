@@ -20,12 +20,16 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
   try {
     const account = await getSession(request.cookies.get(sessionCookie)?.value);
     const sql = solutionsSql();
-    const [row] = await sql`SELECT i.content_base64 FROM solution_site_images i JOIN founder_solutions s ON s.id = i.solution_id
+    const [row] = await sql`SELECT i.content_base64, s.published_data IS NOT NULL AS is_public FROM solution_site_images i JOIN founder_solutions s ON s.id = i.solution_id
       WHERE i.solution_id = ${params.id} AND i.content_base64 IS NOT NULL
         AND (s.published_data IS NOT NULL OR s.owner_id = ${account?.id ?? null}::uuid)`;
     if (!row) return failure('Portada no disponible.', 404);
+    // Unlike a screenshot, the owner can re-fetch this at any time (even while
+    // published), so the bytes behind this URL can change — no `immutable`.
+    // A short s-maxage still cuts most of the per-visit Neon reads.
+    const cacheControl = row.is_public ? 'public, max-age=60, s-maxage=3600, stale-while-revalidate=86400' : 'private, no-store';
     return new NextResponse(new Uint8Array(Buffer.from(String(row.content_base64), 'base64')), {
-      headers: { 'Content-Type': 'image/webp', 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' },
+      headers: { 'Content-Type': 'image/webp', 'Cache-Control': cacheControl, 'X-Content-Type-Options': 'nosniff' },
     });
   } catch { return failure('No pudimos cargar la portada.', 503); }
 }

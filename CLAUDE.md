@@ -1570,3 +1570,93 @@ teniendo sentido incluso con un solo admin.
 `tests/integration/ops.cjs` tenía una prueba explícita de que la autorrevisión
 se bloqueaba (409); se cambió para afirmar lo contrario (200, con `actor_id`
 correcto), en vez de borrarla o dejarla fallando.
+
+## 52. Fase 1 — la navegación deja de trabarse — 3 septiembre 2026
+
+Primera fase de un plan mayor (`/Users/andrevalleortega/.claude/plans/haz-el-plan-para-humble-magpie.md`
+en la sesión que lo escribió) sobre navegación, ficha, filtros y ranking. Esta
+entrega resuelve solo la causa de que «se traba al picarle a la navbar»:
+cuatro causas acumuladas, ninguna requería migrar datos de negocio.
+
+- **Enlaces sin locale.** Todo vive bajo `[locale]`, pero `navigationHref()`
+  devolvía hrefs como `/explorar/cobros` sin prefijo; `middleware.ts` los
+  redirige 307 a `/es/...`, y Next **descarta** el prefetch de un `<Link>`
+  cuyo destino es un redirect. Cada clic era una navegación en frío, no una
+  transición. `navigationHref(href, locale)` ahora exige el locale; `Navbar`,
+  `Footer` y `BrandLink` lo reciben como prop desde
+  `(marketing)/layout.tsx`, que ya lo tenía en `params`. `BrandLink` acepta
+  `locale='es'` por defecto porque `/account` no está traducido (§ previas) y
+  sus tres usos ahí no necesitan tocarse.
+- **Cero `loading.tsx` en toda la app.** Sin límite de Suspense, el App
+  Router bloquea la transición hasta que el RSC completo responde: la URL no
+  cambiaba y la pantalla quedaba congelada, que es literalmente el síntoma.
+  Nuevos: `explorar/[slug]`, `industria/[slug]`, `colecciones/[slug]`,
+  `soluciones/[id]`, `comunidad` y `(marketing)` (genérico, para páginas sin
+  esqueleto propio como `/blog` o `/criterios`). Esqueletos con
+  `animate-pulse motion-reduce:animate-none`, el patrón ya usado en
+  `account-utilities.tsx`; nunca un spinner.
+- **`publicProducts()` sin caché, con 9 subconsultas correlacionadas por
+  fila** (5 en el `SELECT`, las mismas 4 repetidas en el `ORDER BY`).
+  Reescrita con CTEs agregadas (`likes`, `comments`, `views`, `saves`, una
+  pasada `GROUP BY` cada una) y envuelta en `unstable_cache({tags:['catalog'],
+  revalidate:300})`. El `catch` de errores queda **fuera** de la función
+  cacheada a propósito: un fallo transitorio nunca se cachea como catálogo
+  vacío, se reintenta en la siguiente llamada.
+  `CREATE INDEX buyer_saved_projects_key ON buyer_saved_projects(project_key)`
+  (`db/catalog-performance.sql`, aplicada a `neondb` y `shwcs_production`):
+  el score consultaba por `project_key` solo contra una tabla cuya única
+  clave es `(owner_id,project_key)`, así que era un seq scan.
+- **`revalidateTag('catalog')`** en los cuatro puntos donde una interacción
+  cambia el orden: like/comment/delete-comment
+  (`/api/solutions/social`) y save/unsave (`/api/library`). Verificado en
+  vivo: dar like a una ficha de prueba la hizo aparecer en
+  `/es/explorar/cobros` **sin esperar los 300 s** del TTL de respaldo.
+  **Límite conocido, no cerrado en esta fase**: `ops/` es un despliegue de
+  Next.js separado con su propia caché; `POST /api/review` (publicar/retirar
+  desde el backoffice) no invalida la del producto. Publicar una ficha desde
+  ops tarda hasta 5 minutos en aparecer en el catálogo, contra instantáneo
+  para like/comentario/guardado hechos desde el propio producto. Cerrarlo
+  exigiría un endpoint de revalidación entre apps protegido por secreto; no
+  se construyó todavía.
+- **Filtros sin round-trip.** Cada cambio de filtro hacía `router.push()` y
+  volvía a ejecutar el servidor entero para un filtrado que ya era 100 % en
+  cliente. `CategoryPageLayout` pasa a dueño del estado (`useState` inicializado
+  desde `useSearchParams()`), `CatalogFilterBar` se vuelve un componente
+  controlado (`values`/`onChange`/`onClear`, sin `useRouter` propio), y la
+  URL se sincroniza con `window.history.replaceState` — nunca dispara
+  navegación ni petición al servidor. Los filtros siguen siendo compartibles
+  por URL. **Efecto colateral bueno y no buscado**: al dejar de leer
+  `searchParams` en el servidor, las tres rutas de categoría — con
+  `generateStaticParams` sobre sus 7+7+4 slugs — pasaron de dinámicas (`ƒ`) a
+  **prerrenderizadas (`●`)** en el build. `revalidateTag('catalog')` sigue
+  regenerándolas bajo demanda: no es una foto fija del build.
+- **Imágenes de fichas publicadas ahora cacheables.** Capturas
+  (`/api/solutions/[id]/media/[assetId]`): `public, max-age=3600, immutable`
+  cuando el asset está en `published_data.screenshots` — sus bytes no cambian
+  nunca, no hay endpoint de reemplazo. Portada del sitio
+  (`/api/solutions/[id]/site-image`): `public, max-age=60, s-maxage=3600,
+  stale-while-revalidate=86400`, **sin** `immutable` porque el dueño puede
+  volver a pedir la og:image en cualquier momento y el mismo URL cambiaría de
+  contenido. Ambas rutas conservan `private, no-store` para borradores;
+  verificado que una solución retirada a `draft` vuelve a dar 404 sin
+  cabecera pública.
+- `.no-scrollbar` y `.hide-scrollbar` se usaban en `blog-index.tsx` y
+  `catalog-filter-bar.tsx` sin estar definidas en ningún CSS — clases
+  muertas, la barra de scroll nativa se veía igual. Definidas en
+  `@layer utilities` de `globals.css`.
+
+**Verificación**: 65 unitarias (una corregida:
+`navigationHref` ahora exige locale), lint y TypeScript limpios, build de
+producción confirma las tres rutas como `●`. Contra el dev: enlace sin locale
+sigue en 307 (comportamiento esperado de una URL vieja/externa), el que
+genera el navbar ahora es 200 directo; dar like revalida el catálogo al
+instante; portada pública vs. borrador con las cabeceras correctas.
+Migración `db/catalog-performance.sql` aplicada a `neondb` y a
+`shwcs_production` con `neondb_owner`.
+
+**Pendiente, fuera de esta fase** (el plan completo tiene más pasos):
+ficha con carrusel de imágenes, taxonomía única con industria/tamaño como
+campos declarados, filtros del catálogo rediseñados sobre `.selector-*`
+multiselección, filtros de comunidad mejorados, y el ranking difícil de
+manipular (verificación de correo, decaimiento temporal, deduplicación de
+vistas). Nada de eso se tocó todavía.
