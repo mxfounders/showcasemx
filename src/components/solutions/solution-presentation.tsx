@@ -18,10 +18,6 @@ export function SolutionPresentation({data,id,catalogKey,publishedAt,verifiedDom
  const website=safeSolutionUrl(data.website),evidence=safeSolutionUrl(data.evidenceUrl),demo=safeSolutionUrl(data.demoUrl);
  const evaluation=solutionEvaluationFields.filter(field=>!['scope','evidence'].includes(field.key));
  const slides=solutionSlides(id,data.name,{screenshots:data.screenshots,hasSiteImage,hideSiteImage:data.hideSiteImage});
- // "Antes de decidir" already asks for every field below; this is the same
- // information surfaced high, compact, and only where it was actually declared —
- // never a value that isn't there.
- const keyFacts=[['Precio',data.pricing],['Implementación',data.implementation],['Integraciones',data.integrations]].filter((row):row is [string,string]=>!!row[1]?.trim());
  // Shown to whoever reads the ficha, not just its owner: solutionChecklist
  // already exists to guide the founder, and being honest about a gap here is
  // exactly the information a buyer needs before deciding whether to reach out.
@@ -35,9 +31,6 @@ export function SolutionPresentation({data,id,catalogKey,publishedAt,verifiedDom
 
   {slides.length?<div className="mt-10"><SolutionGallery slides={slides}/></div>:<p className="mt-10 text-sm text-stone-500">Este proyecto aún no ha compartido imágenes. Puedes pedirle una demostración.</p>}
 
-  {keyFacts.length>0&&<div className="mt-8 border-y border-stone-200 py-6">
-   <dl className="grid gap-6 sm:grid-cols-3">{keyFacts.map(([label,value])=><div key={label}><dt className="text-xs font-medium text-stone-400">{label}</dt><dd className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-stone-700">{value}</dd></div>)}</dl>
-  </div>}
 
   {!!missing.length&&<details className="mt-6"><summary>Qué falta por declarar en esta ficha ({missing.length})</summary><div className="mt-4 rounded-2xl border border-stone-200 bg-stone-50/70 p-5"><p className="flex items-start gap-2 text-xs leading-relaxed text-stone-500"><CircleAlert aria-hidden="true" className="mt-0.5 size-3.5 shrink-0"/>Que falte información no significa que la solución sea mala: es simplemente lo que el proyecto todavía no ha compartido públicamente.</p><ul className="mt-4 space-y-2">{missing.map(item=><li key={item.key} className="text-sm text-stone-600"><span className="font-medium text-stone-800">{item.label}.</span> {item.hint}</li>)}</ul></div></details>}
 
