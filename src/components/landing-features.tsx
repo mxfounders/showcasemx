@@ -237,16 +237,22 @@ export function LandingFeatures({ products = [] }: { products?: PublishedProduct
                     const product = categoryProducts[i];
                     if (product) {
                       return (
-                        <Link key={`prod-${i}`} href={product.detailUrl || "#"} className="rounded-3xl p-6 flex flex-col h-48 sm:h-52 bg-white/95 border border-stone-200/60 shadow-lg transition-transform hover:-translate-y-1 hover:shadow-xl group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800">
-                          <div className="flex justify-between items-center mb-auto">
-                            <span className="text-[10px] font-bold text-stone-500 tracking-widest uppercase">{product.category || "Software"}</span>
-                            <div className="flex items-center gap-2 bg-stone-100 px-2 py-1 rounded-full text-[11px] font-semibold text-stone-700">
+                        <Link key={`prod-${i}`} href={product.detailUrl || "#"} className={`relative overflow-hidden rounded-3xl p-6 flex flex-col h-48 sm:h-52 ${product.ogImage ? 'border-none' : 'bg-white/95 border border-stone-200/60'} shadow-lg transition-transform hover:-translate-y-1 hover:shadow-xl group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800`}>
+                          {product.ogImage && (
+                            <>
+                              <img src={product.ogImage} alt="" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/20" />
+                            </>
+                          )}
+                          <div className="relative z-10 flex justify-between items-center mb-auto">
+                            <span className={`text-[10px] font-bold tracking-widest uppercase ${product.ogImage ? 'text-white/80' : 'text-stone-500'}`}>{product.category || "Software"}</span>
+                            <div className={`flex items-center gap-2 px-2 py-1 rounded-full text-[11px] font-semibold ${product.ogImage ? 'bg-black/30 backdrop-blur-md text-white/90 border border-white/10' : 'bg-stone-100 text-stone-700'}`}>
                               <span className="inline-flex items-center gap-0.5"><Heart className="size-3 text-red-500" aria-hidden="true" />{product.likes ?? 0}</span>
-                              <span className="inline-flex items-center gap-0.5"><Bookmark className="size-3 text-stone-500" aria-hidden="true" />{product.saves ?? 0}</span>
-                              <span className="inline-flex items-center gap-0.5"><MessageCircle className="size-3 text-stone-500" aria-hidden="true" />{product.comments ?? 0}</span>
+                              <span className="inline-flex items-center gap-0.5"><Bookmark className={`size-3 ${product.ogImage ? 'text-white/70' : 'text-stone-500'}`} aria-hidden="true" />{product.saves ?? 0}</span>
+                              <span className="inline-flex items-center gap-0.5"><MessageCircle className={`size-3 ${product.ogImage ? 'text-white/70' : 'text-stone-500'}`} aria-hidden="true" />{product.comments ?? 0}</span>
                             </div>
                           </div>
-                          <div>
+                          <div className="relative z-10">
                             <div className="flex items-center gap-3 mb-2">
                               {product.favicon || product.website ? (
                                 <img src={product.favicon || `https://www.google.com/s2/favicons?domain=${product.website}&sz=128`} alt="" className="w-6 h-6 rounded-md object-contain bg-white shadow-sm" />
@@ -255,9 +261,9 @@ export function LandingFeatures({ products = [] }: { products?: PublishedProduct
                                   {product.name.charAt(0)}
                                 </div>
                               )}
-                              <h4 className="text-lg font-bold text-stone-900 truncate">{product.name}</h4>
+                              <h4 className={`text-lg font-bold truncate ${product.ogImage ? 'text-white' : 'text-stone-900'}`}>{product.name}</h4>
                             </div>
-                            <p className="text-[13px] text-stone-600 line-clamp-2 leading-relaxed">{product.description || product.feature}</p>
+                            <p className={`text-[13px] line-clamp-2 leading-relaxed ${product.ogImage ? 'text-white/80' : 'text-stone-600'}`}>{product.description || product.feature}</p>
                           </div>
                         </Link>
                       );
