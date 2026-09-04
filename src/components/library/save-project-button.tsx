@@ -31,9 +31,9 @@ export function SaveProjectButton({projectKey,initialSaved,variant}: {projectKey
      </>
    )}
  </button>
- {confirm&&<div className="text-sm text-stone-600"><p>También se quitará de tus listas y se eliminarán sus notas en ellas.</p><div className="mt-3 flex gap-4"><button disabled={pending} onClick={()=>void change(true)} type="button" className="text-[#A94E35] underline underline-offset-4">Quitar de guardados</button><button type="button" disabled={pending} onClick={()=>setConfirm(false)}>Cancelar</button></div></div>}
- {login&&<p className="text-sm leading-relaxed text-stone-500"><Link href={`/sign-in?next=${encodeURIComponent(returnTo)}`} className="font-medium text-[#365DC4] underline underline-offset-4">Inicia sesión o crea una cuenta</Link> para guardar este proyecto. Lo retomaremos al entrar.</p>}
- {message&&<p role="status" className="text-xs text-stone-500">{message}{saved&&<> <Link href="/account/saved" className="underline underline-offset-4">Organizar en listas</Link></>}</p>}
- {error&&<p role="alert" className="text-sm text-[#A94E35]">{error}</p>}
+ {confirm&&<div className="text-center text-sm text-stone-600"><p>También se quitará de tus listas y se eliminarán sus notas en ellas.</p><div className="mt-3 flex justify-center gap-4"><button disabled={pending} onClick={()=>void change(true)} type="button" className="text-[#A94E35] underline underline-offset-4">Quitar de guardados</button><button type="button" disabled={pending} onClick={()=>setConfirm(false)}>Cancelar</button></div></div>}
+ {login&&<p className="text-center text-sm leading-relaxed text-stone-500"><Link href={`/sign-in?next=${encodeURIComponent(returnTo)}`} className="font-medium text-[#365DC4] underline underline-offset-4">Inicia sesión o crea una cuenta</Link> para guardar este proyecto. Lo retomaremos al entrar.</p>}
+ {message&&<p role="status" className="text-center text-xs text-stone-500">{message}{saved&&<> <Link href="/account/saved" className="underline underline-offset-4">Organizar en listas</Link></>}</p>}
+ {error&&<p role="alert" className="text-center text-sm text-[#A94E35]">{error}</p>}
  </div>;
 }

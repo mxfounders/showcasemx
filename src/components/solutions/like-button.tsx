@@ -36,7 +36,7 @@ export function LikeButton({ id, initialLikes, liked, own = false }: { id: strin
       <span>{likes} me gusta</span>
       <Heart className="size-4" aria-hidden="true" fill={like ? 'currentColor' : 'none'} />
     </button>
-    {login && <p className="mt-3 text-xs leading-relaxed text-stone-500"><Link href={`/sign-in?next=${encodeURIComponent('/soluciones/' + id)}`} className="font-medium text-[#365DC4] underline underline-offset-4">Inicia sesión o crea una cuenta</Link> para darle like.</p>}
-    {error && <p role="alert" className="mt-3 text-xs text-[#A94E35]">{error}</p>}
+    {login && <p className="mt-3 text-center text-xs leading-relaxed text-stone-500"><Link href={`/sign-in?next=${encodeURIComponent('/soluciones/' + id)}`} className="font-medium text-[#365DC4] underline underline-offset-4">Inicia sesión o crea una cuenta</Link> para darle like.</p>}
+    {error && <p role="alert" className="mt-3 text-center text-xs text-[#A94E35]">{error}</p>}
   </div>;
 }
