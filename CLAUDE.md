@@ -1755,3 +1755,172 @@ sitio + captura), datos clave, disclosure de qué falta y soluciones
 parecidas, todo presente en el HTML; alternar `hideSiteImage` vía `PATCH`
 persiste en el borrador; un borrador ajeno sigue sin exponer su portada a un
 extraño (404). Fixtures y cuentas de prueba eliminadas.
+
+## 54. Fase 3 — taxonomía única y filtros reales — 4 septiembre 2026
+
+Tercera fase del plan de catálogo (§52). Industria y tamaño de empresa pasan
+de mocks a campos declarados de verdad, y las cinco fuentes de taxonomía
+desincronizadas se reducen a una.
+
+- **`src/lib/taxonomy.ts`**, fuente única de presentación del catálogo:
+  `categories`/`industries` (slug, valor, tono, título, descripción),
+  `companySizes` (etiqueta y rango), `offerings`, `collections` con su
+  `CollectionRule` y `matchesCollection()`, y `catalogRoutes()`. Importa los
+  arrays de valores legales (`solutionCategories`, `solutionIndustries`,
+  `companySizes`) desde `solutions/model.ts` en una sola dirección —
+  `model.ts` sigue siendo dueño de qué es legal guardar, `taxonomy.ts` de
+  cómo se presenta — para no repetir el ciclo que ya había desincronizado
+  `brand-colors.ts`, `catalog-preview.ts`, el objeto `taxonomy` local de
+  `category-page-layout.tsx` y los tres mapas de slug de las rutas de
+  categoría: la industria tenía 6 valores en el filtro y 7 en las rutas
+  (faltaba Construcción), y el filtro de tamaño comparaba
+  `pyme`/`midmarket`/`enterprise` contra texto libre de la descripción —
+  un mock que siempre daba cero resultados, porque ninguna solución podía
+  declarar un tamaño.
+- **Campos declarados de verdad.** `solutionIndustries` (7 valores) y
+  `companySizes` (micro/pyme/mediana/corporativo) en `solutions/model.ts`;
+  `SolutionData` gana `industries?:string[]` y `companySizes?:string[]`.
+  `[]` significa «declarado, sirve a cualquiera» — una respuesta real;
+  `undefined` significa que nunca se contestó. Ambos casos se distinguen en
+  toda la cadena: validación, checklist y filtros nunca colapsan uno en el
+  otro. `solutionErrors` exige ambos campos en el paso 1 para enviar a
+  revisión. Se declaran en la pregunta nueva `market` de
+  `solutions/questions.ts` (entre `audience` y `scope`, fase 1), con su
+  checklist item en `completeness.ts`.
+- **Editor guiado.** `SolutionEditor` añade chips de selección múltiple por
+  industria (con el tono de marca de cada una) y por tamaño, más una casilla
+  «Sirve a cualquier industria/tamaño» por grupo que escribe `[]`
+  explícitamente. El resumen final y `guideQuestion` (mapa de la guía de
+  completitud a la pregunta) incluyen `market`.
+- **Ficha pública.** `SolutionPresentation` muestra las industrias y tamaños
+  declarados como cápsulas junto a «Para quién está pensada»: con el tono de
+  marca de cada industria si se listaron valores, o «Cualquier
+  industria»/«Cualquier tamaño de empresa» si el proyecto declaró `[]`. No
+  se muestra nada si el campo nunca se contestó — el disclosure «Qué falta
+  por declarar» (§53) ya cubre ese hueco.
+- **`PublishedProduct`** (`solutions/public.ts`) expone `industries`/
+  `companySizes`, opcionales igual que en `SolutionData`, leídos de
+  `published_data`.
+- **Filtros reales.** Las tres rutas de categoría (`explorar/[slug]`,
+  `industria/[slug]`, `colecciones/[slug]`) ya no tienen mapas locales:
+  `generateStaticParams` y el título/descripción salen de `taxonomy.ts`.
+  `/industria/[slug]` filtraba antes por `category`/`categories` (la
+  taxonomía de *problema*, no de industria) con una búsqueda de substring
+  en la descripción como respaldo — comparaba contra el campo equivocado y
+  nunca daba resultados reales; ahora filtra por
+  `product.industries?.includes(info.value)`, el campo declarado. Antes
+  colecciones era `products.slice(0, 8)` idéntico en las cuatro rutas; ahora
+  cada colección filtra con `matchesCollection()` contra su `CollectionRule`
+  declarada en `taxonomy.ts`. `CategoryPageLayout` perdió su objeto
+  `taxonomy` local roto y su tipo `Product = Record<string,any>`: usa
+  `PublishedProduct` real y compara contra `industries`/`categories`/
+  `companySizes` en vez de buscar substrings en `description`/`feature`.
+  Un producto que nunca declaró industria/tamaño simplemente no aparece en
+  ese filtro específico — un hueco real, no un bug, igual que en la ficha.
+- **Barra de filtros.** `CatalogFilterBar` sustituye el `<select>` nativo
+  invisible superpuesto (sin `aria-label` en la superficie visible,
+  monoselección, rueda nativa en móvil) por el patrón canónico §28:
+  `.selector-dropdown-trigger`/`.selector-menu-active`, el mismo
+  `FilterMenu` que ya usa `SavedGallery`. Un solo menú abierto a la vez.
+- **Índice de comunidad.** `db/community-search.sql` añade
+  `buyer_lists_public_created(created_at DESC,id) WHERE visibility='public'`:
+  el `ORDER BY l.created_at DESC` de «Recientes» (`library/community.ts`,
+  §23 fija esa semántica como creación, no edición) nunca usaba índice
+  porque el único parcial existente (`buyer_lists_public`,
+  `db/public-collections.sql`) cubre `updated_at`. Se añadió el índice que
+  falta en vez de cambiar la semántica de «Recientes». La búsqueda de
+  comunidad (`strpos` sobre texto concatenado sin índice) queda igual —
+  indexarla con trigramas es un cambio de infraestructura mayor (extensión
+  `pg_trgm`) que no se hizo en esta entrega.
+- Migraciones `db/community-search.sql` y (Fase 4, ver abajo)
+  `db/ranking-integrity.sql` aplicadas a `neondb`. **Pendiente**: aplicarlas
+  también a `shwcs_production` con `neondb_owner` antes de desplegar el
+  código que las consulta — no se tenía acceso directo a esa conexión desde
+  esta sesión.
+- Verificación: 72 unitarias (dos nuevas, tri-estado de
+  `industries`/`companySizes`), lint, TypeScript y build de producción
+  aislado limpios (las 18 rutas de categoría siguen prerenderizadas `●`).
+  Contra el dev: `/es/explorar/cobros`, `/es/industria/retail`,
+  `/es/colecciones/essential` en 200, slug desconocido en 404; los tres
+  filtros renderizan con `.selector-dropdown-trigger`. Recorrido en vivo con
+  una cuenta `@example.invalid`: la pregunta `market` persiste
+  `industries`/`companySizes` con la semántica de tri-estado correcta a
+  través de `PATCH`, y la preview privada muestra las cápsulas declaradas.
+  Cuenta y solución de prueba eliminadas.
+
+## 55. Fase 4 — ranking difícil de manipular — 4 septiembre 2026
+
+Cuarta y última fase del plan de catálogo (§52). El orden del catálogo deja
+de poder inflarse con vistas anónimas repetidas, actividad sin correo
+verificado o un empujón inicial que fija la posición para siempre.
+
+- **Solo cuentas verificadas suman.** El score ya no sale de contar
+  likes/guardados/comentarios en bruto: `public.ts` calcula, en la misma
+  pasada de CTEs de la Fase 1, una suma **decayed** por señal que solo
+  incluye filas de cuentas con `email_verified_at IS NOT NULL`. Los
+  contadores en bruto (`likes`/`saves`/`comments`/`views`, los que se
+  muestran en el botón de like y en las tarjetas del home) siguen siendo el
+  total real sin filtrar — la actividad de una cuenta sin verificar se
+  guarda y se muestra con normalidad, exactamente como decidió el
+  propietario; solo el campo `score` (usado nada más que para ordenar,
+  nunca mostrado como número) excluye esas filas.
+- **La auto-actividad no cuenta.** Cada CTE decayed excluye también las
+  filas donde el actor es el dueño de la ficha
+  (`sl.owner_id<>s.owner_id`, etc.). El like y el comentario propio ya eran
+  imposibles de crear desde la API (§46: bloqueados en el INSERT); el
+  guardado propio sí era posible (`/api/library` nunca comprobó
+  `owner_id` contra la solución) y sigue siéndolo — se ve, pero el CTE de
+  `saves` lo excluye del score igual que a los otros dos, por si esa guarda
+  de inserción cambia algún día.
+- **Decaimiento temporal.** `src/lib/solutions/ranking.ts` fija
+  `rankingHalfLifeDays=60`: cada like/guardado/comentario pesa
+  `exp(-ln2·antigüedad/60d)` desde su `created_at`, y cada fila diaria de
+  `solution_daily_metrics` pesa igual según `current_date-day`. Constante
+  única, consumida por las CTEs de `public.ts` — no hay que recalcular nada
+  con un cron: al ser una función continua de la fecha actual, el orden se
+  actualiza solo con cada lectura cacheada (`revalidate:300`, Fase 1).
+- **Vistas: una por visitante y día.** Tabla nueva
+  `solution_view_visitors(solution_id,day,visitor_hash)` con PK compuesta —
+  el `ON CONFLICT DO NOTHING` hace la deduplicación.
+  `src/lib/solutions/view-visitor.ts` calcula `visitor_hash` como
+  HMAC-SHA256 de `ip+':'+day` con clave `VIEW_HASH_SECRET`: nunca se guarda
+  la IP, y el día entra en el HMAC (no solo en la columna) para que el hash
+  del mismo visitante no se pueda correlacionar entre días distintos.
+  **Sin `VIEW_HASH_SECRET` configurada, `/api/metrics` conserva el
+  comportamiento anterior sin deduplicar** — mismo criterio que
+  `AUTH_TOTP_KEY` en §49: una protección opcional que se apaga con
+  honestidad en vez de fingir que existe. `VIEW_HASH_SECRET` **no está
+  configurada en ningún entorno todavía**; hasta entonces las vistas siguen
+  contándose como antes (limitadas solo por `securityLimit`, 600/hora por
+  IP). Los clics nunca deduplican: pasar por el sitio varias veces es una
+  señal real que no hay que aplastar.
+- **Peso amortiguado.** `solutionScore` cambia el término de vistas de
+  `views*0.1` a `Math.log1p(views)*0.1` — rendimientos decrecientes, para
+  que miles de vistas no ahoguen unos pocos comentarios reales. Sigue
+  siendo la única función que calcula el puntaje (§46 ya la había
+  centralizado); ahora sus cuatro argumentos son las sumas *decayed* de
+  SQL, no conteos en bruto — documentado en el propio archivo para que no
+  se vuelva a mezclar con los contadores que sí se muestran.
+- **Limpieza.** El cron de monitor (`/api/internal/monitor`, ya diario)
+  borra filas de `solution_view_visitors` con más de 3 días — Vercel Hobby
+  no tiene un tercer cron disponible (§42), y el borrado es best-effort: un
+  fallo ahí nunca tumba la revisión de salud.
+- Migración `db/ranking-integrity.sql`, script
+  `scripts/migrate-ranking-integrity.cjs`, aplicada a `neondb`.
+  **Pendiente, igual que `db/community-search.sql`**: aplicarla a
+  `shwcs_production` con `neondb_owner` antes de desplegar este código, y
+  configurar `VIEW_HASH_SECRET` en Vercel para activar la deduplicación de
+  vistas en producción.
+- **Límite conocido, no cerrado en esta fase:** ordenar depende de traer
+  todas las publicadas y calcular el score en TS (§52, 4.6 del plan) — con
+  el catálogo actual es irrelevante; si crece mucho toca paginar y ordenar
+  en SQL. Tampoco se añadió `pg_trgm` para la búsqueda de comunidad (ver
+  §54); ambos quedan anotados, no resueltos.
+- Verificación: 72 unitarias (dos nuevas: la fórmula con amortiguación
+  logarítmica y `rankingHalfLifeDays`, y el hash de visitante — ausente sin
+  secreto, estable para el mismo IP+día, distinto entre días o IPs, y sin
+  el IP en claro). Lint, TypeScript y build de producción aislado limpios.
+  La query decayed de `public.ts` y la CTE de deduplicación de vistas se
+  validaron directamente contra `neondb` con datos de prueba desechables
+  (tres solicitudes de vista idénticas → una sola fila de visitante y
+  `views=1`), eliminados al terminar.

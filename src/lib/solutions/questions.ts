@@ -4,6 +4,7 @@ export const solutionQuestions=[
  {id:'categories',phase:0,title:'¿Qué ofreces y dónde encaja?',hint:'Elige el tipo de solución y todas las categorías que realmente cubres.',fields:['kind','category'],optional:false},
  {id:'problem',phase:1,title:'¿Qué problema haces más fácil?',hint:'Explica qué ocurre hoy y qué cambia con tu solución. Habla de lo concreto.',fields:['problem'],optional:false},
  {id:'audience',phase:1,title:'¿Para quién está pensada?',hint:'Tipo de empresa, equipo y momento en el que tu solución resulta útil.',fields:['audience'],optional:false},
+ {id:'market',phase:1,title:'¿A quién sirve, en concreto?',hint:'Industrias y tamaños de empresa donde tu solución encaja de verdad. Si sirve a cualquiera, dilo — es una respuesta válida.',fields:['industries','companySizes'],optional:false},
  {id:'scope',phase:1,title:'¿Qué incluye y hasta dónde llega?',hint:'Ayuda a entender el alcance antes de iniciar una conversación.',fields:['scope','notFor'],optional:true},
  {id:'founders',phase:1,title:'¿Quién está detrás del proyecto?',hint:'Presenta a sus creadores o al equipo responsable. Estos datos serán públicos si se aprueba la ficha.',fields:['founders'],optional:true},
  {id:'links',phase:1,title:'¿Dónde podemos seguir el proyecto?',hint:'Redes oficiales, comunidad y enlaces útiles. Las redes personales van en la pregunta anterior.',fields:['projectLinks'],optional:true},

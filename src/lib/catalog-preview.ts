@@ -20,6 +20,11 @@ export type PreviewProduct = {
   comments?: number;
   views?: number;
   score?: number;
+  // Declared industries/company sizes (see src/lib/taxonomy.ts). Present only
+  // for published solutions; [] means "declared, fits any" — a real answer —
+  // distinct from absent, which static examples always are.
+  industries?: string[];
+  companySizes?: string[];
 };
 
 // Descriptions based on the providers' official sites. No independent certification implied.

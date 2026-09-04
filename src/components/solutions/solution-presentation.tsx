@@ -12,9 +12,13 @@ import { getSolutionCategories,safeSolutionUrl,solutionEvaluationFields,type Sol
 import { solutionSlides } from '@/lib/solutions/gallery';
 import { solutionChecklist } from '@/lib/solutions/completeness';
 import { actionButtonStyle,brandColors,solutionCategoryTones } from '@/lib/brand-colors';
+import { industries as industryOptions,companySizes as companySizeOptions } from '@/lib/taxonomy';
 import type { SolutionComment } from '@/lib/solutions/social';
 import type { PublishedProduct } from '@/lib/solutions/public';
-export function SolutionPresentation({data,id,catalogKey,publishedAt,verifiedDomain,preview=false,social,comments,viewerName,own=false,hasSiteImage=false,similar=[]}:{data:SolutionData;id:string;catalogKey?:string|null;publishedAt?:string|null;verifiedDomain?:string|null;preview?:boolean;social?:{likes:number;liked:boolean;commentsCount:number};comments?:SolutionComment[];viewerName?:string;own?:boolean;hasSiteImage?:boolean;similar?:PublishedProduct[]}){
+const industryLabels=Object.fromEntries(industryOptions.map(item=>[item.value,item.label]));
+const industryTones=Object.fromEntries(industryOptions.map(item=>[item.value,item.tone]));
+const companySizeLabels=Object.fromEntries(companySizeOptions.map(item=>[item.value,item.label]));
+export function SolutionPresentation({data,id,catalogKey,publishedAt,verifiedDomain,preview=false,social,comments,viewerName,own=false,viewerLoggedIn=false,viewerVerified=false,hasSiteImage=false,similar=[]}:{data:SolutionData;id:string;catalogKey?:string|null;publishedAt?:string|null;verifiedDomain?:string|null;preview?:boolean;social?:{likes:number;liked:boolean;commentsCount:number};comments?:SolutionComment[];viewerName?:string;own?:boolean;viewerLoggedIn?:boolean;viewerVerified?:boolean;hasSiteImage?:boolean;similar?:PublishedProduct[]}){
  const website=safeSolutionUrl(data.website),evidence=safeSolutionUrl(data.evidenceUrl),demo=safeSolutionUrl(data.demoUrl);
  const evaluation=solutionEvaluationFields.filter(field=>!['scope','evidence'].includes(field.key));
  const slides=solutionSlides(id,data.name,{screenshots:data.screenshots,hasSiteImage,hideSiteImage:data.hideSiteImage});
@@ -36,7 +40,7 @@ export function SolutionPresentation({data,id,catalogKey,publishedAt,verifiedDom
 
   <div className="mt-10 grid items-start gap-12 lg:grid-cols-[minmax(0,1fr)_280px]">
    <div className="min-w-0 space-y-10">
-    <section><h2 className="text-xl font-medium">Para quién está pensada</h2><p className="mt-4 whitespace-pre-wrap break-words leading-relaxed text-stone-600">{data.audience||'El proyecto todavía no ha detallado para quién está pensado. Confírmalo con su equipo.'}</p></section>
+    <section><h2 className="text-xl font-medium">Para quién está pensada</h2><p className="mt-4 whitespace-pre-wrap break-words leading-relaxed text-stone-600">{data.audience||'El proyecto todavía no ha detallado para quién está pensado. Confírmalo con su equipo.'}</p>{(data.industries!==undefined||data.companySizes!==undefined)&&<div className="mt-5 flex flex-wrap gap-2">{data.industries!==undefined&&(data.industries.length?data.industries.map(value=>{const tone=brandColors[industryTones[value]??'blue'];return <span key={value} className="rounded-full px-3 py-1.5 text-xs" style={{backgroundColor:tone.soft,color:tone.solid}}>{industryLabels[value]??value}</span>;}):<span className="rounded-full bg-stone-100 px-3 py-1.5 text-xs text-stone-600">Cualquier industria</span>)}{data.companySizes!==undefined&&(data.companySizes.length?data.companySizes.map(value=><span key={value} className="rounded-full bg-stone-100 px-3 py-1.5 text-xs text-stone-600">{companySizeLabels[value]??value}</span>):<span className="rounded-full bg-stone-100 px-3 py-1.5 text-xs text-stone-600">Cualquier tamaño de empresa</span>)}</div>}</section>
     <section className="border-t border-stone-200 pt-8"><h2 className="text-xl font-medium">Cuándo puede no encajar</h2><p className="mt-4 whitespace-pre-wrap break-words leading-relaxed text-stone-600">{data.notFor||'El proyecto no ha indicado limitaciones específicas. Confirma si cubre tus requisitos.'}</p></section>
     <section className="border-t border-stone-200 pt-8"><h2 className="text-xl font-medium">Qué incluye</h2><p className="mt-4 whitespace-pre-wrap break-words leading-relaxed text-stone-600">{data.scope||'El proyecto todavía no ha detallado el alcance. Consulta qué incluye antes de contratar.'}</p></section>
     <section className="border-t border-stone-200 pt-8"><h2 className="text-xl font-medium">Antes de decidir</h2><dl className="mt-6 grid gap-x-8 gap-y-7 sm:grid-cols-2">{evaluation.map(field=><div key={field.key}><dt className="text-sm font-medium">{field.label}</dt><dd className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-stone-500">{data[field.key]||'Información no proporcionada. Consúltala con el proyecto.'}</dd></div>)}</dl></section>
@@ -51,14 +55,14 @@ export function SolutionPresentation({data,id,catalogKey,publishedAt,verifiedDom
     {!preview&&<>
      <Link href={`/account/contacts/new?solution=${id}`} style={actionButtonStyle} className="action-button mt-3 flex w-full items-center justify-between gap-2 rounded-full px-5 py-3 text-sm font-medium">Quiero conocer esta solución<ArrowRight className="size-4" aria-hidden="true"/></Link>
      <div className="mt-3"><SaveProjectButton variant="secondary" projectKey={catalogKey?`catalog:${catalogKey}`:`solution:${id}`} /></div>
-     {social&&<div className="mt-3"><LikeButton id={id} initialLikes={social.likes} liked={social.liked} own={own}/></div>}
+     {social&&<div className="mt-3"><LikeButton id={id} initialLikes={social.likes} liked={social.liked} own={own}/>{viewerLoggedIn&&!viewerVerified&&!own&&<p className="mt-2 text-xs leading-relaxed text-stone-400">Tu actividad se guarda, pero solo cuenta para el orden del catálogo si <Link href="/account/settings" className="underline underline-offset-4 hover:text-stone-600">verificas tu correo</Link>.</p>}</div>}
     </>}
     {!!data.projectLinks?.length&&<div className="mt-6 border-t border-stone-200 pt-6"><h3 className="text-sm font-medium text-stone-700">Sigue al proyecto</h3><div className="mt-3 flex flex-wrap gap-2">{data.projectLinks.map((link,index)=>{const href=safeSolutionUrl(link.url);return href?<a key={index} href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 px-3 py-1.5 text-xs text-stone-600 transition-colors hover:border-stone-300 hover:text-stone-900"><SocialIcon label={link.label} className="size-3.5 shrink-0"/>{link.label}<span className="sr-only"> (otra pestaña)</span></a>:null})}</div></div>}
     <p className="mt-6 text-xs leading-relaxed text-stone-400">Información proporcionada por el proyecto. La revisión editorial para aparecer en el catálogo no certifica sus resultados, seguridad ni calidad del servicio.</p>
     {!preview&&<details className="mt-6 border-t border-stone-200 pt-5"><summary className="cursor-pointer text-xs text-stone-500">Reportar esta ficha</summary><div className="mt-4"><ReportForm solutionId={id}/></div></details>}
    </aside>
   </div>
-  {!preview&&social&&<SolutionSocial id={id} initialCommentsCount={social.commentsCount} comments={comments??[]} initialName={viewerName}/>}
+  {!preview&&social&&<SolutionSocial id={id} initialCommentsCount={social.commentsCount} comments={comments??[]} initialName={viewerName} own={own}/>}
   {!preview&&!!similar.length&&<SimilarSolutions products={similar}/>}
  </article>;
 }

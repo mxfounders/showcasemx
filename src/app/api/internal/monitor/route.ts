@@ -29,6 +29,19 @@ export async function GET(request: NextRequest) {
 
     checks.database = database.status === "fulfilled";
     checks.homepage = homepage.status === "fulfilled" && homepage.value.ok;
+
+    // Rows in solution_view_visitors only need to live long enough to dedupe
+    // "today"'s views (src/lib/solutions/view-visitor.ts); Vercel Hobby has
+    // no room for a third, dedicated cron (§42), so this reuses the daily
+    // monitor. Best-effort: a failed cleanup never fails the health check —
+    // an extra day of rows just delays being reclaimed, it never miscounts.
+    if (checks.database) {
+      try {
+        await sql`DELETE FROM solution_view_visitors WHERE day < current_date - 3`;
+      } catch {
+        // Non-fatal; see comment above.
+      }
+    }
   } catch {
     // The result below remains false and produces a single bounded alert.
   }

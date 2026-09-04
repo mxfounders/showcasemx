@@ -8,37 +8,21 @@ import { ArrowUpRight } from 'lucide-react';
 import { CatalogFilterBar } from './catalog-filter-bar';
 import { ProductVisual } from '@/components/product-visual';
 import { getAccentStyle } from '@/lib/brand-colors';
+import { categories, industries, companySizes, offerings } from '@/lib/taxonomy';
+import type { PublishedProduct } from '@/lib/solutions/public';
 
-type Product = Record<string, any>;
+type Product = PublishedProduct;
 
-const taxonomy = {
-  industria: [
-    { value: 'Agencias', label: 'Agencias y consultoras' },
-    { value: 'Retail', label: 'Retail & E-commerce' },
-    { value: 'Manufactura', label: 'Manufactura y logística' },
-    { value: 'Legal', label: 'Despachos legales' },
-    { value: 'Salud', label: 'Salud y clínicas' },
-    { value: 'Educación', label: 'Educación y EdTech' }
-  ],
-  problema: [
-    { value: 'Cobros', label: 'Cobros y facturación' },
-    { value: 'Contratos', label: 'Contratos y firma' },
-    { value: 'Nómina', label: 'Nómina y RH' },
-    { value: 'Finanzas', label: 'Visibilidad financiera' },
-    { value: 'Inventario', label: 'Inventario y supply chain' },
-    { value: 'Ventas', label: 'Ventas y CRM' }
-  ],
-  tamano: [
-    { value: 'pyme', label: 'PyMEs y Startups' },
-    { value: 'midmarket', label: 'Mid-market' },
-    { value: 'enterprise', label: 'Corporativo (Enterprise)' }
-  ],
-  modelo: [
-    { value: 'Software', label: 'SaaS / Software' },
-    { value: 'Agencia', label: 'Agencia Especializada' },
-    { value: 'Servicio', label: 'Servicio B2B' }
-  ]
-};
+// Filter option lists, sourced from src/lib/taxonomy.ts instead of a local
+// copy — the "tamano" filter here used to compare pyme/midmarket/enterprise
+// against free-text description fields and never matched anything, and
+// "industria" was missing Construcción. Category labels repeat (inventario
+// and soporte both surface as "Operación"), so they're deduped for the menu;
+// filtering still matches every route that shares that label.
+const categoryFilterOptions = Array.from(new Map(categories.map(item => [item.label, item.label])).values()).map(label => ({ value: label, label }));
+const industryFilterOptions = industries.map(item => ({ value: item.value, label: item.label }));
+const sizeFilterOptions = companySizes.map(item => ({ value: item.value, label: item.label }));
+const modelFilterOptions = offerings.map(value => ({ value, label: value }));
 
 export function CategoryPageLayout({
   title,
@@ -84,47 +68,40 @@ export function CategoryPageLayout({
     if (basePath === '/explorar') {
       // User is looking at a specific Problem (e.g., Cobros). Allow filtering by Industry and Size.
       return [
-        { id: 'industria', label: 'Industria específica', options: taxonomy.industria },
-        { id: 'tamano', label: 'Tamaño de empresa', options: taxonomy.tamano },
-        { id: 'modelo', label: 'Formato', options: taxonomy.modelo }
+        { id: 'industria', label: 'Industria específica', options: industryFilterOptions },
+        { id: 'tamano', label: 'Tamaño de empresa', options: sizeFilterOptions },
+        { id: 'modelo', label: 'Formato', options: modelFilterOptions }
       ];
     }
     if (basePath === '/industria') {
       // User is looking at a specific Industry (e.g., Retail). Allow filtering by Problem and Size.
       return [
-        { id: 'problema', label: 'Caso de uso', options: taxonomy.problema },
-        { id: 'tamano', label: 'Tamaño de empresa', options: taxonomy.tamano },
-        { id: 'modelo', label: 'Formato', options: taxonomy.modelo }
+        { id: 'problema', label: 'Caso de uso', options: categoryFilterOptions },
+        { id: 'tamano', label: 'Tamaño de empresa', options: sizeFilterOptions },
+        { id: 'modelo', label: 'Formato', options: modelFilterOptions }
       ];
     }
     // Default for /colecciones
     return [
-      { id: 'problema', label: 'Caso de uso', options: taxonomy.problema },
-      { id: 'modelo', label: 'Formato', options: taxonomy.modelo }
+      { id: 'problema', label: 'Caso de uso', options: categoryFilterOptions },
+      { id: 'modelo', label: 'Formato', options: modelFilterOptions }
     ];
   }, [basePath]);
 
-  // Filtering Logic
+  // Filtering Logic. Each filter compares against the real declared field
+  // (categories/industries/companySizes) instead of matching substrings in
+  // free-text description/feature copy. A product that never declared
+  // industries/companySizes simply doesn't match a specific filter for that
+  // dimension — that's a real, honest gap, not a bug: see SolutionData in
+  // src/lib/solutions/model.ts, where undefined means "never answered".
   const filteredProducts = useMemo(() => {
     let result = [...products];
-    
-    // Cross-filtering engine
-    if (searchParams.industria) {
-      const term = searchParams.industria.toLowerCase();
-      result = result.filter(p => p.categories?.some((c: string) => c.toLowerCase().includes(term)) || p.description.toLowerCase().includes(term));
-    }
-    if (searchParams.problema) {
-      const term = searchParams.problema.toLowerCase();
-      result = result.filter(p => p.category?.toLowerCase().includes(term) || p.categories?.some((c: string) => c.toLowerCase().includes(term)) || p.description.toLowerCase().includes(term));
-    }
-    if (searchParams.tamano) {
-      // Mock filtering for size (in reality this would check a 'target_audience' field)
-      result = result.filter(p => p.description.toLowerCase().includes(searchParams.tamano!) || p.feature?.toLowerCase().includes(searchParams.tamano!));
-    }
-    if (searchParams.modelo) {
-      result = result.filter(p => p.offering === searchParams.modelo);
-    }
-    
+
+    if (searchParams.industria) result = result.filter(p => p.industries?.includes(searchParams.industria!));
+    if (searchParams.problema) result = result.filter(p => p.category === searchParams.problema || p.categories?.includes(searchParams.problema!));
+    if (searchParams.tamano) result = result.filter(p => p.companySizes?.includes(searchParams.tamano!));
+    if (searchParams.modelo) result = result.filter(p => p.offering === searchParams.modelo);
+
     // Sorting
     if (searchParams.sort === 'az') {
       result.sort((a, b) => a.name.localeCompare(b.name));

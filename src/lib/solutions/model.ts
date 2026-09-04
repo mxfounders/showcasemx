@@ -4,9 +4,19 @@ export type SolutionScreenshot={id:string;caption:string};
 // their own site as a ficha slide. Absent/false = shown, so no existing ficha
 // changes. Named in the negative on purpose: an absent boolean must mean
 // "show", and a jsonb key that is merely false already means that.
-export type SolutionData = { name:string; kind:string; category:string; categories?:string[]; problem:string; audience:string; website:string; contactEmail:string; scope?:string; pricing?:string; implementation?:string; integrations?:string; support?:string; evidence?:string; evidenceUrl?:string;demoUrl?:string;notFor?:string;screenshots?:SolutionScreenshot[];founders?:SolutionFounder[];projectLinks?:PublicLink[];hideSiteImage?:boolean };
+export type SolutionData = { name:string; kind:string; category:string; categories?:string[]; problem:string; audience:string; website:string; contactEmail:string; scope?:string; pricing?:string; implementation?:string; integrations?:string; support?:string; evidence?:string; evidenceUrl?:string;demoUrl?:string;notFor?:string;screenshots?:SolutionScreenshot[];founders?:SolutionFounder[];projectLinks?:PublicLink[];hideSiteImage?:boolean;industries?:string[];companySizes?:string[] };
 export const emptySolution:SolutionData={name:'',kind:'',category:'',problem:'',audience:'',website:'',contactEmail:''};
 export const solutionCategories=['Cobros','Finanzas','Nómina','Ventas','Operación','Legal','Agencias'] as const;
+// Plain value lists a solution can declare. This file owns what is legal to
+// store; src/lib/taxonomy.ts imports these same arrays to attach labels,
+// tones and routes for the UI, so the two can never drift apart. Reversing
+// that import direction would create a cycle (model.ts needs the value list
+// to validate; taxonomy.ts needs the value list to build its richer entries).
+export const solutionIndustries=['Agencias','Retail','Manufactura','Legal','Construcción','Salud','Educación'] as const;
+export const companySizes=['micro','pyme','mediana','corporativo'] as const;
+// [] on either field means "declared, serves any" — a deliberate answer, not a
+// gap. undefined means the founder never answered the question. The public
+// ficha and the filters must tell these two apart; see solutionChecklist.
 export const statuses={draft:{label:'Borrador',next:'Completa los datos y envía tu solución.'},pending:{label:'En revisión',next:'El equipo está revisando tu postulación. Puedes consultar lo que enviaste.'},changes_requested:{label:'Necesita cambios',next:'Revisa los comentarios, corrige y vuelve a enviar.'},published:{label:'Publicada',next:'Tu ficha está disponible. Las modificaciones necesitan una nueva revisión.'},rejected:{label:'No aceptada',next:'Consulta el motivo. Puedes preparar una versión corregida.'}} as const;
 export type SolutionStatus=keyof typeof statuses;
 // has_site_image: whether the og:image read from the project's own website is
@@ -35,12 +45,17 @@ export function readSolutionData(value:unknown):SolutionData|null{
  if(input.founders!==undefined){const founders=readFounders(input.founders);if(!founders)return null;result.founders=founders;}
  if(input.projectLinks!==undefined){const links=readPublicLinks(input.projectLinks,6);if(!links)return null;result.projectLinks=links;}
  if(input.hideSiteImage!==undefined){if(typeof input.hideSiteImage!=='boolean')return null;result.hideSiteImage=input.hideSiteImage;}
+ // An empty array is a real, valid answer ("sirve a cualquier industria/tamaño"),
+ // distinct from the field being absent (never answered). Both fields keep that
+ // distinction all the way through: never default a missing one to [].
+ if(input.industries!==undefined){if(!Array.isArray(input.industries)||input.industries.length>solutionIndustries.length||input.industries.some(value=>typeof value!=='string'||!solutionIndustries.some(industry=>industry===value)))return null;result.industries=Array.from(new Set(input.industries as string[]));}
+ if(input.companySizes!==undefined){if(!Array.isArray(input.companySizes)||input.companySizes.length>companySizes.length||input.companySizes.some(value=>typeof value!=='string'||!companySizes.some(size=>size===value)))return null;result.companySizes=Array.from(new Set(input.companySizes as string[]));}
  return result;
 }
 export function solutionErrors(data:SolutionData,step?:number){
  const errors:Partial<Record<keyof SolutionData,string>>={};
  if(step===undefined||step===0){if(!data.name)errors.name='Dale un nombre a tu solución.';if(!data.kind)errors.kind='Selecciona qué ofreces.';if(!getSolutionCategories(data).length)errors.category='Selecciona al menos una categoría.';}
- if(step===undefined||step===1){if(data.problem.length<20)errors.problem='Cuéntanos qué resuelves en al menos 20 caracteres.';if(data.audience.length<10)errors.audience='Describe para quién es tu solución.';}
+ if(step===undefined||step===1){if(data.problem.length<20)errors.problem='Cuéntanos qué resuelves en al menos 20 caracteres.';if(data.audience.length<10)errors.audience='Describe para quién es tu solución.';if(data.industries===undefined)errors.industries='Elige las industrias donde encaja, o marca que sirve a cualquiera.';if(data.companySizes===undefined)errors.companySizes='Elige los tamaños de empresa donde encaja, o marca que sirve a cualquiera.';}
  if(step===undefined||step===2){try{const url=new URL(data.website);if(!['https:','http:'].includes(url.protocol)||url.username||url.password||!url.hostname.includes('.'))throw new Error();}catch{errors.website='Escribe un sitio válido, empezando por https://.';}if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.contactEmail))errors.contactEmail='Escribe un correo de contacto válido.';}
  if((step===undefined||step===2)&&data.evidenceUrl&&!safeSolutionUrl(data.evidenceUrl))errors.evidenceUrl='El enlace de evidencia debe empezar por https:// y no contener credenciales.';
  if((step===undefined||step===1)&&data.demoUrl&&!safeSolutionUrl(data.demoUrl))errors.demoUrl='Escribe un enlace HTTP(S) válido para la demo, sin credenciales.';

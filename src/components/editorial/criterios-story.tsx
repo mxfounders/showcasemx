@@ -4,10 +4,10 @@ import Link from 'next/link';
 import { ArrowRight, TextSelect, Cpu, LayoutTemplate, CircleDollarSign, Fingerprint, LineChart, ShieldCheck, Scale, MessageCircle, Bookmark, Heart, Eye } from 'lucide-react';
 
 const rankingWeights = [
-  { Icon: MessageCircle, weight: '× 3', label: 'Comentario', desc: 'La señal más costosa de dar: alguien se tomó el tiempo de escribir.' },
+  { Icon: MessageCircle, weight: '× 3', label: 'Comentario', desc: 'La señal más costosa de dar: alguien se tomó el tiempo de escribir. Un fundador no puede comentar su propia ficha.' },
   { Icon: Bookmark, weight: '× 2', label: 'Guardado', desc: 'Expresa intención de volver o comparar más adelante.' },
-  { Icon: Heart, weight: '× 1', label: 'Like', desc: 'La interacción más fácil de dar.' },
-  { Icon: Eye, weight: '× 0.1', label: 'Vista', desc: 'Tráfico real, la señal más débil de las cuatro.' },
+  { Icon: Heart, weight: '× 1', label: 'Like', desc: 'La interacción más fácil de dar. Un fundador tampoco puede dársela a su propia ficha.' },
+  { Icon: Eye, weight: '× 0.1', label: 'Vista', desc: 'Tráfico real, con rendimientos decrecientes: miles de vistas no ahogan unos pocos comentarios.' },
 ];
 
 const criterios = [
@@ -158,7 +158,9 @@ export function CriteriosStory() {
             <p className="mt-5 max-w-md text-base leading-relaxed text-stone-600 sm:text-lg">
               Dentro de cada categoría, el orden refleja interacción real de compradores — comentar,
               guardar, dar like — no una puntuación de calidad ni un aval editorial. Todo empieza en
-              cero. Es una señal auxiliar, no una certificación: puede manipularse creando cuentas.
+              cero. Solo cuenta la actividad de cuentas con correo verificado, y pesa menos con el
+              tiempo: un empujón antiguo no fija el orden para siempre. Es una señal auxiliar,
+              no una certificación.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-4">

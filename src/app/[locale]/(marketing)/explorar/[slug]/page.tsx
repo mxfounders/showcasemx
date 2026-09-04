@@ -4,16 +4,7 @@ import { publicProducts } from '@/lib/solutions/public';
 import { CategoryPageLayout } from '@/components/catalog/category-page-layout';
 import { CategoryPageSkeleton } from '@/components/catalog/category-page-skeleton';
 import { i18n } from '@/i18n/config';
-
-const categoryMap: Record<string, { title: string; desc: string; label: string }> = {
-  'cobros': { title: 'Cobros y cuentas por cobrar', desc: 'Sistemas para reducir tu ciclo de cobranza de semanas a días. Conciliación automática, recordatorios y portales de pago B2B.', label: 'Cobros' },
-  'contratos': { title: 'Contratos y firma digital', desc: 'Cierra acuerdos B2B sin imprimir una sola hoja. Gestión del ciclo de vida del contrato (CLM), firmas con validez NOM-151 y resguardo seguro.', label: 'Legal' },
-  'nomina': { title: 'Nómina y compliance', desc: 'Cálculos de IMSS, SAT, dispersión bancaria y gestión de vacaciones en un solo lugar. Evita multas y errores manuales.', label: 'Nómina' },
-  'finanzas': { title: 'Visibilidad financiera', desc: 'Herramientas para saber exactamente qué entra, qué sale y cuándo. Flujo de efectivo, presupuestos y consolidación bancaria.', label: 'Finanzas' },
-  'inventario': { title: 'Inventario y supply chain', desc: 'Control de stock en tiempo real, logística y compras. Dile adiós a los inventarios gestionados en hojas de Excel.', label: 'Operación' },
-  'ventas': { title: 'Ventas y CRM', desc: 'Mapea tu pipeline, haz seguimiento a prospectos y cierra más tratos. CRM especializados en ciclos de venta B2B largos.', label: 'Ventas' },
-  'soporte': { title: 'Atención al cliente', desc: 'Mesa de ayuda omnicanal, ticketing y automatización de respuestas para escalar tu soporte B2B sin caos.', label: 'Operación' },
-};
+import { categories } from '@/lib/taxonomy';
 
 // Must enumerate {locale, slug} pairs, not just slug: this is the innermost
 // dynamic segment, so Next needs the full combination to prerender each
@@ -21,8 +12,8 @@ const categoryMap: Record<string, { title: string; desc: string; label: string }
 // does not get one inferred). Getting this wrong doesn't just skip locales —
 // combined with dynamicParams=false below it 404s even the known-good slugs,
 // because none of them cleanly match a {slug}-only manifest at serve time.
-export function generateStaticParams() { return i18n.locales.flatMap(locale => Object.keys(categoryMap).map(slug => ({ locale, slug }))); }
-// The slugs are a fixed, closed set (see categoryMap above): an unknown one
+export function generateStaticParams() { return i18n.locales.flatMap(locale => categories.map(item => ({ locale, slug: item.slug }))); }
+// The slugs are a fixed, closed set (see src/lib/taxonomy.ts): an unknown one
 // should 404 at the routing layer, never attempt an on-demand dynamic render.
 // (An on-demand render here previously crashed outright — the route commits
 // fully static at build time since cookies() resolves to nothing during
@@ -36,7 +27,7 @@ export default async function ExplorarCategoryPage(props: {
 }) {
   const params = await props.params;
 
-  const categoryInfo = categoryMap[params.slug];
+  const categoryInfo = categories.find(item => item.slug === params.slug);
   if (!categoryInfo) return notFound();
 
   const products = await publicProducts();
@@ -53,7 +44,7 @@ export default async function ExplorarCategoryPage(props: {
     <Suspense fallback={<CategoryPageSkeleton />}>
       <CategoryPageLayout
         title={categoryInfo.title}
-        description={categoryInfo.desc}
+        description={categoryInfo.description}
         categorySlug={params.slug}
         basePath="/explorar"
         products={categoryProducts}

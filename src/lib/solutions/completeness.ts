@@ -3,6 +3,7 @@ export function solutionChecklist(data:SolutionData){
  return [
   {key:'basics',label:'Identidad y categorías',hint:'Nombre, tipo y al menos una categoría.',step:0,done:!!data.name&&!!data.kind&&getSolutionCategories(data).length>0},
   {key:'fit',label:'Problema y cliente ideal',hint:'Explica el reto y para quién está pensada.',step:1,done:data.problem.length>=20&&data.audience.length>=10},
+  {key:'market',label:'Industrias y tamaño de empresa',hint:'Declara dónde encaja, o marca que sirve a cualquiera.',step:1,done:data.industries!==undefined&&data.companySizes!==undefined},
   {key:'scope',label:'Alcance y límites',hint:'Qué incluye y en qué casos no encaja.',step:1,done:!!data.scope?.trim()&&!!data.notFor?.trim()},
   {key:'visual',label:'Capturas con contexto',hint:'Añade al menos una captura y explica qué muestra.',step:1,done:!!data.screenshots?.length&&data.screenshots.every(item=>item.caption.trim().length>=3)},
   {key:'demo',label:'Demo o recorrido',hint:'Un enlace para conocer cómo funciona.',step:1,done:!!safeSolutionUrl(data.demoUrl)},
