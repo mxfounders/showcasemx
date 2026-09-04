@@ -19,6 +19,11 @@ const NEW_STATUS: Record<string, string> = {
   withdraw: 'changes_requested',
 };
 
+// Self-review is deliberately allowed here: unlike solution_reports (community
+// moderation), only the account holder decides what happens to their own
+// listings, and the sole ops admin currently owns Cord. Every decision is still
+// attributed by actor_id in solution_events and audited below. See CLAUDE.md §7.
+
 export async function POST(req: NextRequest) {
   const user = await requireOpsApi();
   if (user instanceof Response) return user;
@@ -54,7 +59,7 @@ export async function POST(req: NextRequest) {
           updated_at = now(),
           published_at = CASE WHEN ${isPublishing} THEN now() WHEN ${isWithdrawing} THEN NULL ELSE published_at END,
           published_data = CASE WHEN ${isPublishing} THEN data WHEN ${isWithdrawing} THEN NULL ELSE published_data END
-        WHERE id = ${solutionId} AND owner_id <> ${user.id} AND version = ${version}
+        WHERE id = ${solutionId} AND version = ${version}
           AND status = ANY(${allowedStatuses}::text[])
         RETURNING id, status, version
       ), event AS (
@@ -65,7 +70,7 @@ export async function POST(req: NextRequest) {
     ]);
 
     const rows = result[1];
-    if (!rows.length) return failure('La postulación cambió, no admite esta acción, o es tuya. Recarga e intenta de nuevo.', 409);
+    if (!rows.length) return failure('La postulación cambió o no admite esta acción. Recarga e intenta de nuevo.', 409);
 
     await audit({
       actorId: user.id, actorEmail: user.email, action: `solution_${action}`,

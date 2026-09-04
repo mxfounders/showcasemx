@@ -194,9 +194,13 @@ process.on('unhandledRejection', (reason) => {
     await sql`INSERT INTO account_notifications (id, owner_id, category, source_key, title, href, email_state, attempts) VALUES (${notificationId}, ${accountIds.target}, 'solution', ${'test:' + tag}, 'Test title', '/account', 'failed', 3)`;
     await sql`INSERT INTO newsletter_subscribers (email, consent_version) VALUES (${'nl-' + emails.target}, 'newsletter-v2')`;
 
-    // === Self-review guard: admin cannot review their own pending solution ===
-    const selfReview = await opsFetch('/api/review', { method: 'POST', cookie: opsCookies.admin, body: { solutionId: ownSolutionAdmin, action: 'publish', message: 'trying to self-approve', version: 0 } });
-    assert.equal(selfReview.status, 409, 'self-review must be blocked: ' + JSON.stringify(selfReview.json));
+    // === Self-review is allowed: an ops account may publish its own pending solution ===
+    // Unlike solution_reports (third-party moderation), only the owner decides what
+    // happens to their own listing; publishing still records actor_id below.
+    const selfReview = await opsFetch('/api/review', { method: 'POST', cookie: opsCookies.admin, body: { solutionId: ownSolutionAdmin, action: 'publish', message: 'self-approving my own listing', version: 0 } });
+    assert.equal(selfReview.status, 200, 'self-review must be allowed: ' + JSON.stringify(selfReview.json));
+    const [selfEventRow] = await sql`SELECT actor_id FROM solution_events WHERE solution_id = ${ownSolutionAdmin} ORDER BY id DESC LIMIT 1`;
+    assert.equal(String(selfEventRow.actor_id), String(accountIds.admin), 'self-review must still record the actor');
 
     // === Publishing someone else's solution copies data -> published_data and records actor_id ===
     const publish = await opsFetch('/api/review', { method: 'POST', cookie: opsCookies.admin, body: { solutionId: targetSolution, action: 'publish', message: 'Looks good, publishing.', version: 0 } });
@@ -362,7 +366,7 @@ process.on('unhandledRejection', (reason) => {
     }
     assert.ok(audit.json.items.every(i => i.reason && i.reason.length >= 10));
 
-    console.log('PASS: two-step TOTP login/enrollment, session isolation from the product, self-review guard, publish copies published_data with actor_id, reviewer/admin permission split, last-admin guard, privacy boundary (no notes/purpose leaked), and all panel API surfaces (solutions, reports, accounts, domains, community, inquiries, mail, newsletter, metrics, search, team, audit).');
+    console.log('PASS: two-step TOTP login/enrollment, session isolation from the product, self-review allowed and attributed, publish copies published_data with actor_id, reviewer/admin permission split, last-admin guard, privacy boundary (no notes/purpose leaked), and all panel API surfaces (solutions, reports, accounts, domains, community, inquiries, mail, newsletter, metrics, search, team, audit).');
   } catch (error) {
     console.log(error instanceof assert.AssertionError ? error.stack : ('Integration failed: ' + (error && error.stack || error)));
     process.exitCode = 1;

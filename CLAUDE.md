@@ -224,7 +224,9 @@ step, version y fechas. owner_id proviene de la sesión.
 Estados: draft, pending, changes_requested, published, rejected.
 El fundador edita borradores/cambios y envía; el revisor decide con comentario.
 solution_reviewers concede permisos explícitos. No se crea ningún revisor
-automáticamente ni por perfil. Prohibida autoaprobación.
+automáticamente ni por perfil. Revisar (publicar/rechazar/pedir cambios/retirar)
+es exclusivo de ops y ya **admite autorrevisión**, decisión explícita del
+propietario del 3 de septiembre de 2026: sustituye la prohibición histórica. Ver §48.
 
 - categories admite varias categorías conocidas sin duplicados.
   category conserva la primera por compatibilidad con registros antiguos.
@@ -1234,9 +1236,11 @@ columnas a ninguna consulta de `ops/` sin decisión explícita del usuario.
 
 `ops_audit_log` registra cada mutación (actor, acción, sujeto, motivo obligatorio
 ≥10 caracteres, metadata, IP). Es de solo inserción; no se borran filas al eliminar
-cuentas de prueba. `solution_events.actor_id` registra quién decidió cada revisión.
-Un revisor no puede aprobar ni reportar su propia solución
-(`owner_id<>account.id`/`reporter_id IS DISTINCT FROM`), igual que en el producto.
+cuentas de prueba. `solution_events.actor_id` registra quién decidió cada revisión,
+incluida una autorrevisión: `POST /api/review` ya no exige `owner_id<>account.id`
+(ver §48; decisión explícita del 3 de septiembre de 2026, sustituye la prohibición
+histórica). `POST /api/reports` sigue bloqueando resolver un reporte que uno mismo
+presentó (`reporter_id IS DISTINCT FROM`) — es una guarda distinta, sin tocar.
 Solo `level='admin'` accede a `/panel/equipo`, `/panel/bitacora` y a suspender,
 despublicar o verificar cuentas; nadie puede quitarse a sí mismo el último `admin`
 ni auto-suspenderse/revocarse. `despublicar todo` retira `published_data` de sus
@@ -1539,3 +1543,30 @@ sitio publica. Funciona **en borrador**, que era el punto de la petición.
   copia propia, servida como WebP desde nuestro dominio, 404 para anónimos
   mientras es borrador y pública al publicarse; `127.0.0.1`, `localhost` y
   `169.254.169.254` rechazados sin guardar nada. Fichas de prueba eliminadas.
+
+## 51. Autorrevisión permitida en ops — 3 septiembre 2026
+
+Decisión explícita del usuario: «quita lo de que no pueda aceptar las mías».
+`POST /api/review` en ops (§44, §48) bloqueaba con `owner_id<>account.id` que
+un revisor publicara, rechazara, pidiera cambios o retirara **su propia**
+solución. En la práctica esto le impedía al único admin de ops aprobar Cord,
+su propia postulación (§45: única cuenta, único proyecto, en `pending`) —
+no hay otro revisor que pueda hacerlo por él.
+
+Se quitó esa cláusula de las cuatro transiciones (`publish`, `reject`,
+`changes_requested`, `withdraw`). `solution_events.actor_id` sigue registrando
+quién decidió, y `ops_audit_log` sigue auditando la acción con motivo
+obligatorio; una autorrevisión queda tan trazada como cualquier otra. Esto
+**sustituye** la prohibición histórica de autoaprobación de §7 y §44.
+
+No se tocó `POST /api/reports`: resolver un reporte que uno mismo presentó
+sigue bloqueado (`reporter_id IS DISTINCT FROM`) porque es una guarda distinta
+— moderación de un tercero, no decisión sobre la propia publicación — y no fue
+parte de lo pedido. Tampoco se tocó el bloqueo de autolike/autocomentario en
+`solution_likes`/`solution_comments` (§46): esa guarda protege que la señal de
+interacción sea de otra persona, no del propio fundador, algo que sigue
+teniendo sentido incluso con un solo admin.
+
+`tests/integration/ops.cjs` tenía una prueba explícita de que la autorrevisión
+se bloqueaba (409); se cambió para afirmar lo contrario (200, con `actor_id`
+correcto), en vez de borrarla o dejarla fallando.
