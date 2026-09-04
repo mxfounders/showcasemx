@@ -1660,3 +1660,98 @@ campos declarados, filtros del catálogo rediseñados sobre `.selector-*`
 multiselección, filtros de comunidad mejorados, y el ranking difícil de
 manipular (verificación de correo, decaimiento temporal, deduplicación de
 vistas). Nada de eso se tocó todavía.
+
+## 53. Fase 2 — la ficha con carrusel — 3 septiembre 2026
+
+Segunda fase del plan de catálogo (§52). La ficha pública gana un carrusel de
+imágenes, datos clave visibles antes de bajar, qué falta por declarar, y
+soluciones parecidas al final.
+
+- **`src/lib/solutions/gallery.ts`**, fuente única de dos reglas antes
+  duplicadas con criterios distintos en tres archivos:
+  - `solutionSlides()` — la lista del carrusel. **og:image primero**, luego
+    las capturas del fundador en su orden. Es la imagen ancha tipo hero.
+  - `solutionCover()` — la portada de rejilla (catálogo, biblioteca, Inicio
+    del fundador). Orden **opuesto a propósito**: captura del fundador
+    primero (sobrevive el recorte a una miniatura pequeña, una og:image de
+    marketing no), luego og:image, luego el arte local de Cord/Flouvia.
+    `public.ts`, `library/server.ts` y `account/page.tsx` ya tenían tres
+    versiones a mano de este mismo criterio, desincronizadas entre sí; ahora
+    las tres llaman a la misma función.
+- **`hideSiteImage?:boolean`** en `SolutionData`: el fundador puede quitar la
+  og:image de su ficha. Ausente/false = se muestra, así que ninguna ficha
+  existente cambia. El interruptor vive en `site-image-card.tsx` (donde ya
+  se veía esa portada) y escribe por el mismo `PATCH .../[id]` con
+  `action:'save'` que usa el editor guiado — **no es instantáneo**: como
+  cualquier otro campo, pasa a `data` (borrador), no a `published_data`, y
+  necesita una nueva revisión para llegar a la ficha pública. La interfaz lo
+  dice explícitamente tras guardar, para que una casilla no se sienta
+  instantánea cuando no lo es.
+- **`SolutionGallery`** (`src/components/solutions/solution-gallery.tsx`)
+  sustituye a `screenshot-gallery.tsx` (eliminado, sin otro import). Tira con
+  scroll-snap horizontal, mecánica copiada de `blog-index.tsx` (el único otro
+  carrusel del repo); el `<dialog>` ampliado es casi verbatim el de la
+  versión anterior —`showModal()`, devuelve el foco al disparador, `Escape`
+  con `stopPropagation`— porque ya cumplía la barra de accesibilidad y
+  reescribirlo arriesgaba perder justo eso. Se añadieron flechas de teclado
+  (←/→ sobre la tira), que antes faltaban. Un solo ratio para toda imagen,
+  **`aspect-[16/10]` + `object-contain`**: recortar una captura de interfaz
+  esconde justo lo que debía mostrar, y es el punto medio entre el 4:3 de
+  las capturas viejas y el 1.905 de una og:image 1200×630.
+- Se inserta a **ancho completo entre el `</header>` y la rejilla de dos
+  columnas** de `solution-presentation.tsx` — debajo del nombre y la
+  descripción, como se pidió. Falta un dato para que la ficha pública supiera
+  si existe og:image: `soluciones/[id]/page.tsx` no seleccionaba
+  `has_site_image`; ahora sí, con el mismo `EXISTS(...)` que ya usan
+  `public.ts` y `library/server.ts`. La preview privada no necesitó tocar
+  SQL: `getSolution` ya lo devolvía.
+- **Datos clave arriba**: precio, implementación e integraciones —antes
+  enterrados en el `<dl>` «Antes de decidir», muy abajo— ahora en una fila
+  compacta bajo el carrusel, junto al botón de demo. Solo se muestra el campo
+  si el proyecto lo declaró; nunca un valor inventado.
+- **Qué falta por declarar**: reutiliza `solutionChecklist` (ya existía, nueve
+  bloques) en un disclosure visible **para cualquiera que lea la ficha, no
+  solo el dueño** — decisión explícita: ayuda al comprador y empuja al
+  fundador a completar. El texto aclara que falta de información no es lo
+  mismo que mala calidad.
+- **Soluciones parecidas**: hasta tres de la misma categoría al final de la
+  ficha, desde `publicProducts()` ya cacheado en la fase 1 — sin consulta
+  extra. La ficha dejó de ser un callejón sin salida.
+
+### Bug de producción encontrado y corregido en el camino
+
+Al verificar contra `next start` (no solo `next dev`), una categoría
+**desconocida** en `/explorar`, `/industria` o `/colecciones` tiraba 500 con
+`Error: Page changed from static to dynamic at runtime … reason: cookies`.
+Causa: `generateStaticParams()` de la fase 1 devolvía solo `{slug}`, sin
+`locale`; Next no podía resolver limpiamente la combinación
+`[locale]/[slug]` en runtime, y el intento de render dinámico de respaldo
+chocaba con que la ruta ya se había comprometido como estática en el build
+(el layout de marketing lee `cookies()`, que se resuelve vacío durante el
+prerender pero real en el fallback). Arreglado con dos cambios en las tres
+rutas de categoría:
+- `generateStaticParams()` ahora enumera **`{locale,slug}`** para los dos
+  locales × sus slugs (7+7+4, ×2 = 36 combinaciones).
+- `export const dynamicParams=false`: el conjunto de slugs es cerrado, así
+  que uno desconocido debe dar 404 en la capa de enrutamiento, sin intentar
+  nunca un render dinámico. (Poner `dynamicParams=false` sin arreglar antes
+  el `generateStaticParams` rompía también los slugs *válidos* con
+  `NoFallbackError` — las dos correcciones van juntas, no una sin la otra.)
+
+**Límite pre-existente, no de esta fase, encontrado de paso**: en este
+entorno, `notFound()` sirve el contenido correcto de «no encontrado» pero con
+código HTTP 200 en vez de 404, tanto en `/explorar/[slug]` como en
+`/soluciones/[id]` con un UUID inexistente. Confirmado con el contenido
+exacto de la respuesta, no solo el código. No se investigó su causa ni se
+tocó; queda anotado para revisión aparte.
+
+**Verificación**: 70 unitarias (5 nuevas: orden del carrusel, que
+`hideSiteImage` solo quita el slide del sitio, portada vacía sin capturas ni
+sitio, orden opuesto de `solutionCover`, y validación del campo booleano).
+Lint y TypeScript limpios. Contra `next start`: categoría desconocida → 404
+limpio sin error en el log; categoría válida en `es` y `en` → 200 con el
+contenido correcto. Contra el dev: ficha real con carrusel (portada del
+sitio + captura), datos clave, disclosure de qué falta y soluciones
+parecidas, todo presente en el HTML; alternar `hideSiteImage` vía `PATCH`
+persiste en el borrador; un borrador ajeno sigue sin exponer su portada a un
+extraño (404). Fixtures y cuentas de prueba eliminadas.

@@ -112,3 +112,28 @@ conexión (TOCTOU). Cerrarlo del todo exige conectar contra la IP ya validada co
 la cabecera Host correcta; no está hecho. El riesgo queda acotado por el resto de
 guardas y porque la respuesta nunca se devuelve al cliente: solo se guarda una
 imagen reencodificada.
+
+## Carrusel de la ficha y portadas — 3 septiembre 2026
+
+`src/lib/solutions/gallery.ts` es la fuente única de dos reglas de orden que
+antes vivían duplicadas, con criterios distintos, en `public.ts`,
+`library/server.ts` y `account/page.tsx`:
+
+- `solutionSlides()` — el carrusel de la ficha pública. **og:image primero**,
+  luego las capturas del fundador en su orden declarado. Es la imagen ancha,
+  tipo hero.
+- `solutionCover()` — la portada de una tarjeta pequeña (catálogo, biblioteca,
+  Inicio del fundador). Orden **opuesto a propósito**: captura del fundador
+  primero, og:image después, arte local de Cord/Flouvia al final. Una
+  og:image de marketing rara vez sobrevive el recorte a una miniatura
+  cuadrada; una captura del producto sí.
+
+El fundador puede ocultar la og:image de su ficha con `hideSiteImage` en
+`SolutionData` (interruptor en `site-image-card.tsx`). Como cualquier otro
+campo, el cambio pasa por revisión antes de llegar a la ficha pública — no es
+instantáneo, y la interfaz lo dice.
+
+Un solo ratio para toda imagen del carrusel: `aspect-[16/10]` +
+`object-contain` sobre fondo blanco. `object-cover` en una captura de interfaz
+recorta justo lo que debía enseñarse; 16/10 es el punto medio entre el 4:3 de
+las capturas y el 1.905 de una og:image 1200×630.
