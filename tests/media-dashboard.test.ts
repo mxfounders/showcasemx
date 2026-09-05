@@ -4,7 +4,7 @@ import {randomUUID} from 'node:crypto';
 import {readSolutionData,solutionErrors,emptySolution} from '../src/lib/solutions/model';
 import {solutionChecklist,needsPublicationReview} from '../src/lib/solutions/completeness';
 import {isDashboardMode,resolveDashboardMode} from '../src/lib/dashboard/model';
-const complete={...emptySolution,name:'Example',kind:'Software',category:'Cobros',problem:'Organiza cuentas por cobrar y facturación.',audience:'Equipos de finanzas',website:'https://example.com',contactEmail:'founder@example.invalid',industries:[] as string[],companySizes:[] as string[]};
+const complete={...emptySolution,name:'Example',kind:'Software',category:'Cobros',problem:'Organiza cuentas por cobrar y facturación.',audience:'Equipos de finanzas',website:'https://example.com',contactEmail:'founder@example.invalid',industries:[] as string[],companySizes:[] as string[],capabilities:['facturacion-cfdi'] as string[]};
 test('media metadata rejects foreign shapes, duplicate IDs and excessive captions; old solutions remain valid',()=>{
  const image={id:randomUUID(),caption:'Vista de cobros'};
  assert.deepEqual(readSolutionData({...complete,screenshots:[{...image,owner_id:'forged'}]})?.screenshots,[image]);
@@ -16,8 +16,8 @@ test('media metadata rejects foreign shapes, duplicate IDs and excessive caption
 });
 test('completeness reports information gaps without blocking valid minimal submissions',()=>{
  assert.deepEqual(solutionErrors(complete),{});
- assert.deepEqual(solutionChecklist(complete).filter(x=>x.done).map(x=>x.key),['basics','fit','market']);
- const data={...complete,founders:[{name:'Team',role:'',bio:'',links:[]}],projectLinks:[{label:'Sitio web' as const,url:'https://example.com'}],scope:'Alcance',notFor:'No cubre nómina',screenshots:[{id:randomUUID(),caption:'Vista de cobros'}],demoUrl:'https://example.com/demo',pricing:'A medida',implementation:'Una semana',integrations:'Sin integraciones',support:'Correo',evidence:'Caso público',evidenceUrl:'https://example.com/caso'};
+ assert.deepEqual(solutionChecklist(complete).filter(x=>x.done).map(x=>x.key),['basics','fit','market','capabilities']);
+ const data={...complete,founders:[{name:'Team',role:'',bio:'',links:[]}],projectLinks:[{label:'Sitio web' as const,url:'https://example.com'}],scope:'Alcance',notFor:'No cubre nómina',screenshots:[{id:randomUUID(),caption:'Vista de cobros'}],demoUrl:'https://example.com/demo',priceBand:'menos-1000',pricing:'A medida',implementation:'Una semana',setupTime:'menos-semana',integrationKeys:[] as string[],integrations:'Sin integraciones',support:'Correo',evidence:'Caso público',evidenceUrl:'https://example.com/caso'};
  assert.ok(solutionChecklist(data).every(item=>item.done));
  const now=Date.parse('2026-08-30T12:00:00Z');
  for(const date of [null,undefined,'invalid','2026-01-01'])assert.equal(needsPublicationReview(date,now),true);

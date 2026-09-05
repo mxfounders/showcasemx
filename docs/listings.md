@@ -144,3 +144,18 @@ Un solo ratio para toda imagen del carrusel: `aspect-[16/10]` +
 `object-contain` sobre fondo blanco. `object-cover` en una captura de interfaz
 recorta justo lo que debía enseñarse; 16/10 es el punto medio entre el 4:3 de
 las capturas y el 1.905 de una og:image 1200×630.
+
+## Capacidades y filtros derivados del resultado — 5 septiembre 2026
+
+Detalle completo en CLAUDE.md §59. La categoría `Agencias` (proveedores de
+servicios) es distinta de la industria `Agencias y consultoras` (empresas
+compradoras) mencionada arriba — desde esta entrega la categoría también tiene
+ruta propia (`/explorar/agencias`) y aparece en el filtro "Caso de uso"; antes
+era legal declararla pero no tenía dónde aparecer.
+
+Los filtros de capacidad, integración, precio, arranque y cumplimiento se
+calculan a partir de los productos que ya pasaron los demás filtros: un eje
+sin ningún valor presente entre esos resultados no se renderiza. Con el
+catálogo real todavía en una o dos fichas, esto evita ocho dropdowns casi
+vacíos; el comportamiento cambia solo — y automáticamente — según crece el
+catálogo real.

@@ -1,10 +1,14 @@
 # Postulación guiada, creadores y redes
 
-Entrega vigente 30/08/2026. Sustituye la interfaz anterior de cuatro pantallas
-largas. Conserva las cuatro fases internas para compatibilidad, pero presenta
-**14 preguntas cortas**: nombre, tipo/categorías, problema, audiencia, alcance,
-creadores, enlaces, capturas, demo, contratación, implementación/soporte, evidencia,
-sitio/contacto y revisión final.
+Entrega original 30/08/2026, ampliada el 5/09/2026 (CLAUDE.md §59). Sustituye
+la interfaz anterior de cuatro pantallas largas. Conserva las cuatro fases
+internas para compatibilidad, pero presenta **17 preguntas cortas**: nombre,
+tipo/categorías, problema, **qué hace en concreto (capacidades)**, audiencia,
+a quién sirve (industrias/tamaño), alcance, creadores, enlaces, capturas, demo,
+contratación (modelo/rango de precio), implementación/arranque/soporte,
+**con qué se conecta**, **qué cumplimiento acredita**, evidencia, sitio/contacto
+y revisión final. Las tres preguntas en negrita son la ampliación de §59; el
+resto es la entrega original de esta página.
 
 ## Interacción
 
@@ -49,8 +53,25 @@ clientes anteriores y deja la reanudación por fase. No cambiar la constraint de
 step ni reescribir masivamente borradores antiguos.
 
 `questionIndex` prefiere ID válido, de lo contrario el primer paso de la fase
-legacy. La guía de completitud ahora tiene **nueve bloques**, incluyendo creadores
-con presencia pública. Sigue siendo cobertura informativa, nunca puntuación.
+legacy. La guía de completitud tiene **doce bloques** desde §59 (antes diez,
+que ya incluían creadores con presencia pública; la cifra "nueve" de entregas
+más antiguas describe un estado previo a la pregunta `market`). Sigue siendo
+cobertura informativa, nunca puntuación.
+
+## Capacidades, integraciones, precio, arranque y cumplimiento (§59)
+
+`capabilities` no tiene estado `[]`: una solución hace algo concreto o no lo
+hace, así que solo `undefined` (nunca contestada) es un hueco, y se exige al
+menos una para enviar a revisión — igual que antes exigía `industries`/
+`companySizes` declarados, no una lista específica. El editor las agrupa por
+categoría ya declarada y sugiere capacidades leyendo `problem`/`audience`/
+`scope` con el mismo umbral de dos aciertos de vocabulario que ya usaba la
+inferencia de industria (`suggestCapabilities`, `src/lib/search/facets.ts`);
+la sugerencia nunca marca nada por sí sola, solo ofrece un chip de un clic.
+`integrationKeys` sí conserva el tri-estado ("no se conecta con nada" es
+`[]`, una respuesta real). `pricingModel`/`priceBand`/`setupTime`/`compliance`
+no tienen ninguna forma de "cualquiera": ausente y `[]` significan lo mismo,
+así que no hay nada que distinguir ahí. Detalle completo en CLAUDE.md §59.
 
 ## Información de Cord/Flouvia
 

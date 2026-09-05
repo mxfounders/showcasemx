@@ -2,17 +2,49 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, BookOpen, ChartNoAxesCombined, Layers3, ShieldCheck, SlidersHorizontal } from 'lucide-react';
+import { ArrowRight, BookOpen, ChartNoAxesCombined, Layers3, ShieldCheck, SlidersHorizontal, Tags, Search, MessageCircle, GalleryHorizontal, UserRound } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const releases = [
   {
-    date: '4 de septiembre de 2026',
+    date: '5 de septiembre de 2026',
     label: 'Nuevo', category: 'Producto',
-    title: 'Filtros de catálogo reales, y un orden más difícil de manipular',
-    summary: 'Industria y tamaño de empresa ahora son datos que cada proyecto declara, no una adivinanza — y el orden del catálogo pesa menos la actividad reciente y sin correo verificado.',
-    items: ['Filtra por industria específica y tamaño de empresa, con resultados reales en /explorar, /industria y /colecciones.', 'Cada proyecto declara en qué industrias y tamaños de empresa encaja, o que sirve a cualquiera — visible en su ficha.', 'El orden del catálogo ya no se infla con vistas repetidas ni con actividad de cuentas sin correo verificado, y pesa menos con el tiempo.'],
-    accent: '#88631B', icon: SlidersHorizontal,
+    title: 'Filtra por lo que un proyecto hace, no solo por su categoría',
+    summary: 'Cada proyecto puede declarar sus capacidades concretas — cotizaciones, facturación CFDI, nómina, integraciones y más — para que el catálogo lo encuentre por lo que realmente resuelve.',
+    items: ['Filtros nuevos por capacidad, integraciones, rango de precio, tiempo de arranque y cumplimiento normativo en /explorar, /industria y /colecciones.', 'Un filtro solo aparece cuando al menos un proyecto real lo cubre — nada de opciones que no llevan a ningún lado.', 'El formulario de postulación sugiere capacidades a partir de lo que ya escribiste; nunca las marca por ti.'],
+    accent: '#88631B', icon: Tags,
+  },
+  {
+    date: '5 de septiembre de 2026',
+    label: 'Búsqueda', category: 'Producto',
+    title: 'La búsqueda entiende conceptos, no solo palabras exactas',
+    summary: 'Buscar "cotizaciones de mayoreo" o "agencias que cotizan" ahora encuentra proyectos de Ventas aunque su ficha nunca use esas palabras.',
+    items: ['Vocabulario propio por categoría, industria y capacidad declarada.', 'Prioriza coincidencias literales; el vocabulario ampliado nunca las supera.', 'Aplica igual en el catálogo y en tus guardados.'],
+    accent: '#365DC4', icon: Search,
+  },
+  {
+    date: '3 de septiembre de 2026',
+    label: 'Comunidad', category: 'Comunidad',
+    title: 'Cada ficha ahora tiene like y comentarios',
+    summary: 'La misma capa social que ya tenían las listas de la comunidad llega a las fichas de proyecto, con un orden de catálogo basado en interacción real.',
+    items: ['Dale like o comenta cualquier ficha con tu cuenta; un fundador no puede hacerlo en la suya.', 'El orden del catálogo ahora refleja esa actividad, con más peso a comentarios que a guardados y a guardados que a likes.', 'Solo cuenta la actividad de cuentas con correo verificado.'],
+    accent: '#7753A5', icon: MessageCircle,
+  },
+  {
+    date: '3 de septiembre de 2026',
+    label: 'Producto', category: 'Producto',
+    title: 'Portada automática y logos reales en cada ficha',
+    summary: 'Al escribir tu sitio, tu ficha ya tiene una portada — y las redes de cada proyecto se muestran con su logo real.',
+    items: ['La portada se lee del propio sitio del proyecto y se guarda como copia propia, nunca como enlace externo.', 'Logos de LinkedIn, X, Instagram, YouTube, GitHub, TikTok y Product Hunt junto a cada enlace.', 'Un carrusel de imágenes reúne la portada y las capturas del fundador en cada ficha.'],
+    accent: '#B15C3F', icon: GalleryHorizontal,
+  },
+  {
+    date: '3 de septiembre de 2026',
+    label: 'Cuenta', category: 'Cuenta',
+    title: 'Una bienvenida de tres pasos para conocerte mejor',
+    summary: 'Antes de entrar a tu panel, shwcs te pregunta tu nombre, tu perfil y tu rol — así el inicio se adapta a ti desde el primer momento.',
+    items: ['Nombre y empresa, perfil (comprador, fundador, ambos o explorando) y rol.', 'Las cuentas de Google que ya traen nombre saltan ese primer paso.', 'No cambia permisos ni tipo de cuenta; solo tu experiencia de inicio.'],
+    accent: '#416B50', icon: UserRound,
   },
   {
     date: '1 de septiembre de 2026',

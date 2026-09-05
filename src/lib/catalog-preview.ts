@@ -25,6 +25,19 @@ export type PreviewProduct = {
   // distinct from absent, which static examples always are.
   industries?: string[];
   companySizes?: string[];
+  // What the solution declared it does (src/lib/solutions/model.ts
+  // solutionCapabilities), plus the four commercial axes that ride along for
+  // filtering and the ficha's "datos clave" row. None of these have a "fits
+  // any" state — absent just means never answered. scope rides along too,
+  // read-only here, so matchCapability's inference has real prose to read.
+  capabilities?: string[];
+  integrationKeys?: string[];
+  pricingModel?: string[];
+  priceBand?: string;
+  setupTime?: string;
+  compliance?: string[];
+  scope?: string;
+  publishedAt?: string | null;
   // Extra hand-authored search terms for the two real static entries, when a
   // concept a buyer would type ("tienda online", "automatización") isn't
   // captured by any of the rigid 7 categories. Replaces the old per-URL

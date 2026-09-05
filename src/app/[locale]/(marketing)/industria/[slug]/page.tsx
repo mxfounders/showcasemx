@@ -5,6 +5,7 @@ import { CategoryPageLayout } from '@/components/catalog/category-page-layout';
 import { CategoryPageSkeleton } from '@/components/catalog/category-page-skeleton';
 import { i18n } from '@/i18n/config';
 import { industries } from '@/lib/taxonomy';
+import { matchIndustry, isRealMatch } from '@/lib/search/facets';
 
 // See explorar/[slug]/page.tsx for why {locale, slug} pairs (not just slug)
 // and dynamicParams=false both matter here.
@@ -21,12 +22,15 @@ export default async function IndustriaCategoryPage(props: {
 
   const products = await publicProducts();
 
-  // Matches the founder-declared `industries` field (src/lib/solutions/model.ts),
-  // not a substring search over description copy: a product that never
-  // declared an industry no longer shows up here by accident of wording, and
-  // one that explicitly declared "sirve a cualquier industria" (industries:[])
-  // is a deliberate answer, not a match for any specific one.
-  const categoryProducts = products.filter(p => p.industries?.includes(info.value));
+  // Matches the founder-declared `industries` field (src/lib/solutions/model.ts)
+  // through matchIndustry/isRealMatch, not a raw includes(): a product that
+  // never declared an industry no longer shows up here by accident of wording,
+  // but one that explicitly declared "sirve a cualquier industria"
+  // (industries:[]) is a deliberate "any" answer and must appear on every
+  // industry landing page — the same rule the client-side filter and
+  // matchesCollection already apply. A bare `.includes()` here used to
+  // exclude that "any" answer from every one of these seven routes.
+  const categoryProducts = products.filter(p => isRealMatch(matchIndustry(p, info.value)));
 
   return (
     <Suspense fallback={<CategoryPageSkeleton />}>

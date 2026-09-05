@@ -2384,3 +2384,109 @@ encola las 3 claves y cascadea las filas.
 **Pendiente de despliegue:** `db/media-renditions.sql` no aplicada a
 `shwcs_production` (hay 0 capturas en prod; el backfill ahí es no-op). Plan
 original en `/Users/andrevalleortega/.claude/plans/haz-el-plan-para-abundant-dove.md`.
+
+## 59. Capacidades declaradas, integraciones, precio, arranque y cumplimiento — 5 septiembre 2026
+
+Petición explícita del usuario: que el catálogo detecte de qué es capaz cada
+proyecto (ejemplo dado: Cord hace cotizaciones, cobranza y facturación, no solo
+"Ventas"/"Cobros") y que el formulario de postulación tenga muchas más
+categorías para no dejar proyectos fuera ni meterlos donde no encajan. Plan
+completo en `/Users/andrevalleortega/.claude/plans/oye-ayudame-con-los-parallel-garden.md`.
+Sin migraciones: los cinco campos viven en el `jsonb` de `data`/`published_data`,
+igual que `industries`/`companySizes` desde §54.
+
+- **Cinco ejes nuevos** en `SolutionData` (`src/lib/solutions/model.ts`):
+  `capabilities` (~58 ids cerrados, hijos de una de las 7 categorías —
+  `solutionCapabilities`), `integrationKeys` (~25 herramientas —
+  `solutionIntegrations`), `pricingModel` (8 modelos de contratación),
+  `priceBand` (6 rangos, single) y `setupTime` (5 tiempos de arranque, single),
+  más `compliance` (11 normativas mexicanas/de datos). `capabilities` **no
+  tiene estado `[]`** — a diferencia de `industries`/`companySizes`, una
+  solución hace algo concreto o no lo hace, así que `undefined` es el único
+  hueco y se exige mínimo una para enviar a revisión; una capacidad huérfana
+  de una categoría ya no declarada también bloquea el envío.
+  `integrationKeys` sí conserva el tri-estado (`[]` = "no se conecta con
+  nada", una respuesta real). Etiquetas y tonos en `src/lib/taxonomy.ts`
+  (`capabilityLabels`, `capabilitiesByCategory()` y los `*Options`/`*Labels`
+  de los otros cuatro ejes); vocabulario de búsqueda de capacidades en
+  `src/lib/search/vocabulary.ts` (`capabilityVocabulary`).
+- **Detección, no inversión de la carga**: `suggestCapabilities()`
+  (`src/lib/search/facets.ts`) lee `problem`/`audience`/`scope`/`name` del
+  borrador y propone capacidades de las categorías ya declaradas con el mismo
+  umbral de dos aciertos de vocabulario que ya usaba `matchIndustry`. Nunca
+  marca nada por sí sola: el editor la muestra como chips "Detectamos esto en
+  lo que escribiste" que el fundador confirma con un clic. La pregunta
+  `capabilities` va justo después de `problem` en `solutionQuestions` (antes
+  de `audience`/`market`) precisamente para que ya haya texto del que leer en
+  el primer paso, no solo al volver. `matchCapability()` replica los cuatro
+  niveles de `matchIndustry` (`declared|any|inferred|none`, aunque nunca
+  devuelve `any`) con la misma regla: declarar cierra la pregunta, la
+  inferencia solo llena el hueco de `undefined`.
+- **Formulario**: 14 preguntas pasan a 17. Nuevas: `capabilities`
+  (obligatoria, fase 1), `integrations` e `compliance` (opcionales, fase 2).
+  `delivery` se dividió — ahora es solo `setupTime`+`implementation`+`support`
+  — porque sumarle además integraciones y cumplimiento la volvía la pantalla
+  más pesada del formulario, contra la regla de una pregunta corta a la vez.
+  `pricing` gana chips de `pricingModel` y `priceBand` antes del textarea
+  libre existente. La guía de completitud pasa de diez a doce bloques
+  (`capabilities`, `readiness`); la cifra "nueve bloques" de §16/§17 describe
+  un estado anterior a que existiera la pregunta `market`, no la vigente.
+- **Catálogo**: `publicProducts()` expone los cinco campos nuevos más `scope`
+  y `published_at` (antes ausente, usado para arreglar el bug de "Más
+  recientes"). `CategoryPageLayout` añade capacidad/integración/precio/
+  arranque/cumplimiento como ejes de filtro — **derivados del resultado**:
+  un eje sin ningún valor presente entre los productos filtrados no se
+  renderiza, en vez de mostrar dropdowns llenos de opciones muertas mientras
+  el catálogo real tiene una o dos fichas. `/explorar/[slug]` acota el filtro
+  de capacidad a la categoría que se está navegando. El bucket "También
+  podrían servir" (antes exclusivo de industria) se generalizó a capacidad y
+  a tamaño de empresa nunca declarado, con el motivo explícito por tarjeta.
+  Ocho ejes no caben en una fila: `CatalogFilterBar` muestra los tres
+  primeros y colapsa el resto tras un disparador "Más filtros · N" con el
+  mismo patrón `.selector-dropdown-trigger` de §28.
+- **Cuatro bugs de filtrado corregidos de paso** (encontrados al auditar el
+  código existente, no introducidos por esta entrega): (1) la categoría legal
+  `Agencias` no tenía ruta ni opción de filtro — se agregó a
+  `taxonomy.categories`, distinta de la industria homónima; (2)
+  `/industria/[slug]` excluía con un `includes()` crudo a quien declaró
+  `industries:[]` ("sirve a cualquier industria"), al revés de lo que ya
+  hacían el filtro del cliente y `matchesCollection` — ahora usa
+  `isRealMatch(matchIndustry(...))`; (3) "Más recientes" hacía
+  `.reverse()` sobre el orden por score en vez de ordenar por fecha real —
+  ahora usa `published_at`; (4) el filtro de tamaño descartaba en silencio a
+  quien nunca declaró tamaño — ahora cae en "También podrían servir" con el
+  motivo indicado, en vez de desaparecer.
+- **Búsqueda**: `expandVocabulary()` acepta capacidades como tercer
+  argumento; `score.ts` suma las etiquetas de las capacidades declaradas a la
+  cadena de faceta (peso 4) y su vocabulario a la cadena expandida (peso 1.5),
+  así que una ficha que declaró `cotizaciones-propuestas`/`mayoreo-b2b` gana
+  a una que solo declaró la categoría `Ventas` en bruto para una búsqueda
+  como "cotizaciones de mayoreo".
+- **Ficha pública**: capacidades declaradas como cápsulas bajo la descripción
+  del problema, con el tono de su categoría padre; fila de datos clave
+  (rango de precio, tiempo de arranque, número de integraciones) bajo el
+  carrusel; integraciones y cumplimiento como cápsulas dentro de "Antes de
+  decidir". Sin declarar, no se muestra nada — el disclosure "Qué falta por
+  declarar" ya cubre ese hueco.
+- **Efecto real esperado**: `capabilities` es obligatorio para enviar a
+  revisión, así que Cord —`pending` en `shwcs_production`, sin publicar,
+  ver §45— necesitará declarar sus capacidades antes de poder aprobarse. No
+  se tocó ninguna publicación existente ni se inventaron valores para Cord.
+- Verificación: 96 unitarias (7 nuevas en `tests/search.test.ts`: catálogo de
+  capacidades consistente, `matchCapability`, `suggestCapabilities`,
+  `expandVocabulary` con capacidades, ranking con una ficha tipo Cord; 2
+  nuevas en `tests/solutions.test.ts` para los cinco campos y el bloqueo de
+  envío sin capacidades o con una huérfana de categoría). Se actualizaron los
+  fixtures de `tests/solutions.test.ts` y `tests/media-dashboard.test.ts` que
+  ya construían una solución "completa" a mano, igual que tuvieron que
+  aprender `industries:[]`/`companySizes:[]` cuando ese par se hizo
+  obligatorio en su momento. Lint, TypeScript y build de producción aislado
+  limpios (las 18+14+4 rutas de categoría siguen prerenderizadas `●`, ahora
+  con `agencias` incluida en `/explorar`). No se corrió la integración de
+  media/dashboard contra una base real en esta sesión ni se aplicó ningún
+  cambio a `shwcs_production`; no hay push/deploy.
+- **Pendiente, no tocado aquí**: filtros de capacidad/integración en
+  Guardados/Mis listas (§57 solo cubre industria/tamaño ahí); un índice sobre
+  `published_data->'capabilities'` no aporta nada con el volumen actual y
+  queda anotado, no construido; moderación de las ~58 etiquetas si el
+  catálogo crece mucho no se diseñó en esta entrega.

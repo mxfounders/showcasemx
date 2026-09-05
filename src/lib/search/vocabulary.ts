@@ -107,13 +107,84 @@ export const conceptCategories: Record<string, SolutionCategory[]> = {
   automatizacion: ['Operación'], comunicacion: ['Ventas'], desarrollo: ['Operación'],
 };
 
-// Every vocabulary term a declared category/industry pulls in, flattened and
-// ready to tokenize. `[]` ("declared, fits any") intentionally contributes no
-// extra vocabulary of its own — matching every filter already covers that
-// case; it shouldn't also flood search with every category's words.
-export function expandVocabulary(categories?: string[], industries?: string[]): string[] {
+// Capability -> vocabulary, keyed by capability id (src/lib/solutions/model.ts
+// solutionCapabilities). One level more specific than category vocabulary: a
+// solution that declared "cotizaciones-propuestas" should surface for
+// "cotización de mayoreo" even though its category (Ventas) also covers CRM,
+// comisiones and forecast — words that would otherwise dilute a plain
+// category-level match. Not every capability needs entries here; one missing
+// simply falls back to its category's vocabulary contributing nothing extra.
+export const capabilityVocabulary: Record<string, string[]> = {
+  'facturacion-cfdi': ['facturar', 'factura', 'facturas', 'facturación', 'cfdi', 'timbrado', 'timbrar', 'comprobante', 'comprobantes', 'sat'],
+  'cobranza-recordatorios': ['cobrar', 'cobro', 'cobros', 'cobranza', 'recordatorio', 'recordatorios', 'vencimiento', 'vencimientos', 'morosidad', 'recuperación'],
+  'conciliacion-bancaria': ['conciliación', 'conciliar', 'banco', 'bancos', 'bancario', 'movimientos'],
+  'portal-pagos': ['pago', 'pagos', 'pagar', 'portal', 'checkout', 'cobrar en línea'],
+  'suscripciones': ['suscripción', 'suscripciones', 'recurrente', 'membresía'],
+  'cartera-antiguedad': ['cartera', 'antigüedad', 'saldos', 'saldo'],
+  'cuentas-por-pagar': ['cuentas por pagar', 'proveedor', 'proveedores', 'pagar a proveedores'],
+  'factoraje': ['factoraje', 'anticipo', 'anticipos'],
+  'flujo-efectivo': ['flujo', 'efectivo', 'caja', 'tesorería'],
+  'presupuestos': ['presupuesto', 'presupuestos'],
+  'contabilidad': ['contabilidad', 'contable', 'contador', 'contadores'],
+  'reportes-tableros': ['reporte', 'reportes', 'tablero', 'tableros', 'dashboard', 'kpi'],
+  'gastos-reembolsos': ['gasto', 'gastos', 'reembolso', 'reembolsos', 'viáticos'],
+  'tarjetas-corporativas': ['tarjeta', 'tarjetas', 'corporativa', 'corporativas'],
+  'consolidacion-multiempresa': ['consolidación', 'multiempresa', 'grupo', 'grupo empresarial'],
+  'impuestos': ['impuesto', 'impuestos', 'declaración', 'declaraciones'],
+  'calculo-timbrado': ['nómina', 'nóminas', 'timbrado', 'cálculo'],
+  'dispersion': ['dispersión', 'dispersar', 'pago de sueldos'],
+  'imss-infonavit': ['imss', 'infonavit'],
+  'asistencia-horarios': ['asistencia', 'horario', 'horarios', 'turno', 'turnos', 'checador', 'checadas'],
+  'vacaciones-ausencias': ['vacaciones', 'vacación', 'ausencia', 'ausencias', 'permiso', 'permisos'],
+  'reclutamiento-onboarding': ['reclutamiento', 'contratación', 'onboarding', 'inducción'],
+  'desempeno': ['desempeño', 'evaluación', 'evaluaciones'],
+  'capacitacion': ['capacitación', 'capacitaciones', 'entrenamiento'],
+  'prestaciones': ['prestación', 'prestaciones', 'beneficio', 'beneficios'],
+  'crm-pipeline': ['crm', 'pipeline', 'embudo'],
+  'cotizaciones-propuestas': ['cotizar', 'cotización', 'cotizaciones', 'cotizador', 'propuesta', 'propuestas'],
+  'catalogo-precios': ['catálogo', 'lista de precios', 'listas de precios', 'precio', 'precios'],
+  'prospeccion': ['prospección', 'prospecto', 'prospectos'],
+  'pronostico': ['pronóstico', 'forecast', 'predicción'],
+  'comisiones': ['comisión', 'comisiones'],
+  'contratos-cierre': ['contrato', 'contratos', 'cierre'],
+  'mayoreo-b2b': ['mayoreo', 'menudeo', 'volumen', 'b2b'],
+  'postventa-renovaciones': ['postventa', 'renovación', 'renovaciones'],
+  'inventario-almacen': ['inventario', 'stock', 'existencias', 'almacén'],
+  'compras-proveedores': ['compra', 'compras', 'proveedor', 'proveedores'],
+  'logistica-envios': ['logística', 'envío', 'envíos', 'entrega', 'entregas'],
+  'proyectos-tareas': ['proyecto', 'proyectos', 'tarea', 'tareas'],
+  'produccion': ['producción', 'planta', 'línea de producción'],
+  'mantenimiento': ['mantenimiento'],
+  'calidad': ['calidad'],
+  'mesa-ayuda': ['soporte', 'ticket', 'tickets', 'mesa de ayuda', 'help desk'],
+  'automatizacion-procesos': ['automatización', 'automatizar', 'proceso', 'procesos'],
+  'documentos': ['documento', 'documentos', 'expediente digital'],
+  'firma-electronica': ['firma', 'firmas', 'firma electrónica', 'nom-151'],
+  'gestion-contratos': ['contrato', 'contratos', 'clm', 'ciclo de vida del contrato'],
+  'expedientes-casos': ['expediente', 'expedientes', 'caso', 'casos'],
+  'cumplimiento-normativo': ['cumplimiento', 'compliance', 'normativo'],
+  'societario': ['societario', 'corporativo', 'acta', 'actas'],
+  'marcas-pi': ['marca', 'marcas', 'propiedad intelectual', 'patente', 'patentes'],
+  'proteccion-datos': ['protección de datos', 'privacidad', 'lfpdppp'],
+  'horas-facturables': ['horas facturables', 'billable', 'horas'],
+  'cuentas-clientes': ['cuenta', 'cuentas', 'cliente', 'clientes'],
+  'propuestas-briefs': ['propuesta', 'propuestas', 'brief', 'briefs'],
+  'rentabilidad-proyecto': ['rentabilidad', 'margen', 'márgenes'],
+  'reportes-cliente': ['reporte para clientes', 'reporte de cliente'],
+  'capacidad-equipo': ['capacidad', 'carga de trabajo', 'equipo'],
+  'aprobaciones-creativas': ['aprobación', 'aprobaciones', 'creativo', 'creativos'],
+};
+
+// Every vocabulary term a declared category/industry/capability pulls in,
+// flattened and ready to tokenize. `[]` ("declared, fits any") intentionally
+// contributes no extra vocabulary of its own — matching every filter already
+// covers that case; it shouldn't also flood search with every category's
+// words. Capabilities have no "any" state, so they always contribute
+// whatever their id resolves to.
+export function expandVocabulary(categories?: string[], industries?: string[], capabilities?: string[]): string[] {
   const terms: string[] = [];
   for (const category of categories ?? []) terms.push(...(categoryVocabulary[category as SolutionCategory] ?? []));
   for (const industry of industries ?? []) terms.push(...(industryVocabulary[industry as Industry] ?? []));
+  for (const capability of capabilities ?? []) terms.push(...(capabilityVocabulary[capability] ?? []));
   return terms;
 }

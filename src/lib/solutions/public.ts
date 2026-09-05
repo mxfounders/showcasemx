@@ -55,6 +55,10 @@ const fetchPublishedRows=unstable_cache(async()=>{
  SELECT s.id,s.catalog_key,s.published_data->>'name' AS name,s.published_data->>'kind' AS kind,
   s.published_data->>'category' AS category,s.published_data->'categories' AS categories,
   s.published_data->'industries' AS industries,s.published_data->'companySizes' AS company_sizes,
+  s.published_data->'capabilities' AS capabilities,s.published_data->'integrationKeys' AS integration_keys,
+  s.published_data->'pricingModel' AS pricing_model,s.published_data->>'priceBand' AS price_band,
+  s.published_data->>'setupTime' AS setup_time,s.published_data->'compliance' AS compliance,
+  s.published_data->>'scope' AS scope,s.published_at,
   s.published_data->>'problem' AS problem,s.published_data->>'audience' AS audience,
   s.published_data->>'website' AS website,
   s.published_data->'screenshots'->0->>'id' AS cover_id,
@@ -73,7 +77,10 @@ export async function publicProducts():Promise<PublishedProduct[]>{
  // See src/lib/solutions/gallery.ts: screenshot the founder curated, then the
  // site's own og:image, then the local art shipped for Cord/Flouvia.
  const ogImage=solutionCover(String(row.id),{coverScreenshotId:isSolutionId(String(row.cover_id))?String(row.cover_id):undefined,hasSiteImage:Boolean(row.has_site_image),staticArt:staticProduct?.ogImage});
- return {...staticProduct,ogImage,catalogId:row.catalog_key?String(row.catalog_key):undefined,name:String(row.name),description:String(row.problem),feature:String(row.audience),website:String(row.website),provider:row.catalog_key==='cord'?'Flouvia':String(row.name),offering:row.kind as 'Software'|'Agencia'|'Servicio',category:String(row.category),categories:getSolutionCategories({category:String(row.category??''),categories:Array.isArray(row.categories)?row.categories as string[]:undefined}),industries:Array.isArray(row.industries)?row.industries as string[]:undefined,companySizes:Array.isArray(row.company_sizes)?row.company_sizes as string[]:undefined,detailUrl:`/soluciones/${row.id}`,likes:Number(row.likes),saves:Number(row.saves),comments:Number(row.comments),views:Number(row.views),score:solutionScore(Number(row.likes_score),Number(row.saves_score),Number(row.comments_score),Number(row.views_score))};});
+ return {...staticProduct,ogImage,catalogId:row.catalog_key?String(row.catalog_key):undefined,name:String(row.name),description:String(row.problem),feature:String(row.audience),website:String(row.website),provider:row.catalog_key==='cord'?'Flouvia':String(row.name),offering:row.kind as 'Software'|'Agencia'|'Servicio',category:String(row.category),categories:getSolutionCategories({category:String(row.category??''),categories:Array.isArray(row.categories)?row.categories as string[]:undefined}),industries:Array.isArray(row.industries)?row.industries as string[]:undefined,companySizes:Array.isArray(row.company_sizes)?row.company_sizes as string[]:undefined,
+ // Same tri-state-preserving cast as industries/companySizes above; scope/priceBand/setupTime are plain strings with no [] state, so they pass through row?? straight.
+ capabilities:Array.isArray(row.capabilities)?row.capabilities as string[]:undefined,integrationKeys:Array.isArray(row.integration_keys)?row.integration_keys as string[]:undefined,pricingModel:Array.isArray(row.pricing_model)?row.pricing_model as string[]:undefined,priceBand:row.price_band?String(row.price_band):undefined,setupTime:row.setup_time?String(row.setup_time):undefined,compliance:Array.isArray(row.compliance)?row.compliance as string[]:undefined,scope:row.scope?String(row.scope):undefined,publishedAt:row.published_at?String(row.published_at):null,
+ detailUrl:`/soluciones/${row.id}`,likes:Number(row.likes),saves:Number(row.saves),comments:Number(row.comments),views:Number(row.views),score:solutionScore(Number(row.likes_score),Number(row.saves_score),Number(row.comments_score),Number(row.views_score))};});
  }catch(error){
   // A transient failure is never cached: unstable_cache only stores what it
   // successfully returns, so the empty result here is retried on the next call

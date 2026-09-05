@@ -1,5 +1,6 @@
 import { tokenize } from './normalize';
 import { expandVocabulary } from './vocabulary';
+import { capabilityLabels } from '@/lib/taxonomy';
 
 // A searchable thing: the fields catalog-search and (later) the saved library
 // score against. Only `name`/`description`/`feature` are required; everything
@@ -12,6 +13,7 @@ export interface SearchableProduct {
   categories?: string[];
   industries?: string[];
   companySizes?: string[];
+  capabilities?: string[];
   keywords?: string[];
 }
 
@@ -67,11 +69,12 @@ interface Scored<T> {
 
 function scoreProduct<T extends SearchableProduct>(tokens: readonly string[], product: T): Scored<T> {
   const nameWords = tokenize(product.name);
-  const facetWords = tokenize([...(product.categories ?? []), ...(product.industries ?? []), ...(product.companySizes ?? [])].join(' '));
+  const capabilityLabelWords = (product.capabilities ?? []).map(id => capabilityLabels[id]).filter((label): label is string => Boolean(label));
+  const facetWords = tokenize([...(product.categories ?? []), ...(product.industries ?? []), ...(product.companySizes ?? []), ...capabilityLabelWords].join(' '));
   const featureWords = tokenize(product.feature);
   const descriptionWords = tokenize(product.description);
   const providerWords = tokenize(product.provider ?? '');
-  const vocabularyWords = tokenize([...expandVocabulary(product.categories, product.industries), ...(product.keywords ?? [])].join(' '));
+  const vocabularyWords = tokenize([...expandVocabulary(product.categories, product.industries, product.capabilities), ...(product.keywords ?? [])].join(' '));
 
   let score = 0;
   let matched = 0;

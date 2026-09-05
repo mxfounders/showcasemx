@@ -1,5 +1,5 @@
 import type { BrandTone } from './brand-colors';
-import { solutionCategories, solutionIndustries, companySizes as companySizeValues } from './solutions/model';
+import { solutionCategories, solutionIndustries, companySizes as companySizeValues, solutionCapabilities, solutionIntegrations, solutionPricingModels, solutionPriceBands, solutionSetupTimes, solutionCompliance } from './solutions/model';
 import { matchIndustry, isRealMatch } from './search/facets';
 
 /**
@@ -26,6 +26,13 @@ export const categories: CategoryEntry[] = [
   { slug: 'inventario', label: 'Operación', tone: 'amber', title: 'Inventario y supply chain', description: 'Control de stock en tiempo real, logística y compras. Dile adiós a los inventarios gestionados en hojas de Excel.' },
   { slug: 'ventas', label: 'Ventas', tone: 'terracotta', title: 'Ventas y CRM', description: 'Mapea tu pipeline, haz seguimiento a prospectos y cierra más tratos. CRM especializados en ciclos de venta B2B largos.' },
   { slug: 'soporte', label: 'Operación', tone: 'amber', title: 'Atención al cliente', description: 'Mesa de ayuda omnicanal, ticketing y automatización de respuestas para escalar tu soporte B2B sin caos.' },
+  // Agencias is a legal category (solutionCategories) with no route of its
+  // own until now — a solution that only declared it had no landing page and
+  // no filter option (bug fixed alongside the capabilities axis). Distinct
+  // from the *industry* "Agencias" below: this is the category for service
+  // providers (who sells), that one is the industry of buying agencies (who
+  // buys) — see docs/listings.md.
+  { slug: 'agencias', label: 'Agencias', tone: 'blue', title: 'Software para vender servicios', description: 'Herramientas de agencias, consultorías y estudios que ejecutan por ti: horas facturables, propuestas y rentabilidad por cuenta.' },
 ];
 
 /** The seven industries, exactly matching solutionIndustries and the seven routes. */
@@ -56,6 +63,49 @@ export type CompanySize = typeof companySizeValues[number];
 
 export const offerings = ['Software', 'Agencia', 'Servicio'] as const;
 export type Offering = typeof offerings[number];
+
+/**
+ * Labels for the five new commercial axes. solutions/model.ts owns which ids
+ * are legal to store; this is only presentation, same split as everything
+ * above. Capabilities have no tone of their own — the editor and filters use
+ * their parent category's tone (solutionCategoryTones) so a capability chip
+ * always reads as "part of Ventas/Cobros/etc.", never as an unrelated color.
+ */
+export const capabilityLabels: Record<string, string> = {
+  'facturacion-cfdi': 'Facturación y CFDI', 'cobranza-recordatorios': 'Cobranza y recordatorios', 'conciliacion-bancaria': 'Conciliación bancaria', 'portal-pagos': 'Portal de pagos', suscripciones: 'Cobro de suscripciones', 'cartera-antiguedad': 'Cartera y antigüedad de saldos', 'cuentas-por-pagar': 'Cuentas por pagar', factoraje: 'Factoraje',
+  'flujo-efectivo': 'Flujo de efectivo', presupuestos: 'Presupuestos', contabilidad: 'Contabilidad', 'reportes-tableros': 'Reportes y tableros financieros', 'gastos-reembolsos': 'Gastos y reembolsos', 'tarjetas-corporativas': 'Tarjetas corporativas', 'consolidacion-multiempresa': 'Consolidación multiempresa', impuestos: 'Impuestos',
+  'calculo-timbrado': 'Cálculo y timbrado de nómina', dispersion: 'Dispersión de pagos', 'imss-infonavit': 'IMSS e INFONAVIT', 'asistencia-horarios': 'Asistencia y horarios', 'vacaciones-ausencias': 'Vacaciones y ausencias', 'reclutamiento-onboarding': 'Reclutamiento y onboarding', desempeno: 'Evaluación de desempeño', capacitacion: 'Capacitación', prestaciones: 'Prestaciones y beneficios',
+  'crm-pipeline': 'CRM y pipeline', 'cotizaciones-propuestas': 'Cotizaciones y propuestas', 'catalogo-precios': 'Catálogo y listas de precios', prospeccion: 'Prospección', pronostico: 'Pronóstico de ventas', comisiones: 'Comisiones', 'contratos-cierre': 'Contratos y cierre', 'mayoreo-b2b': 'Ventas de mayoreo B2B', 'postventa-renovaciones': 'Postventa y renovaciones',
+  'inventario-almacen': 'Inventario y almacén', 'compras-proveedores': 'Compras y proveedores', 'logistica-envios': 'Logística y envíos', 'proyectos-tareas': 'Proyectos y tareas', produccion: 'Producción', mantenimiento: 'Mantenimiento', calidad: 'Control de calidad', 'mesa-ayuda': 'Mesa de ayuda', 'automatizacion-procesos': 'Automatización de procesos', documentos: 'Gestión documental',
+  'firma-electronica': 'Firma electrónica', 'gestion-contratos': 'Gestión de contratos', 'expedientes-casos': 'Expedientes y casos', 'cumplimiento-normativo': 'Cumplimiento normativo', societario: 'Corporativo y societario', 'marcas-pi': 'Marcas y propiedad intelectual', 'proteccion-datos': 'Protección de datos',
+  'horas-facturables': 'Horas facturables', 'cuentas-clientes': 'Gestión de cuentas de clientes', 'propuestas-briefs': 'Propuestas y briefs', 'rentabilidad-proyecto': 'Rentabilidad por proyecto', 'reportes-cliente': 'Reportes para clientes', 'capacidad-equipo': 'Capacidad del equipo', 'aprobaciones-creativas': 'Aprobaciones creativas',
+};
+
+/** Capabilities grouped by their parent category, in solutionCapabilities' declared order — what the editor renders once a category is picked. */
+export function capabilitiesByCategory(categories: readonly string[]): { category: string; items: { id: string; label: string }[] }[] {
+  return categories
+    .map(category => ({ category, items: solutionCapabilities.filter(item => item.category === category).map(item => ({ id: item.id, label: capabilityLabels[item.id] ?? item.id })) }))
+    .filter(group => group.items.length > 0);
+}
+
+export const integrationLabels: Record<string, string> = {
+  'sat-cfdi': 'SAT / CFDI', contpaqi: 'Contpaqi', aspel: 'Aspel', quickbooks: 'QuickBooks', xero: 'Xero', odoo: 'Odoo', sap: 'SAP', netsuite: 'Oracle NetSuite',
+  shopify: 'Shopify', 'mercado-libre': 'Mercado Libre', woocommerce: 'WooCommerce', amazon: 'Amazon', stripe: 'Stripe', conekta: 'Conekta', clip: 'Clip', 'mercado-pago': 'Mercado Pago', paypal: 'PayPal', 'bancos-mx': 'Bancos mexicanos',
+  'google-workspace': 'Google Workspace', 'microsoft-365': 'Microsoft 365', slack: 'Slack', 'whatsapp-business': 'WhatsApp Business', 'zapier-make': 'Zapier / Make', 'api-publica': 'API pública', webhooks: 'Webhooks',
+};
+export const integrationOptions = solutionIntegrations.map(id => ({ value: id, label: integrationLabels[id] ?? id }));
+
+export const pricingModelLabels: Record<string, string> = { 'suscripcion-mensual': 'Suscripción mensual', 'suscripcion-anual': 'Suscripción anual', 'pago-unico': 'Pago único', 'por-uso': 'Por uso o transacción', 'por-proyecto': 'Por proyecto', 'por-hora': 'Por hora', comision: 'Comisión sobre operación', 'solo-cotizar': 'Solo a cotizar' };
+export const pricingModelOptions = solutionPricingModels.map(id => ({ value: id, label: pricingModelLabels[id] ?? id }));
+
+export const priceBandLabels: Record<string, string> = { 'menos-1000': 'Menos de $1,000 MXN/mes', 'de-1000-a-5000': '$1,000–$5,000 MXN/mes', 'de-5000-a-20000': '$5,000–$20,000 MXN/mes', 'de-20000-a-50000': '$20,000–$50,000 MXN/mes', 'mas-50000': 'Más de $50,000 MXN/mes', 'depende-alcance': 'Depende del alcance' };
+export const priceBandOptions = solutionPriceBands.map(id => ({ value: id, label: priceBandLabels[id] ?? id }));
+
+export const setupTimeLabels: Record<string, string> = { 'mismo-dia': 'El mismo día', 'menos-semana': 'Menos de una semana', 'una-a-cuatro-semanas': 'De una a cuatro semanas', 'uno-a-tres-meses': 'De uno a tres meses', 'mas-tres-meses': 'Más de tres meses' };
+export const setupTimeOptions = solutionSetupTimes.map(id => ({ value: id, label: setupTimeLabels[id] ?? id }));
+
+export const complianceLabels: Record<string, string> = { 'cfdi-4-0': 'CFDI 4.0 y timbrado', 'sat-buzon': 'Buzón y descarga SAT', 'nom-151': 'NOM-151 (firma)', 'nom-024': 'NOM-024 (expediente clínico)', 'imss-infonavit': 'IMSS / INFONAVIT', lfpdppp: 'LFPDPPP', gdpr: 'GDPR', 'iso-27001': 'ISO 27001', 'soc-2': 'SOC 2', 'soporte-espanol': 'Soporte en español', 'factura-fiscal-mx': 'Factura fiscal mexicana' };
+export const complianceOptions = solutionCompliance.map(id => ({ value: id, label: complianceLabels[id] ?? id }));
 
 /** A product matches a declarative rule instead of `products.slice(0, 8)`. */
 export type CollectionRule = { categories?: SolutionCategory[]; industries?: Industry[] };
