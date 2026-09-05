@@ -1,5 +1,6 @@
 import type { BrandTone } from './brand-colors';
 import { solutionCategories, solutionIndustries, companySizes as companySizeValues } from './solutions/model';
+import { matchIndustry, isRealMatch } from './search/facets';
 
 /**
  * The one place the catalogue's *presentation* structure lives — labels,
@@ -66,9 +67,16 @@ export const collections: CollectionEntry[] = [
   { slug: 'legal', title: 'Stack legal moderno', description: 'El kit completo de transformación digital para tu departamento legal interno o despacho.', rule: { categories: ['Legal'] } },
 ];
 
-export function matchesCollection(product: { categories?: string[]; industries?: string[] }, rule: CollectionRule): boolean {
+export function matchesCollection(
+  product: { categories?: string[]; industries?: string[]; name?: string; description?: string; feature?: string },
+  rule: CollectionRule,
+): boolean {
   if (rule.categories?.some(category => product.categories?.includes(category))) return true;
-  if (rule.industries?.some(industry => product.industries?.includes(industry))) return true;
+  // isRealMatch, not includes(): a product that declared industries: []
+  // ("fits any") belongs in every industry collection, and one that never
+  // declared an industry must not be pulled in by inference — an editorial
+  // collection only grows by a real declared match. See src/lib/search/facets.ts.
+  if (rule.industries?.some(industry => isRealMatch(matchIndustry(product, industry)))) return true;
   return false;
 }
 

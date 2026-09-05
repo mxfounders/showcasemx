@@ -25,6 +25,17 @@ export type PreviewProduct = {
   // distinct from absent, which static examples always are.
   industries?: string[];
   companySizes?: string[];
+  // Extra hand-authored search terms for the two real static entries, when a
+  // concept a buyer would type ("tienda online", "automatización") isn't
+  // captured by any of the rigid 7 categories. Replaces the old per-URL
+  // keyword map in catalog-search.ts — attached to a stable identity, not a
+  // website string that can be edited. Not part of SolutionData: a published
+  // solution's vocabulary comes from its declared taxonomy.
+  keywords?: string[];
+  // Category labels this product sits under. Published solutions carry their
+  // own declared list; a static example gets it from which PreviewCategory
+  // group lists it. Populated by catalog-search's collectSearchableProducts.
+  categories?: string[];
 };
 
 // Descriptions based on the providers' official sites. No independent certification implied.
@@ -50,6 +61,9 @@ const flouvia: PreviewProduct = {
   favicon: "/images/catalog/flouvia-favicon.svg",
   provider: "Flouvia",
   offering: "Servicio",
+  // "tienda online", "comercio electrónico", "portal b2b" — a services shop
+  // that builds these, not something the 7 problem categories name directly.
+  keywords: ["tienda", "tiendas", "online", "ecommerce", "comercio", "electronico", "portal", "portales", "b2b", "automatizar", "automatizacion", "automatizaciones", "integracion", "integraciones"],
 };
 
 export type PreviewCategory = {

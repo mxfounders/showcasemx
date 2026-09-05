@@ -5,11 +5,25 @@ import { notFound } from 'next/navigation';
 import { blogPosts, blogTones, formatBlogDate, getBlogPost } from '@/lib/blog';
 import { ArticleProgress, CopyArticleLink } from '@/components/blog/article-tools';
 import { ArticleFeedback } from '@/components/blog/article-feedback';
+import { i18n } from '@/i18n/config';
 
-export function generateStaticParams() { return blogPosts.map(({ slug }) => ({ slug })); }
+// {locale,slug} pairs, not just slug: same reasoning as explorar/[slug] — this
+// is the innermost dynamic segment under [locale], which has no
+// generateStaticParams of its own. Posts are a fixed in-code array with no
+// locale-specific content, so every locale gets the same slugs.
+export function generateStaticParams() { return i18n.locales.flatMap(locale => blogPosts.map(({ slug }) => ({ locale, slug }))); }
+// The slug set is closed (blogPosts above): an unknown one 404s at the routing
+// layer before the page (or its loading.tsx Suspense boundary) ever renders.
+// That matters because notFound() called at runtime inside a segment that has
+// a loading.tsx (this one inherits (marketing)/loading.tsx) streams a 200
+// shell before the boundary can catch it — a Next.js limitation, not
+// something fixable from generateMetadata/the page body. See CLAUDE.md §53/§56
+// and https://github.com/vercel/next.js/issues/75543.
+export const dynamicParams = false;
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const post = getBlogPost((await params).slug);
-  return post ? { title: `${post.title} | shwcs`, description: post.excerpt } : { title: 'Artículo | shwcs' };
+  if (!post) notFound();
+  return { title: `${post.title} | shwcs`, description: post.excerpt };
 }
 
 export default async function BlogArticle({ params }: { params: Promise<{ slug: string }> }) {

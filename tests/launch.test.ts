@@ -65,13 +65,13 @@ test('transactional mail retries use a stable provider key and never report prov
     process.env.RESEND_API_KEY = 'fixture-only'; process.env.AUTH_EMAIL_FROM = 'Fixture <test@example.invalid>'; process.env.AUTH_APP_ORIGIN = 'https://example.com';
     const requests: RequestInit[] = [];
     globalThis.fetch = async (_url, init) => { requests.push(init!); return new Response(JSON.stringify({ id: 'fixture-delivery' }), { status: 200 }); };
-    assert.equal(await sendEmail('recipient@example.invalid', 'Aviso', 'Abre tu cuenta.', 'stable-event-id'), 'fixture-delivery');
-    await sendEmail('recipient@example.invalid', 'Aviso', 'Abre tu cuenta.', 'stable-event-id');
+    assert.equal(await sendEmail({ to: 'recipient@example.invalid', subject: 'Aviso', text: 'Abre tu cuenta.', idempotencyKey: 'stable-event-id' }), 'fixture-delivery');
+    await sendEmail({ to: 'recipient@example.invalid', subject: 'Aviso', text: 'Abre tu cuenta.', idempotencyKey: 'stable-event-id' });
     assert.equal(new Headers(requests[0].headers).get('Idempotency-Key'), new Headers(requests[1].headers).get('Idempotency-Key'));
     assert.deepEqual(JSON.parse(String(requests[0].body)).to, ['recipient@example.invalid']);
     globalThis.fetch = async () => new Response('', { status: 429 });
-    await assert.rejects(sendEmail('recipient@example.invalid', 'Aviso', 'Texto', 'stable-event-id'));
+    await assert.rejects(sendEmail({ to: 'recipient@example.invalid', subject: 'Aviso', text: 'Texto', idempotencyKey: 'stable-event-id' }));
     delete process.env.RESEND_API_KEY;
-    await assert.rejects(sendEmail('recipient@example.invalid', 'Aviso', 'Texto'));
+    await assert.rejects(sendEmail({ to: 'recipient@example.invalid', subject: 'Aviso', text: 'Texto' }));
   } finally { globalThis.fetch = original; names.forEach((name,i) => { if (saved[i] === undefined) delete process.env[name]; else process.env[name] = saved[i]; }); }
 });

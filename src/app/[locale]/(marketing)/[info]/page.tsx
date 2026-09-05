@@ -90,7 +90,15 @@ const pages:Record<string,{title:string;intro:string;sections:[string,string|str
 
 };
 import { getDictionary } from '@/i18n/get-dictionary';
-import type { Locale } from '@/i18n/config';
+import { i18n, type Locale } from '@/i18n/config';
+
+// {locale,info} pairs over the closed set of keys above: same reasoning as
+// explorar/[slug] and blog/[slug]. An unknown `info` value must 404 at the
+// routing layer — a runtime notFound() here would render correctly but keep
+// HTTP 200, because this segment inherits (marketing)/loading.tsx's Suspense
+// boundary (see CLAUDE.md §53/§56, https://github.com/vercel/next.js/issues/75543).
+export function generateStaticParams() { return i18n.locales.flatMap(locale => Object.keys(pages).map(info => ({ locale, info }))); }
+export const dynamicParams = false;
 
 export async function generateMetadata({params}:{params:Promise<{info:string}>}){const {info}=await params;return {title:pages[info]?`${pages[info].title} | shwcs`:'shwcs',robots:['privacidad','terminos'].includes(info)?{index:false,follow:true}:undefined};}
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Bookmark, MessageCircle } from "lucide-react";
 import { brandColors } from "@/lib/brand-colors";
+import { conceptCategories } from "@/lib/search/vocabulary";
 import type { PublishedProduct } from "@/lib/solutions/public";
 
 const features = [
@@ -149,19 +150,11 @@ export function LandingFeatures({ products = [] }: { products?: PublishedProduct
   // number. See src/lib/solutions/ranking.ts and src/lib/solutions/public.ts.
   const rankedProducts = [...products].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 
-  // These tabs are an editorial marketing narrative, not the product taxonomy
-  // (CLAUDE.md §3: Cobros, Finanzas, Nómina, Ventas, Operación, Legal, Agencias).
-  // Best-effort mapping to the closest real category(ies); a tab with no
-  // matching published solution correctly shows only empty slots.
-  const tabCategories: Record<string, string[]> = {
-    crm: ["Ventas"], marketing: ["Agencias"], rh: ["Nómina"],
-    finanzas: ["Finanzas", "Cobros"], operaciones: ["Operación"], legal: ["Legal"],
-    datos: ["Operación"], ti: ["Operación"], soporte: ["Operación"],
-    ecommerce: ["Ventas"], proyectos: ["Operación"], diseno: ["Agencias"],
-    automatizacion: ["Operación"], comunicacion: ["Ventas"], desarrollo: ["Operación"],
-  };
+  // The 15 marketing tabs map to the 7 real categories via `conceptCategories`
+  // in src/lib/search/vocabulary.ts — the same mapping the catalog search now
+  // uses to expand a query, instead of a copy that only lived here.
   const categoryProducts = rankedProducts.filter(p =>
-    p.categories?.some(category => tabCategories[activeTab.id]?.includes(category))
+    conceptCategories[activeTab.id]?.some(category => p.categories?.includes(category))
   ).slice(0, 16);
 
   return (

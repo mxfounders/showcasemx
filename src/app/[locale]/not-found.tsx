@@ -6,6 +6,15 @@ import { getSession,sessionCookie } from '@/lib/auth/session';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import { getDictionary } from '@/i18n/get-dictionary';
 import type { Locale } from '@/i18n/config';
+import type { Metadata } from 'next';
+
+// Some routes with data-driven notFound() (an arbitrary /soluciones/[id] or
+// /comunidad/[id] that doesn't exist) can't set a real 404 status code — a
+// Next.js limitation, not something fixable here: a loading.tsx on the route
+// streams a 200 shell before this boundary's own status could take effect
+// (see CLAUDE.md §56, https://github.com/vercel/next.js/issues/75543). Noindex
+// stops a crawler from treating that 200 as a real, indexable page regardless.
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function NotFound() {
   // Since this is not-found, we might not get the locale from params directly in some Next.js versions.

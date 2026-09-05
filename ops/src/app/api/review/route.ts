@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireOpsApi, isUuid, sameOrigin, opsLimit, requestIdentity, audit, requestIp } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 import { failure, opsBody } from '@/lib/http';
+import { triggerCatalogRevalidate } from '@/lib/catalog';
 
 export const runtime = 'nodejs';
 
@@ -76,6 +77,11 @@ export async function POST(req: NextRequest) {
       actorId: user.id, actorEmail: user.email, action: `solution_${action}`,
       subjectType: 'solution', subjectId: solutionId, reason: message.trim(), ip: requestIp(req.headers),
     });
+
+    // Only publish/withdraw change published_data; reject and changes_requested
+    // (from pending) never touch what the catalog reads, so there is nothing
+    // to invalidate for those two.
+    if (isPublishing || isWithdrawing) await triggerCatalogRevalidate();
 
     return NextResponse.json({ ok: true, newStatus: String(rows[0].status) }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (err) {

@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authSql, requestIdentity, securityLimit } from '@/lib/auth/security';
 import { inquiryReasons, inquiryUrgencies, validateContactInquiry } from '@/lib/contact-inquiry';
 import { sendEmail } from '@/lib/notifications/server';
+import { recoveryConfig } from '@/lib/auth/recovery';
+import { escapeHtml, renderEmailHtml } from '@/lib/notifications/email-template';
 
 async function readBody(request: NextRequest) {
   if (!request.headers.get('content-type')?.includes('application/json')) return null;
@@ -34,15 +36,26 @@ export async function POST(request: NextRequest) {
       VALUES(${id},${inquiry.reason},${inquiry.name},${inquiry.email},${inquiry.organization},${inquiry.role || null},${inquiry.website || null},${inquiry.message},${inquiry.urgency})`;
     const reason = inquiryReasons.find(item => item.value === inquiry.reason)?.label ?? inquiry.reason;
     const urgency = inquiryUrgencies.find(item => item.value === inquiry.urgency)?.label ?? inquiry.urgency;
+    const fields: [string, string][] = [
+      ['Motivo', reason], ['Nombre', inquiry.name], ['Correo', inquiry.email],
+      ['Empresa o proyecto', inquiry.organization], ['Rol', inquiry.role || 'No indicado'],
+      ['Sitio', inquiry.website || 'No indicado'], ['Momento', urgency],
+    ];
     const content = [
       `Nueva conversación desde shwcs.site`, '',
-      `Motivo: ${reason}`, `Nombre: ${inquiry.name}`, `Correo: ${inquiry.email}`,
-      `Empresa o proyecto: ${inquiry.organization}`, `Rol: ${inquiry.role || 'No indicado'}`,
-      `Sitio: ${inquiry.website || 'No indicado'}`, `Momento: ${urgency}`, '',
+      ...fields.map(([label, value]) => `${label}: ${value}`), '',
       'Mensaje:', inquiry.message,
     ].join('\n');
     try {
-      const provider = await sendEmail(process.env.CONTACT_EMAIL_TO?.trim() || 'contacto@shwcs.site', `Contacto shwcs · ${reason}`, content, id, inquiry.email);
+      const config = recoveryConfig();
+      const html = config ? renderEmailHtml({
+        origin: config.origin, preheader: `Contacto shwcs · ${reason}`, heading: 'Nueva conversación desde shwcs.site',
+        paragraphs: [
+          fields.map(([label, value]) => `<strong>${escapeHtml(label)}:</strong> ${escapeHtml(value)}`).join('<br>'),
+          `<strong>Mensaje:</strong><br>${escapeHtml(inquiry.message).replace(/\n/g, '<br>')}`,
+        ],
+      }) : undefined;
+      const provider = await sendEmail({ to: process.env.CONTACT_EMAIL_TO?.trim() || 'contacto@shwcs.site', subject: `Contacto shwcs · ${reason}`, text: content, html, idempotencyKey: id, replyTo: inquiry.email });
       await sql`UPDATE contact_inquiries SET email_state='sent',provider_id=${provider} WHERE id=${id}`;
     } catch {
       const state = process.env.RESEND_API_KEY && process.env.AUTH_EMAIL_FROM && process.env.AUTH_APP_ORIGIN ? 'failed' : 'unavailable';

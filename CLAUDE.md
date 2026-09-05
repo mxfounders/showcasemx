@@ -1661,6 +1661,95 @@ multiselección, filtros de comunidad mejorados, y el ranking difícil de
 manipular (verificación de correo, decaimiento temporal, deduplicación de
 vistas). Nada de eso se tocó todavía.
 
+## 56. Moderación de listas/comentarios de comunidad y búsqueda con pg_trgm — 4 septiembre 2026
+
+Cierra los dos pendientes marcados en §19/§23 (sin reporte central para listas/
+comentarios de comunidad) y §54/§55 (`strpos()` sin índice en la búsqueda de
+comunidad). Fuente vigente ampliada: `docs/community-lists.md`.
+
+- **`db/community-reports.sql`**: tabla `community_reports`, espejo de
+  `solution_reports` (§7) para la capa de comunidad — `subject_type`
+  (`list`|`comment`), `list_id` siempre presente, `comment_id` solo en reportes
+  de comentario, `reason` (`spam|abuse|impersonation|other`, distinto del
+  enum de soluciones porque el contenido es otro), `status`
+  (`open|resolved|dismissed`), `decision`, `reviewer_id`, `version` para
+  concurrencia optimista igual que soluciones. Índices parciales únicos por
+  `(list_id,reporter_id)` y `(comment_id,reporter_id)` con `status='open'`
+  evitan reportes duplicados abiertos; reintentos devuelven 409. Tabla nueva,
+  no una reforma de `solution_reports`: sigue la regla de este proyecto de
+  migraciones aditivas y no reutiliza una tabla ajena a la forma de
+  `founder_solutions`.
+- **Corrección encontrada en la verificación en vivo, no en el diseño
+  inicial**: `comment_id` se declaró primero `ON DELETE CASCADE`; al tomar la
+  decisión "eliminar comentario" (`takedown`) sobre un reporte de comentario,
+  el mismo borrado hacía cascada sobre `community_reports` y el reporte que
+  acababa de resolverse desaparecía con su historial de decisión. Corregido a
+  `ON DELETE SET NULL` (como ya hacían `reporter_id`/`reviewer_id`) y se quitó
+  el CHECK que forzaba `comment_id` no nulo para `subject_type='comment'`,
+  porque ese CHECK es precisamente lo que impedía conservar el reporte tras
+  perder su comentario. Verificado de nuevo en vivo: el reporte de comentario
+  queda `resolved` con su `decision` intacta aunque el comentario ya no exista.
+- **Producto**: `POST /api/community` gana `action:'report'` junto a
+  like/save/comment/delete-comment ya existentes, en vez de una ruta nueva.
+  `securityLimit('community-report',cuenta,5)` (5/hora). Excluye
+  autorreportes en el mismo INSERT (`owner_id<>cuenta` para listas,
+  `author_id<>cuenta` para comentarios), igual que like/save ya excluían
+  autointeracción. `communityReport()` y `escapeLikeTerm()` nuevos en
+  `community-model.ts`; a diferencia del reporte de soluciones (enum inline
+  en la ruta), aquí el validador quedó centralizado.
+  `src/components/library/community-report-form.tsx` mirror exacto de
+  `ReportForm` (fichas): mismo tono, mismo copy de éxito. En
+  `community-actions.tsx`: `<details>Reportar esta lista</details>` (oculto
+  para el dueño) y un botón de bandera por comentario, visible solo para
+  quien no es su autor — el dueño de la lista ya puede borrar cualquier
+  comentario directo (§23) y no necesita reportarlo.
+- **Búsqueda**: `db/community-search-trgm.sql` habilita `pg_trgm` y crea un
+  índice GIN sobre `(name||' '||public_description||' '||curator_name)`
+  filtrado a `visibility='public'`. `getPublicCollections` cambió
+  `strpos(...)>0` a `(...) ILIKE '%término%'` con el término escapado
+  (`\ % _`) para que un `%`/`_` propio del visitante no actúe como comodín.
+  Con el catálogo actual (pocas listas) el planificador sigue prefiriendo un
+  seq scan — comportamiento esperado en una tabla pequeña, no un defecto;
+  se confirmó forzando `enable_seqscan=off` que el índice sí resuelve la
+  expresión. El índice se vuelve determinante según crece la tabla.
+- **Ops**: `ops/api/community-reports` (GET paginado por estado, POST con la
+  misma cadena CTE versionada que `ops/api/reports` — `resolve`/`dismiss`
+  marcan el reporte; `takedown` además pone la lista en privado o borra el
+  comentario según `subject_type`). `/panel/reportes` gana un selector
+  Fichas/Comunidad sobre las mismas pestañas de estado y el mismo patrón
+  expandir-y-decidir; no se creó una página de ops nueva. El KPI "Reportes
+  abiertos" de `/panel` ahora suma `solution_reports` y `community_reports`.
+  Auditoría con `action:'community_report_${decision}'`. No se tocó el flujo
+  de reportes de soluciones (tabla, ruta ni UI) más allá de compartir esa
+  página y esa tarjeta del KPI.
+- **Migraciones aplicadas solo a la base de desarrollo configurada**
+  (`scripts/migrate-community-reports.cjs`,
+  `scripts/migrate-community-search-trgm.cjs`), verificado en vivo tras
+  aplicar (tabla, índices y extensión existen). **No aplicadas a
+  `shwcs_production`**: a diferencia de fases anteriores de este mismo plan
+  de catálogo (§52-§55), esta entrega no tocó producción; queda como paso
+  explícito pendiente del propietario, igual que el resto de credenciales
+  operativas de §12.
+- Verificación: 74 unitarias (dos nuevas: `communityReport()` y
+  `escapeLikeTerm()`), lint, TypeScript y build de producción aislado
+  limpios en ambas apps (`shwcs` y `ops/`). Recorrido en vivo completo contra
+  el dev con cuentas `@example.invalid` desechables: creación de lista
+  pública + comentario, reporte de lista y de comentario por cuentas
+  distintas al dueño/autor, 409 en autorreporte y en reporte duplicado,
+  búsqueda por término parcial con y sin coincidencia, sesión de ops
+  temporal (cuenta+`solution_reviewers`+`ops_sessions` insertados
+  directamente, sin pasar por TOTP) listando ambos reportes con los datos
+  correctos, decisión `dismiss` sobre la lista y `takedown` sobre el
+  comentario, verificación de `ops_audit_log`. Cuentas, sesión de ops y filas
+  de prueba eliminadas al terminar.
+- **Pendiente, no tocado aquí**: aplicar ambas migraciones a
+  `shwcs_production`; las fichas de solución (`solution_comments`) todavía no
+  tienen reporte visitante — ops solo puede borrarlas ad hoc como antes. No
+  hay bloqueo, apelación, reputación ni defensa ante multicuentas para esta
+  capa de reportes (mismo límite que ya señalaba §23 para moderación de
+  comunidad en general); no promover masivamente la función hasta cerrar esa
+  operación.
+
 ## 53. Fase 2 — la ficha con carrusel — 3 septiembre 2026
 
 Segunda fase del plan de catálogo (§52). La ficha pública gana un carrusel de
@@ -1949,3 +2038,170 @@ verificado o un empujón inicial que fija la posición para siempre.
   verificadas en vivo contra `shwcs_production` tras aplicarlas: la tabla
   `solution_view_visitors` (con su índice) y `buyer_lists_public_created`
   existen.
+
+## 57. Búsqueda semántica y filtros de comunidad al nivel del catálogo — 5 septiembre 2026
+
+Petición del usuario: «la página de comunidad no sirve», y que tanto la barra
+de búsqueda como los filtros «filtren los proyectos cabrón» — que un proyecto
+de ventas como Cord aparezca al buscar «cotizaciones de mayoreo» o «agencias
+que quieran cotizar», y que Comunidad tenga filtros «tipo explorar».
+Decisiones tomadas: multi-select en categorías e industrias; Comunidad con
+estado vacío honesto, sin sembrar contenido.
+
+### Capa de búsqueda compartida — `src/lib/search/`
+
+Antes había **tres** algoritmos de búsqueda incompatibles (`catalog-search.ts`
+match exacto de token, `library/filters.ts` substring, `community.ts` ILIKE en
+SQL) y **cero** vocabulario reutilizable — el «diccionario semántico» del sitio
+eran dos líneas en `catalog-search.ts` indexadas por **URL exacta del sitio**
+(si el fundador editaba su web quitando la barra final, perdía todos sus
+sinónimos).
+
+- **`normalize.ts`**: un solo normalizador (`normalizeText`/`tokenize`) —
+  NFD + `\p{Diacritic}` + minúsculas + colapsar no-alfanumérico a espacio.
+  Sustituye a `normalizeQuery` y a `normalizeLibrarySearch`, que discrepaban en
+  silencio (uno quitaba puntuación, el otro no).
+- **`vocabulary.ts`**: `categoryVocabulary` (7 categorías) e `industryVocabulary`
+  (7 industrias), cada una ~20-25 términos de dominio en español, keyed por
+  **valor de taxonomía** (`Ventas`, `Manufactura`), nunca por URL. Incluye
+  `conceptCategories`, el mapa de 15 conceptos → 7 categorías que estaba
+  atrapado sin exportar en `landing-features.tsx:156`; ahora lo consumen el
+  landing **y** la búsqueda. `expandVocabulary(categories, industries)`
+  devuelve el vocabulario que una faceta declarada implica.
+- **`facets.ts`**: `matchIndustry`/`matchCompanySize` resuelven el tri-estado
+  de `solutions/model.ts` y añaden un cuarto nivel: `'declared' | 'any' |
+  'inferred' | 'none'`. **`[]` ahora devuelve `'any'`** — corrige el bug
+  documentado en `public.ts:8-10` donde `p.industries?.includes(x)` excluía
+  a quien declaró «sirvo a cualquier industria». **Declarar cierra la
+  pregunta**: si el fundador declaró `['Retail']`, filtrar por `Salud` da
+  `'none'` aunque el texto mencione clínicas — nunca `'inferred'`. La
+  inferencia (≥2 aciertos de vocabulario distintos en el texto real de la
+  ficha) solo llena el hueco de `undefined`. `matchCompanySize` nunca infiere.
+- **`score.ts`**: `rankSearch(query, products, tieBreak)` reemplaza el match
+  exacto. Campos pesados (nombre 6 > facetas declaradas 4 > feature 3 >
+  descripción 2 > provider 1 > vocabulario expandido 1.5), stem-lite por
+  prefijo común ≥5 (`cotizacion`↔`cotizaciones`, `cobrar`↔`cobranza`, sin
+  dependencia nueva), y **los que matchean todos los tokens van primero**.
+  El vocabulario expandido pesa poco a propósito: basta para sacar a Cord
+  con «predicción» o «mayoreo», nunca para superar a quien lo dice literal.
+
+### Búsqueda del catálogo — `catalog-search.ts` reescrito
+
+- Delega en `rankSearch` + `vocabulary`. `searchCatalog(query, categories)`
+  mantiene su firma; su único consumidor (`landing-discovery.tsx:19`) no cambia.
+- Se eliminó el mapa `keywords` por URL. Los dos términos que no cubre ninguna
+  categoría (Flouvia: «tienda online», «ecommerce», «automatización») viven
+  ahora como `keywords?: string[]` en el objeto estático de
+  `catalog-preview.ts` — atado a una identidad estable, no a un string de URL.
+- `nómina` sigue devolviendo 0: no es un bug, es honesto — **ningún proyecto
+  real declara la categoría Nómina** todavía. Lo que sí cambió: Cord aparece
+  para `mayoreo`, `cotización` (singular, con acento), `predicción`, `CRM`,
+  `forecast`, `pipeline`, `agencias que cotizan` — conceptos que su propia
+  copy nunca usa, vía el vocabulario de sus categorías declaradas.
+
+### Filtros del catálogo — `category-page-layout.tsx` + `catalog-filter-bar.tsx`
+
+- `FilterMenu` se extrajo a `src/components/catalog/filter-menu.tsx` con dos
+  modos desde un componente: **controlado** (catálogo, cliente) y
+  **navegacional** (`href`/`clearHref`, para Comunidad, Server Component sin
+  `'use client'`, funciona sin JS). Multi-select es solo `values` con más de
+  un elemento; cada opción marcada conserva su `Check`, el trigger muestra
+  `Etiqueta · N`. Cero estilos nuevos: reutiliza `.selector-*` de §28.
+- Categoría e industria pasan a **multi-select** (OR dentro del eje);
+  serializadas en la URL como lista separada por comas. Tamaño, formato y
+  orden siguen mono-select.
+- El filtrado usa `matchIndustry`/`matchCompanySize` en vez de `?.includes()`.
+  Los `'inferred'` no se descartan ni se mezclan: van a una sección aparte
+  **«También podrían servir»** bajo la rejilla, que aclara que no declararon
+  esa industria y que coinciden por su categoría y descripción.
+- `matchesCollection()` (`taxonomy.ts`) tenía el mismo bug de `includes`;
+  ahora usa `isRealMatch(matchIndustry(...))` — una colección editorial solo
+  crece por match declarado, nunca por inferencia.
+
+### Comunidad — `getPublicCollections` + `CommunityFilterBar`
+
+- **SQL nuevo** (`src/lib/library/community.ts`), todo server-side porque la
+  paginación (OFFSET) y el contador viven ahí:
+  - `category` (mono) → `categories` (multi, `l.categories && ARRAY[...]`);
+  - **industria y tamaño de los proyectos contenidos** en la lista (`EXISTS`
+    + `jsonb_array_elements_text`), respetando el tri-estado (`[]` = cualquiera);
+  - la búsqueda ahora **también matchea el nombre de los proyectos dentro de
+    la lista** — antes una lista con «Cord» no salía al buscar «cord» porque
+    el `ILIKE` solo miraba nombre/descripción/firma de la lista;
+  - devuelve `total` (`count(*) OVER ()`), y `hasMore = offset+rows < total`
+    (ya no pide `pageSize+1`);
+  - `viewer` se pasa en el listado (antes `page.tsx` no lo pasaba y
+    `liked`/`saved`/`own` eran siempre `false` — trabajo hecho y tirado).
+- **`community-url.ts`**: contrato puro de URL. `readCommunityFilters` valida
+  cada valor contra la taxonomía y corta a 7 por eje; `communityHref` resetea
+  `page` a 1 salvo patch explícito. **`savedBy` nunca viene de la URL** — solo
+  el booleano `guardadas=1`; el id de cuenta lo resuelve la sesión en
+  servidor, o cualquiera enumeraría las listas guardadas de otra cuenta con
+  `?savedBy=<uuid>`.
+- **`CommunityFilterBar`** (Server Component): cápsulas de categoría
+  multi-select (`.selector-tab` + `aria-pressed`), `FilterMenu` de industria y
+  tamaño en modo `href`, «Guardadas por mí» si hay sesión, botón «Limpiar»,
+  contador `N listas`, `ExpandingSearch` (form GET nativo) y el orden. Idéntico
+  visualmente al catálogo, sin una clase nueva en `globals.css`.
+- `page.tsx` adelgazado; **estado vacío honesto**: con 0 listas dice «Aún no
+  hay listas públicas», sin fingir actividad. Migración
+  `db/community-facets.sql` + `scripts/migrate-community-facets.cjs` (índice
+  GIN sobre `buyer_lists.categories`, índices de expresión para el join
+  `'solution:'||id`, trigram sobre `published_data->>'name'`).
+
+### Guardados y Mis listas — el tercer algoritmo unificado
+
+«Todos los filtros» incluía la biblioteca privada, que corría un **tercer**
+motor de búsqueda distinto (`filterSaved` con substring y su propio
+`normalizeLibrarySearch`).
+
+- `filters.ts` reescrito sobre el scorer compartido: `makeQueryScorer` (nuevo
+  en `score.ts`) da un puntaje por proyecto sin perder la estructura de
+  `SavedEntry`. Con query activa manda la relevancia; sin query, el orden
+  elegido (recientes/antiguos/A–Z). Guardados hereda stem-lite y vocabulario:
+  «pago» encuentra «Pagos del equipo», «cobros» encuentra un guardado de la
+  categoría Cobros. `normalizeLibrarySearch` queda como re-export de
+  `normalizeText` para no romper imports.
+- `BuyerProject` gana `industries?`/`companySizes?`; `resolveProjects`
+  (`library/server.ts`) los lee de `published_data` con el mismo tri-estado.
+- `SavedGallery` añade dropdowns de **industria** y **tamaño**, con las
+  opciones derivadas de los proyectos que sí las declararon (nada de cápsulas
+  que no dan resultados). Filtran con `isRealMatch(matchIndustry/…)` —
+  declarado o `[]`, sin inferencia: una vista personal se mantiene literal.
+- `BoardGallery` (Mis listas) pasa a `normalizeText` para su búsqueda por
+  nombre; ya usaba `.selector-tab`.
+
+### Verificación
+
+- **86 unitarias** (11 nuevas en `tests/search.test.ts` + 1 en
+  `tests/library-filters.test.ts` para las facetas industria/tamaño y el
+  stem-lite en Guardados; las 6 aserciones históricas de esos archivos y de
+  `discovery.test.ts` pasan sin tocarse). Cubren: normalizador, higiene del
+  vocabulario —todo término === su forma normalizada—, `conceptCategories`
+  apunta solo a categorías reales, los cuatro niveles de `matchIndustry`
+  incluida la regla «declarar cierra la pregunta», `matchCompanySize` nunca
+  infiere, `expandVocabulary`, `rankSearch` prioriza cobertura total de
+  tokens, `searchCatalog` encuentra Cord por conceptos de Ventas y mantiene
+  sus guardarraíles de precisión (`contrato` no arrastra `control`;
+  `nómina` sigue en 0 porque ningún proyecto real la declara). Lint y
+  TypeScript limpios.
+- SQL de comunidad verificado contra `neondb` con listas sembradas
+  desechables (dos cuentas de proyecto con `industries`/`companySizes`
+  declaradas, `[]` y ausente): multi-categoría con unión correcta, faceta de
+  industria/tamaño del proyecto contenido, `[]` matcheando cualquier tamaño,
+  búsqueda por nombre de proyecto dentro de la lista, `total` y paginación
+  OFFSET consistentes, `savedBy` sin filtración. Datos eliminados en cascada
+  al terminar.
+- Dev server: `/es/comunidad` y variantes con `category`/`industria`/`tamano`/
+  `q` en 200 sin error; `/es/explorar/cobros?industria=Retail,Salud` en 200.
+- Migración `db/community-facets.sql` aplicada solo a `neondb` (dev). **No
+  aplicada a `shwcs_production`** — paso explícito pendiente del propietario,
+  igual que las de §56. Sin ella la app funciona (seq scan sobre tablas
+  vacías); el índice se vuelve determinante al crecer.
+- **Pendiente, no tocado aquí**: `npm run build` no se corrió (el dev server
+  estaba abierto; CLAUDE.md §13 prohíbe compartir `.next`). No se añadieron
+  filtros de industria/tamaño a `BoardGallery` (Mis listas filtran listas, no
+  proyectos; sus proyectos no cargan facetas). Sigue sin haber acción real
+  recomendada aparte: que Cord declare sus `industries` y `companySizes` en su
+  ficha — la inferencia solo cubre el hueco mientras tanto. El plan completo
+  está en `/Users/andrevalleortega/.claude/plans/oye-como-que-la-federated-newell.md`.

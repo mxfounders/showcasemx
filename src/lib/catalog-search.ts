@@ -1,21 +1,42 @@
-import { previewCategories, catalogPriority, type PreviewCategory } from "./catalog-preview";
+import { previewCategories, catalogPriority, type PreviewCategory, type PreviewProduct } from "./catalog-preview";
+import { normalizeText } from "./search/normalize";
+import { rankSearch } from "./search/score";
 
+// Kept exported: some callers still import it. Now delegates to the shared
+// normalizer so the catalog and the saved library agree on what a token is.
 export function normalizeQuery(value: string) {
-  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  return normalizeText(value);
 }
 
-const keywords: Record<string, string> = {
-  "https://cordhq.app/": "cobrar cobros cobranza pagos pagar facturas facturar facturacion cotizar cotizaciones propuestas finanzas ventas",
-  "https://flouvia.com/": "tienda tiendas online ecommerce comercio electronico e commerce automatizar automatizacion automatizaciones agencia agencias desarrollo portales b2b operacion",
-};
-const ignored = new Set("quiero necesito busco para mi mis una un el la los las de del a al en y o que me con por como empresa negocio tiempo organizar ayuda solucion soluciones".split(" "));
+// Accumulates every category label a product appears under, across every
+// PreviewCategory group that lists it (a static example carries this only via
+// which group it sits in; a published product already declares its own
+// `.categories`, left untouched). Dedupes by website, so scoring sees the
+// union of the product's categories — not just whichever group listed it
+// first — and its declared industries/keywords come along.
+function collectSearchableProducts(categories: PreviewCategory[]): PreviewProduct[] {
+  const byWebsite = new Map<string, PreviewProduct>();
+  for (const category of categories) {
+    for (const product of category.products) {
+      if (!product.website) continue; // no real site to open — not a search result
+      const existing = byWebsite.get(product.website);
+      if (existing) {
+        existing.categories = Array.from(new Set([...(existing.categories ?? []), category.label]));
+      } else {
+        byWebsite.set(product.website, { ...product, categories: product.categories ?? [category.label] });
+      }
+    }
+  }
+  return Array.from(byWebsite.values());
+}
 
+// Free-text catalog search. Scores each product across its name, declared
+// taxonomy, feature/description and the vocabulary a declared category or
+// industry implies (src/lib/search/vocabulary.ts), so a Ventas product is
+// found by "cotización", "mayoreo" or "predicción" even when its own copy
+// never uses those words. Products matching every query word rank first;
+// Cord/Flouvia break score ties, no longer the primary order.
 export function searchCatalog(query: string, categories: PreviewCategory[] = previewCategories) {
-  const tokens = normalizeQuery(query).split(" ").filter(token => token && !ignored.has(token));
-  if (!tokens.length) return [];
-  const unique = Array.from(new Map(categories.flatMap(category => category.products).filter(product => product.website).map(product => [product.website, product])).values());
-  return unique.map(product => {
-    const words = new Set(normalizeQuery(`${product.name} ${product.description} ${product.feature} ${product.provider} ${keywords[product.website!] ?? ""}`).split(" "));
-    return { product, score: tokens.filter(token => words.has(token)).length };
-  }).filter(result => result.score > 0).sort((a, b) => b.score - a.score || catalogPriority(a.product)-catalogPriority(b.product)).map(result => result.product);
+  const products = collectSearchableProducts(categories);
+  return rankSearch(query, products, (a, b) => catalogPriority(a) - catalogPriority(b));
 }

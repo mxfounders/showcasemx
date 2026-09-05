@@ -61,12 +61,12 @@ export async function GET(request: NextRequest) {
         .map(([name]) => name)
         .join(", ");
       const day = new Date().toISOString().slice(0, 10);
-      await sendEmail(
-        recipient,
-        "Alerta de producción en shwcs",
-        `La revisión diaria detectó problemas en: ${failed}.\n\nRevisa Vercel Observability y Neon antes de operar el sitio.`,
-        `shwcs-production-monitor-${day}`,
-      );
+      await sendEmail({
+        to: recipient,
+        subject: "Alerta de producción en shwcs",
+        text: `La revisión diaria detectó problemas en: ${failed}.\n\nRevisa Vercel Observability y Neon antes de operar el sitio.`,
+        idempotencyKey: `shwcs-production-monitor-${day}`,
+      });
     } catch {
       return NextResponse.json(
         { status: "error", checks, alert: "failed" },

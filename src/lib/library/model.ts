@@ -16,7 +16,7 @@ export function listDetails(body:Record<string,unknown>){
 export type BuyerList={id:string;name:string;purpose:string;version:number;count:number;visibility?:'private'|'public';categories?:string[];public_description?:string;curator_name?:string};
 export type SavedReference={project_key:string};
 export type ListItem=SavedReference&{list_id:string;note:string;version:number};
-export type BuyerProject={key:string;name:string;description:string;kind:string;categories:string[];href:string;external:boolean;solutionId?:string;image?:string;pricing?:string;scope?:string;implementation?:string;audience?:string;integrations?:string;support?:string;evidence?:string;evidenceUrl?:string};
+export type BuyerProject={key:string;name:string;description:string;kind:string;categories:string[];industries?:string[];companySizes?:string[];href:string;external:boolean;solutionId?:string;image?:string;pricing?:string;scope?:string;implementation?:string;audience?:string;integrations?:string;support?:string;evidence?:string;evidenceUrl?:string};
 
 export function comparisonKeys(value:unknown,members:string[]):string[]|null {
  if(!Array.isArray(value)||value.length<2||value.length>3||value.some(key=>!validProjectKey(key)))return null;
