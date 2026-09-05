@@ -7,7 +7,7 @@ import { solutionsSql } from '@/lib/solutions/server';
 import { isSolutionId } from '@/lib/solutions/model';
 import { failure } from '@/lib/solutions/http';
 import { storageEnabled,putObject } from '@/lib/storage/blob';
-import { mediaKey } from '@/lib/storage/keys';
+import { mediaKey,renditionKey,RENDITION_WIDTHS } from '@/lib/storage/keys';
 export const runtime='nodejs';
 export async function GET(request:NextRequest, props:{params: Promise<{id:string}>}) {
  const params = await props.params;
@@ -45,6 +45,18 @@ export async function POST(request:NextRequest, props:{params: Promise<{id:strin
  try{results=await sql.transaction([sql`SELECT id FROM founder_solutions WHERE id=${params.id} AND owner_id=${account.id} FOR UPDATE`,sql`INSERT INTO solution_media(id,solution_id,storage_key,bytes,checksum,width,height) SELECT ${id},id,${key},${buffer.length},${checksum},${width},${height} FROM founder_solutions WHERE id=${params.id} AND owner_id=${account.id} AND status<>'pending' AND (SELECT count(*) FROM solution_media WHERE solution_id=${params.id})<12 RETURNING id,width,height`]);}
  catch{try{await sql`INSERT INTO storage_orphans(key) VALUES(${key}) ON CONFLICT(key) DO NOTHING`;}catch{}return failure('No pudimos confirmar la subida. Revisa los archivos antes de repetir.',503);}
  if(!results[1].length){try{await sql`INSERT INTO storage_orphans(key) VALUES(${key}) ON CONFLICT(key) DO NOTHING`;}catch{}return failure('La solución cambió o tiene 12 archivos. Elimina archivos sin uso antes de subir más.',409);}
+ // Renditions (400/800). Best-effort and after the row lands: if any fails, the
+ // full image still serves and the loader falls back to it. A rendition blob
+ // whose row never lands is orphaned into the sweep queue.
+ for(const w of RENDITION_WIDTHS){
+  try{
+   const out=await sharp(Buffer.concat(chunks)).rotate().resize({width:w,withoutEnlargement:true}).webp({quality:80}).toBuffer();
+   const rkey=renditionKey(params.id,id,w),rsum=createHash('sha256').update(out).digest('hex');
+   await putObject(rkey,out);
+   const ins=await sql`INSERT INTO solution_media_files(storage_key,media_id,width,bytes,checksum) SELECT ${rkey},${id},${w},${out.length},${rsum} WHERE EXISTS(SELECT 1 FROM solution_media WHERE id=${id}) ON CONFLICT DO NOTHING RETURNING storage_key`;
+   if(!ins.length)await sql`INSERT INTO storage_orphans(key) VALUES(${rkey}) ON CONFLICT(key) DO NOTHING`;
+  }catch{/* full image is enough */}
+ }
  return NextResponse.json({asset:{...results[1][0],in_use:false}},{headers:{'Cache-Control':'no-store'}});
  }catch{return failure('No pudimos confirmar la subida. Revisa los archivos antes de repetir.',503);}
 }

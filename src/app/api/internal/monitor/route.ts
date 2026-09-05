@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
       // A resurrected key is never swept; this also clears over-eager enqueues.
       await sweepSql`DELETE FROM storage_orphans o
         WHERE EXISTS (SELECT 1 FROM solution_media m       WHERE m.storage_key = o.key)
+           OR EXISTS (SELECT 1 FROM solution_media_files f WHERE f.storage_key = o.key)
            OR EXISTS (SELECT 1 FROM solution_site_images i WHERE i.storage_key = o.key)
            OR EXISTS (SELECT 1 FROM auth_accounts a        WHERE a.avatar_key  = o.key)`;
       // Lease a batch. attempts increments at lease time, so a run that dies

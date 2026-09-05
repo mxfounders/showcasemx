@@ -82,6 +82,7 @@ finally{
  // off, so clean them here rather than leaking into the store.
  try{const owned=k=>[...new Set([solution,foreign,...accounts])].some(id=>k.startsWith('solutions/'+id+'/')||k.startsWith('accounts/'+id+'/'));
   const rows=await sql`SELECT storage_key AS key FROM solution_media WHERE storage_key IS NOT NULL
+    UNION SELECT storage_key FROM solution_media_files
     UNION SELECT storage_key FROM solution_site_images WHERE storage_key IS NOT NULL
     UNION SELECT key FROM storage_orphans`;
   const mine=[...new Set(rows.map(r=>String(r.key)).filter(owned))];

@@ -82,7 +82,7 @@ export function SolutionGallery({ slides }: { slides: SolutionSlide[] }) {
         {slides.map(slide => <div key={slide.key} className="relative aspect-[16/10] w-full shrink-0 snap-center snap-always bg-stone-900/5">
           {failed[slide.key]
             ? <p role="status" className="flex h-full items-center justify-center p-4 text-xs text-stone-500">No pudimos cargar esta imagen.</p>
-            : <Image src={slide.src} alt={slide.alt} fill unoptimized sizes="448px" className="object-cover" onError={() => setFailed(current => ({ ...current, [slide.key]: true }))} />}
+            : <Image src={slide.src} alt={slide.alt} fill sizes="(max-width: 768px) 90vw, 448px" className="object-cover" onError={() => setFailed(current => ({ ...current, [slide.key]: true }))} />}
         </div>)}
       </div>
 
@@ -108,7 +108,7 @@ export function SolutionGallery({ slides }: { slides: SolutionSlide[] }) {
         <p className="min-w-0 break-words text-sm">{selected.caption}</p>
         <button type="button" autoFocus aria-label="Cerrar imagen" onClick={() => dialog.current?.close()} style={actionButtonStyle} className="action-button shrink-0 rounded-full p-3"><X className="size-4" /></button>
       </div>
-      <div className="relative h-[65svh]"><Image src={selected.src} alt={selected.alt} fill unoptimized sizes="94vw" className="object-contain" /></div>
+      <div className="relative h-[65svh]"><Image src={selected.src} alt={selected.alt} fill sizes="94vw" className="object-contain" /></div>
       {count > 1 && <div className="mt-4 flex justify-center gap-5">
         <button type="button" aria-label="Imagen anterior" onClick={() => scrollTo((active - 1 + count) % count)} className="rounded-lg p-3"><ArrowLeft className="size-5" /></button>
         <button type="button" aria-label="Imagen siguiente" onClick={() => scrollTo((active + 1) % count)} className="rounded-lg p-3"><ArrowRight className="size-5" /></button>

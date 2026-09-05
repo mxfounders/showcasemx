@@ -43,6 +43,8 @@ export async function POST(request: NextRequest) {
     const keyRows = await sql`
       SELECT m.storage_key AS key FROM solution_media m JOIN founder_solutions fs ON fs.id = m.solution_id WHERE fs.owner_id = ${account.id} AND m.storage_key IS NOT NULL
       UNION
+      SELECT f.storage_key AS key FROM solution_media_files f JOIN solution_media m ON m.id = f.media_id JOIN founder_solutions fs ON fs.id = m.solution_id WHERE fs.owner_id = ${account.id}
+      UNION
       SELECT i.storage_key AS key FROM solution_site_images i JOIN founder_solutions fs ON fs.id = i.solution_id WHERE fs.owner_id = ${account.id} AND i.storage_key IS NOT NULL
       UNION
       SELECT avatar_key AS key FROM auth_accounts WHERE id = ${account.id} AND avatar_key IS NOT NULL`;

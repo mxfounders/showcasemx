@@ -9,10 +9,17 @@ export const runtime='nodejs';
 export async function GET(request:NextRequest, props:{params:Promise<Params>}) {
  const params = await props.params;
  if(!isSolutionId(params.id)||!isSolutionId(params.assetId))return failure('Captura no disponible.',404);
+ // ?w= selects a rendition (Fase B). Only 400/800 exist; anything else is a
+ // uniform 404, never a distinct error, and never pollutes the CDN cache key.
+ const wRaw=request.nextUrl.searchParams.get('w');
+ const w=wRaw===null?null:(wRaw==='400'||wRaw==='800'?Number(wRaw):NaN);
+ if(Number.isNaN(w))return failure('Captura no disponible.',404);
  try{const account=await getSession(request.cookies.get(sessionCookie)?.value),sql=solutionsSql();
  // Public if the approved snapshot references it, otherwise owner only. Reviewers
  // read screenshots through the ops backoffice, which proxies this route.
- const [asset]=await sql`SELECT m.storage_key,m.checksum,COALESCE(s.published_data->'screenshots','[]'::jsonb) @> ${JSON.stringify([{id:params.assetId}])}::jsonb AS is_public FROM solution_media m JOIN founder_solutions s ON s.id=m.solution_id WHERE m.id=${params.assetId} AND s.id=${params.id} AND (
+ // f.* is the requested rendition (may be absent for a pre-Fase-B asset or if
+ // rendition generation failed) — fall back to the full image.
+ const [asset]=await sql`SELECT COALESCE(f.storage_key,m.storage_key) AS storage_key,COALESCE(f.checksum,m.checksum) AS checksum,COALESCE(s.published_data->'screenshots','[]'::jsonb) @> ${JSON.stringify([{id:params.assetId}])}::jsonb AS is_public FROM solution_media m JOIN founder_solutions s ON s.id=m.solution_id LEFT JOIN solution_media_files f ON f.media_id=m.id AND f.width=${w} WHERE m.id=${params.assetId} AND s.id=${params.id} AND (
  COALESCE(s.published_data->'screenshots','[]'::jsonb) @> ${JSON.stringify([{id:params.assetId}])}::jsonb
  OR s.owner_id=${account?.id??null}::uuid)`;
  if(!asset)return failure('Captura no disponible.',404);

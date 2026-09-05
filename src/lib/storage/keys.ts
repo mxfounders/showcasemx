@@ -16,6 +16,14 @@ export function mediaKey(solutionId: string, assetId: string): string {
   return `solutions/${solutionId}/media/${assetId}.webp`;
 }
 
+// Fase B: responsive renditions of a screenshot. The full 1600 image stays at
+// mediaKey(); only 400 and 800 get their own blob + solution_media_files row.
+export const RENDITION_WIDTHS = [400, 800] as const;
+
+export function renditionKey(solutionId: string, assetId: string, width: number): string {
+  return `solutions/${solutionId}/media/${assetId}-${width}.webp`;
+}
+
 export function siteImageKey(solutionId: string, fetchId: string): string {
   return `solutions/${solutionId}/site/${fetchId}.webp`;
 }
