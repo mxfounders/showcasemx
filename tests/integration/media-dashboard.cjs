@@ -1,7 +1,8 @@
 // Opt-in: only creates temporary accounts and deletes all their data in finally.
 const assert=require('node:assert/strict'),fs=require('fs'),{randomUUID,createHash}=require('crypto');
 if(process.env.RUN_MEDIA_INTEGRATION!=='1'){console.log('Set RUN_MEDIA_INTEGRATION=1 with the local app running.');process.exit(0);}
-const {neon}=require('@neondatabase/serverless'),sharp=require('sharp'),e=require('dotenv').parse(fs.readFileSync('.env.local'));
+const {neon}=require('@neondatabase/serverless'),sharp=require('sharp'),{del:blobDel}=require('@vercel/blob'),e=require('dotenv').parse(fs.readFileSync('.env.local'));
+for(const k of ['BLOB_READ_WRITE_TOKEN','VERCEL_OIDC_TOKEN','BLOB_STORE_ID'])if(e[k]&&!process.env[k])process.env[k]=e[k];
 const sql=neon(e.NEON_DATABASE_URL||e.DATABASE_URL||e.POSTGRES_URL),origin='http://localhost:3000',tag=randomUUID(),password='Temporary media testing phrase';
 const emails=['media-owner','media-other','media-reviewer'].map(name=>name+'-'+tag+'@example.invalid'),accounts=[],cookies=[],solution=randomUUID(),foreign=randomUUID();
 const request=(route,method='GET',data,who=0,rawType)=>fetch(origin+route,{method,headers:{origin,...(who>=0&&cookies[who]?{cookie:cookies[who]}:{}),...(data!==undefined?{'content-type':rawType||'application/json'}:{})},...(data!==undefined?{body:rawType?data:JSON.stringify(data)}:{})});
@@ -24,7 +25,7 @@ async function upload(id,who=0){const r=await status(request(`/api/solutions/${i
  const first=await upload(solution),other=await upload(foreign,1),asset=media+'/'+first;
  await status(request(asset,'GET',undefined,-1),404);await status(request(asset,'GET',undefined,1),404);await status(request(asset,'GET',undefined,2),404);
  const raw=await status(request(asset),200);assert.equal(raw.headers.get('content-type'),'image/webp');assert.equal(raw.headers.get('cache-control'),'private, no-store');assert.equal((await sharp(Buffer.from(await raw.arrayBuffer())).metadata()).format,'webp');
- let data={name:'Media project '+tag,kind:'Software',category:'Cobros',problem:'Public solution for accounts receivable and collections.',audience:'Equipos financieros',website:'https://example.com',contactEmail:emails[0],founders:[{name:'Public Founder',role:'Founder',bio:'Public biography',links:[{label:'LinkedIn',url:'https://www.linkedin.com/in/example'}]}],projectLinks:[{label:'GitHub',url:'https://github.com/example'}],notFor:'No incluye nómina.',demoUrl:'https://example.com/demo',screenshots:[{id:first,caption:'Pantalla inicial de cobros'}]},version=0;
+ let data={name:'Media project '+tag,kind:'Software',category:'Cobros',problem:'Public solution for accounts receivable and collections.',audience:'Equipos financieros',website:'https://example.com',contactEmail:emails[0],founders:[{name:'Public Founder',role:'Founder',bio:'Public biography',links:[{label:'LinkedIn',url:'https://www.linkedin.com/in/example'}]}],projectLinks:[{label:'GitHub',url:'https://github.com/example'}],notFor:'No incluye nómina.',demoUrl:'https://example.com/demo',industries:[],companySizes:[],screenshots:[{id:first,caption:'Pantalla inicial de cobros'}]},version=0;
  async function patch(action,expected=200,who=0,extras={}){const r=await status(request(base,'PATCH',{action,version,step:3,data,...extras},who),expected);const result=await r.json();if(expected===200)version=result.version;return result;}
  // Editorial review lives only in ops now (§48); the product PATCH route no longer
  // has a 'review' action. Mirror ops/src/app/api/review/route.ts's publish
@@ -75,4 +76,15 @@ async function upload(id,who=0){const r=await status(request(`/api/solutions/${i
  assert.ok((await page('/account/solutions')).includes(data.name));
  console.log('PASS: media decoding/limits, owner-only upload/library, reviewer rows grant no product access, private preview, approved-only public assets, publication date, protected deletion, foreign asset rejection, concurrent save/delete safety; adaptive dashboard persistence, profile/permissions separation and account privacy.');
 }catch(error){console.log(error instanceof assert.AssertionError?error.stack:'Integration failed (connection details omitted).');process.exitCode=1;}
-finally{await sql`DELETE FROM auth_accounts WHERE email=ANY(${emails})`;const keys=[...emails.map(v=>'email:'+createHash('sha256').update(v).digest('hex')),...accounts.flatMap(v=>['solution-media','dashboard-mode','library'].map(scope=>scope+':'+createHash('sha256').update(v).digest('hex')))];await sql`DELETE FROM auth_rate_limits WHERE key=ANY(${keys})`;console.log('Cleaned temporary media accounts and their cascading data.');}})();
+finally{
+ // Blobs this run uploaded to the real store: collect from live rows and from
+ // storage_orphans (rows already deleted enqueue their key). The dev sweeper is
+ // off, so clean them here rather than leaking into the store.
+ try{const owned=k=>[...new Set([solution,foreign,...accounts])].some(id=>k.startsWith('solutions/'+id+'/')||k.startsWith('accounts/'+id+'/'));
+  const rows=await sql`SELECT storage_key AS key FROM solution_media WHERE storage_key IS NOT NULL
+    UNION SELECT storage_key FROM solution_site_images WHERE storage_key IS NOT NULL
+    UNION SELECT key FROM storage_orphans`;
+  const mine=[...new Set(rows.map(r=>String(r.key)).filter(owned))];
+  if(mine.length){await blobDel(mine);await sql`DELETE FROM storage_orphans WHERE key=ANY(${mine})`;}
+ }catch{/* best-effort */}
+ await sql`DELETE FROM auth_accounts WHERE email=ANY(${emails})`;const keys=[...emails.map(v=>'email:'+createHash('sha256').update(v).digest('hex')),...accounts.flatMap(v=>['solution-media','dashboard-mode','library'].map(scope=>scope+':'+createHash('sha256').update(v).digest('hex')))];await sql`DELETE FROM auth_rate_limits WHERE key=ANY(${keys})`;await sql`DELETE FROM storage_orphans WHERE key LIKE ${'solutions/'+solution+'/%'} OR key LIKE ${'solutions/'+foreign+'/%'}`;console.log('Cleaned temporary media accounts and their cascading data.');}})();
