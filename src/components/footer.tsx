@@ -241,11 +241,15 @@ export function Footer({ dict, locale = 'es' }: { dict?: any, locale?: string })
         {/* Bottom bar */}
         <div className="border-t border-stone-100 mx-6 md:mx-12" />
         <div className="px-6 md:px-12 py-6 flex flex-col md:flex-row items-center md:items-start justify-between gap-4">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
             <p className="text-[12px] text-stone-400 text-center md:text-left">
               © {new Date().getFullYear()} shwcs
             </p>
-            <div className="h-3 w-px bg-stone-300" />
+            <div className="h-3 w-px bg-stone-300 hidden sm:block" />
+            <p className="text-[12px] text-stone-400 text-center md:text-left">
+              Powered by <a href="https://flouvia.com" target="_blank" rel="noopener noreferrer" className="hover:text-stone-900 underline underline-offset-2 transition-colors">flouvia</a>
+            </p>
+            <div className="h-3 w-px bg-stone-300 hidden sm:block" />
             <LanguageSelector />
           </div>
           <div className="flex items-center justify-center gap-5">
