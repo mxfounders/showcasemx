@@ -10,6 +10,8 @@ async function page(route,who=0){return (await status(request(route,'GET',undefi
 async function upload(id,who=0){const r=await status(request(`/api/solutions/${id}/media`,'POST',await sharp({create:{width:960,height:540,channels:3,background:'#E4EBFC'}}).png().toBuffer(),who,'image/png'),200);return (await r.json()).asset.id;}
 (async()=>{try{
  for(const email of emails){await status(request('/api/auth/register','POST',{email,password},-1),200);const login=await status(request('/api/auth/login','POST',{email,password},-1),200);cookies.push(login.headers.get('set-cookie').split(';')[0]);const [account]=await sql`SELECT id FROM auth_accounts WHERE email=${email}`;accounts.push(account.id);}
+ // §48: a solution_reviewers row no longer grants any product-side access. Kept so
+ // the reviewer (who=2) can prove it below — media stays owner/published-only.
  await sql`INSERT INTO solution_reviewers(account_id) VALUES(${accounts[2]})`;
  await sql`UPDATE auth_accounts SET name='Media Owner Test',profile='founder' WHERE id=${accounts[0]}`;
  for(const [id,who] of [[solution,0],[foreign,1]])await status(request('/api/solutions','POST',{id},who),200);
@@ -24,15 +26,20 @@ async function upload(id,who=0){const r=await status(request(`/api/solutions/${i
  const raw=await status(request(asset),200);assert.equal(raw.headers.get('content-type'),'image/webp');assert.equal(raw.headers.get('cache-control'),'private, no-store');assert.equal((await sharp(Buffer.from(await raw.arrayBuffer())).metadata()).format,'webp');
  let data={name:'Media project '+tag,kind:'Software',category:'Cobros',problem:'Public solution for accounts receivable and collections.',audience:'Equipos financieros',website:'https://example.com',contactEmail:emails[0],founders:[{name:'Public Founder',role:'Founder',bio:'Public biography',links:[{label:'LinkedIn',url:'https://www.linkedin.com/in/example'}]}],projectLinks:[{label:'GitHub',url:'https://github.com/example'}],notFor:'No incluye nómina.',demoUrl:'https://example.com/demo',screenshots:[{id:first,caption:'Pantalla inicial de cobros'}]},version=0;
  async function patch(action,expected=200,who=0,extras={}){const r=await status(request(base,'PATCH',{action,version,step:3,data,...extras},who),expected);const result=await r.json();if(expected===200)version=result.version;return result;}
+ // Editorial review lives only in ops now (§48); the product PATCH route no longer
+ // has a 'review' action. Mirror ops/src/app/api/review/route.ts's publish
+ // transition by fixture, from the same 'pending'|'changes_requested' precondition.
+ async function publish(){const r=await sql`UPDATE founder_solutions SET status='published',version=version+1,updated_at=now(),published_at=now(),published_data=data WHERE id=${solution} AND status IN ('pending','changes_requested') RETURNING version`;if(!r.length)throw new Error('publish fixture: solution not in a publishable state');version=r[0].version;}
  await patch('save',409,0,{data:{...data,screenshots:[{id:other,caption:'Foreign media'}]}});
  await patch('save',400,0,{question:'forged'});await patch('save',400,0,{question:'identity'});
  await patch('save',200,0,{step:1,question:'founders'});const [position]=await sql`SELECT editor_question FROM founder_solutions WHERE id=${solution}`;assert.equal(position.editor_question,'founders');await status(request(asset,'DELETE'),409);
  const preview=await page('/account/solutions/'+solution+'/preview');assert.ok(preview.includes('Vista previa privada'));assert.ok(preview.includes(data.notFor));
  await status(request('/account/solutions/'+solution+'/preview','GET',undefined,1),404);
- await patch('submit');await status(request(asset,'GET',undefined,2),200);await status(request(asset,'GET',undefined,-1),404);
- await status(request(media,'POST',Buffer.from('x'),0,'image/png'),409);
- await patch('review',403,1,{decision:'published',message:'Información revisada para prueba.'});
- await patch('review',200,2,{decision:'published',message:'Información revisada para prueba.'});
+ // who=2 holds a solution_reviewers row; since §48 that grants nothing here, so a
+ // pending asset is 404 for them exactly as for an anonymous visitor.
+ await patch('submit');await status(request(asset,'GET',undefined,2),404);await status(request(asset,'GET',undefined,-1),404);
+ await status(request(media,'POST',Buffer.from('x'),0,'image/png'),409); // upload blocked while pending
+ await publish();
  await status(request(asset,'GET',undefined,-1),200);
  const publicPage=await page('/soluciones/'+solution,-1);assert.ok(publicPage.includes('Pantalla inicial de cobros'));assert.ok(publicPage.includes('Ver demo o recorrido'));assert.ok(publicPage.includes('Public Founder'));assert.ok(publicPage.includes('https://github.com/example')); assert.ok(!publicPage.includes(emails[0]));
  const [dated]=await sql`SELECT published_at FROM founder_solutions WHERE id=${solution}`;assert.ok(dated.published_at);
@@ -48,14 +55,14 @@ async function upload(id,who=0){const r=await status(request(`/api/solutions/${i
  assert.ok(!(await page('/account/lists',0)).includes('Private visual board '+tag));
  await status(request('/account/lists/'+board,'GET',undefined,0),404);
 
- await patch('submit');await patch('review',200,2,{decision:'published',message:'Actualización revisada para prueba.'});
+ await patch('submit');await publish();
  await status(request(media+'/'+replacement,'GET',undefined,-1),200);await status(request(asset,'GET',undefined,-1),404);await status(request(asset,'DELETE'),200);
  const disposable=await upload(solution);
  const race=await Promise.all([request(base,'PATCH',{action:'save',version,step:3,data:{...data,screenshots:[{id:disposable,caption:'Concurrent screenshot'}]}}),request(media+'/'+disposable,'DELETE')]);
  assert.deepEqual(race.map(r=>r.status).sort(),[200,409]);
  const [saved]=await sql`SELECT data,version FROM founder_solutions WHERE id=${solution}`;version=saved.version;data=saved.data;
  for(const image of data.screenshots)assert.equal((await sql`SELECT id FROM solution_media WHERE id=${image.id}`).length,1);
- const library=await (await status(request(media),200)).json();assert.ok(library.assets.every(a=>a.content_base64===undefined));
+ const library=await (await status(request(media),200)).json();assert.ok(library.assets.every(a=>a.content_base64===undefined&&a.storage_key===undefined));
  // A preference changes presentation, never account identity, profile, or reviewer privileges.
  assert.ok((await page('/account')).includes('Tus proyectos'));
  await status(request('/api/account/dashboard','POST',{mode:'admin'}),400);
@@ -66,6 +73,6 @@ async function upload(id,who=0){const r=await status(request(`/api/solutions/${i
  await status(request('/api/account/dashboard','POST',{mode:'both'}),200);home=await page('/account');assert.ok(home.includes('Tus listas'));assert.ok(home.includes('Tus proyectos'));assert.ok(!home.includes(emails[1]));
  assert.ok(!(await page('/account',1)).includes(data.name));
  assert.ok((await page('/account/solutions')).includes(data.name));
- console.log('PASS: media decoding/limits, owner-only upload/library, reviewer scope, private preview, approved-only public assets, publication date, protected deletion, foreign asset rejection, concurrent save/delete safety; adaptive dashboard persistence, profile/permissions separation and account privacy.');
+ console.log('PASS: media decoding/limits, owner-only upload/library, reviewer rows grant no product access, private preview, approved-only public assets, publication date, protected deletion, foreign asset rejection, concurrent save/delete safety; adaptive dashboard persistence, profile/permissions separation and account privacy.');
 }catch(error){console.log(error instanceof assert.AssertionError?error.stack:'Integration failed (connection details omitted).');process.exitCode=1;}
 finally{await sql`DELETE FROM auth_accounts WHERE email=ANY(${emails})`;const keys=[...emails.map(v=>'email:'+createHash('sha256').update(v).digest('hex')),...accounts.flatMap(v=>['solution-media','dashboard-mode','library'].map(scope=>scope+':'+createHash('sha256').update(v).digest('hex')))];await sql`DELETE FROM auth_rate_limits WHERE key=ANY(${keys})`;console.log('Cleaned temporary media accounts and their cascading data.');}})();
