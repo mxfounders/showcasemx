@@ -22,19 +22,14 @@ export async function GET(request: NextRequest, props: { params: Promise<{ solut
   try {
     const sql = solutionsSql();
     const ref = JSON.stringify([{ id: assetId }]);
-    const [asset] = await sql`SELECT m.storage_key, m.content_base64 FROM solution_media m JOIN founder_solutions s ON s.id = m.solution_id
-      WHERE m.id = ${assetId} AND s.id = ${solutionId} AND s.status <> 'draft'
+    const [asset] = await sql`SELECT m.storage_key FROM solution_media m JOIN founder_solutions s ON s.id = m.solution_id
+      WHERE m.id = ${assetId} AND s.id = ${solutionId} AND s.status <> 'draft' AND m.storage_key IS NOT NULL
         AND (COALESCE(s.data->'screenshots','[]'::jsonb) @> ${ref}::jsonb
           OR COALESCE(s.published_data->'screenshots','[]'::jsonb) @> ${ref}::jsonb)`;
     if (!asset) return failure('Captura no disponible.', 404);
-    let bytes: Buffer | null = null;
-    if (asset.storage_key) {
-      const obj = await getObject(String(asset.storage_key));
-      if (obj && obj !== 'not-modified') bytes = obj.bytes;
-    } else if (asset.content_base64) {
-      bytes = Buffer.from(String(asset.content_base64), 'base64');
-    }
-    if (!bytes) return failure('Captura no disponible.', 404);
+    const obj = await getObject(String(asset.storage_key));
+    if (obj === null || obj === 'not-modified') return failure('Captura no disponible.', 404);
+    const bytes = obj.bytes;
     return new NextResponse(new Uint8Array(bytes), {
       headers: { 'Content-Type': 'image/webp', 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' },
     });

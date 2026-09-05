@@ -78,21 +78,3 @@ export async function deleteObjects(keys: string[], signal?: AbortSignal): Promi
   if (keys.length === 0) return;
   await del(keys, signal ? { abortSignal: signal } : undefined);
 }
-
-/**
- * The single dual-read seam. Deleted whole in phase 5 once content_base64 is
- * dropped. Prefers the blob; falls back to the legacy base64 column.
- * Callers that need conditional requests (the serve routes) use getObject()
- * directly with an ETag; this is for everything else.
- */
-export async function readImageBytes(row: {
-  storage_key: string | null;
-  content_base64: string | null;
-}): Promise<Buffer | null> {
-  if (row.storage_key) {
-    const result = await getObject(row.storage_key);
-    return result && result !== 'not-modified' ? result.bytes : null;
-  }
-  if (row.content_base64) return Buffer.from(row.content_base64, 'base64');
-  return null;
-}

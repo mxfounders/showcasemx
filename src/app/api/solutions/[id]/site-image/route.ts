@@ -23,8 +23,8 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
   try {
     const account = await getSession(request.cookies.get(sessionCookie)?.value);
     const sql = solutionsSql();
-    const [row] = await sql`SELECT i.storage_key, i.checksum, i.content_base64, s.published_data IS NOT NULL AS is_public FROM solution_site_images i JOIN founder_solutions s ON s.id = i.solution_id
-      WHERE i.solution_id = ${params.id} AND (i.storage_key IS NOT NULL OR i.content_base64 IS NOT NULL)
+    const [row] = await sql`SELECT i.storage_key, i.checksum, s.published_data IS NOT NULL AS is_public FROM solution_site_images i JOIN founder_solutions s ON s.id = i.solution_id
+      WHERE i.solution_id = ${params.id} AND i.storage_key IS NOT NULL
         AND (s.published_data IS NOT NULL OR s.owner_id = ${account?.id ?? null}::uuid)`;
     if (!row) return failure('Portada no disponible.', 404);
     // Unlike a screenshot, the owner can re-fetch this at any time (even while
@@ -34,16 +34,10 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
     if (etag && request.headers.get('if-none-match') === etag) {
       return new NextResponse(null, { status: 304, headers: { 'Cache-Control': cacheControl, ETag: etag } });
     }
-    if (row.storage_key) {
-      const obj = await getObject(String(row.storage_key));
-      if (obj === null || obj === 'not-modified') return failure('Portada no disponible.', 404);
-      return new NextResponse(new Uint8Array(obj.bytes), {
-        headers: { 'Content-Type': 'image/webp', 'Cache-Control': cacheControl, 'X-Content-Type-Options': 'nosniff', ...(etag ? { ETag: etag } : {}) },
-      });
-    }
-    // Pre-migration row still on the legacy base64 column (dual-read window).
-    return new NextResponse(new Uint8Array(Buffer.from(String(row.content_base64), 'base64')), {
-      headers: { 'Content-Type': 'image/webp', 'Cache-Control': cacheControl, 'X-Content-Type-Options': 'nosniff' },
+    const obj = await getObject(String(row.storage_key));
+    if (obj === null || obj === 'not-modified') return failure('Portada no disponible.', 404);
+    return new NextResponse(new Uint8Array(obj.bytes), {
+      headers: { 'Content-Type': 'image/webp', 'Cache-Control': cacheControl, 'X-Content-Type-Options': 'nosniff', ...(etag ? { ETag: etag } : {}) },
     });
   } catch { return failure('No pudimos cargar la portada.', 503); }
 }
@@ -71,8 +65,8 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
       // The failure branch never touches storage_key: the AFTER UPDATE OF
       // storage_key trigger does not fire, so a working cover is not orphaned
       // by a transient site error. Do not "improve" this to null out storage_key.
-      await sql`INSERT INTO solution_site_images (solution_id, source_url, image_url, content_base64, width, height, failure, fetched_at)
-        VALUES (${params.id}, ${website}, NULL, NULL, NULL, NULL, ${result.failure}, now())
+      await sql`INSERT INTO solution_site_images (solution_id, source_url, image_url, width, height, failure, fetched_at)
+        VALUES (${params.id}, ${website}, NULL, NULL, NULL, ${result.failure}, now())
         ON CONFLICT (solution_id) DO UPDATE SET source_url = EXCLUDED.source_url, failure = EXCLUDED.failure, fetched_at = now()`;
       return NextResponse.json({ ok: false, failure: result.failure }, { status: 200, headers: { 'Cache-Control': 'no-store' } });
     }
@@ -85,10 +79,10 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
     const checksum = createHash('sha256').update(buffer).digest('hex');
     await putObject(key, buffer);
     try {
-      await sql`INSERT INTO solution_site_images (solution_id, source_url, image_url, storage_key, bytes, checksum, content_base64, width, height, failure, fetched_at)
-        VALUES (${params.id}, ${website}, ${imageUrl}, ${key}, ${buffer.length}, ${checksum}, NULL, ${width}, ${height}, NULL, now())
+      await sql`INSERT INTO solution_site_images (solution_id, source_url, image_url, storage_key, bytes, checksum, width, height, failure, fetched_at)
+        VALUES (${params.id}, ${website}, ${imageUrl}, ${key}, ${buffer.length}, ${checksum}, ${width}, ${height}, NULL, now())
         ON CONFLICT (solution_id) DO UPDATE SET source_url = EXCLUDED.source_url, image_url = EXCLUDED.image_url,
-          storage_key = EXCLUDED.storage_key, bytes = EXCLUDED.bytes, checksum = EXCLUDED.checksum, content_base64 = NULL,
+          storage_key = EXCLUDED.storage_key, bytes = EXCLUDED.bytes, checksum = EXCLUDED.checksum,
           width = EXCLUDED.width, height = EXCLUDED.height, failure = NULL, fetched_at = now()`;
     } catch {
       try { await sql`INSERT INTO storage_orphans(key) VALUES(${key}) ON CONFLICT(key) DO NOTHING`; } catch {}

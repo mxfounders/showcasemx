@@ -12,7 +12,7 @@ export async function GET(request:NextRequest, props:{params:Promise<Params>}) {
  try{const account=await getSession(request.cookies.get(sessionCookie)?.value),sql=solutionsSql();
  // Public if the approved snapshot references it, otherwise owner only. Reviewers
  // read screenshots through the ops backoffice, which proxies this route.
- const [asset]=await sql`SELECT m.storage_key,m.checksum,m.content_base64,COALESCE(s.published_data->'screenshots','[]'::jsonb) @> ${JSON.stringify([{id:params.assetId}])}::jsonb AS is_public FROM solution_media m JOIN founder_solutions s ON s.id=m.solution_id WHERE m.id=${params.assetId} AND s.id=${params.id} AND (
+ const [asset]=await sql`SELECT m.storage_key,m.checksum,COALESCE(s.published_data->'screenshots','[]'::jsonb) @> ${JSON.stringify([{id:params.assetId}])}::jsonb AS is_public FROM solution_media m JOIN founder_solutions s ON s.id=m.solution_id WHERE m.id=${params.assetId} AND s.id=${params.id} AND (
  COALESCE(s.published_data->'screenshots','[]'::jsonb) @> ${JSON.stringify([{id:params.assetId}])}::jsonb
  OR s.owner_id=${account?.id??null}::uuid)`;
  if(!asset)return failure('Captura no disponible.',404);
@@ -25,13 +25,9 @@ export async function GET(request:NextRequest, props:{params:Promise<Params>}) {
  // no blob fetch at all. (The blob's own ETag differs from this sha256, so we do
  // not forward If-None-Match to the store.)
  if(etag&&request.headers.get('if-none-match')===etag)return new NextResponse(null,{status:304,headers:{'Cache-Control':cacheControl,ETag:etag}});
- if(asset.storage_key){
  const obj=await getObject(String(asset.storage_key));
  if(obj===null||obj==='not-modified')return failure('Captura no disponible.',404);
  return new NextResponse(new Uint8Array(obj.bytes),{headers:{'Content-Type':'image/webp','Cache-Control':cacheControl,'X-Content-Type-Options':'nosniff',...(etag?{ETag:etag}:{})}});
- }
- // Pre-migration row still on the legacy base64 column (dual-read window).
- return new NextResponse(new Uint8Array(Buffer.from(String(asset.content_base64),'base64')),{headers:{'Content-Type':'image/webp','Cache-Control':cacheControl,'X-Content-Type-Options':'nosniff'}});
  }catch{return failure('No pudimos cargar la captura.',503);}
 }
 export async function DELETE(request:NextRequest, props:{params:Promise<Params>}) {
