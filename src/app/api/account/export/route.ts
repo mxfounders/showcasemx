@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const sql = authSql();
 
     const [profile, solutions, saved, lists, listItems, sent, received, events, notifications, newsletter] = await Promise.all([
-      sql`SELECT id::text, email, name, organization, profile, role, dashboard_mode, created_at::text, email_verified_at::text, avatar_data IS NOT NULL AS has_avatar, totp_confirmed_at IS NOT NULL AS two_step_enabled FROM auth_accounts WHERE id = ${account.id}`,
+      sql`SELECT id::text, email, name, organization, profile, role, dashboard_mode, created_at::text, email_verified_at::text, (avatar_key IS NOT NULL OR avatar_data IS NOT NULL) AS has_avatar, totp_confirmed_at IS NOT NULL AS two_step_enabled FROM auth_accounts WHERE id = ${account.id}`,
       sql`SELECT id::text, catalog_key, status, step, version, data, published_data, published_at::text, updated_at::text FROM founder_solutions WHERE owner_id = ${account.id} ORDER BY updated_at`,
       sql`SELECT project_key, created_at::text FROM buyer_saved_projects WHERE owner_id = ${account.id} ORDER BY created_at`,
       sql`SELECT id::text, name, purpose, visibility, public_description, curator_name, categories, created_at::text FROM buyer_lists WHERE owner_id = ${account.id} ORDER BY created_at`,

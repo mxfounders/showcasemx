@@ -60,7 +60,7 @@ const fetchPublishedRows=unstable_cache(async()=>{
   s.published_data->'screenshots'->0->>'id' AS cover_id,
   COALESCE(l.n,0) likes,COALESCE(c.n,0) comments,COALESCE(sv.n,0) saves,COALESCE(v.n,0) views,
   COALESCE(l.decayed,0) likes_score,COALESCE(c.decayed,0) comments_score,COALESCE(sv.decayed,0) saves_score,COALESCE(v.decayed,0) views_score,
-  EXISTS(SELECT 1 FROM solution_site_images i WHERE i.solution_id=s.id AND i.content_base64 IS NOT NULL) has_site_image
+  EXISTS(SELECT 1 FROM solution_site_image_ready r WHERE r.solution_id=s.id) has_site_image
  FROM founder_solutions s
  LEFT JOIN likes l ON l.solution_id=s.id LEFT JOIN comments c ON c.solution_id=s.id
  LEFT JOIN saves sv ON sv.solution_id=s.id LEFT JOIN views v ON v.solution_id=s.id

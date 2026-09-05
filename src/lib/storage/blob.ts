@@ -72,10 +72,11 @@ export async function getObject(
 }
 
 /** Deletes keys best-effort. `del` does not throw on a missing key, so
- *  re-sweeping an already-gone blob is free. */
-export async function deleteObjects(keys: string[]): Promise<void> {
+ *  re-sweeping an already-gone blob is free. An optional signal bounds the call
+ *  (the sweeper passes one so a slow store cannot stall the cron). */
+export async function deleteObjects(keys: string[], signal?: AbortSignal): Promise<void> {
   if (keys.length === 0) return;
-  await del(keys);
+  await del(keys, signal ? { abortSignal: signal } : undefined);
 }
 
 /**

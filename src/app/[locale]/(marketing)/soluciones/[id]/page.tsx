@@ -16,7 +16,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
   if (!isSolutionId(params.id)) return {};
   const sql = solutionsSql();
   const [row] = await sql`SELECT published_data,
-    EXISTS(SELECT 1 FROM solution_site_images i WHERE i.solution_id=founder_solutions.id AND i.content_base64 IS NOT NULL) AS has_site_image
+    EXISTS(SELECT 1 FROM solution_site_image_ready r WHERE r.solution_id=founder_solutions.id) AS has_site_image
     FROM founder_solutions WHERE id=${params.id} AND published_data IS NOT NULL`;
   if (!row) return {};
   const data = row.published_data as SolutionData;
@@ -48,7 +48,7 @@ export default async function PublicSolution(props:{params: Promise<{id:string}>
  const params = await props.params;
  if(!isSolutionId(params.id))notFound();
  const sql=solutionsSql();const [row]=await sql`SELECT owner_id,catalog_key,published_data - 'contactEmail' AS published_data,published_at::text,
-  EXISTS(SELECT 1 FROM solution_site_images i WHERE i.solution_id=founder_solutions.id AND i.content_base64 IS NOT NULL) AS has_site_image
+  EXISTS(SELECT 1 FROM solution_site_image_ready r WHERE r.solution_id=founder_solutions.id) AS has_site_image
   FROM founder_solutions WHERE id=${params.id} AND published_data IS NOT NULL`;
  if(!row)notFound();
  const data=row.published_data as SolutionData;

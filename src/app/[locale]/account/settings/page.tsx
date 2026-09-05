@@ -12,7 +12,7 @@ export default async function SettingsPage(){
  try{
   const sql=authSql();
   const [[row],[sessionCount],[identity],[prefs]]=await Promise.all([
-   sql`SELECT name,organization,avatar_data IS NOT NULL AS has_avatar,email_verified_at,totp_confirmed_at FROM auth_accounts WHERE id=${account.id}`,
+   sql`SELECT name,organization,(avatar_key IS NOT NULL OR avatar_data IS NOT NULL) AS has_avatar,email_verified_at,totp_confirmed_at FROM auth_accounts WHERE id=${account.id}`,
    sql`SELECT count(*)::int AS total FROM auth_sessions WHERE account_id=${account.id} AND expires_at>now()`,
    sql`SELECT email FROM auth_google_identities WHERE account_id=${account.id}`,
    sql`SELECT count(*)::int AS total FROM notification_preferences WHERE owner_id=${account.id}`,
