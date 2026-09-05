@@ -15,7 +15,7 @@ export default async function PanelHome() {
 
   const [pending, reports, inquiries, mail, newAccounts, auditLog] = await sql.transaction([
     sql`SELECT count(*)::int AS n FROM founder_solutions WHERE status IN ('pending', 'changes_requested')`,
-    sql`SELECT count(*)::int AS n FROM solution_reports WHERE status = 'open'`,
+    sql`SELECT (SELECT count(*)::int FROM solution_reports WHERE status = 'open') + (SELECT count(*)::int FROM community_reports WHERE status = 'open') AS n`,
     sql`SELECT count(*)::int AS n FROM contact_inquiries WHERE handled_at IS NULL`,
     sql`SELECT count(*)::int AS n FROM account_notifications WHERE email_state IN ('failed', 'pending', 'sending')`,
     sql`SELECT count(*)::int AS n FROM auth_accounts WHERE created_at >= now() - interval '7 days'`,

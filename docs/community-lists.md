@@ -49,8 +49,60 @@ Archivos principales: `src/lib/library/community.ts`, `model.ts`, `server.ts`, A
 - Lint, TypeScript y build de producción en directorio aislado; no se modifica `.next` del servidor de desarrollo.
 - Revisión visual con cuenta temporal: formulario móvil, publicar con varias categorías, mosaico con dos proyectos y dos huecos, detalle público, compartir. Fixture eliminado al terminar.
 
+## Moderación: reportes de listas y comentarios — 4 septiembre 2026
+
+Sustituye la nota histórica de "Límites pendientes" que decía que faltaba un reporte
+central para listas/comentarios y que no había que reutilizar el flujo de reportes de
+soluciones. Se construyó una tabla y un flujo propios, espejo de `solution_reports`
+(`db/launch-foundation.sql`), sin tocar ese flujo existente.
+
+- `db/community-reports.sql`: tabla `community_reports` (`subject_type` `list`|`comment`,
+  `list_id` siempre presente, `comment_id` solo para reportes de comentario, `reason`
+  `spam|abuse|impersonation|other`, `details`, `status` `open|resolved|dismissed`,
+  `decision`, `reviewer_id`, `version` para concurrencia optimista). Un índice parcial único
+  por `(list_id,reporter_id)` y otro por `(comment_id,reporter_id)` con `status='open'`
+  impiden que la misma cuenta abra dos reportes simultáneos sobre el mismo contenido;
+  reintentos devuelven 409, no duplican. `comment_id` es `ON DELETE SET NULL` (no
+  `CASCADE`): al eliminar el comentario reportado, el reporte conserva su historial de
+  decisión en vez de desaparecer con él — se detectó y corrigió durante la verificación
+  en vivo de esta entrega, antes de tocar producción.
+- Cualquier visitante autenticado que no sea el dueño de la lista ni el autor del
+  comentario puede reportar. `POST /api/community` gana `action:'report'` (además de
+  like/save/comment/delete-comment ya existentes), límite `securityLimit('community-report',
+  cuenta,5)` (5/hora), y excluye autorreportes en la misma inserción
+  (`owner_id<>cuenta` / `author_id<>cuenta`), igual que like/save.
+- `CommunityReportForm` (`src/components/library/community-report-form.tsx`) es el mismo
+  patrón que `ReportForm` de fichas: motivo + contexto (10–2000 caracteres), sin resolver
+  nada desde el producto. Vive en un `<details>Reportar esta lista</details>` (oculto para
+  el dueño) y, por comentario, en un botón de bandera visible solo para quien no es su
+  autor (el dueño de la lista ya puede borrar cualquier comentario directamente y no
+  necesita reportarlo).
+- Ops: nuevo `ops/api/community-reports` (GET paginado por estado, POST de decisión) y
+  `/panel/reportes` ahora tiene un selector Fichas/Comunidad encima de las pestañas de
+  estado existentes, reutilizando la misma UI de expandir-y-decidir. Decisiones:
+  `resolve`, `dismiss`, `takedown` (pone la lista en privado o borra el comentario según
+  `subject_type`). Concurrencia optimista igual que soluciones (`version`), auditoría en
+  `ops_audit_log` con `action:'community_report_${decision}'`. El KPI "Reportes abiertos"
+  de `/panel` ahora suma ambas tablas.
+- No se tocó el flujo de reportes de soluciones ni sus rutas; ambos comparten página de
+  ops pero no tabla ni endpoint.
+
+## Búsqueda con pg_trgm — 4 septiembre 2026
+
+Sustituye la nota histórica que señalaba `strpos()` sin índice como deuda pendiente.
+`db/community-search-trgm.sql` habilita la extensión `pg_trgm` y crea un índice GIN sobre
+`(name||' '||public_description||' '||curator_name)` filtrado a `visibility='public'`.
+`getPublicCollections` (`src/lib/library/community.ts`) cambió el filtro de
+`strpos(...)>0` a `(...) ILIKE '%término%'`, con el término del visitante escapado
+(`escapeLikeTerm`, `community-model.ts`) para que un `%` o `_` propios no se interpreten
+como comodín. Verificado en vivo: coincide con una lista de prueba por una palabra
+suelta de su descripción y no coincide con términos ajenos; con el catálogo actual de
+pocas listas el planificador todavía prefiere un seq scan (esperado, no un defecto: el
+índice se vuelve determinante según crece la tabla, se confirmó forzando su uso con
+`enable_seqscan=off`).
+
 ## Límites pendientes
 
-No hay colaboración entre autores, seguimiento de curadores, clonado, portadas personalizadas, perfiles públicos ni notificaciones sociales. El ranking mide interacción bruta, no calidad ni tendencia temporal, y puede manipularse creando cuentas; usarlo solo como orden auxiliar durante beta. El curador modera comentarios de su lista, pero todavía faltan reporte central, bloqueo, apelación y proceso editorial para listas, texto y comentarios. No reutilizar el flujo de reportes de soluciones como si ya cubriera estas entidades.
+No hay colaboración entre autores, seguimiento de curadores, clonado, portadas personalizadas, perfiles públicos ni notificaciones sociales. El ranking mide interacción bruta, no calidad ni tendencia temporal, y puede manipularse creando cuentas; usarlo solo como orden auxiliar durante beta. El curador modera comentarios de su lista directamente y ahora también existe un reporte central en ops (ver arriba), pero todavía faltan bloqueo, apelación, reputación y defensa sólida ante multicuentas — no promover masivamente la función hasta cerrar esa operación.
 
 Marca vigente: **shwcs**. Rebranding de interfaz aplicado después de esta entrega; dominio, logo y servicios externos pendientes.

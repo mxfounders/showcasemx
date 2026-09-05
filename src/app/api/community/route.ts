@@ -4,7 +4,7 @@ import { securityLimit } from '@/lib/auth/security';
 import { solutionsSql } from '@/lib/solutions/server';
 import { solutionBody,failure } from '@/lib/solutions/http';
 import { isSolutionId } from '@/lib/solutions/model';
-import { communityComment } from '@/lib/library/community-model';
+import { communityComment,communityReport } from '@/lib/library/community-model';
 const ok=(data:Record<string,unknown>={})=>NextResponse.json({ok:true,...data},{headers:{'Cache-Control':'no-store'}});
 export async function POST(request:NextRequest){
  if(request.headers.get('origin')!==request.nextUrl.origin)return failure('Usa shwcs.',403);
@@ -16,6 +16,10 @@ export async function POST(request:NextRequest){
  }
  if(body.action==='comment'){const details=communityComment(body);if(typeof body.commentId!=='string'||!isSolutionId(body.commentId))return failure('Comentario inválido.',400);if(!details)return failure('Escribe un nombre o alias y un comentario de hasta 500 caracteres.',400);if(!await securityLimit('community-comment',account.id,10))return failure('Espera antes de comentar otra vez.',429);const rows=await sql`WITH target AS (SELECT id FROM buyer_lists WHERE id=${id} AND visibility='public'),inserted AS (INSERT INTO community_list_comments(id,list_id,author_id,author_name,body) SELECT ${body.commentId},id,${account.id},${details.name},${details.comment} FROM target ON CONFLICT(id) DO NOTHING RETURNING id,created_at) SELECT id,created_at,true created FROM inserted UNION ALL SELECT c.id,c.created_at,false created FROM community_list_comments c JOIN target t ON t.id=c.list_id WHERE c.id=${body.commentId} AND c.author_id=${account.id} LIMIT 1`;if(!rows.length)return failure('La lista ya no está pública.',404);return ok({id:rows[0].id,createdAt:rows[0].created_at,created:!!rows[0].created});}
  if(body.action==='delete-comment'){if(typeof body.commentId!=='string'||!isSolutionId(body.commentId))return failure('Comentario inválido.',400);const rows=await sql`DELETE FROM community_list_comments c USING buyer_lists l WHERE c.id=${body.commentId} AND c.list_id=l.id AND (c.author_id=${account.id} OR l.owner_id=${account.id}) RETURNING c.id`;return rows.length?ok():failure('No puedes eliminar este comentario.',404);}
+ if(body.action==='report'){const details=communityReport(body);if(!details)return failure('Indica el motivo y al menos 10 caracteres de contexto.',400);if(body.commentId!==undefined&&(typeof body.commentId!=='string'||!isSolutionId(body.commentId)))return failure('Comentario inválido.',400);if(!await securityLimit('community-report',account.id,5))return failure('Demasiados reportes. Intenta más tarde.',429);
+  const rows=typeof body.commentId==='string'?await sql`INSERT INTO community_reports(subject_type,list_id,comment_id,reporter_id,reason,details) SELECT 'comment',c.list_id,c.id,${account.id},${details.reason},${details.details} FROM community_list_comments c JOIN buyer_lists l ON l.id=c.list_id WHERE c.id=${body.commentId} AND c.list_id=${id} AND l.visibility='public' AND c.author_id<>${account.id} ON CONFLICT DO NOTHING RETURNING id`:await sql`INSERT INTO community_reports(subject_type,list_id,reporter_id,reason,details) SELECT 'list',l.id,${account.id},${details.reason},${details.details} FROM buyer_lists l WHERE l.id=${id} AND l.visibility='public' AND l.owner_id<>${account.id} ON CONFLICT DO NOTHING RETURNING id`;
+  return rows.length?ok():failure('Ya tienes un reporte abierto o el contenido ya no está disponible.',409);
+ }
  return failure('Acción inválida.',400);
  }catch{return failure('No pudimos guardar el cambio.',503);}
 }
