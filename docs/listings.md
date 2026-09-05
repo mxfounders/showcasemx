@@ -79,6 +79,13 @@ escribir el sitio, se lee la `og:image` que ese sitio ya publica.
   justamente el píxel externo que el aviso de privacidad dice no incrustar.
 - Tabla `solution_site_images` (una fila por solución), migración
   `db/solution-site-image.sql`, aplicada a `neondb` y a `shwcs_production`.
+- **Los bytes viven en Vercel Blob**, no en Postgres (migración `db/media-storage.sql`
+  + `db/media-storage-drop.sql`, 5 sep 2026; ver CLAUDE.md §58). La fila guarda
+  `storage_key` (ruta del blob), `bytes` y `checksum` (sha256, sirve de `ETag`).
+  Cada re-lectura de la og:image acuña una `storage_key` nueva; el trigger
+  `AFTER UPDATE OF storage_key` encola la vieja en `storage_orphans` para el
+  barredor. La rama de fallo nunca toca `storage_key`, así que una portada que
+  funciona no se huerfaniza por un error transitorio del sitio.
 - `GET /api/solutions/[id]/site-image` sirve el WebP: público solo si la solución
   está publicada; mientras es borrador responde únicamente a su dueño, para que
   un UUID ajeno no confirme que ahí existe un borrador.

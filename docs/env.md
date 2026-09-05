@@ -20,6 +20,9 @@ variables. Separar bases de desarrollo, preview y producción.
 | NEXT_PUBLIC_SHOW_DEMO_PROJECTS | false/ausente por defecto. true muestra ejemplos de diseño no contratables. No usar en catálogo público real. |
 | LAUNCH_LEGAL_REVIEWED | true solo después de revisión humana de responsable, contacto y políticas; preflight no valida contenido legal. |
 | OPENAI_API_KEY | Opcional/futuro. No hay búsqueda IA implementada. |
+| BLOB_READ_WRITE_TOKEN | Token estático del store privado de Vercel Blob (`shwcs-blob`). Necesario en **local y en scripts** (backfill, integración): OIDC no funciona fuera del runtime de Vercel. En Production/Preview de Vercel el SDK usa OIDC (`VERCEL_OIDC_TOKEN` + `BLOB_STORE_ID`, inyectados por la integración) y este token va vacío. **En local NO poner `BLOB_STORE_ID` junto al token estático** o el SDK lo ignora en favor de OIDC. Sin credenciales, las subidas responden 503 (sin éxito simulado). Ver CLAUDE.md §58. |
+| OPS_MEDIA_SECRET | Secreto de 32+ bytes hex compartido, **mismo valor** en `shwcs` y `shwcs-ops`. `ops/` no lleva token de Blob: proxea los bytes de capturas por `POST`→`GET /api/internal/media/[solutionId]/[assetId]` del producto con `Authorization: Bearer`. Sin él (o sin `PRODUCT_APP_ORIGIN` en ops), el drawer de revisión de ops no muestra capturas. |
+| STORAGE_SWEEP_ENABLED | `true` activa el barredor de blobs huérfanos dentro de `/api/internal/monitor` (cron diario). Dejar sin poner hasta después de dropear `content_base64`: un rollback que ponga `storage_key` a NULL con el barredor activo borraría bytes vivos. En producción ya está en `true` (5 sep). |
 
 La conexión local de Neon tiene aplicadas las migraciones operativas, incluida
 launch-foundation.sql. Eso no confirma otro entorno de Vercel. Revisar orden y

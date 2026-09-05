@@ -65,15 +65,20 @@ ni botón que actualice la fecha sin una revisión editorial.
 
 Migración aditiva `db/solution-media-dashboard.sql` después de auth y soluciones:
 
-- `solution_media`: UUID, solución propietaria con FK en cascada, WebP en base64,
-  ancho, alto y fecha. Índice por solución/fecha.
+- `solution_media`: UUID, solución propietaria con FK en cascada, `storage_key`
+  (ruta del blob), `bytes`, `checksum` (sha256), ancho, alto y fecha. Índice por
+  solución/fecha; índice único parcial por `storage_key`.
 - `founder_solutions.published_at`: fecha de la última aprobación, nullable.
 - `auth_accounts.dashboard_mode`: `buyer`, `founder` o `both`, nullable.
 
-No requiere otro servicio ni secretos. Para este MVP las imágenes se guardan en
-Neon. **No es la arquitectura de almacenamiento definitiva**: antes de crecer,
-migrar binarios a almacenamiento de objetos privado y conservar los mismos permisos.
-No exponer URLs públicas de borradores al hacer esa migración.
+**Los bytes viven en Vercel Blob (store privado `shwcs-blob`), no en Postgres.**
+Migración `db/media-storage.sql` (fases 1–4) + `db/media-storage-drop.sql` (fase 5,
+elimina la columna `content_base64` que usaba el MVP). Aplicadas a `neondb` y a
+`shwcs_production` (5 sep 2026). Detalle completo en CLAUDE.md §58. Las claves de
+blob nunca se derivan del contenido; la portada de sitio y el avatar acuñan clave
+nueva en cada re-escritura para que el trigger de `storage_orphans` limpie la
+vieja sin ambigüedad. No se exponen URLs públicas de blob: todo pasa por la ruta
+proxy, que aplica el mismo predicado de autorización que antes.
 
 | Endpoint | Permisos y comportamiento |
 | --- | --- |

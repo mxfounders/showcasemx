@@ -2205,3 +2205,153 @@ motor de búsqueda distinto (`filterSaved` con substring y su propio
   recomendada aparte: que Cord declare sus `industries` y `companySizes` en su
   ficha — la inferencia solo cubre el hueco mientras tanto. El plan completo
   está en `/Users/andrevalleortega/.claude/plans/oye-como-que-la-federated-newell.md`.
+
+## 58. Imágenes en object storage (Vercel Blob) — 5 septiembre 2026
+
+Fuente vigente: `docs/media-dashboard.md`, `docs/listings.md`, `docs/database.md`,
+`docs/env.md`. Sustituye toda mención histórica a que las imágenes viven en Neon
+como base64 (§16 "elección acotada del MVP", §50 "copia reencodificada en
+`solution_site_images`", `db/solution-media-dashboard.sql` "WebP en base64").
+
+Los bytes de imagen —capturas del fundador y portadas `og:image` del sitio— salieron
+de Postgres a **Vercel Blob**, store privado `shwcs-blob` (`store_yvVU2hQFPsVHLP2A`),
+conectado a `mxfounders/shwcs` y `mxfounders/shwcs-ops`. Migración por fases,
+sin downtime, **completa y desplegada en producción**.
+
+### Esquema
+
+`db/media-storage.sql` (fases 1–4) + `db/media-storage-drop.sql` (fase 5),
+**aplicadas a `neondb` y a `shwcs_production`**. Scripts
+`scripts/migrate-media-storage.cjs` / `-drop.cjs` (reutilizan el splitter de
+`migrate-launch.cjs`: respeta `$$` y comentarios).
+
+- `solution_media` y `solution_site_images` ganan `storage_key text`,
+  `bytes integer CHECK(<=409600)`, `checksum text` (sha256, sirve de `ETag`).
+  `content_base64` **eliminada** en fase 5. `solution_media.storage_key/bytes/checksum`
+  son `NOT NULL`; en `solution_site_images` siguen nullable (una fila de fallo no
+  tiene imagen).
+- `auth_accounts` gana `avatar_key` / `avatar_checksum`. `avatar_data` queda como
+  **columna vestigial** (0 avatares en prod); una limpieza futura puede dropearla y
+  colapsar los predicados `has_avatar` a solo `avatar_key IS NOT NULL`.
+- **Índices únicos parciales** por `storage_key` / `avatar_key`: hacen que el chequeo
+  de vida del barredor sea un lookup, no un seq scan.
+- **`storage_orphans(key PK, deleted_at, attempts, locked_until)`**: la cola del
+  único mecanismo de recolección de basura.
+- **Vista `solution_site_image_ready`**: único lugar del predicado `has_site_image`
+  (antes repetido en 6 consultas). Fase 5 la recrea sin `content_base64` y la app no
+  se toca.
+
+### Claves de blob
+
+`src/lib/storage/keys.ts`. Nunca derivadas del contenido (dos soluciones
+compartirían un blob; su existencia sería un oráculo entre cuentas). Formas:
+`solutions/{sid}/media/{assetId}.webp`, `solutions/{sid}/site/{fetchId}.webp`,
+`accounts/{acc}/avatar/{uploadId}.webp`. La captura usa el `randomUUID()` del asset
+(nuevo por subida). **La portada de sitio y el avatar acuñan una clave nueva en
+cada re-escritura**: el `AFTER UPDATE OF storage_key` encola la vieja en
+`storage_orphans`. Una clave determinista se borraría bajo los pies de la fila viva
+un ciclo de barrido después de un re-fetch.
+
+### Recolección de basura — un solo mecanismo
+
+Triggers → `storage_orphans` → barredor. Cinco triggers (`db/media-storage.sql`):
+`AFTER DELETE` en `solution_media` y `solution_site_images`; `AFTER UPDATE OF
+storage_key` en `solution_site_images` con `WHEN (OLD IS DISTINCT FROM NEW AND OLD
+IS NOT NULL)`; `AFTER UPDATE OF avatar_key` y `AFTER DELETE` en `auth_accounts`.
+`ON CONFLICT (key) DO NOTHING` en la función **no es opcional**: sin él una clave
+duplicada aborta el DELETE del fundador (503). Es el único camino que atrapa los
+borrados por `ON DELETE CASCADE` (borrar solución/cuenta), donde la app nunca ve
+las claves. **La rama de fallo de `site-image` no lista `storage_key` en su
+`SET`**, así que el trigger no dispara ahí y una portada que funciona no se
+huerfaniza por un error transitorio del sitio — no "mejorar" esa rama para poner
+`storage_key` a NULL.
+
+El barredor va en `src/app/api/internal/monitor/route.ts` (cron diario, Hobby no
+tiene un tercer cron), **antes** del probe de salud, detrás de
+`STORAGE_SWEEP_ENABLED` (`true` en prod). Best-effort: un fallo nunca tumba el
+health check. Dos sentencias en un `sql.transaction`: (1) purga de vida —borra de
+la cola cualquier clave presente en una tabla viva, para que una clave resucitada
+nunca se barra; (2) arrienda un lote de 100 (`attempts++`, `locked_until`), luego
+`del()` con `AbortSignal.timeout(3000)`, luego borra las claves de la cola. El JSON
+del monitor expone `orphansDeadLettered` (`attempts >= 5`).
+
+### Rutas de servido
+
+`GET /api/solutions/[id]/media/[assetId]`, `.../site-image`, y `GET
+/api/account/avatar` (ruta nueva, sin id: sirve el avatar de la sesión). **La
+consulta SQL de autorización no cambió** — captura pública si
+`published_data->'screenshots' @> [{id}]`, dueño siempre, todo lo demás 404
+uniforme. Los bytes salen de Blob vía `getObject` del adaptador, **buffeados**
+(nunca stream directo: un fallo a mitad envenena el edge con una imagen truncada
+bajo `immutable`). `ETag` = `"{checksum}"`; un `If-None-Match` que coincide
+devuelve **304 sin tocar Blob** (el ETag propio del blob es otro hash, no se
+reenvía). Caché: capturas publicadas `public, max-age=3600, immutable` (sus bytes
+nunca cambian); portada de sitio `public, max-age=60, s-maxage=3600,
+stale-while-revalidate=86400` **sin `immutable`** (el dueño la re-lee detrás de una
+URL estable); borrador/avatar `private, no-store`. Retirar una publicación revoca
+el acceso público **por predicado, no borrando bytes**: `withdraw` no borra ningún
+blob y re-publicar restaura los mismos ids.
+
+`src/lib/storage/blob.ts` es el **único** importador de `@vercel/blob@2.8.0`.
+Auth: en el runtime de Vercel (prod/preview) OIDC (`VERCEL_OIDC_TOKEN` +
+`BLOB_STORE_ID`); en local y scripts, `BLOB_READ_WRITE_TOKEN` estático —OIDC no
+aplica al entorno `development`— y **sin `BLOB_STORE_ID` junto al token** o el SDK
+lo ignora. Sin credenciales, las subidas responden 503 (sin éxito simulado).
+`putImage()` del SDK descartado: cobra transformación por llamada, exige OIDC, y
+sharp ya corre igual por el §6.
+
+### `ops/` proxea, no lee Blob
+
+`ops/src/app/api/media/[assetId]/route.ts` ya no hace `SELECT content_base64`:
+resuelve el `solution_id` y llama a `GET /api/internal/media/[solutionId]/[assetId]`
+del producto con `Authorization: Bearer OPS_MEDIA_SECRET`. Esa ruta interna —no
+ops— aplica el predicado §16 (no draft + referenciada en `data`/`published_data`).
+Razones: la ruta de ops era un `SELECT ... WHERE id=$1` sin scoping; el `DROP
+COLUMN` de fase 5 no exige redeploy en lockstep de dos proyectos; cero deps nuevas
+en `ops/package.json`. Requiere `OPS_MEDIA_SECRET` (mismo valor en ambos proyectos)
+y `PRODUCT_APP_ORIGIN` en ops.
+
+### Orden de escritura y borrado de cuenta
+
+Subir a Blob → transacción `FOR UPDATE` que inserta la fila. Si devuelve 0 filas
+(carrera de cuota/estado/propiedad) o lanza → `INSERT INTO storage_orphans` de la
+clave recién subida, 409/503. Nunca al revés: una fila apuntando a un blob
+inexistente es una imagen rota visible; un blob encolado es desperdicio invisible.
+Borrar: solo la transacción; el `AFTER DELETE` encola. `POST /api/account/delete`
+hace además un `deleteObjects` **inline best-effort** tras el commit del cascade,
+para honrar la promesa de "sin ventana de retención"; los triggers + el barrido
+son la red de garantía.
+
+### Despliegue realizado
+
+- Fase 1 (`db/media-storage.sql`) → `shwcs_production`, verificada.
+- Migraciones §56/§57 de comunidad → `shwcs_production` (eran prerequisito del
+  merge de esta rama a `main`).
+- Fase 2 (código dual-read) desplegada; verificado en vivo que `shwcs.site` sirve
+  la portada de Cord desde Blob con `ETag`/304.
+- Fase 3 backfill en `shwcs_production`: 1 blob (portada de Cord, `bytes=11474`),
+  `pending 0`.
+- Fase 5a (código sin fallback `content_base64`) + Fase 5b
+  (`db/media-storage-drop.sql`) → `shwcs_production`.
+- Fase 6: `STORAGE_SWEEP_ENABLED=true` en ambos proyectos, redeploy.
+
+### Verificación
+
+86 unitarias, lint y build limpios en `shwcs` y `ops/`.
+`RUN_MEDIA_INTEGRATION=1 node tests/integration/media-dashboard.cjs` **PASS**
+contra el esquema post-drop, incluida la carrera guardar-vs-borrar `[200,409]`
+(el `FOR UPDATE` sobre `founder_solutions` la sigue serializando). Reparada de
+paso: el fixture necesitaba `industries:[]`/`companySizes:[]` (§54) y ahora limpia
+sus propios blobs del store real en `finally`. Recorridos en vivo: triggers de GC
+(delete/replace/cascada/rama-de-fallo/liveness-purge) contra `neondb`;
+publicar→`immutable`, re-fetch de portada→clave nueva+huérfano, withdraw→404 con
+blob y `storage_key` intactos, dueño ve la captura retirada.
+
+### No hecho — Fase B (proyecto aparte)
+
+**Renditions responsivas (400/800/1600 px).** Hoy una tarjeta de catálogo de
+400 px carga la imagen completa de 1600×1200 (~400 KB). La Fase A movió los bytes
+1:1; la Fase B añade tres anchos, tabla hija `solution_media_files`, URLs con
+segmento de ancho (`/media/{id}/800.webp`), `ETag` por rendition, loader propio de
+`next/image` y quitar `unoptimized` de los componentes. No empezada. El plan está
+en `/Users/andrevalleortega/.claude/plans/haz-el-plan-para-abundant-dove.md`.

@@ -120,13 +120,21 @@ actuales sin migrar o borrar guardados, listas o notas.
 ## Capturas e inicio adaptativo — vigente
 
 Aplicar `db/solution-media-dashboard.sql` después de auth/founder-solutions.
-Añade solution_media (WebP base64, dimensiones, FK en cascada), published_at en
+Añade solution_media (WebP, dimensiones, FK en cascada), published_at en
 founder_solutions y dashboard_mode en auth_accounts. Sin backfill de fechas.
-Aplicada a la conexión local configurada; no certifica otro entorno de Vercel.
 Guardar/upload/borrar usan lock de la fila padre para proteger referencias.
 Los binarios son privados salvo referencia en snapshot publicado; no exponerlos
-con SELECT público indiscriminado. Límites y futura migración a objetos privados
-se documentan en [media y dashboard](media-dashboard.md).
+con SELECT público indiscriminado.
+
+**Object storage — vigente (5 sep 2026).** Los bytes de imagen (capturas,
+portadas de sitio) salieron de Postgres a Vercel Blob. Migraciones
+`db/media-storage.sql` (columnas `storage_key`/`bytes`/`checksum`, tabla
+`storage_orphans`, funciones + triggers de recolección de basura, vista
+`solution_site_image_ready`) y `db/media-storage-drop.sql` (elimina
+`content_base64`, pone `solution_media.storage_key/bytes/checksum` NOT NULL,
+recrea la vista). **Ambas aplicadas a `neondb` y a `shwcs_production`.**
+`auth_accounts.avatar_data` queda como columna vestigial (0 avatares en prod).
+Detalle completo: CLAUDE.md §58 y [media y dashboard](media-dashboard.md).
 
 `db/solution-profile.sql` añade editor_question nullable para reanudar las 14 preguntas.
 El step 0..3 se mantiene. Fundadores/redes opcionales viven en data/published_data.
