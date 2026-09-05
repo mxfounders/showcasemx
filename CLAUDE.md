@@ -2347,11 +2347,40 @@ sus propios blobs del store real en `finally`. Recorridos en vivo: triggers de G
 publicar→`immutable`, re-fetch de portada→clave nueva+huérfano, withdraw→404 con
 blob y `storage_key` intactos, dueño ve la captura retirada.
 
-### No hecho — Fase B (proyecto aparte)
+### Fase B — renditions responsivas de capturas (hecha, sin desplegar)
 
-**Renditions responsivas (400/800/1600 px).** Hoy una tarjeta de catálogo de
-400 px carga la imagen completa de 1600×1200 (~400 KB). La Fase A movió los bytes
-1:1; la Fase B añade tres anchos, tabla hija `solution_media_files`, URLs con
-segmento de ancho (`/media/{id}/800.webp`), `ETag` por rendition, loader propio de
-`next/image` y quitar `unoptimized` de los componentes. No empezada. El plan está
-en `/Users/andrevalleortega/.claude/plans/haz-el-plan-para-abundant-dove.md`.
+Las capturas del fundador existen en 400/800/1600. `db/media-renditions.sql`:
+tabla hija `solution_media_files(storage_key PK, media_id FK cascada, width IN
+(400,800), bytes, checksum, UNIQUE(media_id,width))` + su trigger `AFTER DELETE`
+a la misma cola `storage_orphans`. El ancho completo (1600) lo sigue sirviendo
+`solution_media.storage_key`; solo 400 y 800 tienen fila.
+
+- **Loader propio** `src/lib/images/loader.js` (`next.config.mjs` →
+  `images.loader:'custom'`): reescribe solo `/api/solutions/<id>/media/<assetId>`
+  a `?w=<400|800|1600>`; portadas de sitio, avatares y arte de `/brand` pasan sin
+  tocar. Es loader propio, **no** el optimizador de Next: el navegador pide la URL
+  con cookies, así que funciona para un dueño viendo su borrador, no solo para
+  imágenes públicas.
+- **Subida**: tras aterrizar la fila, sharp genera 400/800 best-effort; si una
+  falla, la imagen completa sigue sirviéndose y el loader cae a ella. Una
+  rendition cuya fila no aterriza se encola en `storage_orphans`.
+- **Servido** `GET /api/solutions/[id]/media/[assetId]?w=`: `LEFT JOIN
+  solution_media_files` por `(media_id, width)`; un `?w` desconocido es **404
+  uniforme** (nunca error distinto, nunca ensucia la clave de caché del CDN);
+  `ETag`/304 por rendition; sin `?w` o asset pre-Fase-B → imagen completa.
+- **`unoptimized` retirado** de `solution-gallery`, `project-cover` y
+  `media-editor` (la biblioteca del fundador renderizaba 12 imágenes completas de
+  1600×1200 a 64×48 — el "por qué ahora #3"). Se conserva en avatares y en la
+  tarjeta de portada del borrador (el loader las pasa sin tocar de todos modos).
+- Barredor (purga de vida), `account/delete` y limpieza de la integración ahora
+  incluyen `solution_media_files`. `scripts/backfill-media-renditions.cjs`
+  (`--dry-run`/`--limit`) para filas pre-Fase-B.
+
+89 unitarias (3 nuevas del loader), integración y build limpios. Recorrido en
+vivo: subir → completa + 400 + 800 (blobs/filas, todas menores), `?w=400` sirve
+un webp real de 400 px, `?w=999`/`abc` → 404, `If-None-Match` → 304, DELETE
+encola las 3 claves y cascadea las filas.
+
+**Pendiente de despliegue:** `db/media-renditions.sql` no aplicada a
+`shwcs_production` (hay 0 capturas en prod; el backfill ahí es no-op). Plan
+original en `/Users/andrevalleortega/.claude/plans/haz-el-plan-para-abundant-dove.md`.
