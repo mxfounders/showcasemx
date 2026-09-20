@@ -2490,3 +2490,139 @@ igual que `industries`/`companySizes` desde §54.
   `published_data->'capabilities'` no aporta nada con el volumen actual y
   queda anotado, no construido; moderación de las ~58 etiquetas si el
   catálogo crece mucho no se diseñó en esta entrega.
+
+## 60. Traducción al inglés del catálogo y la ficha pública — 13 septiembre 2026
+
+Petición explícita del usuario: continuar la traducción al inglés del sitio.
+Auditoría antes de tocar código: `/explorar/[slug]`, `/industria/[slug]`,
+`/colecciones/[slug]` y `/soluciones/[id]` **nunca habían recibido el
+diccionario** — ni siquiera antes de esta entrega ni de la de capacidades
+(§59) — pese a que §49 ya afirmaba «catálogo… están traducidos». Home,
+navbar/footer, `/blog` (listado) y las páginas informativas sí lo tenían.
+`/comunidad`, `/comunidad/[id]` y `/blog/[slug]` (el post individual) siguen
+sin traducir; quedan fuera de esta entrega por decisión explícita del usuario
+al elegir alcance («Catálogo + ficha»).
+
+- **`src/lib/taxonomy-en.ts`**: traducciones al inglés de todo lo que
+  `taxonomy.ts` presenta — categorías, industrias, tamaños de empresa,
+  ofertas, ~58 capacidades, ~25 integraciones, modelos de precio, rangos de
+  precio, tiempos de arranque, cumplimiento, colecciones y los cuatro
+  `publicLinkKinds` genéricos (Sitio web/Documentación/Precios/Contacto — los
+  siete nombres de marca como LinkedIn/TikTok no se traducen). Sigue el mismo
+  contrato de `undefined`/`[]` de §54: nunca inventa una traducción faltante,
+  cae al literal en español.
+- **`taxonomy.ts` gana `localized*()`**: `localizedCategories`,
+  `localizedIndustries`, `localizedCompanySizes`, `localizedOfferingOptions`,
+  `localizedCapabilityLabel`/`localizedCapabilitiesByCategory`,
+  `localizedIntegrationOptions`, `localizedPricingModelOptions`,
+  `localizedPriceBandOptions`, `localizedSetupTimeOptions`,
+  `localizedComplianceOptions`, `localizedCollections`, `localizedLinkKind`.
+  Todas: `locale!=='en'` devuelve exactamente el arreglo en español sin
+  tocarlo — así que ningún llamador que nunca pasó locale (el editor guiado,
+  la biblioteca, el comparador, todo lo que vive en `/account`, que sigue en
+  español por decisión de §49) cambia de comportamiento. **`CategoryEntry.label`
+  nunca se traduce**: dobla como el valor canónico contra el que se compara
+  `product.category`/`product.categories` en la base — traducirlo habría roto
+  el filtrado. Para mostrar el texto sí existe `localizedCategoryDisplayLabel`,
+  que separa el valor de coincidencia del texto mostrado.
+- **`dict.catalog`** (nuevo, en `es.ts`/`en.ts`): etiquetas de los ocho ejes de
+  filtro, «Más filtros», «Limpiar», «Cualquiera», las tres opciones de orden,
+  «Mostrando N soluciones», los estados vacíos y «También podrían servir» con
+  sus tres motivos. `CategoryPageLayout` y `CatalogFilterBar` ganan props
+  `locale`/`dict` opcionales; `FilterMenu` no cambió, solo recibe un
+  `clearLabel` distinto. Las tres rutas de categoría ahora llaman
+  `getDictionary(params.locale)` y pasan `dict.catalog`.
+- **`dict.soluciones`** (ficha pública) y **`dict.solutionUi`**
+  (like/guardar/comentarios/reporte, componentes compartidos con el resto de
+  la app): igual patrón, props opcionales con `??` al literal en español.
+  **Nunca se traduce el contenido que escribió el fundador** — nombre,
+  problema, audiencia, alcance, «cuándo no encaja», los campos de
+  `solutionEvaluationFields`, evidencia ni las bios de creadores: son sus
+  palabras, en el idioma en que las escribió. Solo se traduce el texto fijo
+  alrededor (títulos de sección, botones, estados vacíos) y las etiquetas que
+  vienen de listas cerradas (capacidades, industrias, tamaño, integraciones,
+  cumplimiento, precio, arranque, tipo de solución, categorías, y el texto
+  junto al ícono de cada enlace social vía `localizedLinkKind`).
+- **`completeness.ts`**: `solutionChecklist(data, locale?)` traduce
+  label/hint de los doce bloques — es lo único de esa guía que se ve fuera del
+  editor (Spanish-only), en el disclosure público «Qué falta por declarar».
+  El cálculo de `done` es idéntico en ambos idiomas.
+- `SolutionPresentation`, `LikeButton`, `SaveProjectButton`, `SolutionSocial`,
+  `ReportForm` y `SimilarSolutions` ganan props `dict`/`locale` opcionales.
+  La preview privada del fundador (`/account/solutions/[id]/preview`) no pasa
+  ninguna — sigue en español exactamente igual que antes, sin tocarse.
+- Verificación: 105 unitarias (9 nuevas en `tests/i18n-taxonomy.test.ts`: cada
+  clave de `taxonomy-en.ts` corresponde a un slug/valor/id real —sin typos
+  huérfanos—, cada capacidad/integración/… tiene traducción, `locale!=='en'`
+  no toca los arreglos en español, `label` de categoría nunca se traduce
+  mientras `title`/`description` sí, `value` se mantiene canónico en todos los
+  pares valor/etiqueta, y `solutionChecklist` traduce sin cambiar `done`).
+  Lint, TypeScript y build de producción limpios; las 18+14+4 rutas de
+  categoría siguen prerenderizadas `●` en ambos locales. Verificado en vivo
+  contra `next start` en los dos idiomas: `/es/explorar/cobros` y
+  `/en/explorar/cobros`, `/es|en/industria/retail`,
+  `/es|en/colecciones/essential` y una ficha real de Cord en ambos locales —
+  filtros, "Antes de decidir", "Sigue al proyecto" y el formulario de reporte
+  traducidos en inglés; el español se comprobó carácter por carácter idéntico
+  al de antes de esta entrega.
+- **Pendiente, no tocado aquí**: `/comunidad`, `/comunidad/[id]` y
+  `/blog/[slug]` (post individual) siguen sin diccionario — mismo hueco
+  documentado arriba, dejado fuera por alcance explícito. Los ~58 nombres de
+  capacidad y ~25 de integración son traducción de una sola pasada, no
+  revisados por un hablante nativo de inglés de negocios.
+
+## 61. Traducción al inglés: comunidad y blog individual — 14 septiembre 2026
+
+Cierra el pendiente que dejó §60: `/comunidad`, `/comunidad/[id]` y
+`/blog/[slug]` (el post individual) ahora reciben el diccionario. Con esto,
+**toda la superficie pública del sitio** (home, catálogo, ficha, comunidad,
+blog) queda traducida — quedan fuera por decisión de diseño, no por hueco:
+`/account/*` (Spanish-only, §49) y el **contenido editorial** de los 12
+artículos del blog (título, extracto, secciones, párrafos, ideas clave —
+prosa real de shwcs, no etiquetas de lista cerrada; traducirla es un trabajo
+de redacción distinto, no una sustitución mecánica, y no se hizo aquí).
+
+- **`dict.community`** (nuevo, `es.ts`/`en.ts`): hero, filtros (industria,
+  tamaño, «Guardadas por mí», orden, «Cualquiera»), estados vacíos,
+  paginación, «Por», Pública/Privada, «Proyecto no disponible», y los
+  bloques `detail`/`share`/`actions`/`report` para el detalle de una lista.
+  `CommunityDict` vive en `community-filter-bar.tsx` y se reimporta en
+  `board-card.tsx`/`community-actions.tsx` para no duplicar el tipo.
+- Las categorías de comunidad ya no muestran el valor crudo (`Cobros`,
+  `Ventas`) sino `localizedCategoryDisplayLabel`; industria/tamaño usan
+  `localizedIndustries`/`localizedCompanySizes`, igual que en el catálogo.
+  `ProjectPin` (compartido con `/account/lists/[id]`, que sigue sin locale)
+  gana un `locale` opcional para traducir el tipo de oferta y la categoría
+  que muestra bajo cada proyecto.
+- `BoardCard`, `ProjectPin`, `ShareCollection` son compartidos con páginas de
+  `/account` que nunca pasan `dict`/`locale` — cada prop nueva es opcional
+  con su literal en español como valor por omisión, mismo contrato que §60.
+- **`dict.blog.article`**: chrome del post individual — volver a «Blog»,
+  «Por», minutos de lectura, «En este artículo», «Ideas clave», «Compartir
+  en X», «Sigue leyendo»/«Leer siguiente», y el widget de feedback
+  (`ArticleFeedback`) y copiar enlace (`CopyArticleLink`, compartido con
+  nada más por ahora). `formatBlogDate()` gana un segundo parámetro `locale`
+  opcional (`en-US` vs `es-MX`), sin romper sus otros dos llamadores en
+  `blog-index.tsx` (el listado, que sigue sin pasar locale — pendiente
+  anotado, no de esta entrega).
+- **Título/`og:locale` de metadata siguen fijos en español** en
+  `comunidad/page.tsx` y `comunidad/[id]/page.tsx` (igual que ya pasaba en
+  `soluciones/[id]/page.tsx` antes de esta entrega): son `generateMetadata`
+  con string literal, no leen `dict`. Cosmético, no afecta el contenido
+  visible de la página; queda anotado, no arreglado aquí.
+- Verificación: typecheck/lint/104→105 unitarias sin cambios de esta
+  parte (no se tocó lógica, solo texto) siguen en verde. Build de producción
+  limpio. **La primera verificación en vivo dio un falso positivo**: un
+  proceso `next start` anterior quedó vivo en el puerto de prueba (el
+  `pkill` por patrón no lo alcanzó) y siguió respondiendo con contenido
+  compilado antes del fix de "Cualquiera"/"Any" en los dropdowns de
+  comunidad, hasta que se liberó el puerto por PID exacto vía `lsof`. Con
+  el puerto realmente libre y un build limpio: `/es/comunidad` y
+  `/en/comunidad` en 200 con las siete categorías, industria, tamaño, orden
+  y estados vacíos traducidos en inglés y bit-a-bit idénticos en español;
+  `/es|en/blog/[slug]` en 200 con el chrome del artículo traducido y el
+  contenido editorial (título, secciones, párrafos) igual en ambos locales,
+  como se pretendía. `/comunidad/[id]` no se probó en vivo por falta de una
+  lista pública en la base de desarrollo (§57 ya lo dejó documentado: el
+  desarrollo local no tiene listas públicas sembradas); se verificó por
+  tipos — mismo patrón exacto ya probado en vivo en las otras rutas.
