@@ -5,30 +5,37 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowUpRight } from 'lucide-react';
-import { CatalogFilterBar } from './catalog-filter-bar';
+import { CatalogFilterBar, type CatalogDict } from './catalog-filter-bar';
 import { ProductVisual } from '@/components/product-visual';
 import { getAccentStyle } from '@/lib/brand-colors';
-import { categories, industries, companySizes, offerings, capabilitiesByCategory, integrationOptions, priceBandOptions, setupTimeOptions, complianceOptions } from '@/lib/taxonomy';
+import { categories, offerings, localizedCategories, localizedIndustries, localizedCompanySizes, localizedOfferingOptions, localizedCapabilitiesByCategory, localizedIntegrationOptions, localizedPriceBandOptions, localizedSetupTimeOptions, localizedComplianceOptions, localizedCategoryDisplayLabel } from '@/lib/taxonomy';
 import { matchIndustry, matchCapability, matchCompanySize, isRealMatch } from '@/lib/search/facets';
 import type { PublishedProduct } from '@/lib/solutions/public';
 
 type Product = PublishedProduct;
 
-// Filter option lists, sourced from src/lib/taxonomy.ts instead of a local
-// copy. Category labels repeat (inventario and soporte both surface as
+// Category labels repeat (inventario and soporte both surface as
 // "Operación"), so they're deduped for the menu; filtering still matches
-// every route that shares that label.
-const categoryFilterOptions = Array.from(new Map(categories.map(item => [item.label, item.label])).values()).map(label => ({ value: label, label }));
-const industryFilterOptions = industries.map(item => ({ value: item.value, label: item.label }));
-const sizeFilterOptions = companySizes.map(item => ({ value: item.value, label: item.label }));
-const modelFilterOptions = offerings.map(value => ({ value, label: value }));
+// every route that shares that label. `value` always stays the canonical
+// Spanish value products are matched against — only `label` is localized.
+function categoryFilterOptions(locale?: string) {
+  const seen = new Map<string, string>();
+  for (const item of localizedCategories(locale)) if (!seen.has(item.label)) seen.set(item.label, item.label);
+  return Array.from(seen.keys()).map(value => ({ value, label: localizedCategoryDisplayLabel(value, locale) }));
+}
+function industryFilterOptions(locale?: string) {
+  return localizedIndustries(locale).map(item => ({ value: item.value, label: item.label }));
+}
+function sizeFilterOptions(locale?: string) {
+  return localizedCompanySizes(locale).map(item => ({ value: item.value, label: item.label }));
+}
 // Every capability option, for routes with no single category to scope by
 // (/industria, /colecciones). /explorar/[slug] scopes this down to the one
 // category being browsed — see capabilityOptions below.
-function capabilityFilterOptions(categoryLabels: string[]) {
-  return capabilitiesByCategory(categoryLabels).flatMap(group => group.items.map(item => ({ value: item.id, label: item.label })));
+function capabilityFilterOptions(categoryLabels: string[], locale?: string) {
+  return localizedCapabilitiesByCategory(categoryLabels, locale).flatMap(group => group.items.map(item => ({ value: item.id, label: item.label })));
 }
-const allCapabilityOptions = capabilityFilterOptions([...new Set(categories.map(item => item.label))]);
+const allCategoryLabels = [...new Set(categories.map(item => item.label))];
 
 // Category, industry, capacity, integration, compliance and size all accept
 // several values at once (OR within the axis); price band, setup time,
@@ -55,12 +62,16 @@ export function CategoryPageLayout({
   categorySlug,
   basePath,
   products,
+  locale,
+  dict,
 }: {
   title: string;
   description: string;
   categorySlug: string;
   basePath: string;
   products: Product[];
+  locale?: string;
+  dict?: CatalogDict;
 }) {
   // The URL is a mirror of this state via history.replaceState — it never
   // triggers a Next navigation or a server request (see CatalogFilterBar and
@@ -100,10 +111,10 @@ export function CategoryPageLayout({
   // capabilities); elsewhere every category's capabilities are candidates,
   // trimmed by deriveOptions to whatever the result set actually declared.
   const capabilityOptions = useMemo(() => {
-    if (basePath !== '/explorar') return allCapabilityOptions;
+    if (basePath !== '/explorar') return capabilityFilterOptions(allCategoryLabels, locale);
     const info = categories.find(item => item.slug === categorySlug);
-    return info ? capabilityFilterOptions([info.label]) : allCapabilityOptions;
-  }, [basePath, categorySlug]);
+    return info ? capabilityFilterOptions([info.label], locale) : capabilityFilterOptions(allCategoryLabels, locale);
+  }, [basePath, categorySlug, locale]);
 
   // Contextual filters by route (CLAUDE.md §41): never offer the dimension the
   // user is already browsing by. Every axis's options are then derived from
@@ -111,15 +122,16 @@ export function CategoryPageLayout({
   // see the .filter at the end, which is what keeps a one-solution catalogue
   // from rendering eight dropdowns that all say "Cualquiera" and nothing else.
   const filters = useMemo(() => {
-    const capacidad = { id: 'capacidad', label: 'Qué hace', options: deriveOptions(capabilityOptions, products, (p, v) => !!p.capabilities?.includes(v)) };
-    const tamano = { id: 'tamano', label: 'Tamaño de empresa', options: deriveOptions(sizeFilterOptions, products, (p, v) => isRealMatch(matchCompanySize(p, v))) };
-    const integracion = { id: 'integracion', label: 'Se integra con', options: deriveOptions(integrationOptions, products, (p, v) => !!p.integrationKeys?.includes(v)) };
-    const precio = { id: 'precio', label: 'Rango de precio', options: deriveOptions(priceBandOptions, products, (p, v) => p.priceBand === v) };
-    const arranque = { id: 'arranque', label: 'Tiempo de arranque', options: deriveOptions(setupTimeOptions, products, (p, v) => p.setupTime === v) };
-    const cumplimiento = { id: 'cumplimiento', label: 'Cumplimiento', options: deriveOptions(complianceOptions, products, (p, v) => !!p.compliance?.includes(v)) };
-    const modelo = { id: 'modelo', label: 'Formato', options: deriveOptions(modelFilterOptions, products, (p, v) => p.offering === v) };
-    const problema = { id: 'problema', label: 'Caso de uso', options: deriveOptions(categoryFilterOptions, products, (p, v) => p.category === v || !!p.categories?.includes(v)) };
-    const industria = { id: 'industria', label: 'Industria', options: deriveOptions(industryFilterOptions, products, (p, v) => isRealMatch(matchIndustry(p, v))) };
+    const modelFilterOptions = offerings.map(value => ({ value, label: localizedOfferingOptions(locale).find(item => item.value === value)?.label ?? value }));
+    const capacidad = { id: 'capacidad', label: dict?.filters.capability ?? 'Qué hace', options: deriveOptions(capabilityOptions, products, (p, v) => !!p.capabilities?.includes(v)) };
+    const tamano = { id: 'tamano', label: dict?.filters.companySize ?? 'Tamaño de empresa', options: deriveOptions(sizeFilterOptions(locale), products, (p, v) => isRealMatch(matchCompanySize(p, v))) };
+    const integracion = { id: 'integracion', label: dict?.filters.integrations ?? 'Se integra con', options: deriveOptions(localizedIntegrationOptions(locale), products, (p, v) => !!p.integrationKeys?.includes(v)) };
+    const precio = { id: 'precio', label: dict?.filters.priceBand ?? 'Rango de precio', options: deriveOptions(localizedPriceBandOptions(locale), products, (p, v) => p.priceBand === v) };
+    const arranque = { id: 'arranque', label: dict?.filters.setupTime ?? 'Tiempo de arranque', options: deriveOptions(localizedSetupTimeOptions(locale), products, (p, v) => p.setupTime === v) };
+    const cumplimiento = { id: 'cumplimiento', label: dict?.filters.compliance ?? 'Cumplimiento', options: deriveOptions(localizedComplianceOptions(locale), products, (p, v) => !!p.compliance?.includes(v)) };
+    const modelo = { id: 'modelo', label: dict?.filters.format ?? 'Formato', options: deriveOptions(modelFilterOptions, products, (p, v) => p.offering === v) };
+    const problema = { id: 'problema', label: dict?.filters.useCase ?? 'Caso de uso', options: deriveOptions(categoryFilterOptions(locale), products, (p, v) => p.category === v || !!p.categories?.includes(v)) };
+    const industria = { id: 'industria', label: dict?.filters.industry ?? 'Industria', options: deriveOptions(industryFilterOptions(locale), products, (p, v) => isRealMatch(matchIndustry(p, v))) };
 
     const byRoute =
       basePath === '/explorar' ? [industria, capacidad, tamano, integracion, precio, arranque, cumplimiento, modelo] :
@@ -127,7 +139,7 @@ export function CategoryPageLayout({
       [problema, capacidad, tamano, modelo];
 
     return byRoute.filter(filter => filter.options.length > 0);
-  }, [basePath, products, capabilityOptions]);
+  }, [basePath, products, capabilityOptions, locale, dict]);
 
   const sortValue = selections.sort?.[0] ?? 'popular';
 
@@ -206,16 +218,16 @@ export function CategoryPageLayout({
       if (iLevel === 'fail' || cLevel === 'fail' || tLevel === 'fail') continue;
       if (iLevel === 'real' && cLevel === 'real' && tLevel === 'real') { primaryList.push(product); continue; }
       const reasons: string[] = [];
-      if (iLevel === 'soft') reasons.push('No declaró esa industria');
-      if (cLevel === 'soft') reasons.push('No declaró esa capacidad');
-      if (tLevel === 'soft') reasons.push('No declaró tamaño de empresa');
+      if (iLevel === 'soft') reasons.push(dict?.reasonIndustry ?? 'No declaró esa industria');
+      if (cLevel === 'soft') reasons.push(dict?.reasonCapability ?? 'No declaró esa capacidad');
+      if (tLevel === 'soft') reasons.push(dict?.reasonCompanySize ?? 'No declaró tamaño de empresa');
       inferredList.push({ product, reasons });
     }
     return {
       primary: applySort(primaryList),
       inferred: applySort(inferredList.map(item => item.product)).map(product => inferredList.find(item => item.product === product)!),
     };
-  }, [products, selections, applySort]);
+  }, [products, selections, applySort, dict]);
 
   const palette = getAccentStyle(basePath + '/' + categorySlug);
 
@@ -236,7 +248,7 @@ export function CategoryPageLayout({
                 <span className="text-[10px] opacity-80">{new URL(product.website).hostname}</span>
               </>
             )}
-            <span className="absolute right-3 top-3 rounded-full bg-white/90 px-2 py-1 text-[9px] font-medium uppercase tracking-widest text-stone-800 backdrop-blur-md">{product.offering}</span>
+            <span className="absolute right-3 top-3 rounded-full bg-white/90 px-2 py-1 text-[9px] font-medium uppercase tracking-widest text-stone-800 backdrop-blur-md">{localizedOfferingOptions(locale).find(item => item.value === product.offering)?.label ?? product.offering}</span>
           </div>
         ) : (
           <ProductVisual variant={index % 4} color={palette.backgroundColor} />
@@ -259,7 +271,7 @@ export function CategoryPageLayout({
 
       <div className="mt-6 flex items-center justify-between border-t border-stone-100 pt-4 text-[11px] font-medium text-stone-400">
         <span className="truncate pr-4">{product.provider || product.name}</span>
-        <span className="inline-flex shrink-0 items-center text-[#365DC4]">Conocer solución</span>
+        <span className="inline-flex shrink-0 items-center text-[#365DC4]">{dict?.viewSolution ?? 'Conocer solución'}</span>
       </div>
     </Link>
   );
@@ -275,7 +287,7 @@ export function CategoryPageLayout({
         </p>
       </div>
 
-      <CatalogFilterBar filters={filters} totalItems={primary.length} values={selections} onChange={setFilter} onClear={clearFilters} />
+      <CatalogFilterBar filters={filters} totalItems={primary.length} values={selections} onChange={setFilter} onClear={clearFilters} dict={dict} />
 
       {primary.length > 0 ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -283,16 +295,16 @@ export function CategoryPageLayout({
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center rounded-[24px] border border-dashed border-stone-300 bg-stone-50 py-32 text-center">
-          <p className="text-lg font-medium text-stone-900">No encontramos soluciones</p>
-          <p className="mt-2 max-w-sm text-sm text-stone-500">Intenta quitar algunos filtros o explora otras categorías relacionadas.</p>
+          <p className="text-lg font-medium text-stone-900">{dict?.noResultsTitle ?? 'No encontramos soluciones'}</p>
+          <p className="mt-2 max-w-sm text-sm text-stone-500">{dict?.noResultsDesc ?? 'Intenta quitar algunos filtros o explora otras categorías relacionadas.'}</p>
         </div>
       )}
 
       {inferred.length > 0 && (
         <section className="mt-16">
-          <h2 className="text-lg font-semibold tracking-tight text-stone-900">También podrían servir</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-stone-900">{dict?.alsoUsefulTitle ?? 'También podrían servir'}</h2>
           <p className="mt-1.5 max-w-xl text-[13px] leading-relaxed text-stone-500">
-            No declararon todo lo que filtraste, pero encajan por su categoría y por lo que describen. Confírmalo con cada proyecto.
+            {dict?.alsoUsefulDesc ?? 'No declararon todo lo que filtraste, pero encajan por su categoría y por lo que describen. Confírmalo con cada proyecto.'}
           </p>
           <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {inferred.map((item, index) => (

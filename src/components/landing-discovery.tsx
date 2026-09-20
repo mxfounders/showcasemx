@@ -10,7 +10,8 @@ import { searchCatalog } from "@/lib/catalog-search";
 export function LandingDiscovery({ published = [], dict }: { published?: import("@/lib/solutions/public").PublishedProduct[], dict?: any }) {
   // Real interaction (comments > saves > likes > views) ranks within each category;
   // catalogPriority only breaks ties among products with equal (usually zero) score.
-  const categories = useMemo(() => previewCategories.map(category => ({ ...category, products: Array.from(new Map([...category.products.filter(product => process.env.NEXT_PUBLIC_SHOW_DEMO_PROJECTS==='true'&&!product.website), ...published.filter(product => product.categories.includes(category.label))].map(product => [product.website ?? product.name, product])).values()).sort((a,b)=>((b.score??0)-(a.score??0))||(catalogPriority(a)-catalogPriority(b))) })), [published]);
+  const translatedCategories = dict?.previewCategories?.map((c: any, i: number) => ({ ...previewCategories[i], ...c })) || previewCategories;
+  const categories = useMemo(() => translatedCategories.map((category: any) => ({ ...category, products: Array.from(new Map([...category.products.filter((product: any) => process.env.NEXT_PUBLIC_SHOW_DEMO_PROJECTS==='true'&&!product.website), ...published.filter(product => product.categories.includes(category.label))].map(product => [product.website ?? product.name, product])).values()).sort((a: any,b: any)=>((b.score??0)-(a.score??0))||(catalogPriority(a)-catalogPriority(b))) })), [translatedCategories, published]);
   const params = useSearchParams();
   const urlQuery = (params.get("q") ?? "").slice(0, 200).trim();
   const [query, setQuery] = useState(urlQuery);
@@ -24,7 +25,7 @@ export function LandingDiscovery({ published = [], dict }: { published?: import(
   }
   function chooseCategory(index: number) { setSelected(index); setQuery(""); }
   return <>
-    <Hero dict={dict} onSearch={value => { setQuery(value.trim()); revealCatalog(); }} onCategory={id => { chooseCategory(previewCategories.findIndex(category => category.id === id)); revealCatalog(); }} />
+    <Hero dict={dict?.landing} onSearch={value => { setQuery(value.trim()); revealCatalog(); }} onCategory={id => { chooseCategory(translatedCategories.findIndex((category: any) => category.id === id)); revealCatalog(); }} />
     <CategoryExplorer categories={categories} selected={selected} onCategoryChange={chooseCategory} query={query} results={results} onClear={() => setQuery("")} dict={dict?.categoryExplorer} />
   </>;
 }

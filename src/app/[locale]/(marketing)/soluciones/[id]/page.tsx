@@ -8,6 +8,8 @@ import { getSolutionSocial,getSolutionComments } from '@/lib/solutions/social';
 import { publicProducts } from '@/lib/solutions/public';
 import type { Metadata } from 'next';
 import { SolutionPresentation } from '@/components/solutions/solution-presentation';
+import { getDictionary } from '@/i18n/get-dictionary';
+import type { Locale } from '@/i18n/config';
 
 export const dynamic='force-dynamic';
 
@@ -44,9 +46,10 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
   };
 }
 
-export default async function PublicSolution(props:{params: Promise<{id:string}>}) {
+export default async function PublicSolution(props:{params: Promise<{id:string;locale:string}>}) {
  const params = await props.params;
  if(!isSolutionId(params.id))notFound();
+ const dict = await getDictionary(params.locale as Locale);
  const sql=solutionsSql();const [row]=await sql`SELECT owner_id,catalog_key,published_data - 'contactEmail' AS published_data,published_at::text,
   EXISTS(SELECT 1 FROM solution_site_image_ready r WHERE r.solution_id=founder_solutions.id) AS has_site_image
   FROM founder_solutions WHERE id=${params.id} AND published_data IS NOT NULL`;
@@ -64,5 +67,5 @@ export default async function PublicSolution(props:{params: Promise<{id:string}>
  // extra query). The ficha used to be a dead end otherwise.
  let similar:Awaited<ReturnType<typeof publicProducts>>=[];
  try{const categories=getSolutionCategories(data);const catalog=await publicProducts();similar=catalog.filter(product=>product.detailUrl!==`/soluciones/${params.id}`&&product.categories.some(category=>categories.includes(category))).slice(0,3);}catch{/* optional */}
- return <SolutionPresentation verifiedDomain={proof?String(proof.domain):null} id={params.id} data={data} catalogKey={row.catalog_key as string|null} publishedAt={row.published_at as string|null} social={social} comments={comments} viewerName={viewerName} own={!!viewer&&viewer===String(row.owner_id)} viewerLoggedIn={!!viewer} viewerVerified={viewerVerified} hasSiteImage={Boolean(row.has_site_image)} similar={similar}/>;
+ return <SolutionPresentation verifiedDomain={proof?String(proof.domain):null} id={params.id} data={data} catalogKey={row.catalog_key as string|null} publishedAt={row.published_at as string|null} social={social} comments={comments} viewerName={viewerName} own={!!viewer&&viewer===String(row.owner_id)} viewerLoggedIn={!!viewer} viewerVerified={viewerVerified} hasSiteImage={Boolean(row.has_site_image)} similar={similar} locale={params.locale} dict={dict.soluciones} uiDict={dict.solutionUi} catalogDict={dict.catalog}/>;
 }

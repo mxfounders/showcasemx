@@ -4,8 +4,10 @@ import { publicProducts } from '@/lib/solutions/public';
 import { CategoryPageLayout } from '@/components/catalog/category-page-layout';
 import { CategoryPageSkeleton } from '@/components/catalog/category-page-skeleton';
 import { i18n } from '@/i18n/config';
-import { industries } from '@/lib/taxonomy';
+import { industries, localizedIndustries } from '@/lib/taxonomy';
 import { matchIndustry, isRealMatch } from '@/lib/search/facets';
+import { getDictionary } from '@/i18n/get-dictionary';
+import type { Locale } from '@/i18n/config';
 
 // See explorar/[slug]/page.tsx for why {locale, slug} pairs (not just slug)
 // and dynamicParams=false both matter here.
@@ -19,8 +21,10 @@ export default async function IndustriaCategoryPage(props: {
 
   const info = industries.find(item => item.slug === params.slug);
   if (!info) return notFound();
+  const localizedInfo = localizedIndustries(params.locale).find(item => item.slug === params.slug)!;
 
   const products = await publicProducts();
+  const dict = await getDictionary(params.locale as Locale);
 
   // Matches the founder-declared `industries` field (src/lib/solutions/model.ts)
   // through matchIndustry/isRealMatch, not a raw includes(): a product that
@@ -35,11 +39,13 @@ export default async function IndustriaCategoryPage(props: {
   return (
     <Suspense fallback={<CategoryPageSkeleton />}>
       <CategoryPageLayout
-        title={info.title}
-        description={info.description}
+        title={localizedInfo.title}
+        description={localizedInfo.description}
         categorySlug={params.slug}
         basePath="/industria"
         products={categoryProducts}
+        locale={params.locale}
+        dict={dict.catalog}
       />
     </Suspense>
   );

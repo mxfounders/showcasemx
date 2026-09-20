@@ -104,17 +104,16 @@ export async function generateMetadata({params}:{params:Promise<{info:string}>})
 
 export default async function InfoPage({params}:{params:Promise<{info:string, locale:string}>}) {
   const {info, locale} = await params;
-  const page = pages[info];
-  if(!page) notFound();
-  
   const dict = await getDictionary(locale as Locale);
+  const page = dict?.legalPages?.[info] || pages[info];
+  if(!page) notFound();
 
   if(info==='el-proyecto') return <ProjectStory dict={dict.elProyecto} />;
   if(info==='changelog') return <ChangelogStory dict={dict.changelog} />;
-  if(info==='faq') return <FaqStory />;
-  if(info==='proceso') return <ProcesoStory />;
-  if(info==='criterios') return <CriteriosStory />;
-  if(info==='aplicar') return <AplicarStory />;
+  if(info==='faq') return <FaqStory dict={dict.faq} />;
+  if(info==='proceso') return <ProcesoStory dict={dict.proceso} />;
+  if(info==='criterios') return <CriteriosStory dict={dict.criterios} />;
+  if(info==='aplicar') return <AplicarStory dict={dict.aplicar} />;
   
   return <LegalStory page={page} />;
 }

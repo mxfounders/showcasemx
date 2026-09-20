@@ -118,8 +118,9 @@ function Item({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boolea
   );
 }
 
-export function FaqStory() {
+export function FaqStory({ dict }: { dict?: any }) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const activeFaqs = dict?.sections?.map((section: any, i: number) => ({ ...faqs[i], ...section })) || faqs;
 
   return (
     <article className="overflow-hidden pb-24 sm:pb-32">
@@ -128,16 +129,14 @@ export function FaqStory() {
       <section className="mx-auto max-w-[1500px] px-5 pt-10 sm:px-10 sm:pt-12 lg:px-16 lg:pt-20">
         <div className="grid gap-8 border-b border-stone-200 pb-10 lg:grid-cols-[1.3fr_0.7fr] lg:items-end lg:gap-20 lg:pb-14">
 
-          <h1 className="text-5xl font-semibold leading-[0.94] tracking-[-0.06em] sm:text-6xl lg:text-7xl">
-            Preguntas<br />frecuentes
-          </h1>
+          <h1 className="text-5xl font-semibold leading-[0.94] tracking-[-0.06em] sm:text-6xl lg:text-7xl" dangerouslySetInnerHTML={{ __html: dict?.title || "Preguntas<br />frecuentes" }} />
 
           <div className="max-w-md space-y-5 lg:justify-self-end lg:pb-1">
             <p className="text-lg leading-relaxed tracking-[-0.02em] text-stone-600">
-              Lo esencial para descubrir proyectos, gestionar tu cuenta y publicar en el directorio.
+              {dict?.intro || "Lo esencial para descubrir proyectos, gestionar tu cuenta y publicar en el directorio."}
             </p>
             <Link href="/el-proyecto" className="group inline-flex items-center gap-2 text-sm font-medium text-[#A94E35]">
-              Conocer el proyecto
+              {dict?.link || "Conocer el proyecto"}
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none" aria-hidden="true" />
             </Link>
           </div>
@@ -148,7 +147,7 @@ export function FaqStory() {
       {/* ── FAQ ──────────────────────────────────────────────── */}
       <section className="mx-auto max-w-[1500px] px-5 pt-10 sm:px-10 lg:px-16 lg:pt-16">
         <div className="grid gap-5 lg:grid-cols-2">
-          {faqs.map(group => (
+          {activeFaqs.map((group: any) => (
             <div
               key={group.group}
               className="rounded-[24px] px-8 py-8 sm:px-10 sm:py-10"
@@ -158,7 +157,7 @@ export function FaqStory() {
                 {group.group}
               </p>
               <div>
-                {group.items.map(item => (
+                {group.items.map((item: any) => (
                   <Item
                     key={item.q}
                     q={item.q}

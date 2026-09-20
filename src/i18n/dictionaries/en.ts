@@ -333,8 +333,27 @@ export const en = {
     "ctaTitle": "Looking for B2B tools?",
     "ctaDesc": "Explore the catalog, save the options that interest you and review their context before starting a conversation.",
     "ctaBtn": "Explore catalog"
+  ,
+    "heroTitleIndex": "Ideas to choose, build and operate better products and services",
+    "leftAria": "Left",
+    "rightAria": "Right",
+    "featuredLabel": "Featured",
+    "filterAndSort": "Filter & Sort",
+    "sortLabel": "Sort by",
+    "sortNewest": "Newest first",
+    "sortOldest": "Oldest first",
+    "sortTitle": "Title A–Z",
+    "categoryLabel": "Category",
+    "articleCount": "article",
+    "articlesCount": "articles",
+    "viewAria": "View",
+    "gridLabel": "Grid",
+    "listLabel": "List",
+    "searchPlaceholder": "Search articles",
+    "readArticle": "Read article",
+    "previousPage": "Previous"
   },
-    "changelog": {
+  "changelog": {
     "heroTitle": "What's new in shwcs",
     "heroDesc1": "A log of the changes you can already use in shwcs.",
     "heroDesc2": "We publish features when they are available. Ideas that are still in development stay out until they become real.",

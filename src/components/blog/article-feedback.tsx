@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { ThumbsUp, ThumbsDown, Check } from 'lucide-react';
 
-export function ArticleFeedback() {
+export function ArticleFeedback({ dict }: { dict?: { feedbackThanks: string; feedbackAsk: string; feedbackUp: string; feedbackDown: string } }) {
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
 
   return (
     <div className="flex items-center gap-4">
       <span className="text-sm font-medium text-stone-500 transition-opacity">
-        {feedback ? '¡Gracias por tu opinión!' : '¿Te resultó útil?'}
+        {feedback ? (dict?.feedbackThanks ?? '¡Gracias por tu opinión!') : (dict?.feedbackAsk ?? '¿Te resultó útil?')}
       </span>
       <div className="flex gap-2">
         <button
@@ -23,7 +23,7 @@ export function ArticleFeedback() {
               ? 'border-stone-100 bg-stone-50 text-stone-300 cursor-default'
               : 'border-stone-200 bg-white text-stone-400 hover:border-[#365DC4] hover:text-[#365DC4]'
           }`}
-          aria-label="Sí, fue útil"
+          aria-label={dict?.feedbackUp ?? 'Sí, fue útil'}
         >
           {feedback === 'up' ? <Check className="size-4" /> : <ThumbsUp className="size-4" />}
         </button>
@@ -38,7 +38,7 @@ export function ArticleFeedback() {
               ? 'border-stone-100 bg-stone-50 text-stone-300 cursor-default'
               : 'border-stone-200 bg-white text-stone-400 hover:border-stone-800 hover:text-stone-800'
           }`}
-          aria-label="No fue útil"
+          aria-label={dict?.feedbackDown ?? 'No fue útil'}
         >
           {feedback === 'down' ? <Check className="size-4" /> : <ThumbsDown className="size-4" />}
         </button>

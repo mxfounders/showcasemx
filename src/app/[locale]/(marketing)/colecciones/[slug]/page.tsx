@@ -4,7 +4,9 @@ import { publicProducts } from '@/lib/solutions/public';
 import { CategoryPageLayout } from '@/components/catalog/category-page-layout';
 import { CategoryPageSkeleton } from '@/components/catalog/category-page-skeleton';
 import { i18n } from '@/i18n/config';
-import { collections, matchesCollection } from '@/lib/taxonomy';
+import { collections, matchesCollection, localizedCollections } from '@/lib/taxonomy';
+import { getDictionary } from '@/i18n/get-dictionary';
+import type { Locale } from '@/i18n/config';
 
 // See explorar/[slug]/page.tsx for why {locale, slug} pairs (not just slug)
 // and dynamicParams=false both matter here.
@@ -18,8 +20,10 @@ export default async function ColeccionesCategoryPage(props: {
 
   const info = collections.find(item => item.slug === params.slug);
   if (!info) return notFound();
+  const localizedInfo = localizedCollections(params.locale).find(item => item.slug === params.slug)!;
 
   const products = await publicProducts();
+  const dict = await getDictionary(params.locale as Locale);
 
   // Each collection filters by its declared rule (categories and/or
   // industries) from src/lib/taxonomy.ts instead of an unrelated slice of the
@@ -29,11 +33,13 @@ export default async function ColeccionesCategoryPage(props: {
   return (
     <Suspense fallback={<CategoryPageSkeleton />}>
       <CategoryPageLayout
-        title={info.title}
-        description={info.description}
+        title={localizedInfo.title}
+        description={localizedInfo.description}
         categorySlug={params.slug}
         basePath="/colecciones"
         products={categoryProducts}
+        locale={params.locale}
+        dict={dict.catalog}
       />
     </Suspense>
   );

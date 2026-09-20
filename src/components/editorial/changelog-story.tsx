@@ -90,15 +90,22 @@ type ReleaseCategory = (typeof releaseCategories)[number];
 export function ChangelogStory({ dict }: { dict?: any }) {
   const [category, setCategory] = useState<ReleaseCategory>('Todos');
 
-  const visibleReleases = category === 'Todos' ? releases : releases.filter(release => release.category === category);
-  const septemberReleases = visibleReleases.filter(release => release.date.includes('septiembre'));
-  const augustReleases = visibleReleases.filter(release => release.date.includes('agosto'));
+  const activeReleases = dict?.releases || releases;
+  const categoryFilters = dict?.categories || releaseCategories;
+  
+  // Use the Spanish categories as values for logic, but localized labels for display
+  const isAll = category === 'Todos' || (category as string) === 'All';
+  const visibleReleases = isAll ? activeReleases : activeReleases.filter((release: any) => release.category === category || release.category === releaseCategories.find((c, i) => categoryFilters[i] === category));
+  
+  // Also localized month check
+  const septemberReleases = visibleReleases.filter((release: any) => release.date.toLowerCase().includes('septiembre') || release.date.toLowerCase().includes('september'));
+  const augustReleases = visibleReleases.filter((release: any) => release.date.toLowerCase().includes('agosto') || release.date.toLowerCase().includes('august'));
 
   return (
     <article className="pb-24 sm:pb-32">
       <header className="mx-auto max-w-[1500px] px-5 pt-12 sm:px-10 sm:pt-16 lg:px-16">
         <div className="grid gap-10 border-b border-stone-200 pb-14 lg:grid-cols-[1.3fr_0.7fr] lg:items-end lg:pb-16">
-          <div><h1 className="max-w-5xl text-5xl font-semibold leading-[0.94] tracking-[-0.06em] sm:text-6xl lg:text-7xl">{dict?.heroTitle || "Lo nuevo en shwcs"}</h1></div>
+          <h1 className="text-5xl font-semibold tracking-[-0.05em] sm:text-7xl lg:text-8xl">{dict?.heroTitle || "Changelog"}</h1>
           <div className="max-w-md lg:justify-self-end">
             <p className="text-xl leading-relaxed tracking-[-0.02em] text-stone-600">{dict?.heroDesc1 || "Un registro de los cambios que ya puedes usar en shwcs."}</p>
             <p className="mt-5 text-sm leading-relaxed text-stone-400">{dict?.heroDesc2 || "Publicamos funciones cuando están disponibles. Las ideas que siguen en desarrollo se quedan fuera hasta convertirse en algo real."}</p>
@@ -116,17 +123,19 @@ export function ChangelogStory({ dict }: { dict?: any }) {
           <p className="border-b border-stone-200 pb-4 text-sm font-medium">{dict?.filterTitle || "Filtrar lanzamientos"}</p>
           <p className="mt-5 text-xs uppercase tracking-[0.16em] text-stone-400">{dict?.categoryLabel || "Categoría"}</p>
           <nav aria-label="Filtrar lanzamientos por categoría" className="selector-tabs mt-3 lg:flex-col lg:items-stretch">
-            {releaseCategories.map(item => (
+            {categoryFilters.map((item: string, i: number) => {
+              const value = releaseCategories[i] as ReleaseCategory;
+              return (
               <button 
-                key={item} 
+                key={value} 
                 type="button" 
-                aria-pressed={category === item} 
-                onClick={() => setCategory(item)} 
+                aria-pressed={category === value} 
+                onClick={() => setCategory(value)} 
                 className="selector-tab text-left lg:w-full"
               >
                 {item}
               </button>
-            ))}
+            )})}
           </nav>
           <p role="status" className="mt-5 text-xs text-stone-400">{visibleReleases.length} {visibleReleases.length === 1 ? (dict?.releaseLabel || 'lanzamiento') : (dict?.releasesLabel || 'lanzamientos')}</p>
         </aside>
@@ -151,7 +160,7 @@ export function ChangelogStory({ dict }: { dict?: any }) {
                 </div>
                 <motion.div layout className="mt-8 grid gap-5">
                   <AnimatePresence mode="popLayout">
-                    {septemberReleases.map(release => (
+                    {septemberReleases.map((release: any) => (
                       <ReleaseCard key={release.title} release={release} featured />
                     ))}
                   </AnimatePresence>
@@ -176,7 +185,7 @@ export function ChangelogStory({ dict }: { dict?: any }) {
                 </div>
                 <motion.div layout className="mt-8 grid gap-5 sm:grid-cols-2">
                   <AnimatePresence mode="popLayout">
-                    {augustReleases.map(release => (
+                    {augustReleases.map((release: any) => (
                       <ReleaseCard key={release.title} release={release} />
                     ))}
                   </AnimatePresence>

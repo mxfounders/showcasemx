@@ -45,12 +45,13 @@ const steps = [
   }
 ];
 
-export function StepsAccordion() {
+export function StepsAccordion({ dict }: { dict?: any }) {
   const [active, setActive] = useState(0);
+  const activeSteps = dict?.steps?.map((step: any, i: number) => ({ ...steps[i], ...step })) || steps;
 
   return (
     <div className="flex flex-col lg:flex-row w-full h-[700px] lg:h-[450px] gap-3 sm:gap-4">
-      {steps.map((step, idx) => {
+      {activeSteps.map((step: any, idx: number) => {
         const isActive = active === idx;
         
         return (
@@ -75,7 +76,7 @@ export function StepsAccordion() {
                     {step.title}
                   </h3>
                   <p className="mt-4 max-w-sm text-sm sm:text-base leading-relaxed whitespace-normal opacity-90" style={{ color: step.text }}>
-                    {step.description}
+                    {step.desc || step.description}
                   </p>
                 </div>
               </div>

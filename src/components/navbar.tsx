@@ -391,7 +391,7 @@ export function Navbar({ authenticated = false, dict, locale = 'es' }: { authent
         {/* RIGHT */}
         <div className="flex items-center gap-2">
           <Link href={`/${locale}/comunidad`} aria-label="Listas de la comunidad" title="Comunidad" onClick={()=>{setActiveMenu(null);setMobileMenuOpen(false);}} className="group flex size-10 shrink-0 items-center justify-center rounded-full text-stone-700 transition-colors hover:bg-[#EEE5F5] hover:text-[#7753A5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7753A5]"><CommunityIcon className="size-[23px]"/></Link>
-          <NavbarSearch onOpen={()=>{setActiveMenu(null);setMobileMenuOpen(false);}} />
+          <NavbarSearch onOpen={()=>{setActiveMenu(null);setMobileMenuOpen(false);}} dict={dict?.search} />
           
           <div className="hidden md:flex items-center gap-2">
             <NavLink href={authenticated ? "/account" : "/sign-in"} locale={locale}>{authenticated ? (dict?.dashboard || "Ir a mi panel") : (dict?.login || "Entrar")}</NavLink>

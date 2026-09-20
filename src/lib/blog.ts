@@ -466,6 +466,6 @@ export function getBlogPost(slug: string) {
   return allPosts.find((post) => post.slug === slug);
 }
 
-export function formatBlogDate(value: string) {
-  return new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${value}T00:00:00Z`));
+export function formatBlogDate(value: string, locale?: string) {
+  return new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'es-MX', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${value}T00:00:00Z`));
 }

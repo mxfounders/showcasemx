@@ -8,7 +8,7 @@ import { brandColors } from "@/lib/brand-colors";
 import { conceptCategories } from "@/lib/search/vocabulary";
 import type { PublishedProduct } from "@/lib/solutions/public";
 
-const features = [
+const fallbackFeatures = [
   {
     id: "crm",
     label: "CRM & Ventas",
@@ -116,8 +116,9 @@ const features = [
   }
 ];
 
-export function LandingFeatures({ products = [] }: { products?: PublishedProduct[] }) {
-  const [activeTab, setActiveTab] = useState(features[0]);
+export function LandingFeatures({ products = [], dict }: { products?: PublishedProduct[], dict?: any }) {
+  const activeFeatures = dict?.features?.map((f: any, i: number) => ({ ...fallbackFeatures[i], ...f })) || fallbackFeatures;
+  const [activeTab, setActiveTab] = useState(activeFeatures[0]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Center the active tab on mount
@@ -132,7 +133,7 @@ export function LandingFeatures({ products = [] }: { products?: PublishedProduct
     }
   }, []);
 
-  const handleTabClick = (feature: typeof features[0], event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleTabClick = (feature: typeof fallbackFeatures[0], event: React.MouseEvent<HTMLButtonElement>) => {
     setActiveTab(feature);
     if (scrollRef.current) {
       const container = scrollRef.current;
@@ -160,12 +161,12 @@ export function LandingFeatures({ products = [] }: { products?: PublishedProduct
   return (
     <section className="py-24 sm:py-32 overflow-hidden bg-transparent">
       <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <h2 className="text-4xl sm:text-[4rem] sm:leading-[1.1] font-medium tracking-tight text-stone-900 mb-6">
-            Encuentra la tecnología<br />exacta para tu industria
+        <div className="text-center mb-12 sm:mb-16 px-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-medium tracking-tight text-stone-900 mb-6">
+            {dict?.landing?.featuresHeaderTitle?.split("<br />").map((line: string, i: number) => <span key={i}>{line}{i === 0 && <br />}</span>) || <>Encuentra la tecnología<br />exacta para tu industria</>}
           </h2>
           <p className="text-lg sm:text-xl text-stone-600 leading-relaxed max-w-2xl mx-auto">
-            Explora herramientas y servicios diseñados para resolver cada uno de tus retos operativos, todo en un solo lugar.
+            {dict?.landing?.featuresHeaderDesc || "Explora herramientas y servicios diseñados para resolver cada uno de tus retos operativos, todo en un solo lugar."}
           </p>
         </div>
 
@@ -178,7 +179,7 @@ export function LandingFeatures({ products = [] }: { products?: PublishedProduct
               WebkitMaskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)'
             }}
           >
-            {features.map((feature) => {
+            {activeFeatures.map((feature: any) => {
               const isActive = activeTab.id === feature.id;
               return (
                 <button
@@ -264,18 +265,18 @@ export function LandingFeatures({ products = [] }: { products?: PublishedProduct
                     return (
                       <Link key={`empty-${i}`} href="/account/solutions/new" className="rounded-3xl p-6 flex flex-col h-48 sm:h-52 bg-white/60 border border-dashed border-stone-300 backdrop-blur-md transition-all hover:bg-white hover:shadow-sm group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800">
                         <div className="flex justify-between text-[10px] font-bold text-stone-400 tracking-widest uppercase mb-auto">
-                          <span>Espacio Disponible</span>
+                          <span>{dict?.categoryExplorer?.availableSpace || "Espacio Disponible"}</span>
                           <span>{(i + 1).toString().padStart(2, '0')}</span>
                         </div>
                         <div>
                           <h4 className="text-lg font-medium text-stone-600 mb-4 leading-tight group-hover:text-stone-900 transition-colors">
-                            Tu solución puede estar aquí.
+                            {dict?.categoryExplorer?.applySpaceTitle || "Tu solución puede estar aquí."}
                           </h4>
                           <div
                             className="text-[11px] font-bold flex items-center gap-1.5 transition-colors opacity-80 group-hover:opacity-100 uppercase tracking-wide"
                             style={{ color: activeTab.color.solid }}
                           >
-                            Postular en {activeTab.label.split(' ')[0]} <span className="text-base font-medium leading-none mb-0.5">+</span>
+                            {dict?.categoryExplorer?.applySpaceBtn || "Postular en"} {activeTab.label.split(' ')[0]} <span className="text-base font-medium leading-none mb-0.5">+</span>
                           </div>
                         </div>
                       </Link>

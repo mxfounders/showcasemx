@@ -9,7 +9,9 @@ import { Heart } from 'lucide-react';
  * comments. Same endpoint and same state shape either way — the comments
  * section below still owns its own comment count and list.
  */
-export function LikeButton({ id, initialLikes, liked, own = false }: { id: string; initialLikes: number; liked: boolean; own?: boolean }) {
+type LikeDict = { suffix: string; loginPrompt: string; loginSuffix: string; ownTitle: string; genericError: string };
+
+export function LikeButton({ id, initialLikes, liked, own = false, dict }: { id: string; initialLikes: number; liked: boolean; own?: boolean; dict?: LikeDict }) {
   const [like, setLike] = useState(liked);
   const [likes, setLikes] = useState(initialLikes);
   const [pending, setPending] = useState(false);
@@ -27,16 +29,16 @@ export function LikeButton({ id, initialLikes, liked, own = false }: { id: strin
       if (!response.ok) throw new Error(body.error);
       setLike(body.active); setLikes(body.count);
     } catch (error) {
-      setError(error instanceof Error && !['TypeError', 'TimeoutError', 'SyntaxError'].includes(error.name) ? error.message : 'No pudimos guardar el cambio.');
+      setError(error instanceof Error && !['TypeError', 'TimeoutError', 'SyntaxError'].includes(error.name) ? error.message : (dict?.genericError ?? 'No pudimos guardar el cambio.'));
     } finally { lock.current = false; setPending(false); }
   }
 
   return <div>
-    <button type="button" aria-pressed={like} disabled={pending || own} title={own ? 'Es tu ficha' : undefined} onClick={() => void toggle()} className="flex w-full items-center justify-between gap-2 rounded-full border border-stone-200 bg-white px-5 py-3 text-sm font-medium transition-colors hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-60" style={like ? { backgroundColor: '#FCE7F3', color: '#BE185D', borderColor: '#FCE7F3' } : undefined}>
-      <span>{likes} me gusta</span>
+    <button type="button" aria-pressed={like} disabled={pending || own} title={own ? (dict?.ownTitle ?? 'Es tu ficha') : undefined} onClick={() => void toggle()} className="flex w-full items-center justify-between gap-2 rounded-full border border-stone-200 bg-white px-5 py-3 text-sm font-medium transition-colors hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-60" style={like ? { backgroundColor: '#FCE7F3', color: '#BE185D', borderColor: '#FCE7F3' } : undefined}>
+      <span>{likes} {dict?.suffix ?? 'me gusta'}</span>
       <Heart className="size-4" aria-hidden="true" fill={like ? 'currentColor' : 'none'} />
     </button>
-    {login && <p className="mt-3 text-center text-xs leading-relaxed text-stone-500"><Link href={`/sign-in?next=${encodeURIComponent('/soluciones/' + id)}`} className="font-medium text-[#365DC4] underline underline-offset-4">Inicia sesión o crea una cuenta</Link> para darle like.</p>}
+    {login && <p className="mt-3 text-center text-xs leading-relaxed text-stone-500"><Link href={`/sign-in?next=${encodeURIComponent('/soluciones/' + id)}`} className="font-medium text-[#365DC4] underline underline-offset-4">{dict?.loginPrompt ?? 'Inicia sesión o crea una cuenta'}</Link> {dict?.loginSuffix ?? 'para darle like.'}</p>}
     {error && <p role="alert" className="mt-3 text-center text-xs text-[#A94E35]">{error}</p>}
   </div>;
 }

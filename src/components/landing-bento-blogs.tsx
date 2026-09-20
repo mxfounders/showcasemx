@@ -10,7 +10,7 @@ const getToneColors = (tone?: string) => {
   return brandColors.blue;
 };
 
-export function LandingBentoBlogs() {
+export function LandingBentoBlogs({ dict }: { dict?: any }) {
   const postA = blogPosts[0]; // blue
   const postB = blogPosts[2]; // green (sage)
   const postD = blogPosts[3]; // lavender (purple)
@@ -25,7 +25,7 @@ export function LandingBentoBlogs() {
     <section className="w-full py-24 sm:py-32">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-center mb-16 text-stone-900">
-          Aprende más sobre<br />tecnología B2B
+          {dict?.title?.split("<br />").map((line: string, i: number) => <span key={i}>{line}{i === 0 && <br />}</span>) || <>Aprende más sobre<br />tecnología B2B</>}
         </h2>
         
         {/* Bento Grid */}
@@ -39,7 +39,7 @@ export function LandingBentoBlogs() {
             <div className="p-8 flex flex-col flex-1">
               <h3 className="text-2xl sm:text-3xl font-medium text-stone-800 leading-tight mb-4">{postA.title}</h3>
               <div className="mt-auto pt-4 flex items-center text-sm font-medium text-stone-800 group-hover:text-stone-500 transition-colors">
-                Leer artículo <ArrowIcon />
+                {dict?.readArticle || "Leer artículo"} <ArrowIcon />
               </div>
             </div>
           </Link>
@@ -53,7 +53,7 @@ export function LandingBentoBlogs() {
                 {postB.excerpt}
               </p>
               <div className="mt-auto flex items-center text-sm font-medium text-stone-800 transition-colors group-hover:opacity-70">
-                Leer artículo <ArrowIcon />
+                {dict?.readArticle || "Leer artículo"} <ArrowIcon />
               </div>
             </div>
             <div className="h-48 md:h-full w-full md:w-2/5" style={{ backgroundColor: colorB.solid }} />
@@ -67,10 +67,10 @@ export function LandingBentoBlogs() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/40" />
             
             <div className="relative z-10 p-8 flex flex-col flex-1 h-full">
-              <span className="text-[11px] font-bold tracking-widest text-white/90 uppercase mb-4 drop-shadow-md">Promoción</span>
-              <h3 className="text-2xl font-medium text-white leading-tight mb-4 drop-shadow-md">Cómo cobrar más rápido tus cotizaciones</h3>
+              <span className="text-[11px] font-bold tracking-widest text-white/90 uppercase mb-4 drop-shadow-md">{dict?.promotion || "Promoción"}</span>
+              <h3 className="text-2xl font-medium text-white leading-tight mb-4 drop-shadow-md">{dict?.promoTitle || "Cómo cobrar más rápido tus cotizaciones"}</h3>
               <div className="mt-auto pt-4 flex items-center text-sm font-medium text-white transition-colors group-hover:text-white/80 drop-shadow-md">
-                Ir a cordhq.app <ArrowIcon />
+                {dict?.promoAction || "Ir a cordhq.app"} <ArrowIcon />
               </div>
             </div>
           </a>
@@ -83,7 +83,7 @@ export function LandingBentoBlogs() {
             <div className="p-8 flex flex-col flex-1">
               <h3 className="text-2xl sm:text-3xl font-medium text-stone-800 leading-tight mb-4">{postD.title}</h3>
               <div className="mt-auto pt-4 flex items-center text-sm font-medium text-stone-800 transition-colors group-hover:opacity-70">
-                Leer artículo <ArrowIcon />
+                {dict?.readArticle || "Leer artículo"} <ArrowIcon />
               </div>
             </div>
           </Link>
@@ -98,7 +98,7 @@ export function LandingBentoBlogs() {
                 {postE.excerpt}
               </p>
               <div className="mt-auto pt-2 flex items-center text-sm font-medium text-stone-800 transition-colors group-hover:opacity-70">
-                Leer artículo <ArrowIcon />
+                {dict?.readArticle || "Leer artículo"} <ArrowIcon />
               </div>
             </div>
           </Link>

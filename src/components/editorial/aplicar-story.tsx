@@ -27,21 +27,23 @@ const steps = [
   }
 ];
 
-export function AplicarStory() {
+export function AplicarStory({ dict }: { dict?: any }) {
+  const activeSteps = dict?.steps?.map((step: any, i: number) => ({ ...steps[i], ...step })) || steps;
+
   return (
     <article className="pb-24 sm:pb-32">
       {/* ── HERO ─────────────────────────────────────────────── */}
       <section className="mx-auto max-w-[1500px] px-5 pt-10 sm:px-10 sm:pt-12 lg:px-16 lg:pt-20">
         <div className="grid gap-8 border-b border-stone-200 pb-10 lg:grid-cols-[1.3fr_0.7fr] lg:items-end lg:gap-20 lg:pb-14">
           <h1 className="max-w-5xl text-5xl font-semibold leading-[0.94] tracking-[-0.06em] sm:text-6xl lg:text-7xl">
-            Postula tu proyecto
+            {dict?.title || "Postula tu proyecto"}
           </h1>
           <div className="max-w-md space-y-5 lg:justify-self-end lg:pb-1">
             <p className="text-lg leading-relaxed tracking-[-0.02em] text-stone-600">
-              shwcs es un directorio curado B2B. Te explicamos exactamente qué necesitas para entrar y cómo funciona nuestro proceso de revisión.
+              {dict?.desc || "shwcs es un directorio curado B2B. Te explicamos exactamente qué necesitas para entrar y cómo funciona nuestro proceso de revisión."}
             </p>
             <Link href="/criterios" className="group inline-flex items-center gap-2 text-sm font-medium text-[#A94E35]">
-              Ver los criterios de entrada
+              {dict?.link || "Ver los criterios de entrada"}
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none" aria-hidden="true" />
             </Link>
           </div>
@@ -51,7 +53,7 @@ export function AplicarStory() {
       {/* ── EL PROCESO ───────────────────────────────────────── */}
       <section className="mx-auto max-w-[1500px] px-5 pt-10 sm:px-10 lg:px-16 lg:pt-16">
         <div className="grid gap-6 lg:grid-cols-3">
-          {steps.map((step) => {
+          {activeSteps.map((step: any) => {
             const Icon = step.icon;
             return (
               <div

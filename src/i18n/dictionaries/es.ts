@@ -321,7 +321,7 @@ export const es = {
     "problemTitle": "Más opciones no siempre significan mejores decisiones.",
     "problemDesc": "Construimos shwcs para ordenar esa búsqueda alrededor de preguntas concretas: qué resuelve, para quién funciona, qué límites tiene y quién está detrás. El catálogo es el punto de partida; la decisión sigue siendo tuya."
   },
-    "blog": {
+    "blog": { "article": { "backLink": "", "progress": "", "feedback": "", "feedbackPlaceholder": "", "feedbackSubmit": "", "feedbackSuccess": "", "related": "", "copyLink": "", "copiedLink": "" },
     "heroTitle": "Ideas para elegir, construir y operar mejores proyectos",
     "heroDesc": "No es contenido para rellenar espacio. Aquí publicamos las notas, entrevistas y análisis que usamos internamente para entender qué herramientas funcionan, qué problemas importan y quiénes los están resolviendo mejor en el ecosistema.",
     "tabs": [
@@ -617,5 +617,45 @@ export const es = {
         ]
       }
     ]
-  }
+  },
+  "soluciones": {
+    "anyCompanySize": "", "anyIndustry": "", "audienceFallback": "", "audienceTitle": "",
+    "backToApplication": "", "backToCatalog": "", "beforeDecidingTitle": "", "complianceLabel": "",
+    "contactCta": "", "dateUnknown": "", "declaredBy": "", "demoButton": "", "descriptionPending": "",
+    "disclaimer": "", "domainVerified": "", "domainVerifiedSuffix": "", "draftPrivate": "",
+    "fieldNotProvided": "", "fitDesc": "", "fitTitle": "", "followProject": "", "integratesWith": "",
+    "missingInfoNote": "", "missingInfoTitle": "", "namePending": "", "noImages": "",
+    "noIntegrationsNote": "", "noToolsDeclared": "", "notForFallback": "", "notForTitle": "",
+    "officialSite": "", "otherTab": "", "previewBanner": "", "priceBand": "", "publishedUpdated": "",
+    "reportThis": "", "scopeFallback": "", "scopeTitle": "", "setupTime": "", "similarTitle": "",
+    "teamNote": "", "teamTitle": "", "toolsCount": "", "verifyLink": "", "verifyNote": "", "viewDemoLink": "",
+    "workFallback": "", "workTitle": ""
+  },
+  "solutionUi": {
+    "like": { "suffix": "", "loginPrompt": "", "loginSuffix": "", "ownTitle": "", "genericError": "" },
+    "save": { "checking": "", "saving": "", "saved": "", "cta": "", "confirmRemoveNote": "", "removeCta": "", "cancel": "", "loginPrompt": "", "loginSuffix": "", "removedMessage": "", "savedMessage": "", "organize": "", "queryError": "" },
+    "social": { "commentSingular": "", "commentPlural": "", "loginPrompt": "", "loginSuffix": "", "ownNote": "", "nameLabel": "", "namePlaceholder": "", "commentLabel": "", "commentPlaceholder": "", "publicNote": "", "posting": "", "submit": "", "deleteLabel": "", "empty": "", "deleteError": "", "postError": "" },
+    "report": { "done": "", "reasonLabel": "", "reasonMisleading": "", "reasonBroken": "", "reasonOwnership": "", "reasonAbuse": "", "detailsLabel": "", "saving": "", "submit": "", "genericError": "" }
+  },
+  "catalog": {
+    "filters": { "capability": "", "industry": "", "companySize": "", "integrations": "", "priceBand": "", "setupTime": "", "compliance": "", "format": "", "useCase": "" },
+    "moreFilters": "", "clear": "", "any": "",
+    "sort": { "label": "", "popular": "", "newest": "", "az": "" },
+    "showingPrefix": "", "solutionSingular": "", "solutionPlural": "", "noResultsTitle": "", "noResultsDesc": "",
+    "alsoUsefulTitle": "", "alsoUsefulDesc": "", "reasonIndustry": "", "reasonCapability": "", "reasonCompanySize": "", "viewSolution": ""
+  },
+  "proceso": {},
+  "criterios": {},
+  "aplicar": {},
+  "community": {
+    "heroTitleLine1": "", "heroTitleLine2": "", "heroSubtitle": "", "createList": "", "emptyFilteredTitle": "", "emptyTitle": "", "emptyFilteredDesc": "", "emptyDesc": "", "clearFiltersLink": "", "createListLink": "",
+    "pagination": { "label": "", "previous": "", "pagePrefix": "", "next": "" },
+    "detail": { "returnToDirectory": "", "saveCollection": "", "shareCollection": "", "footerNote": "", "noProjects": "" },
+    "filters": { "myLists": "", "saved": "", "all": "" },
+    "sort": { "recent": "", "popular": "" },
+    "categories": { "all": "", "sales": "", "finance": "", "ops": "", "tech": "", "other": "" },
+    "visibility": { "public": "", "unlisted": "", "private": "" },
+    "actions": { "like": "", "share": "", "comments": "" }
+  },
+  "bentoBlogs": {}
 } as const;

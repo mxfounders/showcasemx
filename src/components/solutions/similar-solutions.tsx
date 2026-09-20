@@ -7,9 +7,9 @@ import type { PublishedProduct } from '@/lib/solutions/public';
 // from the same catalogue and category give somewhere to go without leaving
 // the site. Selection and order come from the caller (see how callers of
 // this component pick `similar`) — this component only renders the list.
-export function SimilarSolutions({ products }: { products: PublishedProduct[] }) {
+export function SimilarSolutions({ products, title, viewLabel }: { products: PublishedProduct[]; title?: string; viewLabel?: string }) {
   return <section className="mt-16 border-t border-stone-200 pt-10">
-    <h2 className="text-xl font-medium">Otras soluciones que te podrían interesar</h2>
+    <h2 className="text-xl font-medium">{title ?? 'Otras soluciones que te podrían interesar'}</h2>
     <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {products.map(product => <Link key={product.detailUrl || product.name} href={product.detailUrl || '#'} className="group flex flex-col justify-between rounded-[20px] border border-stone-200 bg-white p-5 transition-colors hover:border-stone-300">
         <div>
@@ -21,7 +21,7 @@ export function SimilarSolutions({ products }: { products: PublishedProduct[] })
           </div>
           <p className="mt-3 line-clamp-2 text-[13px] leading-relaxed text-stone-500">{product.description}</p>
         </div>
-        <span className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-[#365DC4]">Conocer solución<ArrowUpRight aria-hidden="true" className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transform-none" /></span>
+        <span className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-[#365DC4]">{viewLabel ?? 'Conocer solución'}<ArrowUpRight aria-hidden="true" className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transform-none" /></span>
       </Link>)}
     </div>
   </section>;

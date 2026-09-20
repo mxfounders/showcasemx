@@ -1,6 +1,7 @@
 import type { BrandTone } from './brand-colors';
 import { solutionCategories, solutionIndustries, companySizes as companySizeValues, solutionCapabilities, solutionIntegrations, solutionPricingModels, solutionPriceBands, solutionSetupTimes, solutionCompliance } from './solutions/model';
 import { matchIndustry, isRealMatch } from './search/facets';
+import { categoryEn, industryEn, companySizeEn, offeringEn, capabilityEn, integrationEn, pricingModelEn, priceBandEn, setupTimeEn, complianceEn, collectionEn, publicLinkKindEn } from './taxonomy-en';
 
 /**
  * The one place the catalogue's *presentation* structure lives — labels,
@@ -137,4 +138,73 @@ export function catalogRoutes(): string[] {
     ...industries.map(item => `/industria/${item.slug}`),
     ...collections.map(item => `/colecciones/${item.slug}`),
   ];
+}
+
+/**
+ * Locale-aware presentation. Every export above stays Spanish and untouched —
+ * account-side callers (the editor, the ficha's own declared-value chips) and
+ * anything that never passes a locale keep working exactly as before. These
+ * `localized*` functions are additive: locale !== 'en' (the default, absent
+ * locale included) returns the arrays above unchanged; 'en' merges in
+ * taxonomy-en.ts by the same slug/value/id key and falls back to the Spanish
+ * literal for anything that file doesn't cover, so a missing translation
+ * degrades to Spanish rather than to undefined. Used by the public catalog
+ * route pages and CategoryPageLayout — see CLAUDE.md §49/§60.
+ */
+// `label` is deliberately never overridden here: on CategoryEntry it doubles
+// as the canonical Spanish value matched against product.category/categories
+// (real DB content, never translated) — only `title`/`description` (the
+// /explorar/[slug] page header) are presentation. To show a category pill or
+// filter option in English, use localizedCategoryDisplayLabel below, which
+// keeps `value` canonical for matching and only localizes what's rendered.
+export function localizedCategories(locale?: string): CategoryEntry[] {
+  if (locale !== 'en') return categories;
+  return categories.map(item => ({ ...item, title: categoryEn[item.slug]?.title ?? item.title, description: categoryEn[item.slug]?.description ?? item.description }));
+}
+export function localizedCategoryDisplayLabel(value: string, locale?: string): string {
+  if (locale !== 'en') return value;
+  const slug = categories.find(item => item.label === value)?.slug;
+  return (slug && categoryEn[slug]?.label) ?? value;
+}
+export function localizedIndustries(locale?: string) {
+  if (locale !== 'en') return industries;
+  return industries.map(item => ({ ...item, ...(industryEn[item.slug] ?? {}) }));
+}
+export function localizedCompanySizes(locale?: string) {
+  if (locale !== 'en') return companySizes;
+  return companySizes.map(item => ({ ...item, ...(companySizeEn[item.value] ?? {}) }));
+}
+export function localizedOfferingOptions(locale?: string): { value: Offering; label: string }[] {
+  return offerings.map(value => ({ value, label: locale === 'en' ? (offeringEn[value] ?? value) : value }));
+}
+export function localizedCapabilityLabel(id: string, locale?: string): string {
+  return (locale === 'en' ? capabilityEn[id] : undefined) ?? capabilityLabels[id] ?? id;
+}
+export function localizedCapabilitiesByCategory(categoryList: readonly string[], locale?: string): { category: string; items: { id: string; label: string }[] }[] {
+  return categoryList
+    .map(category => ({ category, items: solutionCapabilities.filter(item => item.category === category).map(item => ({ id: item.id, label: localizedCapabilityLabel(item.id, locale) })) }))
+    .filter(group => group.items.length > 0);
+}
+export function localizedIntegrationOptions(locale?: string) {
+  return solutionIntegrations.map(id => ({ value: id, label: locale === 'en' ? (integrationEn[id] ?? integrationLabels[id] ?? id) : (integrationLabels[id] ?? id) }));
+}
+export function localizedPricingModelOptions(locale?: string) {
+  return solutionPricingModels.map(id => ({ value: id, label: locale === 'en' ? (pricingModelEn[id] ?? pricingModelLabels[id] ?? id) : (pricingModelLabels[id] ?? id) }));
+}
+export function localizedPriceBandOptions(locale?: string) {
+  return solutionPriceBands.map(id => ({ value: id, label: locale === 'en' ? (priceBandEn[id] ?? priceBandLabels[id] ?? id) : (priceBandLabels[id] ?? id) }));
+}
+export function localizedSetupTimeOptions(locale?: string) {
+  return solutionSetupTimes.map(id => ({ value: id, label: locale === 'en' ? (setupTimeEn[id] ?? setupTimeLabels[id] ?? id) : (setupTimeLabels[id] ?? id) }));
+}
+export function localizedComplianceOptions(locale?: string) {
+  return solutionCompliance.map(id => ({ value: id, label: locale === 'en' ? (complianceEn[id] ?? complianceLabels[id] ?? id) : (complianceLabels[id] ?? id) }));
+}
+export function localizedCollections(locale?: string): CollectionEntry[] {
+  if (locale !== 'en') return collections;
+  return collections.map(item => ({ ...item, ...(collectionEn[item.slug] ?? {}) }));
+}
+/** Display text next to a founder's link icon (see social-icons.tsx). The icon itself always keys on the canonical Spanish label. */
+export function localizedLinkKind(label: string, locale?: string): string {
+  return (locale === 'en' ? publicLinkKindEn[label] : undefined) ?? label;
 }

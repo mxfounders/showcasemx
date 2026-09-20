@@ -21,11 +21,11 @@ export default async function Home(
   return (
     <div>
       <Suspense fallback={<div className="min-h-[70vh]" aria-label={dict.landing.loadingCatalog} />}>
-        <LandingDiscovery published={published} dict={dict.landing} />
+        <LandingDiscovery published={published} dict={dict} />
       </Suspense>
-      <LandingFeatures products={published} />
-      <LandingStackingCards products={published} />
-      <LandingBentoBlogs />
+      <LandingFeatures products={published} dict={dict} />
+      <LandingStackingCards products={published} dict={dict} />
+      <LandingBentoBlogs dict={dict.bentoBlogs} />
       <FounderInvitation dict={dict.landing} />
     </div>
   );

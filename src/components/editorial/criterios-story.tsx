@@ -93,21 +93,24 @@ const criterios = [
   },
 ];
 
-export function CriteriosStory() {
+export function CriteriosStory({ dict }: { dict?: any }) {
+  const activeCriterios = dict?.items?.map((item: any, i: number) => ({ ...criterios[i], ...item })) || criterios;
+  const activeWeights = dict?.weights?.map((item: any, i: number) => ({ ...rankingWeights[i], ...item })) || rankingWeights;
+
   return (
     <article className="pb-24 sm:pb-32">
       {/* ── HERO ─────────────────────────────────────────────── */}
       <section className="mx-auto max-w-[1500px] px-5 pt-10 sm:px-10 sm:pt-12 lg:px-16 lg:pt-20">
         <div className="grid gap-8 border-b border-stone-200 pb-10 lg:grid-cols-[1.3fr_0.7fr] lg:items-end lg:gap-20 lg:pb-14">
           <h1 className="max-w-5xl text-5xl font-semibold leading-[0.94] tracking-[-0.06em] sm:text-6xl lg:text-7xl">
-            Qué revisamos<br />antes de publicar
+            {dict?.title?.split('<br />').map((line: string, i: number) => <span key={i}>{line}{i === 0 && <br />}</span>) || <>Qué revisamos<br />antes de publicar</>}
           </h1>
           <div className="max-w-md space-y-5 lg:justify-self-end lg:pb-1">
             <p className="text-lg leading-relaxed tracking-[-0.02em] text-stone-600">
-              Evaluamos exhaustivamente cada proyecto en 8 dimensiones clave operativas para garantizar la calidad del directorio.
+              {dict?.desc || "Evaluamos exhaustivamente cada proyecto en 8 dimensiones clave operativas para garantizar la calidad del directorio."}
             </p>
             <Link href="/proceso" className="group inline-flex items-center gap-2 text-sm font-medium text-[#A94E35]">
-              Ver proceso de publicación
+              {dict?.link || "Ver proceso de publicación"}
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none" aria-hidden="true" />
             </Link>
           </div>
@@ -117,7 +120,7 @@ export function CriteriosStory() {
       {/* ── CRITERIOS BENTO ──────────────────────────────────── */}
       <section className="mx-auto max-w-[1500px] px-5 pt-10 sm:px-10 lg:px-16 lg:pt-16">
         <div className="grid grid-flow-row-dense gap-6 md:grid-cols-12">
-          {criterios.map((crit) => {
+          {activeCriterios.map((crit: any) => {
             const Icon = crit.icon;
             return (
               <div
@@ -127,7 +130,7 @@ export function CriteriosStory() {
               >
                 <div className="mb-12 flex items-center justify-between">
                   <span className="text-sm font-semibold uppercase tracking-[0.2em] opacity-70">
-                    Criterio {crit.id}
+                    {dict?.critPrefix || "Criterio"} {crit.id}
                   </span>
                   <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-white/30 backdrop-blur-md transition-transform group-hover:scale-110">
                     <Icon className="size-5" />
@@ -153,18 +156,14 @@ export function CriteriosStory() {
         <div className="grid gap-8 border-t border-stone-200 pt-10 lg:grid-cols-[1fr_1fr] lg:gap-16 lg:pt-14">
           <div>
             <h2 className="max-w-lg text-4xl font-semibold leading-[0.98] tracking-[-0.05em] sm:text-5xl">
-              Cómo se ordena el catálogo
+              {dict?.orderTitle || "Cómo se ordena el catálogo"}
             </h2>
             <p className="mt-5 max-w-md text-base leading-relaxed text-stone-600 sm:text-lg">
-              Dentro de cada categoría, el orden refleja interacción real de compradores — comentar,
-              guardar, dar like — no una puntuación de calidad ni un aval editorial. Todo empieza en
-              cero. Solo cuenta la actividad de cuentas con correo verificado, y pesa menos con el
-              tiempo: un empujón antiguo no fija el orden para siempre. Es una señal auxiliar,
-              no una certificación.
+              {dict?.orderDesc || "Dentro de cada categoría, el orden refleja interacción real de compradores — comentar, guardar, dar like — no una puntuación de calidad ni un aval editorial. Todo empieza en cero. Solo cuenta la actividad de cuentas con correo verificado, y pesa menos con el tiempo: un empujón antiguo no fija el orden para siempre. Es una señal auxiliar, no una certificación."}
             </p>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            {rankingWeights.map(({ Icon, weight, label, desc }) => (
+            {activeWeights.map(({ Icon, weight, label, desc }: any) => (
               <div key={label} className="rounded-2xl border border-stone-200 bg-stone-50 p-5">
                 <div className="mb-3 flex items-center justify-between">
                   <Icon className="size-5 text-stone-500" aria-hidden="true" />

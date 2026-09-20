@@ -13,7 +13,7 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-const stackData = [
+export const fallbackStackData = [
   {
     id: "data",
     badge: "CATÁLOGO",
@@ -52,7 +52,8 @@ const stackData = [
   }
 ];
 
-export function LandingStackingCards({ products = [] }: { products?: PublishedProduct[] }) {
+export function LandingStackingCards({ products = [], dict }: { products?: PublishedProduct[], dict?: any }) {
+  const stackData = dict?.stackingCards?.map((c: any, i: number) => ({ ...fallbackStackData[i], ...c })) || fallbackStackData;
   const containerRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -89,7 +90,7 @@ export function LandingStackingCards({ products = [] }: { products?: PublishedPr
 
   return (
     <section ref={containerRef} className="relative h-screen w-full flex items-center justify-center overflow-hidden bg-[#f5f5f4]">
-      {stackData.map((item, index) => (
+      {stackData.map((item: any, index: number) => (
         <div
           key={item.id}
           ref={(el) => { cardsRef.current[index] = el; }}
@@ -142,20 +143,20 @@ export function LandingStackingCards({ products = [] }: { products?: PublishedPr
                   className="px-7 py-3 rounded-full text-white font-medium shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-2 group text-sm sm:text-base"
                   style={{ backgroundColor: item.color.solid }}
                 >
-                  {item.button}
+                  {item.button || item.action}
                   <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                   </svg>
                 </a>
                 <Link href="/criterios" className="px-7 py-3 rounded-full bg-white text-stone-800 font-medium shadow-sm transition-all hover:bg-stone-50 hover:shadow-md text-sm sm:text-base">
-                  Conocer más
+                  {item.secondaryAction || "Conocer más"}
                 </Link>
               </div>
             </div>
           </div>
 
           <div className="flex-1 relative hidden md:block opacity-90 overflow-hidden">
-            <RightVisual id={item.id} color={item.color.solid} products={products} />
+            <RightVisual id={item.id} color={item.color.solid} products={products} dict={dict} />
           </div>
         </div>
       ))}
@@ -163,7 +164,7 @@ export function LandingStackingCards({ products = [] }: { products?: PublishedPr
   );
 }
 
-const RightVisual = ({ id, color, products }: { id: string; color: string; products: PublishedProduct[] }) => {
+const RightVisual = ({ id, color, products, dict }: { id: string; color: string; products: PublishedProduct[]; dict?: any }) => {
   return (
     <div 
       className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden"
@@ -172,12 +173,12 @@ const RightVisual = ({ id, color, products }: { id: string; color: string; produ
         WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)'
       }}
     >
-      <MockupGridVisual color={color} products={products} />
+      <MockupGridVisual color={color} products={products} dict={dict} />
     </div>
   );
 };
 
-const MockupGridVisual = ({ color, products }: { color: string; products: PublishedProduct[] }) => {
+const MockupGridVisual = ({ color, products, dict }: { color: string; products: PublishedProduct[]; dict?: any }) => {
   // Ranked by real interaction, not a fabricated number. See src/lib/solutions/ranking.ts.
   const rankedProducts = [...products].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 
@@ -195,7 +196,7 @@ const MockupGridVisual = ({ color, products }: { color: string; products: Publis
           const product = col1Products[i];
           return product 
             ? <ProductMockupCard key={`col1-prod-${i}`} product={product} color={color} />
-            : <MiniMockupCard key={`col1-empty-${i}`} />;
+            : <MiniMockupCard key={`col1-empty-${i}`} dict={dict} />;
         })}
       </motion.div>
 
@@ -208,7 +209,7 @@ const MockupGridVisual = ({ color, products }: { color: string; products: Publis
           const product = col2Products[i];
           return product 
             ? <ProductMockupCard key={`col2-prod-${i}`} product={product} color={color} />
-            : <MiniMockupCard key={`col2-empty-${i}`} />;
+            : <MiniMockupCard key={`col2-empty-${i}`} dict={dict} />;
         })}
       </motion.div>
     </div>
@@ -246,14 +247,14 @@ const ProductMockupCard = ({ product, color }: { product: any, color: string }) 
   </div>
 );
 
-const MiniMockupCard = () => (
+const MiniMockupCard = ({ dict }: { dict?: any }) => (
   <div className="bg-transparent border border-dashed border-black/10 rounded-[1.5rem] p-6 flex flex-col h-44 w-full">
     <div className="flex justify-between text-[10px] font-bold text-black/20 tracking-widest uppercase mb-auto">
-      <span>Espacio</span>
+      <span>{dict?.miniMockup?.space || "Espacio"}</span>
       <span className="text-black/20 text-lg leading-none">+</span>
     </div>
     <div>
-      <h4 className="text-[15px] font-medium text-black/40 leading-tight">Tu solución<br/>puede estar aquí.</h4>
+      <h4 className="text-[15px] font-medium text-black/40 leading-tight">{dict?.miniMockup?.text?.split("\n").map((line: string, i: number) => <span key={i}>{line}<br/></span>) || <>{`Tu solución`}<br/>{`puede estar aquí.`}</>}</h4>
     </div>
   </div>
 );

@@ -4,7 +4,9 @@ import { publicProducts } from '@/lib/solutions/public';
 import { CategoryPageLayout } from '@/components/catalog/category-page-layout';
 import { CategoryPageSkeleton } from '@/components/catalog/category-page-skeleton';
 import { i18n } from '@/i18n/config';
-import { categories } from '@/lib/taxonomy';
+import { categories, localizedCategories } from '@/lib/taxonomy';
+import { getDictionary } from '@/i18n/get-dictionary';
+import type { Locale } from '@/i18n/config';
 
 // Must enumerate {locale, slug} pairs, not just slug: this is the innermost
 // dynamic segment, so Next needs the full combination to prerender each
@@ -29,8 +31,12 @@ export default async function ExplorarCategoryPage(props: {
 
   const categoryInfo = categories.find(item => item.slug === params.slug);
   if (!categoryInfo) return notFound();
+  // Only title/description vary by locale — `.label` stays the canonical
+  // Spanish value the filter below matches against (see localizedCategories).
+  const localizedInfo = localizedCategories(params.locale).find(item => item.slug === params.slug)!;
 
   const products = await publicProducts();
+  const dict = await getDictionary(params.locale as Locale);
 
   const categoryProducts = products.filter(p =>
     p.category === categoryInfo.label ||
@@ -43,11 +49,13 @@ export default async function ExplorarCategoryPage(props: {
     // dynamic rendering just because a query string might exist.
     <Suspense fallback={<CategoryPageSkeleton />}>
       <CategoryPageLayout
-        title={categoryInfo.title}
-        description={categoryInfo.description}
+        title={localizedInfo.title}
+        description={localizedInfo.description}
         categorySlug={params.slug}
         basePath="/explorar"
         products={categoryProducts}
+        locale={params.locale}
+        dict={dict.catalog}
       />
     </Suspense>
   );
