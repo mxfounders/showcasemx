@@ -2,13 +2,14 @@ import { getDatabaseUrl } from '@/lib/database-url';
 import { getSolutionCategories, isSolutionId } from './model';
 import { neon } from '@neondatabase/serverless';
 import { unstable_cache } from 'next/cache';
-import { previewCategories,type PreviewProduct } from '@/lib/catalog-preview';
-import { solutionScore,rankingHalfLifeDays } from './ranking';
+import { previewCategories, type PreviewProduct } from '@/lib/catalog-preview';
+import { solutionScore, rankingHalfLifeDays } from './ranking';
+import { freeEmailDomains, freeEmailPattern, reviewWeights } from '@/lib/reviews/model';
 import { solutionCover } from './gallery';
 // industries/companySizes stay optional, mirroring SolutionData: absent means
 // the founder never declared them (excluded from a specific filter), while []
 // means declared to fit any (matches every filter) — see src/lib/taxonomy.ts.
-export type PublishedProduct=PreviewProduct & {category:string;categories:string[]};
+export type PublishedProduct = PreviewProduct & { category: string; categories: string[] };
 // Order reflects real interaction (comments > saves > likes > views), decayed
 // and — for the three account-linked signals — restricted to verified
 // accounts acting on someone else's ficha; catalog_key only breaks ties, it
@@ -25,29 +26,42 @@ export type PublishedProduct=PreviewProduct & {category:string;categories:string
 // "se ve pero no cuenta". One pass over each table instead of a correlated
 // subquery per row (still true, from Fase 1). `revalidateTag('catalog')`
 // invalidates this after a like/comment/save/publish; see callers of that tag.
-const fetchPublishedRows=unstable_cache(async()=>{
- const url=getDatabaseUrl();if(!url)return [];
- const sql=neon(url);
- return await sql`WITH likes AS (
+const fetchPublishedRows = unstable_cache(
+  async () => {
+    const url = getDatabaseUrl();
+    if (!url) return [];
+    const sql = neon(url);
+    return await sql`WITH likes AS (
   SELECT sl.solution_id,count(*)::int AS n,
    sum(CASE WHEN a.email_verified_at IS NOT NULL AND sl.owner_id<>s.owner_id
-    THEN exp(-ln(2)*extract(epoch FROM now()-sl.created_at)/${rankingHalfLifeDays*86400}) ELSE 0 END) AS decayed
+    THEN exp(-ln(2)*extract(epoch FROM now()-sl.created_at)/${rankingHalfLifeDays * 86400}) ELSE 0 END) AS decayed
    FROM solution_likes sl JOIN auth_accounts a ON a.id=sl.owner_id JOIN founder_solutions s ON s.id=sl.solution_id
    GROUP BY sl.solution_id),
  comments AS (
   SELECT sc.solution_id,count(*)::int AS n,
    sum(CASE WHEN a.email_verified_at IS NOT NULL AND sc.author_id<>s.owner_id
-    THEN exp(-ln(2)*extract(epoch FROM now()-sc.created_at)/${rankingHalfLifeDays*86400}) ELSE 0 END) AS decayed
+    THEN exp(-ln(2)*extract(epoch FROM now()-sc.created_at)/${rankingHalfLifeDays * 86400}) ELSE 0 END) AS decayed
    FROM solution_comments sc JOIN auth_accounts a ON a.id=sc.author_id JOIN founder_solutions s ON s.id=sc.solution_id
    GROUP BY sc.solution_id),
  views AS (
   SELECT solution_id,sum(views)::int AS n,
    sum(views*exp(-ln(2)*(current_date-day)/${rankingHalfLifeDays})) AS decayed
    FROM solution_daily_metrics GROUP BY solution_id),
+ reviews AS (
+  -- Only public reviews: published, from a verified address and not by the owner.
+  -- n and average are what the cards show; decayed feeds the order.
+  SELECT r.solution_id,count(*)::int AS n,avg(r.rating)::float AS average,
+   sum(r.rating*CASE WHEN EXISTS(SELECT 1 FROM solution_review_proofs p WHERE p.review_id=r.id) THEN ${reviewWeights.customer}::float
+     WHEN split_part(a.email,'@',2)<>ALL(${freeEmailDomains as readonly string[]}::text[])
+     AND split_part(a.email,'@',2)!~${freeEmailPattern} THEN ${reviewWeights.work}::float ELSE ${reviewWeights.email}::float END
+    *exp(-ln(2)*extract(epoch FROM now()-r.created_at)/${rankingHalfLifeDays * 86400})) AS decayed
+   FROM solution_reviews r JOIN auth_accounts a ON a.id=r.author_id JOIN founder_solutions s ON s.id=r.solution_id
+   WHERE r.status='published' AND a.email_verified_at IS NOT NULL AND r.author_id<>s.owner_id
+   GROUP BY r.solution_id),
  saves AS (
   SELECT s.id AS solution_id,count(*)::int AS n,
    sum(CASE WHEN a.email_verified_at IS NOT NULL AND b.owner_id<>s.owner_id
-    THEN exp(-ln(2)*extract(epoch FROM now()-b.created_at)/${rankingHalfLifeDays*86400}) ELSE 0 END) AS decayed
+    THEN exp(-ln(2)*extract(epoch FROM now()-b.created_at)/${rankingHalfLifeDays * 86400}) ELSE 0 END) AS decayed
    FROM founder_solutions s JOIN buyer_saved_projects b
     ON b.project_key='solution:'||s.id::text OR (s.catalog_key IS NOT NULL AND b.project_key='catalog:'||s.catalog_key)
    JOIN auth_accounts a ON a.id=b.owner_id
@@ -63,28 +77,91 @@ const fetchPublishedRows=unstable_cache(async()=>{
   s.published_data->>'website' AS website,
   s.published_data->'screenshots'->0->>'id' AS cover_id,
   COALESCE(l.n,0) likes,COALESCE(c.n,0) comments,COALESCE(sv.n,0) saves,COALESCE(v.n,0) views,
+  COALESCE(rv.n,0) reviews,rv.average AS rating,
   COALESCE(l.decayed,0) likes_score,COALESCE(c.decayed,0) comments_score,COALESCE(sv.decayed,0) saves_score,COALESCE(v.decayed,0) views_score,
+  COALESCE(rv.decayed,0) reviews_score,
   EXISTS(SELECT 1 FROM solution_site_image_ready r WHERE r.solution_id=s.id) has_site_image
  FROM founder_solutions s
  LEFT JOIN likes l ON l.solution_id=s.id LEFT JOIN comments c ON c.solution_id=s.id
  LEFT JOIN saves sv ON sv.solution_id=s.id LEFT JOIN views v ON v.solution_id=s.id
+ LEFT JOIN reviews rv ON rv.solution_id=s.id
  WHERE s.published_data IS NOT NULL
- ORDER BY (COALESCE(l.decayed,0)+COALESCE(c.decayed,0)*3+COALESCE(sv.decayed,0)*2+ln(1+COALESCE(v.decayed,0))*0.1) DESC,
+ ORDER BY (COALESCE(l.decayed,0)+COALESCE(c.decayed,0)*3+COALESCE(sv.decayed,0)*2+COALESCE(rv.decayed,0)+ln(1+COALESCE(v.decayed,0))*0.1) DESC,
   CASE s.catalog_key WHEN 'cord' THEN 0 WHEN 'flouvia' THEN 1 ELSE 2 END,s.published_at DESC NULLS LAST,s.id`;
-},['public-products'],{tags:['catalog'],revalidate:300});
-export async function publicProducts():Promise<PublishedProduct[]>{
- try{const rows=await fetchPublishedRows();return rows.map(row=>{const staticProduct=previewCategories.flatMap(category=>category.products).find(product=>product.catalogId===row.catalog_key);
- // See src/lib/solutions/gallery.ts: screenshot the founder curated, then the
- // site's own og:image, then the local art shipped for Cord/Flouvia.
- const ogImage=solutionCover(String(row.id),{coverScreenshotId:isSolutionId(String(row.cover_id))?String(row.cover_id):undefined,hasSiteImage:Boolean(row.has_site_image),staticArt:staticProduct?.ogImage});
- return {...staticProduct,ogImage,catalogId:row.catalog_key?String(row.catalog_key):undefined,name:String(row.name),description:String(row.problem),feature:String(row.audience),website:String(row.website),provider:row.catalog_key==='cord'?'Flouvia':String(row.name),offering:row.kind as 'Software'|'Agencia'|'Servicio',category:String(row.category),categories:getSolutionCategories({category:String(row.category??''),categories:Array.isArray(row.categories)?row.categories as string[]:undefined}),industries:Array.isArray(row.industries)?row.industries as string[]:undefined,companySizes:Array.isArray(row.company_sizes)?row.company_sizes as string[]:undefined,
- // Same tri-state-preserving cast as industries/companySizes above; scope/priceBand/setupTime are plain strings with no [] state, so they pass through row?? straight.
- capabilities:Array.isArray(row.capabilities)?row.capabilities as string[]:undefined,integrationKeys:Array.isArray(row.integration_keys)?row.integration_keys as string[]:undefined,pricingModel:Array.isArray(row.pricing_model)?row.pricing_model as string[]:undefined,priceBand:row.price_band?String(row.price_band):undefined,setupTime:row.setup_time?String(row.setup_time):undefined,compliance:Array.isArray(row.compliance)?row.compliance as string[]:undefined,scope:row.scope?String(row.scope):undefined,publishedAt:row.published_at?String(row.published_at):null,
- detailUrl:`/soluciones/${row.id}`,likes:Number(row.likes),saves:Number(row.saves),comments:Number(row.comments),views:Number(row.views),score:solutionScore(Number(row.likes_score),Number(row.saves_score),Number(row.comments_score),Number(row.views_score))};});
- }catch(error){
-  // A transient failure is never cached: unstable_cache only stores what it
-  // successfully returns, so the empty result here is retried on the next call
-  // instead of serving a cached blank catalogue for the revalidate window.
-  console.error('Public catalogue unavailable',error instanceof Error?error.name:'UnknownError');return [];
- }
+  },
+  ['public-products'],
+  { tags: ['catalog'], revalidate: 300 },
+);
+export async function publicProducts(): Promise<PublishedProduct[]> {
+  try {
+    const rows = await fetchPublishedRows();
+    return rows.map(row => {
+      const staticProduct = previewCategories
+        .flatMap(category => category.products)
+        .find(product => product.catalogId === row.catalog_key);
+      // See src/lib/solutions/gallery.ts: screenshot the founder curated, then the
+      // site's own og:image, then the local art shipped for Cord/Flouvia.
+      const ogImage = solutionCover(String(row.id), {
+        coverScreenshotId: isSolutionId(String(row.cover_id)) ? String(row.cover_id) : undefined,
+        hasSiteImage: Boolean(row.has_site_image),
+        staticArt: staticProduct?.ogImage,
+      });
+      return {
+        ...staticProduct,
+        ogImage,
+        catalogId: row.catalog_key ? String(row.catalog_key) : undefined,
+        name: String(row.name),
+        description: String(row.problem),
+        feature: String(row.audience),
+        website: String(row.website),
+        provider: row.catalog_key === 'cord' ? 'Flouvia' : String(row.name),
+        offering: row.kind as 'Software' | 'Agencia' | 'Servicio',
+        category: String(row.category),
+        categories: getSolutionCategories({
+          category: String(row.category ?? ''),
+          categories: Array.isArray(row.categories) ? (row.categories as string[]) : undefined,
+        }),
+        industries: Array.isArray(row.industries) ? (row.industries as string[]) : undefined,
+        companySizes: Array.isArray(row.company_sizes)
+          ? (row.company_sizes as string[])
+          : undefined,
+        // Same tri-state-preserving cast as industries/companySizes above; scope/priceBand/setupTime are plain strings with no [] state, so they pass through row?? straight.
+        capabilities: Array.isArray(row.capabilities) ? (row.capabilities as string[]) : undefined,
+        integrationKeys: Array.isArray(row.integration_keys)
+          ? (row.integration_keys as string[])
+          : undefined,
+        pricingModel: Array.isArray(row.pricing_model)
+          ? (row.pricing_model as string[])
+          : undefined,
+        priceBand: row.price_band ? String(row.price_band) : undefined,
+        setupTime: row.setup_time ? String(row.setup_time) : undefined,
+        compliance: Array.isArray(row.compliance) ? (row.compliance as string[]) : undefined,
+        scope: row.scope ? String(row.scope) : undefined,
+        publishedAt: row.published_at ? String(row.published_at) : null,
+        detailUrl: `/soluciones/${row.id}`,
+        likes: Number(row.likes),
+        saves: Number(row.saves),
+        comments: Number(row.comments),
+        views: Number(row.views),
+        reviews: Number(row.reviews),
+        rating: row.rating == null ? null : Number(row.rating),
+        score: solutionScore(
+          Number(row.likes_score),
+          Number(row.saves_score),
+          Number(row.comments_score),
+          Number(row.views_score),
+          Number(row.reviews_score),
+        ),
+      };
+    });
+  } catch (error) {
+    // A transient failure is never cached: unstable_cache only stores what it
+    // successfully returns, so the empty result here is retried on the next call
+    // instead of serving a cached blank catalogue for the revalidate window.
+    console.error(
+      'Public catalogue unavailable',
+      error instanceof Error ? error.name : 'UnknownError',
+    );
+    return [];
+  }
 }

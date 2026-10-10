@@ -1,0 +1,102 @@
+export const contactForm = {
+  formAria: 'Formulario de contacto',
+  progressAria: 'Progreso del formulario',
+  honeypot: 'No llenar',
+  titles: {
+    reason: '¿Para qué quieres hablar con nosotros?',
+    person: '¿Con quién vamos a conversar?',
+    context: 'Cuéntanos el contexto.',
+    review: '¿Todo correcto?',
+  },
+  errors: {
+    reason: 'Elige el motivo que más se acerque a tu mensaje.',
+    name: 'Escribe tu nombre.',
+    email: 'Escribe un correo válido.',
+    org: 'Escribe el nombre de tu empresa o proyecto.',
+    msg: 'Cuéntanos un poco más para poder responderte bien.',
+    urgency: 'Indica en qué momento quieres resolverlo.',
+    website: 'Escribe un sitio válido, incluyendo https://',
+    consent: 'Necesitamos tu autorización para responder este mensaje.',
+    submit: 'No pudimos enviar tu mensaje.',
+    submitCatch:
+      'No pudimos confirmar el envío. Tus respuestas siguen aquí para que puedas reintentar.',
+  },
+  reasons: {
+    find: {
+      label: 'Encontrar una solución',
+      detail: 'Busco software, una agencia o un servicio para mi empresa.',
+    },
+    submit: {
+      label: 'Presentar un proyecto',
+      detail: 'Quiero publicar o mejorar la presencia de lo que construyo.',
+    },
+    partnership: {
+      label: 'Alianza o comunidad',
+      detail: 'Tengo una colaboración, evento o iniciativa que proponer.',
+    },
+    press: {
+      label: 'Prensa o contenido',
+      detail: 'Quiero conversar, investigar o contar una historia.',
+    },
+    support: {
+      label: 'Ayuda con mi cuenta',
+      detail: 'Necesito resolver algo dentro de shwcs.',
+    },
+    other: {
+      label: 'Otra conversación',
+      detail: 'Mi mensaje no encaja en las opciones anteriores.',
+    },
+  },
+  urgencies: {
+    exploring: 'Solo estoy explorando',
+    month: 'Quiero resolverlo este mes',
+    soon: 'Me gustaría hablar pronto',
+  },
+  labels: {
+    name: 'Nombre completo',
+    email: 'Correo de trabajo',
+    org: 'Empresa o proyecto',
+    role: 'Tu rol',
+    roleOpt: '· opcional',
+    msg: '¿Qué necesitas resolver?',
+    msgHint: 'Shift + Enter para una nueva línea',
+    website: 'Sitio',
+    websiteOpt: '· opcional',
+    urgency: '¿En qué momento estás?',
+  },
+  placeholders: {
+    name: 'Tu nombre',
+    email: 'tu@empresa.com',
+    org: 'Nombre',
+    role: 'Founder, CFO, operaciones…',
+    msg: 'Danos el contexto, qué has intentado y cuál sería un buen siguiente paso.',
+    website: 'https://',
+  },
+  summary: {
+    reason: 'Motivo',
+    person: 'Persona',
+    org: 'Empresa o proyecto',
+    urgency: 'Momento',
+  },
+  consentLabel:
+    'Autorizo a shwcs a usar estos datos para responder mi solicitud. Esto no me suscribe al newsletter.',
+  step: 'Paso',
+  of: 'de',
+  sending: 'Enviando…',
+  submitBtn: 'Enviar mensaje',
+  continueBtn: 'Continuar',
+  enterHint: 'presiona Enter ↵',
+  backBtn: 'Anterior',
+  successTitle: 'Tu mensaje ya está con nosotros.',
+  successDesc: 'Lo guardamos correctamente. Te responderemos a',
+  successDesc2: 'con el contexto de tu solicitud.',
+  successBtn: 'Explorar shwcs',
+  successRetry: 'Enviar otro',
+  apiErrors: {
+    origin: 'Envía el mensaje desde shwcs.',
+    invalid: 'Revisa los campos del formulario y vuelve a intentarlo.',
+    rateLimited: 'Recibimos varios mensajes. Espera un poco antes de enviar otro.',
+    unavailable:
+      'No pudimos guardar tu mensaje. Tus datos siguen en el formulario para que puedas reintentar.',
+  },
+} as const;

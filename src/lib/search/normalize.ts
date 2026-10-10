@@ -11,7 +11,12 @@
 // ̀-ͯ range, without spelling out non-printable code points in the
 // source.
 export function normalizeText(value: string): string {
-  return value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  return value
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
 }
 
 export function tokenize(value: string): string[] {

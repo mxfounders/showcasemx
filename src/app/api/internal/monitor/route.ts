@@ -1,20 +1,35 @@
-import { NextRequest, NextResponse } from "next/server";
-import { authSql } from "@/lib/auth/security";
-import { recoveryConfig } from "@/lib/auth/recovery";
-import { authorizedCron } from "@/lib/notifications/cron";
-import { sendEmail } from "@/lib/notifications/server";
-import { deleteObjects } from "@/lib/storage/blob";
+import { NextRequest, NextResponse } from 'next/server';
+import { authSql } from '@/lib/auth/security';
+import { recoveryConfig } from '@/lib/auth/recovery';
+import { authorizedCron } from '@/lib/notifications/cron';
+import { sendEmail } from '@/lib/notifications/server';
+import { deleteObjects } from '@/lib/storage/blob';
+import { processBillingQueue } from '@/lib/billing/server';
+import { refreshSat69b } from '@/lib/compliance/server';
 
-export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+// The 69-B list is a 4.5 MB download on the days it changes (docs/compliance.md).
+export const maxDuration = 300;
 
 export async function GET(request: NextRequest) {
-  if (!authorizedCron(request.headers.get("authorization"))) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!authorizedCron(request.headers.get('authorization'))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const checks = { database: false, homepage: false };
   let orphansDeadLettered = 0;
+  let billingDocuments = 0;
+
+  // Retries fiscal documents the webhook could not issue (Cord or the PAC down). The
+  // webhook already tries right after each payment; this is the daily safety net.
+  try {
+    billingDocuments = (await processBillingQueue(25)).processed;
+  } catch {
+    // Non-fatal: leased rows unlock after five minutes and retry on the next run.
+  }
+  // Mirror of the SAT's 69-B list. A conditional request makes most days a 304; a
+  // failure keeps yesterday's list and is reported, never thrown.
+  const registry = await refreshSat69b().catch(() => 'failed' as const);
   const config = recoveryConfig();
 
   // Orphaned blob sweep. Runs first (and only when explicitly enabled) so a slow
@@ -22,7 +37,7 @@ export async function GET(request: NextRequest) {
   // and the health check below still runs. Gated by STORAGE_SWEEP_ENABLED so a
   // rollback that nulls storage_key during the dual-read window cannot delete
   // bytes that are still needed.
-  if (process.env.STORAGE_SWEEP_ENABLED === "true") {
+  if (process.env.STORAGE_SWEEP_ENABLED === 'true') {
     try {
       const sweepSql = authSql();
       // A resurrected key is never swept; this also clears over-eager enqueues.
@@ -39,12 +54,13 @@ export async function GET(request: NextRequest) {
                       WHERE attempts < 5 AND (locked_until IS NULL OR locked_until < now())
                       ORDER BY deleted_at LIMIT 100)
         RETURNING key`;
-      const keys = leased.map((r) => String(r.key));
+      const keys = leased.map(r => String(r.key));
       if (keys.length) {
         await deleteObjects(keys, AbortSignal.timeout(3_000));
         await sweepSql`DELETE FROM storage_orphans WHERE key = ANY(${keys})`;
       }
-      const [dead] = await sweepSql`SELECT count(*)::int AS n FROM storage_orphans WHERE attempts >= 5`;
+      const [dead] =
+        await sweepSql`SELECT count(*)::int AS n FROM storage_orphans WHERE attempts >= 5`;
       orphansDeadLettered = Number(dead?.n ?? 0);
     } catch {
       // Non-fatal; leased rows unlock after 10 minutes and retry next run.
@@ -57,15 +73,15 @@ export async function GET(request: NextRequest) {
       sql`SELECT 1 AS healthy`,
       config
         ? fetch(config.origin, {
-            cache: "no-store",
-            headers: { "User-Agent": "shwcs-production-monitor/1.0" },
+            cache: 'no-store',
+            headers: { 'User-Agent': 'shwcs-production-monitor/1.0' },
             signal: AbortSignal.timeout(8_000),
           })
-        : Promise.reject(new Error("Origin unavailable")),
+        : Promise.reject(new Error('Origin unavailable')),
     ]);
 
-    checks.database = database.status === "fulfilled";
-    checks.homepage = homepage.status === "fulfilled" && homepage.value.ok;
+    checks.database = database.status === 'fulfilled';
+    checks.homepage = homepage.status === 'fulfilled' && homepage.value.ok;
 
     // Rows in solution_view_visitors only need to live long enough to dedupe
     // "today"'s views (src/lib/solutions/view-visitor.ts); Vercel Hobby has
@@ -85,8 +101,8 @@ export async function GET(request: NextRequest) {
 
   if (checks.database && checks.homepage) {
     return NextResponse.json(
-      { status: "ok", checks, orphansDeadLettered },
-      { headers: { "Cache-Control": "no-store" } },
+      { status: 'ok', checks, orphansDeadLettered, billingDocuments, registry },
+      { headers: { 'Cache-Control': 'no-store' } },
     );
   }
 
@@ -96,24 +112,38 @@ export async function GET(request: NextRequest) {
       const failed = Object.entries(checks)
         .filter(([, healthy]) => !healthy)
         .map(([name]) => name)
-        .join(", ");
+        .join(', ');
       const day = new Date().toISOString().slice(0, 10);
       await sendEmail({
         to: recipient,
-        subject: "Alerta de producción en shwcs",
+        subject: 'Alerta de producción en shwcs',
         text: `La revisión diaria detectó problemas en: ${failed}.\n\nRevisa Vercel Observability y Neon antes de operar el sitio.`,
         idempotencyKey: `shwcs-production-monitor-${day}`,
       });
     } catch {
       return NextResponse.json(
-        { status: "error", checks, alert: "failed" },
-        { status: 503, headers: { "Cache-Control": "no-store" } },
+        {
+          status: 'error',
+          checks,
+          alert: 'failed',
+          orphansDeadLettered,
+          billingDocuments,
+          registry,
+        },
+        { status: 503, headers: { 'Cache-Control': 'no-store' } },
       );
     }
   }
 
   return NextResponse.json(
-    { status: "error", checks, alert: recipient ? "sent" : "unavailable" },
-    { status: 503, headers: { "Cache-Control": "no-store" } },
+    {
+      status: 'error',
+      checks,
+      alert: recipient ? 'sent' : 'unavailable',
+      orphansDeadLettered,
+      billingDocuments,
+      registry,
+    },
+    { status: 503, headers: { 'Cache-Control': 'no-store' } },
   );
 }

@@ -1,0 +1,41 @@
+import type { Dictionary } from '../../dictionary';
+
+export const onboarding = {
+  title: 'Tell us about yourself',
+  form: {
+    title1: 'Tell us who you are',
+    title2: 'How would you describe your relationship with shwcs?',
+    title3: 'What do you do?',
+    errorName: 'Enter your name.',
+    errorProfile: 'Choose the option that fits best.',
+    errorRole: 'Choose your role.',
+    errorSave: "We couldn't save your profile.",
+    errorGeneric: "We couldn't save your profile. Your answers are still here, try again.",
+    ariaLabel: 'Tell us about yourself',
+    step: 'Step {step} of 3',
+    nameLabel: 'Your name',
+    namePlaceholder: "What's your name",
+    companyLabel: 'Company or project (optional)',
+    companyPlaceholder: 'Your company name',
+    profileLegend: 'Your profile',
+    roleLegend: 'Your role',
+    saving: 'Saving…',
+    continue: 'Continue',
+    finish: 'Enter shwcs',
+    pressEnter: 'press Enter ↵',
+    profiles: {
+      founder: { label: "I'm a founder", detail: 'I build or sell a solution.' },
+      buyer: { label: "I'm a buyer", detail: "I'm looking for solutions for my company." },
+      both: { label: 'A bit of both', detail: 'I build and also look for solutions.' },
+      exploring: { label: "I'm exploring", detail: "I want to see what's being built." },
+    },
+    roles: {
+      leadership: 'Founder / Leadership',
+      product_tech: 'Product / Technology',
+      sales_marketing: 'Sales / Marketing',
+      operations: 'Operations',
+      finance_procurement: 'Finance / Procurement',
+      other: 'Other role',
+    },
+  },
+} as const satisfies Dictionary['onboarding'];

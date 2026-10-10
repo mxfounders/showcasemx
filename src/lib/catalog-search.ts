@@ -1,13 +1,13 @@
-import { previewCategories, catalogPriority, type PreviewCategory, type PreviewProduct } from "./catalog-preview";
-import { normalizeText } from "./search/normalize";
-import { rankSearch } from "./search/score";
+import {
+  previewCategories,
+  catalogPriority,
+  type PreviewCategory,
+  type PreviewProduct,
+} from './catalog-preview';
+import { rankSearch } from './search/score';
 
 // Kept exported: some callers still import it. Now delegates to the shared
 // normalizer so the catalog and the saved library agree on what a token is.
-export function normalizeQuery(value: string) {
-  return normalizeText(value);
-}
-
 // Accumulates every category label a product appears under, across every
 // PreviewCategory group that lists it (a static example carries this only via
 // which group it sits in; a published product already declares its own
@@ -23,7 +23,10 @@ function collectSearchableProducts(categories: PreviewCategory[]): PreviewProduc
       if (existing) {
         existing.categories = Array.from(new Set([...(existing.categories ?? []), category.label]));
       } else {
-        byWebsite.set(product.website, { ...product, categories: product.categories ?? [category.label] });
+        byWebsite.set(product.website, {
+          ...product,
+          categories: product.categories ?? [category.label],
+        });
       }
     }
   }

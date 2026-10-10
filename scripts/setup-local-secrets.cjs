@@ -12,4 +12,8 @@ for (const name of ['CRON_SECRET', 'NEWSLETTER_UNSUBSCRIBE_SECRET']) {
   created.push(name);
 }
 fs.writeFileSync(path, source, { mode: 0o600 });
-console.log(created.length ? `Created ${created.join(' and ')} in .env.local without printing their values.` : 'Local secrets already configured; nothing changed.');
+console.log(
+  created.length
+    ? `Created ${created.join(' and ')} in .env.local without printing their values.`
+    : 'Local secrets already configured; nothing changed.',
+);

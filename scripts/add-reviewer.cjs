@@ -22,7 +22,9 @@ function loadEnv(file) {
         if (!process.env[key]) process.env[key] = val;
       }
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 loadEnv(path.join(__dirname, '..', '.env.local'));
@@ -35,7 +37,9 @@ if (!email || !email.includes('@')) {
 
 const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 if (!url) {
-  console.error('ERROR: DATABASE_URL not found. Make sure .env.local is present in the root directory.');
+  console.error(
+    'ERROR: DATABASE_URL not found. Make sure .env.local is present in the root directory.',
+  );
   process.exit(1);
 }
 
@@ -54,7 +58,8 @@ async function main() {
   console.log(`Found account: ${account.email} (${account.id})`);
 
   // Check if already a reviewer
-  const existing = await sql`SELECT account_id FROM solution_reviewers WHERE account_id = ${account.id} LIMIT 1`;
+  const existing =
+    await sql`SELECT account_id FROM solution_reviewers WHERE account_id = ${account.id} LIMIT 1`;
   if (existing.length) {
     console.log(`✓ ${email} is already a reviewer. Nothing changed.`);
     process.exit(0);

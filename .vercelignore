@@ -1,0 +1,10 @@
+# Files the app does not need to build or run on Vercel.
+
+# Separate Vercel project (shwcs-ops).
+ops/
+
+# Documentation, agent context and local tooling state.
+docs/
+CLAUDE.md
+.claude/
+*.tsbuildinfo

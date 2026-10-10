@@ -1,33 +1,215 @@
-"use client";
-import { useEffect,useRef,useState } from 'react';
-import Link from 'next/link';
-import { ArrowRight,Eye,EyeOff } from 'lucide-react';
+'use client';
+import { useEffect, useRef, useState } from 'react';
+import Link from '@/i18n/navigation';
+import { ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { credentialErrors } from '@/lib/auth/validation';
 import { actionButtonStyle } from '@/lib/brand-colors';
-export function PasswordForm({mode,enabled=true}:{mode:'change'|'forgot'|'reset';enabled?:boolean}) {
- const [pending,setPending]=useState(false);const [error,setError]=useState('');const [done,setDone]=useState(false);const [visible,setVisible]=useState(false);const [token,setToken]=useState('');const busy=useRef(false);
- const fragmentRead=useRef(false);
- useEffect(()=>{if(mode!=='reset'||fragmentRead.current)return;fragmentRead.current=true;const value=new URLSearchParams(window.location.hash.slice(1)).get('token')??'';setToken(value);if(value)window.history.replaceState(null,'',window.location.pathname);},[mode]);
- const field='mt-2 w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-base sm:text-sm outline-none transition-colors focus:border-[#365DC4] focus:ring-1 focus:ring-[#365DC4] shadow-sm';
- if(done)return <div role="status" className="py-4"><h2 className="text-2xl font-medium">{mode==='forgot'?'Revisa tu correo.':'Contraseña actualizada.'}</h2><p className="mt-3 text-sm leading-relaxed text-stone-500">{mode==='forgot'?'Si existe una cuenta con ese correo, recibirás un enlace. Revisa también spam. El enlace caduca en 30 minutos.':'Cerramos las sesiones abiertas para proteger tu cuenta. Entra con tu nueva contraseña.'}</p><Link href="/sign-in" className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-[#365DC4]">Volver al acceso<ArrowRight className="size-4"/></Link></div>;
- return <form noValidate aria-label={mode==='change'?'Cambiar contraseña':mode==='forgot'?'Recuperar contraseña':'Restablecer contraseña'} aria-busy={pending} onSubmit={async event=>{event.preventDefault();if(busy.current||!enabled)return;setError('');const data=Object.fromEntries(new FormData(event.currentTarget));const email=String(data.email??'valid@example.com');if(mode==='forgot'){const message=credentialErrors(email,'unused-password').email;if(message){setError(message);return;}}else{const message=credentialErrors(email,String(data.password??'')).password;if(message){setError(message);return;}if(data.password!==data.confirm){setError('Las contraseñas no coinciden.');return;}if(mode==='change'&&!data.currentPassword){setError('Escribe tu contraseña actual.');return;}}
- busy.current=true;setPending(true);try{const response=await fetch(mode==='change'?'/api/account/password':`/api/auth/${mode==='forgot'?'forgot-password':'reset-password'}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...data,token}),signal:AbortSignal.timeout(20000)});const result=await response.json();if(!response.ok)throw new Error(result.error);setDone(true);}catch(failure){setError(failure instanceof Error&&!['TypeError','TimeoutError','SyntaxError'].includes(failure.name)?failure.message:'No pudimos confirmar la operación. Inténtalo de nuevo.');}finally{busy.current=false;setPending(false);}}}>
- <fieldset disabled={pending||!enabled} className="space-y-5">
- {mode==='forgot'?<label className="block text-sm font-medium text-stone-700">Tu correo electrónico<input name="email" type="email" autoComplete="email" maxLength={254} className={field} placeholder="tu@correo.com"/></label>:<>{mode==='change'&&<label className="block text-sm font-medium text-stone-700">Contraseña actual<input name="currentPassword" type={visible?'text':'password'} autoComplete="current-password" className={field}/></label>}<label className="block text-sm font-medium text-stone-700">Nueva contraseña<input name="password" type={visible?'text':'password'} autoComplete="new-password" aria-describedby="new-password-help" className={field}/></label><p id="new-password-help" className="text-xs text-stone-500">Mínimo 6 caracteres. Una frase larga protege mejor tu cuenta.</p><label className="block text-sm font-medium text-stone-700">Confirmar nueva contraseña<input name="confirm" type={visible?'text':'password'} autoComplete="new-password" className={field}/></label></>}
- 
- <div className="flex flex-col-reverse sm:flex-row items-center gap-4 pt-2">
-  {mode !== 'forgot' && (
-    <button type="button" aria-pressed={visible} onClick={()=>setVisible(value=>!value)} className="inline-flex items-center justify-center gap-2 rounded-full py-2.5 px-4 text-sm font-medium text-stone-600 hover:bg-stone-100 transition-colors w-full sm:w-auto">
-      {visible?<EyeOff className="size-4"/>:<Eye className="size-4"/>}{visible?'Ocultar contraseñas':'Mostrar contraseñas'}
-    </button>
-  )}
-  <button type="submit" style={actionButtonStyle} className="action-button inline-flex items-center justify-center gap-2 rounded-full px-6 py-2.5 text-sm font-medium shadow-sm disabled:opacity-50 w-full sm:w-auto sm:ml-auto" disabled={mode==='reset'&&!/^[a-f0-9]{64}$/.test(token)}>
-    {pending?'Un momento…':mode==='forgot'?'Enviar enlace':mode==='reset'?'Restablecer contraseña':'Actualizar contraseña'}
-  </button>
- </div>
- </fieldset>
- {!enabled&&<p role="status" className="mt-4 text-sm leading-relaxed text-stone-500">La recuperación por correo todavía no está habilitada. Si tienes acceso a tu cuenta, puedes cambiar la contraseña desde Configuración.</p>}
- {mode==='reset'&&!/^[a-f0-9]{64}$/.test(token)&&<p className="mt-4 text-sm text-stone-500">Abre el enlace de tu correo para continuar. <Link href="/forgot-password" className="underline underline-offset-4">Solicitar otro enlace</Link></p>}
- {error&&<p role="alert" className="mt-4 text-sm text-[#A94E35]">{error}</p>}
- </form>;
+import type { Dictionary } from '@/i18n/dictionary';
+export function PasswordForm({
+  mode,
+  enabled = true,
+  dict,
+}: {
+  mode: 'change' | 'forgot' | 'reset';
+  enabled?: boolean;
+  dict: Dictionary['auth'];
+}) {
+  const text = dict.passwordForm;
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState('');
+  const [done, setDone] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [token, setToken] = useState('');
+  const busy = useRef(false);
+  const fragmentRead = useRef(false);
+  useEffect(() => {
+    if (mode !== 'reset' || fragmentRead.current) return;
+    fragmentRead.current = true;
+    const value = new URLSearchParams(window.location.hash.slice(1)).get('token') ?? '';
+    setToken(value);
+    if (value) window.history.replaceState(null, '', window.location.pathname);
+  }, [mode]);
+  const field =
+    'mt-2 w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-base sm:text-sm outline-none transition-colors focus:border-[#365DC4] focus:ring-1 focus:ring-[#365DC4] shadow-sm';
+  if (done)
+    return (
+      <div role="status" className="py-4">
+        <h2 className="text-2xl font-medium">
+          {mode === 'forgot' ? text.doneForgotTitle : text.doneResetTitle}
+        </h2>
+        <p className="mt-3 text-sm leading-relaxed text-stone-500">
+          {mode === 'forgot' ? text.doneForgotDesc : text.doneResetDesc}
+        </p>
+        <Link
+          href="/sign-in"
+          className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-[#365DC4]"
+        >
+          {text.backToLogin}
+          <ArrowRight className="size-4" />
+        </Link>
+      </div>
+    );
+  return (
+    <form
+      noValidate
+      aria-label={
+        mode === 'change' ? text.ariaChange : mode === 'forgot' ? text.ariaForgot : text.ariaReset
+      }
+      aria-busy={pending}
+      onSubmit={async event => {
+        event.preventDefault();
+        if (busy.current || !enabled) return;
+        setError('');
+        const data = Object.fromEntries(new FormData(event.currentTarget));
+        const email = String(data.email ?? 'valid@example.com');
+        if (mode === 'forgot') {
+          const message = credentialErrors(email, 'unused-password').email;
+          if (message) {
+            setError(dict.credentialErrors[message]);
+            return;
+          }
+        } else {
+          const message = credentialErrors(email, String(data.password ?? '')).password;
+          if (message) {
+            setError(dict.credentialErrors[message]);
+            return;
+          }
+          if (data.password !== data.confirm) {
+            setError(text.passwordsMismatch);
+            return;
+          }
+          if (mode === 'change' && !data.currentPassword) {
+            setError(text.missingCurrent);
+            return;
+          }
+        }
+        busy.current = true;
+        setPending(true);
+        try {
+          const response = await fetch(
+            mode === 'change'
+              ? '/api/account/password'
+              : `/api/auth/${mode === 'forgot' ? 'forgot-password' : 'reset-password'}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ...data, token }),
+              signal: AbortSignal.timeout(20000),
+            },
+          );
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error);
+          setDone(true);
+        } catch (failure) {
+          setError(
+            failure instanceof Error &&
+              !['TypeError', 'TimeoutError', 'SyntaxError'].includes(failure.name)
+              ? failure.message
+              : text.genericError,
+          );
+        } finally {
+          busy.current = false;
+          setPending(false);
+        }
+      }}
+    >
+      <fieldset disabled={pending || !enabled} className="space-y-5">
+        {mode === 'forgot' ? (
+          <label className="block text-sm font-medium text-stone-700">
+            {text.emailLabel}
+            <input
+              name="email"
+              type="email"
+              autoComplete="email"
+              maxLength={254}
+              className={field}
+              placeholder={text.emailPlaceholder}
+            />
+          </label>
+        ) : (
+          <>
+            {mode === 'change' && (
+              <label className="block text-sm font-medium text-stone-700">
+                {text.currentPasswordLabel}
+                <input
+                  name="currentPassword"
+                  type={visible ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  className={field}
+                />
+              </label>
+            )}
+            <label className="block text-sm font-medium text-stone-700">
+              {text.newPasswordLabel}
+              <input
+                name="password"
+                type={visible ? 'text' : 'password'}
+                autoComplete="new-password"
+                aria-describedby="new-password-help"
+                className={field}
+              />
+            </label>
+            <p id="new-password-help" className="text-xs text-stone-500">
+              {text.passwordHelp}
+            </p>
+            <label className="block text-sm font-medium text-stone-700">
+              {text.confirmPasswordLabel}
+              <input
+                name="confirm"
+                type={visible ? 'text' : 'password'}
+                autoComplete="new-password"
+                className={field}
+              />
+            </label>
+          </>
+        )}
+
+        <div className="flex flex-col-reverse sm:flex-row items-center gap-4 pt-2">
+          {mode !== 'forgot' && (
+            <button
+              type="button"
+              aria-pressed={visible}
+              onClick={() => setVisible(value => !value)}
+              className="inline-flex items-center justify-center gap-2 rounded-full py-2.5 px-4 text-sm font-medium text-stone-600 hover:bg-stone-100 transition-colors w-full sm:w-auto"
+            >
+              {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              {visible ? text.hidePasswords : text.showPasswords}
+            </button>
+          )}
+          <button
+            type="submit"
+            style={actionButtonStyle}
+            className="action-button inline-flex items-center justify-center gap-2 rounded-full px-6 py-2.5 text-sm font-medium shadow-sm disabled:opacity-50 w-full sm:w-auto sm:ml-auto"
+            disabled={mode === 'reset' && !/^[a-f0-9]{64}$/.test(token)}
+          >
+            {pending
+              ? text.submitLoading
+              : mode === 'forgot'
+                ? text.submitForgot
+                : mode === 'reset'
+                  ? text.submitReset
+                  : text.submitChange}
+          </button>
+        </div>
+      </fieldset>
+      {!enabled && (
+        <p role="status" className="mt-4 text-sm leading-relaxed text-stone-500">
+          {text.disabledRecovery}
+        </p>
+      )}
+      {mode === 'reset' && !/^[a-f0-9]{64}$/.test(token) && (
+        <p className="mt-4 text-sm text-stone-500">
+          {text.openEmailLink}{' '}
+          <Link href="/forgot-password" className="underline underline-offset-4">
+            {text.requestAnotherLink}
+          </Link>
+        </p>
+      )}
+      {error && (
+        <p role="alert" className="mt-4 text-sm text-[#A94E35]">
+          {error}
+        </p>
+      )}
+    </form>
+  );
 }

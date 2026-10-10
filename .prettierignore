@@ -1,0 +1,22 @@
+# Generated
+.next/
+ops/.next/
+node_modules/
+ops/node_modules/
+package-lock.json
+ops/package-lock.json
+next-env.d.ts
+ops/next-env.d.ts
+
+# Prose and data keep their authored layout
+*.md
+docs/
+public/
+db/
+
+# Tooling state
+.claude/
+.vercel/
+ops/.vercel/
+skills-lock.json
+*.tsbuildinfo

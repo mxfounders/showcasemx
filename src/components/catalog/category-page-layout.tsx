@@ -1,16 +1,31 @@
 'use client';
 
-import { useMemo, useState, useCallback, useEffect } from 'react';
+import { useMemo, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import Link from '@/i18n/navigation';
 import Image from 'next/image';
-import { ArrowUpRight } from 'lucide-react';
-import { CatalogFilterBar, type CatalogDict } from './catalog-filter-bar';
+import { ArrowUpRight, Star } from 'lucide-react';
+import type { Dictionary } from '@/i18n/dictionary';
+import { CatalogFilterBar } from './catalog-filter-bar';
 import { ProductVisual } from '@/components/product-visual';
 import { getAccentStyle } from '@/lib/brand-colors';
-import { categories, offerings, localizedCategories, localizedIndustries, localizedCompanySizes, localizedOfferingOptions, localizedCapabilitiesByCategory, localizedIntegrationOptions, localizedPriceBandOptions, localizedSetupTimeOptions, localizedComplianceOptions, localizedCategoryDisplayLabel } from '@/lib/taxonomy';
+import {
+  categories,
+  offerings,
+  localizedCategories,
+  localizedIndustries,
+  localizedCompanySizes,
+  localizedOfferingOptions,
+  localizedCapabilitiesByCategory,
+  localizedIntegrationOptions,
+  localizedPriceBandOptions,
+  localizedSetupTimeOptions,
+  localizedComplianceOptions,
+  localizedCategoryDisplayLabel,
+} from '@/lib/taxonomy';
 import { matchIndustry, matchCapability, matchCompanySize, isRealMatch } from '@/lib/search/facets';
 import type { PublishedProduct } from '@/lib/solutions/public';
+import { ProjectMark } from '@/components/project-mark';
 
 type Product = PublishedProduct;
 
@@ -20,8 +35,12 @@ type Product = PublishedProduct;
 // Spanish value products are matched against — only `label` is localized.
 function categoryFilterOptions(locale?: string) {
   const seen = new Map<string, string>();
-  for (const item of localizedCategories(locale)) if (!seen.has(item.label)) seen.set(item.label, item.label);
-  return Array.from(seen.keys()).map(value => ({ value, label: localizedCategoryDisplayLabel(value, locale) }));
+  for (const item of localizedCategories(locale))
+    if (!seen.has(item.label)) seen.set(item.label, item.label);
+  return Array.from(seen.keys()).map(value => ({
+    value,
+    label: localizedCategoryDisplayLabel(value, locale),
+  }));
 }
 function industryFilterOptions(locale?: string) {
   return localizedIndustries(locale).map(item => ({ value: item.value, label: item.label }));
@@ -33,17 +52,31 @@ function sizeFilterOptions(locale?: string) {
 // (/industria, /colecciones). /explorar/[slug] scopes this down to the one
 // category being browsed — see capabilityOptions below.
 function capabilityFilterOptions(categoryLabels: string[], locale?: string) {
-  return localizedCapabilitiesByCategory(categoryLabels, locale).flatMap(group => group.items.map(item => ({ value: item.id, label: item.label })));
+  return localizedCapabilitiesByCategory(categoryLabels, locale).flatMap(group =>
+    group.items.map(item => ({ value: item.id, label: item.label })),
+  );
 }
 const allCategoryLabels = [...new Set(categories.map(item => item.label))];
 
 // Category, industry, capacity, integration, compliance and size all accept
 // several values at once (OR within the axis); price band, setup time,
 // format and sort stay single.
-const MULTI = new Set(['problema', 'industria', 'capacidad', 'integracion', 'cumplimiento', 'tamano']);
+const MULTI = new Set([
+  'problema',
+  'industria',
+  'capacidad',
+  'integracion',
+  'cumplimiento',
+  'tamano',
+]);
 
 function readValues(raw: string | null): string[] {
-  return raw ? raw.split(',').map(value => value.trim()).filter(Boolean) : [];
+  return raw
+    ? raw
+        .split(',')
+        .map(value => value.trim())
+        .filter(Boolean)
+    : [];
 }
 
 // Only offer a filter value if at least one product in the current result set
@@ -52,7 +85,11 @@ function readValues(raw: string | null): string[] {
 // also means an axis with zero live options simply doesn't render (see the
 // `.filter(f => f.options.length > 0)` below), which matters while the real
 // catalogue is still one or two solutions deep.
-function deriveOptions<T extends { value: string }>(options: T[], products: Product[], matches: (product: Product, value: string) => boolean): T[] {
+function deriveOptions<T extends { value: string }>(
+  options: T[],
+  products: Product[],
+  matches: (product: Product, value: string) => boolean,
+): T[] {
   return options.filter(option => products.some(product => matches(product, option.value)));
 }
 
@@ -64,6 +101,7 @@ export function CategoryPageLayout({
   products,
   locale,
   dict,
+  sponsored,
 }: {
   title: string;
   description: string;
@@ -71,7 +109,9 @@ export function CategoryPageLayout({
   basePath: string;
   products: Product[];
   locale?: string;
-  dict?: CatalogDict;
+  dict: Dictionary['catalog'];
+  /** Labelled paid placements, shown apart from (and unaffected by) the filtered results. */
+  sponsored?: ReactNode;
 }) {
   // The URL is a mirror of this state via history.replaceState — it never
   // triggers a Next navigation or a server request (see CatalogFilterBar and
@@ -86,7 +126,10 @@ export function CategoryPageLayout({
   const setFilter = useCallback((id: string, value: string) => {
     setSelections(current => {
       const next = { ...current };
-      if (!value) { delete next[id]; return next; }
+      if (!value) {
+        delete next[id];
+        return next;
+      }
       if (MULTI.has(id)) {
         const list = next[id] ?? [];
         next[id] = list.includes(value) ? list.filter(item => item !== value) : [...list, value];
@@ -101,9 +144,14 @@ export function CategoryPageLayout({
 
   useEffect(() => {
     const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(selections)) if (value.length) params.set(key, value.join(','));
+    for (const [key, value] of Object.entries(selections))
+      if (value.length) params.set(key, value.join(','));
     const query = params.toString();
-    window.history.replaceState(null, '', query ? `${window.location.pathname}?${query}` : window.location.pathname);
+    window.history.replaceState(
+      null,
+      '',
+      query ? `${window.location.pathname}?${query}` : window.location.pathname,
+    );
   }, [selections]);
 
   // On /explorar/[slug] the capability filter is scoped to the one category
@@ -113,7 +161,9 @@ export function CategoryPageLayout({
   const capabilityOptions = useMemo(() => {
     if (basePath !== '/explorar') return capabilityFilterOptions(allCategoryLabels, locale);
     const info = categories.find(item => item.slug === categorySlug);
-    return info ? capabilityFilterOptions([info.label], locale) : capabilityFilterOptions(allCategoryLabels, locale);
+    return info
+      ? capabilityFilterOptions([info.label], locale)
+      : capabilityFilterOptions(allCategoryLabels, locale);
   }, [basePath, categorySlug, locale]);
 
   // Contextual filters by route (CLAUDE.md §41): never offer the dimension the
@@ -122,37 +172,108 @@ export function CategoryPageLayout({
   // see the .filter at the end, which is what keeps a one-solution catalogue
   // from rendering eight dropdowns that all say "Cualquiera" and nothing else.
   const filters = useMemo(() => {
-    const modelFilterOptions = offerings.map(value => ({ value, label: localizedOfferingOptions(locale).find(item => item.value === value)?.label ?? value }));
-    const capacidad = { id: 'capacidad', label: dict?.filters.capability ?? 'Qué hace', options: deriveOptions(capabilityOptions, products, (p, v) => !!p.capabilities?.includes(v)) };
-    const tamano = { id: 'tamano', label: dict?.filters.companySize ?? 'Tamaño de empresa', options: deriveOptions(sizeFilterOptions(locale), products, (p, v) => isRealMatch(matchCompanySize(p, v))) };
-    const integracion = { id: 'integracion', label: dict?.filters.integrations ?? 'Se integra con', options: deriveOptions(localizedIntegrationOptions(locale), products, (p, v) => !!p.integrationKeys?.includes(v)) };
-    const precio = { id: 'precio', label: dict?.filters.priceBand ?? 'Rango de precio', options: deriveOptions(localizedPriceBandOptions(locale), products, (p, v) => p.priceBand === v) };
-    const arranque = { id: 'arranque', label: dict?.filters.setupTime ?? 'Tiempo de arranque', options: deriveOptions(localizedSetupTimeOptions(locale), products, (p, v) => p.setupTime === v) };
-    const cumplimiento = { id: 'cumplimiento', label: dict?.filters.compliance ?? 'Cumplimiento', options: deriveOptions(localizedComplianceOptions(locale), products, (p, v) => !!p.compliance?.includes(v)) };
-    const modelo = { id: 'modelo', label: dict?.filters.format ?? 'Formato', options: deriveOptions(modelFilterOptions, products, (p, v) => p.offering === v) };
-    const problema = { id: 'problema', label: dict?.filters.useCase ?? 'Caso de uso', options: deriveOptions(categoryFilterOptions(locale), products, (p, v) => p.category === v || !!p.categories?.includes(v)) };
-    const industria = { id: 'industria', label: dict?.filters.industry ?? 'Industria', options: deriveOptions(industryFilterOptions(locale), products, (p, v) => isRealMatch(matchIndustry(p, v))) };
+    const modelFilterOptions = offerings.map(value => ({
+      value,
+      label: localizedOfferingOptions(locale).find(item => item.value === value)?.label ?? value,
+    }));
+    const capacidad = {
+      id: 'capacidad',
+      label: dict.filters.capability,
+      options: deriveOptions(capabilityOptions, products, (p, v) => !!p.capabilities?.includes(v)),
+    };
+    const tamano = {
+      id: 'tamano',
+      label: dict.filters.companySize,
+      options: deriveOptions(sizeFilterOptions(locale), products, (p, v) =>
+        isRealMatch(matchCompanySize(p, v)),
+      ),
+    };
+    const integracion = {
+      id: 'integracion',
+      label: dict.filters.integrations,
+      options: deriveOptions(
+        localizedIntegrationOptions(locale),
+        products,
+        (p, v) => !!p.integrationKeys?.includes(v),
+      ),
+    };
+    const precio = {
+      id: 'precio',
+      label: dict.filters.priceBand,
+      options: deriveOptions(
+        localizedPriceBandOptions(locale),
+        products,
+        (p, v) => p.priceBand === v,
+      ),
+    };
+    const arranque = {
+      id: 'arranque',
+      label: dict.filters.setupTime,
+      options: deriveOptions(
+        localizedSetupTimeOptions(locale),
+        products,
+        (p, v) => p.setupTime === v,
+      ),
+    };
+    const cumplimiento = {
+      id: 'cumplimiento',
+      label: dict.filters.compliance,
+      options: deriveOptions(
+        localizedComplianceOptions(locale),
+        products,
+        (p, v) => !!p.compliance?.includes(v),
+      ),
+    };
+    const modelo = {
+      id: 'modelo',
+      label: dict.filters.format,
+      options: deriveOptions(modelFilterOptions, products, (p, v) => p.offering === v),
+    };
+    const problema = {
+      id: 'problema',
+      label: dict.filters.useCase,
+      options: deriveOptions(
+        categoryFilterOptions(locale),
+        products,
+        (p, v) => p.category === v || !!p.categories?.includes(v),
+      ),
+    };
+    const industria = {
+      id: 'industria',
+      label: dict.filters.industry,
+      options: deriveOptions(industryFilterOptions(locale), products, (p, v) =>
+        isRealMatch(matchIndustry(p, v)),
+      ),
+    };
 
     const byRoute =
-      basePath === '/explorar' ? [industria, capacidad, tamano, integracion, precio, arranque, cumplimiento, modelo] :
-      basePath === '/industria' ? [problema, capacidad, tamano, integracion, precio, arranque, modelo] :
-      [problema, capacidad, tamano, modelo];
+      basePath === '/explorar'
+        ? [industria, capacidad, tamano, integracion, precio, arranque, cumplimiento, modelo]
+        : basePath === '/industria'
+          ? [problema, capacidad, tamano, integracion, precio, arranque, modelo]
+          : [problema, capacidad, tamano, modelo];
 
     return byRoute.filter(filter => filter.options.length > 0);
   }, [basePath, products, capabilityOptions, locale, dict]);
 
   const sortValue = selections.sort?.[0] ?? 'popular';
 
-  const applySort = useCallback((list: Product[]) => {
-    const result = [...list];
-    if (sortValue === 'az') result.sort((a, b) => a.name.localeCompare(b.name));
-    // A real chronological sort on published_at, not a reverse() of the
-    // score-ranked order the server returns (that inverted the ranking
-    // instead of ordering by date, and a missing date sorts last).
-    else if (sortValue === 'newest') result.sort((a, b) => new Date(b.publishedAt ?? 0).getTime() - new Date(a.publishedAt ?? 0).getTime());
-    else result.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
-    return result;
-  }, [sortValue]);
+  const applySort = useCallback(
+    (list: Product[]) => {
+      const result = [...list];
+      if (sortValue === 'az') result.sort((a, b) => a.name.localeCompare(b.name));
+      // A real chronological sort on published_at, not a reverse() of the
+      // score-ranked order the server returns (that inverted the ranking
+      // instead of ordering by date, and a missing date sorts last).
+      else if (sortValue === 'newest')
+        result.sort(
+          (a, b) => new Date(b.publishedAt ?? 0).getTime() - new Date(a.publishedAt ?? 0).getTime(),
+        );
+      else result.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+      return result;
+    },
+    [sortValue],
+  );
 
   // Each axis compares against the real declared field, not substrings in
   // free-text copy. Hard axes (problema, integración, cumplimiento, precio,
@@ -177,9 +298,18 @@ export function CategoryPageLayout({
     const modelo = selections.modelo?.[0];
 
     const passesHard = (product: Product) => {
-      if (problema.length && !problema.some(value => product.category === value || product.categories?.includes(value))) return false;
-      if (integracion.length && !integracion.some(value => product.integrationKeys?.includes(value))) return false;
-      if (cumplimiento.length && !cumplimiento.some(value => product.compliance?.includes(value))) return false;
+      if (
+        problema.length &&
+        !problema.some(value => product.category === value || product.categories?.includes(value))
+      )
+        return false;
+      if (
+        integracion.length &&
+        !integracion.some(value => product.integrationKeys?.includes(value))
+      )
+        return false;
+      if (cumplimiento.length && !cumplimiento.some(value => product.compliance?.includes(value)))
+        return false;
       if (precio && product.priceBand !== precio) return false;
       if (arranque && product.setupTime !== arranque) return false;
       if (modelo && product.offering !== modelo) return false;
@@ -214,18 +344,25 @@ export function CategoryPageLayout({
     const inferredList: { product: Product; reasons: string[] }[] = [];
     for (const product of products) {
       if (!passesHard(product)) continue;
-      const iLevel = industriaLevel(product), cLevel = capacidadLevel(product), tLevel = tamanoLevel(product);
+      const iLevel = industriaLevel(product),
+        cLevel = capacidadLevel(product),
+        tLevel = tamanoLevel(product);
       if (iLevel === 'fail' || cLevel === 'fail' || tLevel === 'fail') continue;
-      if (iLevel === 'real' && cLevel === 'real' && tLevel === 'real') { primaryList.push(product); continue; }
+      if (iLevel === 'real' && cLevel === 'real' && tLevel === 'real') {
+        primaryList.push(product);
+        continue;
+      }
       const reasons: string[] = [];
-      if (iLevel === 'soft') reasons.push(dict?.reasonIndustry ?? 'No declaró esa industria');
-      if (cLevel === 'soft') reasons.push(dict?.reasonCapability ?? 'No declaró esa capacidad');
-      if (tLevel === 'soft') reasons.push(dict?.reasonCompanySize ?? 'No declaró tamaño de empresa');
+      if (iLevel === 'soft') reasons.push(dict.reasonIndustry);
+      if (cLevel === 'soft') reasons.push(dict.reasonCapability);
+      if (tLevel === 'soft') reasons.push(dict.reasonCompanySize);
       inferredList.push({ product, reasons });
     }
     return {
       primary: applySort(primaryList),
-      inferred: applySort(inferredList.map(item => item.product)).map(product => inferredList.find(item => item.product === product)!),
+      inferred: applySort(inferredList.map(item => item.product)).map(product =>
+        inferredList.find(item => item.product === product)!,
+      ),
     };
   }, [products, selections, applySort, dict]);
 
@@ -239,39 +376,76 @@ export function CategoryPageLayout({
     >
       <div>
         {product.website ? (
-          <div className="relative flex h-36 shrink-0 flex-col items-center justify-center gap-3 overflow-hidden rounded-[16px]" style={{ backgroundColor: palette.backgroundColor, color: palette.color }}>
+          <div
+            className="relative flex h-36 shrink-0 flex-col items-center justify-center gap-3 overflow-hidden rounded-[16px]"
+            style={{ backgroundColor: palette.backgroundColor, color: palette.color }}
+          >
             {product.ogImage ? (
-              <Image src={product.ogImage} alt={product.name} fill sizes="(min-width: 640px) 30vw, 90vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+              <Image
+                src={product.ogImage}
+                alt={product.name}
+                fill
+                sizes="(min-width: 640px) 30vw, 90vw"
+                className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+              />
             ) : (
               <>
                 <span className="text-[28px] font-semibold tracking-[-0.04em]">{product.name}</span>
                 <span className="text-[10px] opacity-80">{new URL(product.website).hostname}</span>
               </>
             )}
-            <span className="absolute right-3 top-3 rounded-full bg-white/90 px-2 py-1 text-[9px] font-medium uppercase tracking-widest text-stone-800 backdrop-blur-md">{localizedOfferingOptions(locale).find(item => item.value === product.offering)?.label ?? product.offering}</span>
+            <span className="absolute right-3 top-3 rounded-full bg-white/90 px-2 py-1 text-[9px] font-medium uppercase tracking-widest text-stone-800 backdrop-blur-md">
+              {localizedOfferingOptions(locale).find(item => item.value === product.offering)
+                ?.label ?? product.offering}
+            </span>
           </div>
         ) : (
           <ProductVisual variant={index % 4} color={palette.backgroundColor} />
         )}
 
         <div className="flex items-center gap-3 pt-5">
-          {product.favicon || product.website ? (
-            <img src={product.favicon || `https://www.google.com/s2/favicons?domain=${product.website}&sz=128`} alt="" className="size-8 shrink-0 rounded-[8px] object-contain" />
-          ) : (
-            <span aria-hidden="true" style={{ backgroundColor: palette.color }} className="flex size-8 shrink-0 items-center justify-center rounded-[8px] text-xs font-semibold text-white">
-              {product.name.slice(0, 1)}
-            </span>
-          )}
-          <span className="text-lg font-semibold tracking-tight text-stone-900">{product.name}</span>
-          <ArrowUpRight aria-hidden="true" className="ml-auto size-4 text-stone-400 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+          <ProjectMark
+            name={product.name}
+            favicon={product.favicon}
+            size={32}
+            className="size-8 shrink-0 rounded-[8px]"
+            fallbackClassName="flex items-center justify-center text-xs font-semibold text-white"
+            fallbackStyle={{ backgroundColor: palette.color }}
+          />
+          <span className="text-lg font-semibold tracking-tight text-stone-900">
+            {product.name}
+          </span>
+          <ArrowUpRight
+            aria-hidden="true"
+            className="ml-auto size-4 text-stone-400 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+          />
         </div>
 
-        <p className="line-clamp-2 pt-3 text-[13px] leading-relaxed text-stone-500">{product.description}</p>
+        <p className="line-clamp-2 pt-3 text-[13px] leading-relaxed text-stone-500">
+          {product.description}
+        </p>
       </div>
 
       <div className="mt-6 flex items-center justify-between border-t border-stone-100 pt-4 text-[11px] font-medium text-stone-400">
-        <span className="truncate pr-4">{product.provider || product.name}</span>
-        <span className="inline-flex shrink-0 items-center text-[#365DC4]">{dict?.viewSolution ?? 'Conocer solución'}</span>
+        {product.rating != null && product.reviews ? (
+          <span
+            className="inline-flex items-center gap-1 pr-4 text-stone-600"
+            aria-label={dict.ratingLabel
+              .replace('{rating}', product.rating.toFixed(1))
+              .replace('{count}', String(product.reviews))}
+          >
+            <Star className="size-3.5 fill-[#88631B] text-[#88631B]" aria-hidden="true" />
+            <span aria-hidden="true">
+              {product.rating.toFixed(1)}
+              <span className="text-stone-400"> ({product.reviews})</span>
+            </span>
+          </span>
+        ) : (
+          <span className="truncate pr-4">{product.provider || product.name}</span>
+        )}
+        <span className="inline-flex shrink-0 items-center text-[#365DC4]">
+          {dict.viewSolution}
+        </span>
       </div>
     </Link>
   );
@@ -282,12 +456,19 @@ export function CategoryPageLayout({
         <h1 className="text-3xl sm:text-4xl md:text-[42px] font-semibold tracking-tight leading-[1.05] md:max-w-md lg:max-w-lg shrink-0">
           {title}
         </h1>
-        <p className="max-w-lg text-[17px] leading-relaxed text-stone-500 md:pt-2">
-          {description}
-        </p>
+        <p className="max-w-lg text-[17px] leading-relaxed text-stone-500 md:pt-2">{description}</p>
       </div>
 
-      <CatalogFilterBar filters={filters} totalItems={primary.length} values={selections} onChange={setFilter} onClear={clearFilters} dict={dict} />
+      {sponsored}
+
+      <CatalogFilterBar
+        filters={filters}
+        totalItems={primary.length}
+        values={selections}
+        onChange={setFilter}
+        onClear={clearFilters}
+        dict={dict}
+      />
 
       {primary.length > 0 ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -295,22 +476,26 @@ export function CategoryPageLayout({
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center rounded-[24px] border border-dashed border-stone-300 bg-stone-50 py-32 text-center">
-          <p className="text-lg font-medium text-stone-900">{dict?.noResultsTitle ?? 'No encontramos soluciones'}</p>
-          <p className="mt-2 max-w-sm text-sm text-stone-500">{dict?.noResultsDesc ?? 'Intenta quitar algunos filtros o explora otras categorías relacionadas.'}</p>
+          <p className="text-lg font-medium text-stone-900">{dict.noResultsTitle}</p>
+          <p className="mt-2 max-w-sm text-sm text-stone-500">{dict.noResultsDesc}</p>
         </div>
       )}
 
       {inferred.length > 0 && (
         <section className="mt-16">
-          <h2 className="text-lg font-semibold tracking-tight text-stone-900">{dict?.alsoUsefulTitle ?? 'También podrían servir'}</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-stone-900">
+            {dict.alsoUsefulTitle}
+          </h2>
           <p className="mt-1.5 max-w-xl text-[13px] leading-relaxed text-stone-500">
-            {dict?.alsoUsefulDesc ?? 'No declararon todo lo que filtraste, pero encajan por su categoría y por lo que describen. Confírmalo con cada proyecto.'}
+            {dict.alsoUsefulDesc}
           </p>
           <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {inferred.map((item, index) => (
               <div key={item.product.catalogId || item.product.detailUrl || item.product.name}>
                 {renderCard(item.product, index)}
-                <p className="mt-2 text-[11px] leading-relaxed text-stone-400">{item.reasons.join(' · ')}</p>
+                <p className="mt-2 text-[11px] leading-relaxed text-stone-400">
+                  {item.reasons.join(' · ')}
+                </p>
               </div>
             ))}
           </div>

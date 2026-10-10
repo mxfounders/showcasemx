@@ -1,0 +1,83 @@
+export const newsletter = {
+  metaTitle: 'Novedades y avisos',
+  metaDescription: 'Suscríbete para conocer nuevas soluciones, actualizaciones y avisos de shwcs.',
+  hero: 'Suscríbete al newsletter.<br />Mantente al día.',
+  formAria: 'Suscripción al newsletter',
+  progressAria: 'Progreso del formulario',
+  titles: {
+    profile: '¿Qué te trae por aquí?',
+    role: '¿Cuál es tu rol?',
+    email: '¿A qué correo te escribimos?',
+  },
+  errors: {
+    submit: 'No pudimos registrar tu suscripción. Inténtalo de nuevo.',
+    submitCatch: 'No pudimos confirmar la suscripción. Reintenta; no duplicaremos tu registro.',
+  },
+  profiles: {
+    founder: { label: 'Soy fundador', detail: 'Construyo o vendo una solución.' },
+    buyer: { label: 'Soy comprador', detail: 'Busco soluciones para mi empresa.' },
+    both: { label: 'Un poco de ambos', detail: 'Construyo y también busco soluciones.' },
+    exploring: { label: 'Estoy explorando', detail: 'Quiero conocer lo que se está creando.' },
+  },
+  roles: {
+    leadership: 'Fundador / Dirección',
+    product_tech: 'Producto / Tecnología',
+    sales_marketing: 'Ventas / Marketing',
+    operations: 'Operaciones',
+    finance_procurement: 'Finanzas / Compras',
+    other: 'Otro rol',
+  },
+  labels: {
+    email: 'Tu correo electrónico',
+    purpose:
+      'Usaremos tu correo, perfil y rol para enviarte novedades y avisos relevantes de shwcs.',
+    consent: 'Quiero recibir novedades y avisos de shwcs por correo.',
+    honeypot: 'Deja este campo vacío',
+  },
+  placeholders: { email: 'tu@correo.com' },
+  step: 'Paso',
+  of: 'de',
+  registering: 'Registrando…',
+  subscribeBtn: 'Suscribirme',
+  continueBtn: 'Continuar',
+  backBtn: 'Anterior',
+  successTitle: 'Gracias por sumarte.',
+  successDesc: 'Recibimos tu solicitud. Si ya estabas en la lista, no duplicaremos tu registro.',
+  successBtn: 'Explorar soluciones',
+  /** The page reached from the unsubscribe link at the foot of each newsletter email. */
+  unsubscribe: {
+    metaTitle: 'Cancelar newsletter',
+    doneTitle: 'Tu baja quedó registrada.',
+    doneDesc:
+      'No volveremos a enviarte campañas del newsletter. Los avisos de una cuenta, si los activaste, se administran por separado.',
+    back: 'Volver a shwcs →',
+    title: 'Dejar de recibir el newsletter.',
+    desc: 'Confirma la baja. No eliminaremos tu cuenta ni cambiaremos los avisos transaccionales que hayas solicitado.',
+    pending: 'Registrando…',
+    submit: 'Confirmar baja',
+    missingToken: 'Este enlace no contiene una solicitud de baja válida.',
+    error: 'No pudimos registrar la baja.',
+    genericError: 'No pudimos registrar la baja. Inténtalo de nuevo.',
+  },
+  /** Messages returned by /api/newsletter and /api/newsletter/unsubscribe. */
+  api: {
+    useForm: 'Suscríbete desde el formulario de shwcs.',
+    invalidFormat: 'Formato no válido.',
+    missingEmail: 'Falta tu correo.',
+    formTooLong: 'El formulario es demasiado largo.',
+    unreadableForm: 'No pudimos leer el formulario. Inténtalo de nuevo.',
+    invalidSubscription: 'Revisa tu perfil, rol y correo, y acepta recibir novedades.',
+    subscriptionsDisabled:
+      'Las suscripciones todavía no están habilitadas. Tu correo no se ha guardado; inténtalo más tarde.',
+    subscribeTooMany: 'Recibimos varios intentos. Espera antes de volver a suscribirte.',
+    subscribeUnavailable:
+      'No pudimos registrar tu suscripción. Conservamos el correo en el formulario para que puedas reintentar.',
+    openFromShwcs: 'Abre el enlace desde shwcs.',
+    requestTooLong: 'Solicitud demasiado larga.',
+    unreadableRequest: 'No pudimos leer la solicitud.',
+    unsubscribeLinkInvalid: 'El enlace de baja no es válido.',
+    unsubscribeDisabled: 'La baja no está disponible en este momento.',
+    unsubscribeTooMany: 'Demasiados intentos. Espera un momento.',
+    unsubscribeUnavailable: 'No pudimos registrar la baja. Inténtalo de nuevo.',
+  },
+} as const;

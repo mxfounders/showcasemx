@@ -2,7 +2,7 @@
 -- Aditiva. Solo aplica a solution_media (capturas del fundador); las portadas de
 -- sitio ya vienen <=1200x900 y no se renditionan.
 --
--- Aplicar con scripts/migrate-media-renditions.cjs (splitter de migrate-launch.cjs).
+-- Aplicar con `npm run db:migrate -- db/media-renditions.sql`.
 --
 -- Una fila por (media_id, width) con width en (400, 800). El ancho completo (1600)
 -- NO tiene fila aquí: lo sirve solution_media.storage_key directamente, así se

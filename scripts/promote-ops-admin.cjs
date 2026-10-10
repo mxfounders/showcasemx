@@ -21,7 +21,9 @@ function loadEnv(file) {
         if (!process.env[key]) process.env[key] = val;
       }
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 loadEnv(path.join(__dirname, '..', '.env.local'));
@@ -34,7 +36,9 @@ if (!email || !email.includes('@')) {
 
 const url = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL || process.env.POSTGRES_URL;
 if (!url) {
-  console.error('ERROR: DATABASE_URL not found. Make sure .env.local is present in the root directory.');
+  console.error(
+    'ERROR: DATABASE_URL not found. Make sure .env.local is present in the root directory.',
+  );
   process.exit(1);
 }
 

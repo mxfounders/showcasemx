@@ -15,6 +15,6 @@ export default function mediaLoader({ src, width }) {
   if (typeof src !== 'string' || !/^\/api\/solutions\/[^/]+\/media\/[^/?]+/.test(src)) {
     return src;
   }
-  const w = WIDTHS.find((x) => x >= width) ?? 1600;
+  const w = WIDTHS.find(x => x >= width) ?? 1600;
   return `${src}${src.includes('?') ? '&' : '?'}w=${w}`;
 }

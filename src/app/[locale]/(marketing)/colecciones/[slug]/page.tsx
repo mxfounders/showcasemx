@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { publicProducts } from '@/lib/solutions/public';
@@ -6,12 +7,27 @@ import { CategoryPageSkeleton } from '@/components/catalog/category-page-skeleto
 import { i18n } from '@/i18n/config';
 import { collections, matchesCollection, localizedCollections } from '@/lib/taxonomy';
 import { getDictionary } from '@/i18n/get-dictionary';
-import type { Locale } from '@/i18n/config';
+import { localeAlternates } from '@/lib/seo';
 
 // See explorar/[slug]/page.tsx for why {locale, slug} pairs (not just slug)
 // and dynamicParams=false both matter here.
-export function generateStaticParams() { return i18n.locales.flatMap(locale => collections.map(item => ({ locale, slug: item.slug }))); }
+export function generateStaticParams() {
+  return i18n.locales.flatMap(locale => collections.map(item => ({ locale, slug: item.slug })));
+}
 export const dynamicParams = false;
+
+export async function generateMetadata(props: {
+  params: Promise<{ slug: string; locale: string }>;
+}): Promise<Metadata> {
+  const { slug, locale } = await props.params;
+  const info = localizedCollections(locale).find(item => item.slug === slug);
+  if (!info) return {};
+  return {
+    title: `${info.title} | shwcs`,
+    description: info.description,
+    alternates: localeAlternates(locale, `/colecciones/${slug}`),
+  };
+}
 
 export default async function ColeccionesCategoryPage(props: {
   params: Promise<{ slug: string; locale: string }>;
@@ -20,10 +36,12 @@ export default async function ColeccionesCategoryPage(props: {
 
   const info = collections.find(item => item.slug === params.slug);
   if (!info) return notFound();
-  const localizedInfo = localizedCollections(params.locale).find(item => item.slug === params.slug)!;
+  const localizedInfo = localizedCollections(params.locale).find(
+    item => item.slug === params.slug,
+  )!;
 
   const products = await publicProducts();
-  const dict = await getDictionary(params.locale as Locale);
+  const dict = await getDictionary(params.locale);
 
   // Each collection filters by its declared rule (categories and/or
   // industries) from src/lib/taxonomy.ts instead of an unrelated slice of the

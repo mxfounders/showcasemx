@@ -5,19 +5,25 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { randomUUID, createHash, createHmac } = crypto;
+const { randomUUID, createHmac } = crypto;
 
 if (process.env.RUN_OPS_INTEGRATION !== '1') {
-  console.log('Set RUN_OPS_INTEGRATION=1 to test the running local apps (root :3000, ops on OPS_PORT) and configured database.');
+  console.log(
+    'Set RUN_OPS_INTEGRATION=1 to test the running local apps (root on MAIN_PORT, default 3000; ops on OPS_PORT) and configured database.',
+  );
   process.exit(0);
 }
 
 const root = process.cwd();
 const { neon } = require(root + '/node_modules/@neondatabase/serverless');
-const env = require(root + '/node_modules/dotenv').parse(fs.readFileSync(path.join(root, '.env.local')));
-const sql = neon(env.NEON_DATABASE_URL || env.DATABASE_URL || env.POSTGRES_URL, { fetchOptions: { cache: 'no-store' } });
+const env = require(root + '/node_modules/dotenv').parse(
+  fs.readFileSync(path.join(root, '.env.local')),
+);
+const sql = neon(env.NEON_DATABASE_URL || env.DATABASE_URL || env.POSTGRES_URL, {
+  fetchOptions: { cache: 'no-store' },
+});
 
-const mainOrigin = 'http://localhost:3000';
+const mainOrigin = 'http://localhost:' + (process.env.MAIN_PORT || '3000');
 const opsOrigin = 'http://localhost:' + (process.env.OPS_PORT || '3011');
 const tag = randomUUID();
 const password = 'Temporary ops integration passphrase';
@@ -27,24 +33,28 @@ const emails = {
   reviewer: `ops-reviewer-${tag}@example.invalid`,
 };
 
-const testStart = new Date();
 const accountIds = {};
 const opsCookies = {}; // role -> 'ops-session=...'
 let inquiryId = null;
 let reportId = null;
+let lastAdminExercised = false;
 
 // --- TOTP (mirrors ops/src/lib/totp.ts) ---
 const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 function base32Decode(input) {
   const clean = input.toUpperCase().replace(/[^A-Z2-7]/g, '');
-  let bits = 0, value = 0;
+  let bits = 0,
+    value = 0;
   const bytes = [];
   for (const char of clean) {
     const idx = BASE32_ALPHABET.indexOf(char);
     if (idx === -1) continue;
     value = (value << 5) | idx;
     bits += 5;
-    if (bits >= 8) { bytes.push((value >>> (bits - 8)) & 255); bits -= 8; }
+    if (bits >= 8) {
+      bytes.push((value >>> (bits - 8)) & 255);
+      bits -= 8;
+    }
   }
   return Buffer.from(bytes);
 }
@@ -53,7 +63,11 @@ function hotp(secretBuf, counter) {
   buf.writeBigUInt64BE(counter);
   const hmac = createHmac('sha1', secretBuf).update(buf).digest();
   const offset = hmac[hmac.length - 1] & 0x0f;
-  const code = ((hmac[offset] & 0x7f) << 24) | ((hmac[offset + 1] & 0xff) << 16) | ((hmac[offset + 2] & 0xff) << 8) | (hmac[offset + 3] & 0xff);
+  const code =
+    ((hmac[offset] & 0x7f) << 24) |
+    ((hmac[offset + 1] & 0xff) << 16) |
+    ((hmac[offset + 2] & 0xff) << 8) |
+    (hmac[offset + 3] & 0xff);
   return String(code % 10 ** 6).padStart(6, '0');
 }
 function totpNow(secretBase32) {
@@ -71,9 +85,17 @@ async function opsFetch(pathname, { method = 'GET', body, cookie } = {}) {
   const headers = { origin: opsOrigin };
   if (body !== undefined) headers['content-type'] = 'application/json';
   if (cookie) headers.cookie = cookie;
-  const res = await fetch(opsOrigin + pathname, { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined });
+  const res = await fetch(opsOrigin + pathname, {
+    method,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
   let json = null;
-  try { json = await res.json(); } catch { /* not json */ }
+  try {
+    json = await res.json();
+  } catch {
+    /* not json */
+  }
   return { status: res.status, json, res };
 }
 
@@ -83,26 +105,49 @@ async function loginAndEnroll(email) {
   assert.equal(login.status, 200, 'login step1: ' + JSON.stringify(login.json));
   assert.equal(login.json.step, 'enroll');
   const challengeCookie = setCookieValue(login.res);
-  assert.ok(challengeCookie && challengeCookie.startsWith('ops-challenge='), 'expected challenge cookie');
+  assert.ok(
+    challengeCookie && challengeCookie.startsWith('ops-challenge='),
+    'expected challenge cookie',
+  );
 
   // Step 2: enroll start.
-  const start = await opsFetch('/api/auth/enroll', { method: 'POST', body: { step: 'start' }, cookie: challengeCookie });
+  const start = await opsFetch('/api/auth/enroll', {
+    method: 'POST',
+    body: { step: 'start' },
+    cookie: challengeCookie,
+  });
   assert.equal(start.status, 200, 'enroll start: ' + JSON.stringify(start.json));
-  assert.ok(start.json.secret && start.json.qrDataUri && Array.isArray(start.json.backupCodes) && start.json.backupCodes.length === 10);
+  assert.ok(
+    start.json.secret &&
+      start.json.qrDataUri &&
+      Array.isArray(start.json.backupCodes) &&
+      start.json.backupCodes.length === 10,
+  );
 
   // Step 3: enroll confirm.
   const code = totpNow(start.json.secret);
-  const confirm = await opsFetch('/api/auth/enroll', { method: 'POST', body: { step: 'confirm', code }, cookie: challengeCookie });
+  const confirm = await opsFetch('/api/auth/enroll', {
+    method: 'POST',
+    body: { step: 'confirm', code },
+    cookie: challengeCookie,
+  });
   assert.equal(confirm.status, 200, 'enroll confirm: ' + JSON.stringify(confirm.json));
   const sessionCookie = setCookieValue(confirm.res);
   assert.ok(sessionCookie && sessionCookie.startsWith('ops-session='), 'expected session cookie');
   return { sessionCookie, secret: start.json.secret, backupCodes: start.json.backupCodes };
 }
 
-function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 async function waitForNextTotpStep() {
   const msIntoStep = Date.now() % 30000;
   await sleep(30000 - msIntoStep + 500);
+}
+
+async function loginWithTotpAfterStep(email, secret) {
+  await waitForNextTotpStep();
+  return loginWithTotp(email, secret);
 }
 
 async function loginWithTotp(email, secret) {
@@ -111,16 +156,36 @@ async function loginWithTotp(email, secret) {
   assert.equal(login.json.step, 'totp');
   const challengeCookie = setCookieValue(login.res);
   const code = totpNow(secret);
-  const totp = await opsFetch('/api/auth/totp', { method: 'POST', body: { code }, cookie: challengeCookie });
+  const totp = await opsFetch('/api/auth/totp', {
+    method: 'POST',
+    body: { code },
+    cookie: challengeCookie,
+  });
   assert.equal(totp.status, 200, 'totp verify: ' + JSON.stringify(totp.json));
   return setCookieValue(totp.res);
+}
+
+// Modo seguro: critical actions need a fresh TOTP code on the session. Each
+// account's codes are single-use per 30 s step, so wait for a step the account
+// has not consumed yet.
+async function elevate(cookie, secret) {
+  await waitForNextTotpStep();
+  const res = await opsFetch('/api/auth/elevate', {
+    method: 'POST',
+    cookie,
+    body: { code: totpNow(secret) },
+  });
+  assert.equal(res.status, 200, 'elevate: ' + JSON.stringify(res.json));
 }
 
 // The neon serverless driver has occasionally surfaced a stray rejection from an unrelated earlier
 // query under this test's rapid sequential request volume; log rather than let it crash a run whose
 // real assertions already passed or failed on their own terms.
-process.on('unhandledRejection', (reason) => {
-  console.log('Ignoring a stray async rejection (unrelated to the assertions above):', reason && reason.message || reason);
+process.on('unhandledRejection', reason => {
+  console.log(
+    'Ignoring a stray async rejection (unrelated to the assertions above):',
+    (reason && reason.message) || reason,
+  );
 });
 
 (async () => {
@@ -128,7 +193,9 @@ process.on('unhandledRejection', (reason) => {
     // --- Register three temp accounts on the main app and read their ids ---
     for (const email of Object.values(emails)) {
       const res = await fetch(mainOrigin + '/api/auth/register', {
-        method: 'POST', headers: { origin: mainOrigin, 'content-type': 'application/json' }, body: JSON.stringify({ email, password }),
+        method: 'POST',
+        headers: { origin: mainOrigin, 'content-type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
       assert.equal(res.status, 200, 'register ' + email);
     }
@@ -143,7 +210,10 @@ process.on('unhandledRejection', (reason) => {
     await sql`INSERT INTO solution_reviewers (account_id, level) VALUES (${accountIds.reviewer}, 'reviewer')`;
 
     // --- Login without TOTP must not create a session ---
-    const bareLogin = await opsFetch('/api/auth/login', { method: 'POST', body: { email: emails.admin, password } });
+    const bareLogin = await opsFetch('/api/auth/login', {
+      method: 'POST',
+      body: { email: emails.admin, password },
+    });
     assert.equal(bareLogin.status, 200);
     assert.equal(bareLogin.json.step, 'enroll');
     assert.equal(setCookieValue(bareLogin.res).includes('ops-session'), false);
@@ -154,12 +224,32 @@ process.on('unhandledRejection', (reason) => {
     const reviewerEnroll = await loginAndEnroll(emails.reviewer);
     opsCookies.reviewer = reviewerEnroll.sessionCookie;
 
+    // A session is bound to the client that created it: replaying the cookie from
+    // another user agent kills it.
+    const throwaway = await loginWithTotpAfterStep(emails.reviewer, reviewerEnroll.secret);
+    const stolen = await fetch(opsOrigin + '/api/accounts', {
+      headers: { cookie: throwaway, 'user-agent': 'stolen-cookie/1.0' },
+    });
+    assert.equal(
+      stolen.status,
+      401,
+      'a session cookie replayed from another browser must be rejected',
+    );
+    const afterTheft = await opsFetch('/api/accounts', { cookie: throwaway });
+    assert.equal(afterTheft.status, 401, 'the bound session must be destroyed after a mismatch');
+
     const productLogin = await fetch(mainOrigin + '/api/auth/login', {
-      method: 'POST', headers: { origin: mainOrigin, 'content-type': 'application/json' }, body: JSON.stringify({ email: emails.target, password }),
+      method: 'POST',
+      headers: { origin: mainOrigin, 'content-type': 'application/json' },
+      body: JSON.stringify({ email: emails.target, password }),
     });
     assert.equal(productLogin.status, 200);
-    const productCookie = setCookieValue({ headers: { get: () => productLogin.headers.get('set-cookie') } });
-    const crossPanel = await fetch(opsOrigin + '/api/accounts', { headers: { cookie: productCookie } });
+    const productCookie = setCookieValue({
+      headers: { get: () => productLogin.headers.get('set-cookie') },
+    });
+    const crossPanel = await fetch(opsOrigin + '/api/accounts', {
+      headers: { cookie: productCookie },
+    });
     assert.equal(crossPanel.status, 401, 'a product session must not authenticate ops');
 
     // Second login for admin exercises the code/session-reuse path via TOTP (not enroll, since already confirmed).
@@ -167,7 +257,11 @@ process.on('unhandledRejection', (reason) => {
     await waitForNextTotpStep();
     const secondSession = await loginWithTotp(emails.admin, admin.secret);
     assert.ok(secondSession);
-    const crossOps = await fetch(mainOrigin + '/api/account', { headers: { cookie: secondSession, origin: mainOrigin }, method: 'PATCH', body: '{}' });
+    const crossOps = await fetch(mainOrigin + '/api/account', {
+      headers: { cookie: secondSession, origin: mainOrigin },
+      method: 'PATCH',
+      body: '{}',
+    });
     assert.equal(crossOps.status, 401, 'an ops session must not authenticate the product');
 
     // --- Seed data owned by the target account: a solution of their own, a public list, an inquiry, a stuck notification ---
@@ -181,7 +275,14 @@ process.on('unhandledRejection', (reason) => {
     const PRIVATE_PURPOSE = 'PRIVATE-PURPOSE-MARKER-' + tag;
 
     await sql`INSERT INTO founder_solutions (id, owner_id, data, status, version) VALUES (${ownSolutionAdmin}, ${accountIds.admin}, ${JSON.stringify({ name: 'Admin self solution ' + tag, category: 'Cobros' })}::jsonb, 'pending', 0)`;
-    const publishedData = { name: 'Target solution ' + tag, category: 'Cobros', problem: 'p', audience: 'a', website: 'https://example.com', contactEmail: emails.target };
+    const publishedData = {
+      name: 'Target solution ' + tag,
+      category: 'Cobros',
+      problem: 'p',
+      audience: 'a',
+      website: 'https://example.com',
+      contactEmail: emails.target,
+    };
     await sql`INSERT INTO founder_solutions (id, owner_id, data, status, version) VALUES (${targetSolution}, ${accountIds.target}, ${JSON.stringify(publishedData)}::jsonb, 'pending', 0)`;
 
     await sql`INSERT INTO buyer_saved_projects (owner_id, project_key) VALUES (${accountIds.target}, ${savedKey})`;
@@ -197,49 +298,118 @@ process.on('unhandledRejection', (reason) => {
     // === Self-review is allowed: an ops account may publish its own pending solution ===
     // Unlike solution_reports (third-party moderation), only the owner decides what
     // happens to their own listing; publishing still records actor_id below.
-    const selfReview = await opsFetch('/api/review', { method: 'POST', cookie: opsCookies.admin, body: { solutionId: ownSolutionAdmin, action: 'publish', message: 'self-approving my own listing', version: 0 } });
-    assert.equal(selfReview.status, 200, 'self-review must be allowed: ' + JSON.stringify(selfReview.json));
-    const [selfEventRow] = await sql`SELECT actor_id FROM solution_events WHERE solution_id = ${ownSolutionAdmin} ORDER BY id DESC LIMIT 1`;
-    assert.equal(String(selfEventRow.actor_id), String(accountIds.admin), 'self-review must still record the actor');
+    const selfReview = await opsFetch('/api/review', {
+      method: 'POST',
+      cookie: opsCookies.admin,
+      body: {
+        solutionId: ownSolutionAdmin,
+        action: 'publish',
+        message: 'self-approving my own listing',
+        version: 0,
+      },
+    });
+    assert.equal(
+      selfReview.status,
+      200,
+      'self-review must be allowed: ' + JSON.stringify(selfReview.json),
+    );
+    const [selfEventRow] =
+      await sql`SELECT actor_id FROM solution_events WHERE solution_id = ${ownSolutionAdmin} ORDER BY id DESC LIMIT 1`;
+    assert.equal(
+      String(selfEventRow.actor_id),
+      String(accountIds.admin),
+      'self-review must still record the actor',
+    );
 
     // === Publishing someone else's solution copies data -> published_data and records actor_id ===
-    const publish = await opsFetch('/api/review', { method: 'POST', cookie: opsCookies.admin, body: { solutionId: targetSolution, action: 'publish', message: 'Looks good, publishing.', version: 0 } });
+    const publish = await opsFetch('/api/review', {
+      method: 'POST',
+      cookie: opsCookies.admin,
+      body: {
+        solutionId: targetSolution,
+        action: 'publish',
+        message: 'Looks good, publishing.',
+        version: 0,
+      },
+    });
     assert.equal(publish.status, 200, 'publish: ' + JSON.stringify(publish.json));
     assert.equal(publish.json.newStatus, 'published');
-    const [publishedRow] = await sql`SELECT published_data, status FROM founder_solutions WHERE id = ${targetSolution}`;
-    assert.ok(publishedRow.published_data, 'published_data must be set after publish (fragment-composition regression)');
+    const [publishedRow] =
+      await sql`SELECT published_data, status FROM founder_solutions WHERE id = ${targetSolution}`;
+    assert.ok(
+      publishedRow.published_data,
+      'published_data must be set after publish (fragment-composition regression)',
+    );
     assert.equal(publishedRow.published_data.name, publishedData.name);
-    const [eventRow] = await sql`SELECT actor_id FROM solution_events WHERE solution_id = ${targetSolution} ORDER BY id DESC LIMIT 1`;
-    assert.equal(String(eventRow.actor_id), String(accountIds.admin), 'solution_events.actor_id must record the reviewer');
+    const [eventRow] =
+      await sql`SELECT actor_id FROM solution_events WHERE solution_id = ${targetSolution} ORDER BY id DESC LIMIT 1`;
+    assert.equal(
+      String(eventRow.actor_id),
+      String(accountIds.admin),
+      'solution_events.actor_id must record the reviewer',
+    );
 
     // === Reviewer-level account is forbidden from admin-only endpoints ===
     const reviewerTeam = await opsFetch('/api/team', { cookie: opsCookies.reviewer });
     assert.equal(reviewerTeam.status, 403);
     const reviewerAudit = await opsFetch('/api/audit', { cookie: opsCookies.reviewer });
     assert.equal(reviewerAudit.status, 403);
-    const reviewerSuspend = await opsFetch(`/api/accounts/${accountIds.target}/actions`, { method: 'POST', cookie: opsCookies.reviewer, body: { action: 'suspend', reason: 'reviewer trying an admin-only action' } });
+    const reviewerSuspend = await opsFetch(`/api/accounts/${accountIds.target}/actions`, {
+      method: 'POST',
+      cookie: opsCookies.reviewer,
+      body: { action: 'suspend', reason: 'reviewer trying an admin-only action' },
+    });
     assert.equal(reviewerSuspend.status, 403);
 
     // === solutions list must load (fragment-composition regression) ===
-    const solutionsList = await opsFetch('/api/solutions?status=all&q=' + encodeURIComponent(tag), { cookie: opsCookies.admin });
-    assert.equal(solutionsList.status, 200, 'solutions list: ' + JSON.stringify(solutionsList.json));
+    const solutionsList = await opsFetch('/api/solutions?status=all&q=' + encodeURIComponent(tag), {
+      cookie: opsCookies.admin,
+    });
+    assert.equal(
+      solutionsList.status,
+      200,
+      'solutions list: ' + JSON.stringify(solutionsList.json),
+    );
     assert.ok(solutionsList.json.items.some(i => i.id === targetSolution));
 
     // === Reports flow ===
     reportId = randomUUID();
-    await sql`INSERT INTO solution_reports (id, solution_id, reporter_id, reason, details) VALUES (${reportId}, ${targetSolution}, ${accountIds.admin}, 'misleading', 'A test report detail message')`;
+    // Filed by the reviewer: resolving a report you filed yourself stays blocked (CLAUDE.md §51).
+    await sql`INSERT INTO solution_reports (id, solution_id, reporter_id, reason, details) VALUES (${reportId}, ${targetSolution}, ${accountIds.reviewer}, 'misleading', 'A test report detail message')`;
+    const ownReportId = randomUUID();
+    await sql`INSERT INTO solution_reports (id, solution_id, reporter_id, reason, details) VALUES (${ownReportId}, ${targetSolution}, ${accountIds.admin}, 'broken', 'Filed by the admin itself')`;
+    const resolveOwn = await opsFetch('/api/reports', {
+      method: 'POST',
+      cookie: opsCookies.admin,
+      body: {
+        reportId: ownReportId,
+        decision: 'resolve',
+        message: 'Resolving my own report.',
+        version: 0,
+      },
+    });
+    assert.equal(resolveOwn.status, 409, 'resolving a report you filed must be rejected');
+    await sql`DELETE FROM solution_reports WHERE id = ${ownReportId}`;
     const reportsList = await opsFetch('/api/reports?status=open', { cookie: opsCookies.admin });
     assert.equal(reportsList.status, 200);
     assert.ok(reportsList.json.items.some(r => r.id === reportId));
-    const resolveReport = await opsFetch('/api/reports', { method: 'POST', cookie: opsCookies.admin, body: { reportId, decision: 'resolve', message: 'Reviewed, looks fine.', version: 0 } });
+    const resolveReport = await opsFetch('/api/reports', {
+      method: 'POST',
+      cookie: opsCookies.admin,
+      body: { reportId, decision: 'resolve', message: 'Reviewed, looks fine.', version: 0 },
+    });
     assert.equal(resolveReport.status, 200, JSON.stringify(resolveReport.json));
 
     // === Accounts list/detail, and the privacy boundary ===
-    const accountsList = await opsFetch('/api/accounts?q=' + encodeURIComponent(tag), { cookie: opsCookies.admin });
+    const accountsList = await opsFetch('/api/accounts?q=' + encodeURIComponent(tag), {
+      cookie: opsCookies.admin,
+    });
     assert.equal(accountsList.status, 200);
     assert.equal(accountsList.json.items.length, 3);
 
-    const accountDetail = await opsFetch(`/api/accounts/${accountIds.target}`, { cookie: opsCookies.admin });
+    const accountDetail = await opsFetch(`/api/accounts/${accountIds.target}`, {
+      cookie: opsCookies.admin,
+    });
     assert.equal(accountDetail.status, 200);
     const rawDetail = JSON.stringify(accountDetail.json);
     assert.ok(!rawDetail.includes(PRIVATE_NOTE), 'list item notes must never be exposed to ops');
@@ -254,13 +424,23 @@ process.on('unhandledRejection', (reason) => {
     assert.ok(domains.json.items.some(d => d.solutionId === targetSolution));
 
     // === Community moderation ===
-    const community = await opsFetch('/api/community?q=' + encodeURIComponent(tag), { cookie: opsCookies.admin });
+    const community = await opsFetch('/api/community?q=' + encodeURIComponent(tag), {
+      cookie: opsCookies.admin,
+    });
     assert.equal(community.status, 200);
     assert.ok(community.json.lists.some(l => l.id === listId));
     assert.ok(community.json.comments.some(c => c.id === commentId));
-    const deleteComment = await opsFetch('/api/community', { method: 'POST', cookie: opsCookies.admin, body: { action: 'delete_comment', commentId, reason: 'Test moderation removal.' } });
+    const deleteComment = await opsFetch('/api/community', {
+      method: 'POST',
+      cookie: opsCookies.admin,
+      body: { action: 'delete_comment', commentId, reason: 'Test moderation removal.' },
+    });
     assert.equal(deleteComment.status, 200, JSON.stringify(deleteComment.json));
-    const unpublishList = await opsFetch('/api/community', { method: 'POST', cookie: opsCookies.admin, body: { action: 'unpublish_list', listId, reason: 'Test moderation unpublish.' } });
+    const unpublishList = await opsFetch('/api/community', {
+      method: 'POST',
+      cookie: opsCookies.admin,
+      body: { action: 'unpublish_list', listId, reason: 'Test moderation unpublish.' },
+    });
     assert.equal(unpublishList.status, 200, JSON.stringify(unpublishList.json));
     const [listRow] = await sql`SELECT visibility FROM buyer_lists WHERE id = ${listId}`;
     assert.equal(listRow.visibility, 'private');
@@ -269,16 +449,25 @@ process.on('unhandledRejection', (reason) => {
     const inquiries = await opsFetch('/api/inquiries?pending=1', { cookie: opsCookies.admin });
     assert.equal(inquiries.status, 200);
     assert.ok(inquiries.json.items.some(i => i.id === inquiryId));
-    const markHandled = await opsFetch('/api/inquiries', { method: 'POST', cookie: opsCookies.admin, body: { id: inquiryId } });
+    const markHandled = await opsFetch('/api/inquiries', {
+      method: 'POST',
+      cookie: opsCookies.admin,
+      body: { id: inquiryId },
+    });
     assert.equal(markHandled.status, 200);
 
     // === Mail outbox retry ===
     const mail = await opsFetch('/api/mail', { cookie: opsCookies.admin });
     assert.equal(mail.status, 200);
     assert.ok(mail.json.items.some(m => m.id === notificationId));
-    const retryMail = await opsFetch('/api/mail', { method: 'POST', cookie: opsCookies.admin, body: { action: 'retry', id: notificationId } });
+    const retryMail = await opsFetch('/api/mail', {
+      method: 'POST',
+      cookie: opsCookies.admin,
+      body: { action: 'retry', id: notificationId },
+    });
     assert.equal(retryMail.status, 200);
-    const [notifRow] = await sql`SELECT email_state, attempts FROM account_notifications WHERE id = ${notificationId}`;
+    const [notifRow] =
+      await sql`SELECT email_state, attempts FROM account_notifications WHERE id = ${notificationId}`;
     assert.equal(notifRow.email_state, 'pending');
     assert.equal(Number(notifRow.attempts), 0);
 
@@ -289,86 +478,228 @@ process.on('unhandledRejection', (reason) => {
     const metrics = await opsFetch('/api/metrics', { cookie: opsCookies.admin });
     assert.equal(metrics.status, 200);
     assert.equal(metrics.json.days.length, 30);
-    const search = await opsFetch('/api/search?q=' + encodeURIComponent(tag), { cookie: opsCookies.admin });
+    const search = await opsFetch('/api/search?q=' + encodeURIComponent(tag), {
+      cookie: opsCookies.admin,
+    });
     assert.equal(search.status, 200);
     assert.ok(search.json.results.length > 0);
 
     // === Account actions: revoke, verify, suspend, reactivate, unpublish_all ===
-    await fetch(mainOrigin + '/api/auth/login', { method: 'POST', headers: { origin: mainOrigin, 'content-type': 'application/json' }, body: JSON.stringify({ email: emails.target, password }) });
-    const sessionsBefore = await sql`SELECT count(*)::int AS n FROM auth_sessions WHERE account_id = ${accountIds.target}`;
+    await fetch(mainOrigin + '/api/auth/login', {
+      method: 'POST',
+      headers: { origin: mainOrigin, 'content-type': 'application/json' },
+      body: JSON.stringify({ email: emails.target, password }),
+    });
+    const sessionsBefore =
+      await sql`SELECT count(*)::int AS n FROM auth_sessions WHERE account_id = ${accountIds.target}`;
     assert.ok(Number(sessionsBefore[0].n) >= 1);
 
-    const revoke = await opsFetch(`/api/accounts/${accountIds.target}/actions`, { method: 'POST', cookie: opsCookies.admin, body: { action: 'revoke_sessions', reason: 'Test revoke of target sessions.' } });
+    const unelevated = await opsFetch(`/api/accounts/${accountIds.target}/actions`, {
+      method: 'POST',
+      cookie: opsCookies.admin,
+      body: { action: 'revoke_sessions', reason: 'Trying without modo seguro.' },
+    });
+    assert.equal(unelevated.status, 403);
+    assert.equal(
+      unelevated.json.code,
+      'elevation_required',
+      'account actions must require modo seguro',
+    );
+    await elevate(opsCookies.admin, admin.secret);
+
+    const revoke = await opsFetch(`/api/accounts/${accountIds.target}/actions`, {
+      method: 'POST',
+      cookie: opsCookies.admin,
+      body: { action: 'revoke_sessions', reason: 'Test revoke of target sessions.' },
+    });
     assert.equal(revoke.status, 200, JSON.stringify(revoke.json));
-    const sessionsAfter = await sql`SELECT count(*)::int AS n FROM auth_sessions WHERE account_id = ${accountIds.target}`;
+    const sessionsAfter =
+      await sql`SELECT count(*)::int AS n FROM auth_sessions WHERE account_id = ${accountIds.target}`;
     assert.equal(Number(sessionsAfter[0].n), 0);
 
-    const verifyEmail = await opsFetch(`/api/accounts/${accountIds.target}/actions`, { method: 'POST', cookie: opsCookies.admin, body: { action: 'verify_email', reason: 'Manual verification for testing.' } });
+    const verifyEmail = await opsFetch(`/api/accounts/${accountIds.target}/actions`, {
+      method: 'POST',
+      cookie: opsCookies.admin,
+      body: { action: 'verify_email', reason: 'Manual verification for testing.' },
+    });
     assert.equal(verifyEmail.status, 200);
-    const [verifiedRow] = await sql`SELECT email_verified_at FROM auth_accounts WHERE id = ${accountIds.target}`;
+    const [verifiedRow] =
+      await sql`SELECT email_verified_at FROM auth_accounts WHERE id = ${accountIds.target}`;
     assert.ok(verifiedRow.email_verified_at);
 
     // Self-suspend / self-revoke must be rejected.
-    const selfSuspend = await opsFetch(`/api/accounts/${accountIds.admin}/actions`, { method: 'POST', cookie: opsCookies.admin, body: { action: 'suspend', reason: 'trying to suspend myself' } });
+    const selfSuspend = await opsFetch(`/api/accounts/${accountIds.admin}/actions`, {
+      method: 'POST',
+      cookie: opsCookies.admin,
+      body: { action: 'suspend', reason: 'trying to suspend myself' },
+    });
     assert.equal(selfSuspend.status, 422);
 
-    const suspend = await opsFetch(`/api/accounts/${accountIds.target}/actions`, { method: 'POST', cookie: opsCookies.admin, body: { action: 'suspend', reason: 'Test suspension of target account.' } });
+    const suspend = await opsFetch(`/api/accounts/${accountIds.target}/actions`, {
+      method: 'POST',
+      cookie: opsCookies.admin,
+      body: { action: 'suspend', reason: 'Test suspension of target account.' },
+    });
     assert.equal(suspend.status, 200, JSON.stringify(suspend.json));
 
-    const suspendedLogin = await fetch(mainOrigin + '/api/auth/login', { method: 'POST', headers: { origin: mainOrigin, 'content-type': 'application/json' }, body: JSON.stringify({ email: emails.target, password }) });
-    assert.equal(suspendedLogin.status, 401, 'a suspended account must not be able to log in to the product');
+    const suspendedLogin = await fetch(mainOrigin + '/api/auth/login', {
+      method: 'POST',
+      headers: { origin: mainOrigin, 'content-type': 'application/json' },
+      body: JSON.stringify({ email: emails.target, password }),
+    });
+    assert.equal(
+      suspendedLogin.status,
+      401,
+      'a suspended account must not be able to log in to the product',
+    );
 
-    const reactivate = await opsFetch(`/api/accounts/${accountIds.target}/actions`, { method: 'POST', cookie: opsCookies.admin, body: { action: 'reactivate', reason: 'Test reactivation of target account.' } });
+    const reactivate = await opsFetch(`/api/accounts/${accountIds.target}/actions`, {
+      method: 'POST',
+      cookie: opsCookies.admin,
+      body: { action: 'reactivate', reason: 'Test reactivation of target account.' },
+    });
     assert.equal(reactivate.status, 200);
-    const reactivatedLogin = await fetch(mainOrigin + '/api/auth/login', { method: 'POST', headers: { origin: mainOrigin, 'content-type': 'application/json' }, body: JSON.stringify({ email: emails.target, password }) });
+    const reactivatedLogin = await fetch(mainOrigin + '/api/auth/login', {
+      method: 'POST',
+      headers: { origin: mainOrigin, 'content-type': 'application/json' },
+      body: JSON.stringify({ email: emails.target, password }),
+    });
     assert.equal(reactivatedLogin.status, 200, 'reactivated account must be able to log in again');
 
-    const unpublish = await opsFetch(`/api/accounts/${accountIds.target}/actions`, { method: 'POST', cookie: opsCookies.admin, body: { action: 'unpublish_all', reason: 'Test unpublish-all of target solutions.' } });
+    const unpublish = await opsFetch(`/api/accounts/${accountIds.target}/actions`, {
+      method: 'POST',
+      cookie: opsCookies.admin,
+      body: { action: 'unpublish_all', reason: 'Test unpublish-all of target solutions.' },
+    });
     assert.equal(unpublish.status, 200, JSON.stringify(unpublish.json));
     assert.equal(unpublish.json.solutionsUnpublished, 1);
-    const [afterUnpublish] = await sql`SELECT published_data, status FROM founder_solutions WHERE id = ${targetSolution}`;
+    const [afterUnpublish] =
+      await sql`SELECT published_data, status FROM founder_solutions WHERE id = ${targetSolution}`;
     assert.equal(afterUnpublish.published_data, null);
     assert.equal(afterUnpublish.status, 'changes_requested');
 
     // === Team management: promote reviewer to admin, then demote back, then enforce "last admin" guard ===
     const teamList = await opsFetch('/api/team', { cookie: opsCookies.admin });
     assert.equal(teamList.status, 200);
-    assert.ok(teamList.json.items.some(m => m.id === accountIds.reviewer && m.level === 'reviewer'));
+    assert.ok(
+      teamList.json.items.some(m => m.id === accountIds.reviewer && m.level === 'reviewer'),
+    );
 
-    const promote = await opsFetch('/api/team', { method: 'POST', cookie: opsCookies.admin, body: { action: 'set_level', accountId: accountIds.reviewer, level: 'admin', reason: 'Promoting for last-admin guard test.' } });
+    const promote = await opsFetch('/api/team', {
+      method: 'POST',
+      cookie: opsCookies.admin,
+      body: {
+        action: 'set_level',
+        accountId: accountIds.reviewer,
+        level: 'admin',
+        reason: 'Promoting for last-admin guard test.',
+      },
+    });
     assert.equal(promote.status, 200, JSON.stringify(promote.json));
 
-    const demoteOriginal = await opsFetch('/api/team', { method: 'POST', cookie: opsCookies.admin, body: { action: 'set_level', accountId: accountIds.admin, level: 'reviewer', reason: 'Demoting original admin; another admin remains.' } });
+    const demoteOriginal = await opsFetch('/api/team', {
+      method: 'POST',
+      cookie: opsCookies.admin,
+      body: {
+        action: 'set_level',
+        accountId: accountIds.admin,
+        level: 'reviewer',
+        reason: 'Demoting original admin; another admin remains.',
+      },
+    });
     assert.equal(demoteOriginal.status, 200, JSON.stringify(demoteOriginal.json));
 
-    // Now accountIds.reviewer is the only admin, using its own (already-enrolled) TOTP session.
-    const lastAdminGuard = await opsFetch('/api/team', { method: 'POST', cookie: opsCookies.reviewer, body: { action: 'set_level', accountId: accountIds.reviewer, level: 'reviewer', reason: 'Trying to demote the last admin.' } });
-    assert.equal(lastAdminGuard.status, 422, 'the last admin must not be demotable');
+    // accountIds.reviewer is now the only admin among the test accounts. The guard
+    // counts every active admin in the database, so it can only be exercised when
+    // no real admin exists in the configured database; never demote real rows.
+    await elevate(opsCookies.reviewer, reviewerEnroll.secret);
+    const [{ n: otherAdmins }] = await sql`
+      SELECT count(*)::int AS n FROM solution_reviewers
+      WHERE level = 'admin' AND disabled_at IS NULL AND account_id <> ${accountIds.reviewer}
+    `;
+    lastAdminExercised = otherAdmins === 0;
+    if (otherAdmins === 0) {
+      const lastAdminGuard = await opsFetch('/api/team', {
+        method: 'POST',
+        cookie: opsCookies.reviewer,
+        body: {
+          action: 'set_level',
+          accountId: accountIds.reviewer,
+          level: 'reviewer',
+          reason: 'Trying to demote the last admin.',
+        },
+      });
+      assert.equal(lastAdminGuard.status, 422, 'the last admin must not be demotable');
+    } else {
+      console.log(
+        `Skipping the last-admin assertion: ${otherAdmins} other active admin(s) exist in this database.`,
+      );
+    }
 
-    const resetTotp = await opsFetch('/api/team', { method: 'POST', cookie: opsCookies.reviewer, body: { action: 'reset_totp', accountId: accountIds.admin, reason: 'Test forced 2FA reset.' } });
+    const resetTotp = await opsFetch('/api/team', {
+      method: 'POST',
+      cookie: opsCookies.reviewer,
+      body: { action: 'reset_totp', accountId: accountIds.admin, reason: 'Test forced 2FA reset.' },
+    });
     assert.equal(resetTotp.status, 200, JSON.stringify(resetTotp.json));
-    const [resetRow] = await sql`SELECT totp_confirmed_at FROM solution_reviewers WHERE account_id = ${accountIds.admin}`;
+    const [resetRow] =
+      await sql`SELECT totp_confirmed_at FROM solution_reviewers WHERE account_id = ${accountIds.admin}`;
     assert.equal(resetRow.totp_confirmed_at, null);
     // The old session must be dead now (reset_totp revokes ops_sessions for the target).
     const deadSession = await opsFetch('/api/accounts', { cookie: opsCookies.admin });
     assert.equal(deadSession.status, 401);
 
     // The reset account must re-enroll on next login (not go straight to totp).
-    const loginAfterReset = await opsFetch('/api/auth/login', { method: 'POST', body: { email: emails.admin, password } });
+    const loginAfterReset = await opsFetch('/api/auth/login', {
+      method: 'POST',
+      body: { email: emails.admin, password },
+    });
     assert.equal(loginAfterReset.json.step, 'enroll');
 
     // === Audit log recorded these actions with actor and reason ===
-    const audit = await opsFetch('/api/audit?subjectType=account&subjectId=' + accountIds.target, { cookie: opsCookies.reviewer });
+    const audit = await opsFetch('/api/audit?subjectType=account&subjectId=' + accountIds.target, {
+      cookie: opsCookies.reviewer,
+    });
     assert.equal(audit.status, 200);
     const actions = audit.json.items.map(i => i.action);
-    for (const expected of ['suspend', 'reactivate', 'unpublish_all', 'revoke_sessions', 'verify_email']) {
+    for (const expected of [
+      'suspend',
+      'reactivate',
+      'unpublish_all',
+      'revoke_sessions',
+      'verify_email',
+    ]) {
       assert.ok(actions.includes(expected), `audit log missing ${expected}: ${actions.join(',')}`);
     }
     assert.ok(audit.json.items.every(i => i.reason && i.reason.length >= 10));
 
-    console.log('PASS: two-step TOTP login/enrollment, session isolation from the product, self-review allowed and attributed, publish copies published_data with actor_id, reviewer/admin permission split, last-admin guard, privacy boundary (no notes/purpose leaked), and all panel API surfaces (solutions, reports, accounts, domains, community, inquiries, mail, newsletter, metrics, search, team, audit).');
+    // === Tamper-evident audit log: the whole chain recomputes cleanly ===
+    const chain = await opsFetch('/api/audit/verify', {
+      method: 'POST',
+      cookie: opsCookies.reviewer,
+      body: {},
+    });
+    assert.equal(chain.status, 200, JSON.stringify(chain.json));
+    assert.equal(chain.json.status.firstBrokenSeq, null, 'the audit hash chain must verify');
+    let auditDeleteBlocked = false;
+    try {
+      await sql`DELETE FROM ops_audit_log WHERE id = (SELECT max(id) FROM ops_audit_log)`;
+    } catch {
+      auditDeleteBlocked = true;
+    }
+    assert.ok(auditDeleteBlocked, 'ops_audit_log must reject DELETE');
+
+    console.log(
+      'PASS: two-step TOTP login/enrollment, browser-bound sessions, modo seguro on account/team actions, self-filed report guard, hash-chained append-only audit log, session isolation from the product, self-review allowed and attributed, publish copies published_data with actor_id, reviewer/admin permission split, last-admin guard (' +
+        (lastAdminExercised ? 'exercised' : 'skipped: other admins exist') +
+        '), privacy boundary (no notes/purpose leaked), and all panel API surfaces (solutions, reports, accounts, domains, community, inquiries, mail, newsletter, metrics, search, team, audit).',
+    );
   } catch (error) {
-    console.log(error instanceof assert.AssertionError ? error.stack : ('Integration failed: ' + (error && error.stack || error)));
+    console.log(
+      error instanceof assert.AssertionError
+        ? error.stack
+        : 'Integration failed: ' + ((error && error.stack) || error),
+    );
     process.exitCode = 1;
   } finally {
     // Each cleanup step runs independently so a stray async error in one (observed occasionally with
@@ -377,17 +708,26 @@ process.on('unhandledRejection', (reason) => {
       // solution_reports rows sit at the intersection of two independent FK actions (solution_id
       // CASCADE from founder_solutions, reporter_id SET NULL from auth_accounts); deleting them
       // explicitly first avoids relying on both cascade paths resolving a shared row in one statement.
-      () => (reportId ? sql`DELETE FROM solution_reports WHERE id = ${reportId}` : Promise.resolve()),
+      () =>
+        reportId ? sql`DELETE FROM solution_reports WHERE id = ${reportId}` : Promise.resolve(),
       () => sql`DELETE FROM auth_accounts WHERE email = ANY(${Object.values(emails)})`,
       () => sql`DELETE FROM newsletter_subscribers WHERE email = ${'nl-' + emails.target}`,
-      () => (inquiryId ? sql`DELETE FROM contact_inquiries WHERE id = ${inquiryId}` : Promise.resolve()),
+      () =>
+        inquiryId ? sql`DELETE FROM contact_inquiries WHERE id = ${inquiryId}` : Promise.resolve(),
       // Ops rate limits are keyed by network identity, which is 'unknown' for local test requests and
       // shared across runs within the same clock hour; clear the whole 'ops:' namespace rather than a
       // window-scoped subset so repeated local runs don't self-throttle.
       () => sql`DELETE FROM auth_rate_limits WHERE key LIKE 'ops:%'`,
     ];
     for (const step of cleanupSteps) {
-      try { await step(); } catch (cleanupError) { console.log('Cleanup step failed (continuing with the rest):', cleanupError && cleanupError.message || cleanupError); }
+      try {
+        await step();
+      } catch (cleanupError) {
+        console.log(
+          'Cleanup step failed (continuing with the rest):',
+          (cleanupError && cleanupError.message) || cleanupError,
+        );
+      }
     }
     console.log('Cleaned only temporary integration accounts and their cascading data.');
   }

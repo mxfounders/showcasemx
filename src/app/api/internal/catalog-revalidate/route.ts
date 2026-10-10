@@ -10,7 +10,10 @@ import { authorizedCatalogRevalidate } from '@/lib/catalog-revalidate';
 // call, so there is no browser Origin header to check.
 export async function POST(request: NextRequest) {
   if (!authorizedCatalogRevalidate(request.headers.get('authorization'))) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: { 'Cache-Control': 'no-store' } });
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401, headers: { 'Cache-Control': 'no-store' } },
+    );
   }
   revalidateTag('catalog');
   return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });

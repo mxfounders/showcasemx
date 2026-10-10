@@ -1,8 +1,18 @@
+'use client';
+
+import { commonText } from '@/i18n/common';
+import { useLocale } from '@/i18n/use-locale';
+
 // Mirrors SolutionPresentation's header + two-column layout so the skeleton
 // doesn't jump when the real ficha replaces it.
 export default function Loading() {
+  const text = commonText(useLocale());
   return (
-    <article className="mx-auto max-w-6xl px-6 py-12 sm:py-20" aria-busy="true" aria-label="Cargando ficha">
+    <article
+      className="mx-auto max-w-6xl px-6 py-12 sm:py-20"
+      aria-busy="true"
+      aria-label={text.loadingListing}
+    >
       <div className="mb-6 h-4 w-40 animate-pulse rounded bg-stone-100 motion-reduce:animate-none" />
       <header className="border-b border-stone-200 pb-10">
         <div className="flex gap-2">

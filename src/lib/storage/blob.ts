@@ -20,7 +20,7 @@ const MAX_AGE_SECONDS = 31_536_000;
 export function storageEnabled(): boolean {
   return Boolean(
     process.env.BLOB_READ_WRITE_TOKEN ||
-      (process.env.VERCEL_OIDC_TOKEN && process.env.BLOB_STORE_ID),
+    (process.env.VERCEL_OIDC_TOKEN && process.env.BLOB_STORE_ID),
   );
 }
 
@@ -40,10 +40,7 @@ export async function putObject(
   return { key, bytes: bytes.length };
 }
 
-export type GetObjectResult =
-  | { bytes: Buffer; etag: string }
-  | 'not-modified'
-  | null;
+export type GetObjectResult = { bytes: Buffer; etag: string } | 'not-modified' | null;
 
 /**
  * Reads an object BUFFERED — never streamed through to the client. A mid-stream
@@ -51,10 +48,7 @@ export type GetObjectResult =
  * truncated image for an hour; the 400 KiB cap makes buffering free.
  * Returns 'not-modified' on an ifNoneMatch ETag hit, null when the key is absent.
  */
-export async function getObject(
-  key: string,
-  ifNoneMatch?: string,
-): Promise<GetObjectResult> {
+export async function getObject(key: string, ifNoneMatch?: string): Promise<GetObjectResult> {
   let res;
   try {
     res = await get(key, {

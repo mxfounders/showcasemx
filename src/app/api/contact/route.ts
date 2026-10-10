@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { authSql, requestIdentity, securityLimit } from '@/lib/auth/security';
-import { inquiryReasons, inquiryUrgencies, validateContactInquiry } from '@/lib/contact-inquiry';
+import { validateContactInquiry } from '@/lib/contact-inquiry';
+import { getDictionary } from '@/i18n/get-dictionary';
+import { requestLocale } from '@/i18n/negotiate';
 import { sendEmail } from '@/lib/notifications/server';
 import { recoveryConfig } from '@/lib/auth/recovery';
 import { escapeHtml, renderEmailHtml } from '@/lib/notifications/email-template';
@@ -16,53 +18,114 @@ async function readBody(request: NextRequest) {
     const { value, done } = await reader.read();
     if (done) break;
     size += value.byteLength;
-    if (size > 12_000) { await reader.cancel(); return null; }
+    if (size > 12_000) {
+      await reader.cancel();
+      return null;
+    }
     chunks.push(value);
   }
-  try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { return null; }
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  } catch {
+    return null;
+  }
 }
 
+/**
+ * The notification goes to the shwcs team inbox, never to the visitor, so it is always
+ * written in Spanish (like ops), whatever language the form was filled in.
+ */
+const staffEmail = {
+  heading: 'Nueva conversación desde shwcs.site',
+  subject: 'Contacto shwcs',
+  reason: 'Motivo',
+  name: 'Nombre',
+  email: 'Correo',
+  organization: 'Empresa o proyecto',
+  role: 'Rol',
+  website: 'Sitio',
+  urgency: 'Momento',
+  missing: 'No indicado',
+  message: 'Mensaje:',
+} as const;
+
 export async function POST(request: NextRequest) {
+  const t = (await getDictionary(requestLocale(request))).contactForm.apiErrors;
   const fail = (error: string, status: number) => NextResponse.json({ error }, { status });
-  if (request.headers.get('origin') !== request.nextUrl.origin) return fail('Envía el mensaje desde shwcs.', 403);
+  if (request.headers.get('origin') !== request.nextUrl.origin) return fail(t.origin, 403);
   const body = await readBody(request);
   const inquiry = validateContactInquiry(body);
-  if (!inquiry) return fail('Revisa los campos del formulario y vuelve a intentarlo.', 400);
+  if (!inquiry) return fail(t.invalid, 400);
+  // Option labels come from the Spanish form dictionary, the same text the form shows.
+  const options = (await getDictionary('es')).contactForm;
   try {
-    if (!(await securityLimit('public-contact', `${requestIdentity(request.headers)}:${inquiry.email}`, 5, 240))) return fail('Recibimos varios mensajes. Espera un poco antes de enviar otro.', 429);
+    if (
+      !(await securityLimit(
+        'public-contact',
+        `${requestIdentity(request.headers)}:${inquiry.email}`,
+        5,
+        240,
+      ))
+    )
+      return fail(t.rateLimited, 429);
     const sql = authSql();
     const id = randomUUID();
     await sql`INSERT INTO contact_inquiries(id,reason,name,email,organization,role,website,message,urgency)
       VALUES(${id},${inquiry.reason},${inquiry.name},${inquiry.email},${inquiry.organization},${inquiry.role || null},${inquiry.website || null},${inquiry.message},${inquiry.urgency})`;
-    const reason = inquiryReasons.find(item => item.value === inquiry.reason)?.label ?? inquiry.reason;
-    const urgency = inquiryUrgencies.find(item => item.value === inquiry.urgency)?.label ?? inquiry.urgency;
+    const reason = options.reasons[inquiry.reason].label;
+    const urgency = options.urgencies[inquiry.urgency];
     const fields: [string, string][] = [
-      ['Motivo', reason], ['Nombre', inquiry.name], ['Correo', inquiry.email],
-      ['Empresa o proyecto', inquiry.organization], ['Rol', inquiry.role || 'No indicado'],
-      ['Sitio', inquiry.website || 'No indicado'], ['Momento', urgency],
+      [staffEmail.reason, reason],
+      [staffEmail.name, inquiry.name],
+      [staffEmail.email, inquiry.email],
+      [staffEmail.organization, inquiry.organization],
+      [staffEmail.role, inquiry.role || staffEmail.missing],
+      [staffEmail.website, inquiry.website || staffEmail.missing],
+      [staffEmail.urgency, urgency],
     ];
     const content = [
-      `Nueva conversación desde shwcs.site`, '',
-      ...fields.map(([label, value]) => `${label}: ${value}`), '',
-      'Mensaje:', inquiry.message,
+      staffEmail.heading,
+      '',
+      ...fields.map(([label, value]) => `${label}: ${value}`),
+      '',
+      staffEmail.message,
+      inquiry.message,
     ].join('\n');
     try {
       const config = recoveryConfig();
-      const html = config ? renderEmailHtml({
-        origin: config.origin, preheader: `Contacto shwcs · ${reason}`, heading: 'Nueva conversación desde shwcs.site',
-        paragraphs: [
-          fields.map(([label, value]) => `<strong>${escapeHtml(label)}:</strong> ${escapeHtml(value)}`).join('<br>'),
-          `<strong>Mensaje:</strong><br>${escapeHtml(inquiry.message).replace(/\n/g, '<br>')}`,
-        ],
-      }) : undefined;
-      const provider = await sendEmail({ to: process.env.CONTACT_EMAIL_TO?.trim() || 'contacto@shwcs.site', subject: `Contacto shwcs · ${reason}`, text: content, html, idempotencyKey: id, replyTo: inquiry.email });
+      const html = config
+        ? renderEmailHtml({
+            origin: config.origin,
+            preheader: `${staffEmail.subject} · ${reason}`,
+            heading: staffEmail.heading,
+            paragraphs: [
+              fields
+                .map(
+                  ([label, value]) => `<strong>${escapeHtml(label)}:</strong> ${escapeHtml(value)}`,
+                )
+                .join('<br>'),
+              `<strong>${staffEmail.message}</strong><br>${escapeHtml(inquiry.message).replace(/\n/g, '<br>')}`,
+            ],
+          })
+        : undefined;
+      const provider = await sendEmail({
+        to: process.env.CONTACT_EMAIL_TO?.trim() || 'contacto@shwcs.site',
+        subject: `${staffEmail.subject} · ${reason}`,
+        text: content,
+        html,
+        idempotencyKey: id,
+        replyTo: inquiry.email,
+      });
       await sql`UPDATE contact_inquiries SET email_state='sent',provider_id=${provider} WHERE id=${id}`;
     } catch {
-      const state = process.env.RESEND_API_KEY && process.env.AUTH_EMAIL_FROM && process.env.AUTH_APP_ORIGIN ? 'failed' : 'unavailable';
+      const state =
+        process.env.RESEND_API_KEY && process.env.AUTH_EMAIL_FROM && process.env.AUTH_APP_ORIGIN
+          ? 'failed'
+          : 'unavailable';
       await sql`UPDATE contact_inquiries SET email_state=${state} WHERE id=${id}`;
     }
     return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
   } catch {
-    return fail('No pudimos guardar tu mensaje. Tus datos siguen en el formulario para que puedas reintentar.', 503);
+    return fail(t.unavailable, 503);
   }
 }

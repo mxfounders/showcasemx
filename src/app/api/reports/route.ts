@@ -1,8 +1,37 @@
-import { NextRequest,NextResponse } from 'next/server';
-import { getSession,sessionCookie } from '@/lib/auth/session';
-import { authSql,securityLimit } from '@/lib/auth/security';
+import { NextRequest, NextResponse } from 'next/server';
+import { getSession, sessionCookie } from '@/lib/auth/session';
+import { authSql, securityLimit } from '@/lib/auth/security';
 import { isSolutionId } from '@/lib/solutions/model';
-import { failure,solutionBody } from '@/lib/solutions/http';
-export async function POST(request:NextRequest){if(request.headers.get('origin')!==request.nextUrl.origin)return failure('Usa shwcs.',403);try{const account=await getSession(request.cookies.get(sessionCookie)?.value);if(!account)return failure('Inicia sesión para reportar.',401);const body=await solutionBody(request),sql=authSql();if(body?.action==='create'){if(typeof body.solutionId!=='string'||!isSolutionId(body.solutionId)||!['misleading','broken','ownership','abuse'].includes(String(body.reason))||typeof body.details!=='string'||body.details.trim().length<10||body.details.length>2000)return failure('Indica el motivo y al menos 10 caracteres de contexto.',400);if(!await securityLimit('report',account.id,5))return failure('Demasiados reportes. Intenta más tarde.',429);const rows=await sql`INSERT INTO solution_reports(solution_id,reporter_id,reason,details) SELECT id,${account.id},${String(body.reason)},${body.details.trim()} FROM founder_solutions WHERE id=${body.solutionId} AND published_data IS NOT NULL ON CONFLICT DO NOTHING RETURNING id`;if(!rows.length)return failure('Ya tienes un reporte abierto o la publicación no está disponible.',409);
- // Visitors only open reports here. Resolving them belongs to the ops backoffice.
- }else return failure('Acción inválida.',400);return NextResponse.json({ok:true},{headers:{'Cache-Control':'no-store'}});}catch{return failure('No pudimos guardar el reporte.',503);}}
+import { failure, solutionBody } from '@/lib/solutions/http';
+import { getDictionary } from '@/i18n/get-dictionary';
+import { requestLocale } from '@/i18n/negotiate';
+export async function POST(request: NextRequest) {
+  const t = (await getDictionary(requestLocale(request))).solutionUi.reportErrors;
+  if (request.headers.get('origin') !== request.nextUrl.origin)
+    return failure(t.foreignOrigin, 403);
+  try {
+    const account = await getSession(request.cookies.get(sessionCookie)?.value);
+    if (!account) return failure(t.signIn, 401);
+    const body = await solutionBody(request),
+      sql = authSql();
+    if (body?.action === 'create') {
+      if (
+        typeof body.solutionId !== 'string' ||
+        !isSolutionId(body.solutionId) ||
+        !['misleading', 'broken', 'ownership', 'abuse'].includes(String(body.reason)) ||
+        typeof body.details !== 'string' ||
+        body.details.trim().length < 10 ||
+        body.details.length > 2000
+      )
+        return failure(t.invalid, 400);
+      if (!(await securityLimit('report', account.id, 5))) return failure(t.rateLimited, 429);
+      const rows =
+        await sql`INSERT INTO solution_reports(solution_id,reporter_id,reason,details) SELECT id,${account.id},${String(body.reason)},${body.details.trim()} FROM founder_solutions WHERE id=${body.solutionId} AND published_data IS NOT NULL ON CONFLICT DO NOTHING RETURNING id`;
+      if (!rows.length) return failure(t.duplicate, 409);
+      // Visitors only open reports here. Resolving them belongs to the ops backoffice.
+    } else return failure(t.invalidAction, 400);
+    return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
+  } catch {
+    return failure(t.saveFailed, 503);
+  }
+}

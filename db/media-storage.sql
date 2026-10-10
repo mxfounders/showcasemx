@@ -6,8 +6,8 @@
 -- fase 5 (db/media-storage-drop.sql) hace DROP COLUMN, en una migración aparte
 -- y SIN deploy. La columna vieja nunca se elimina en el mismo paso que la nueva.
 --
--- Aplicar con scripts/migrate-media-storage.cjs, que reutiliza el splitter de
--- sentencias de migrate-launch.cjs: respeta bloques $$ y comentarios de linea.
+-- Aplicar con `npm run db:migrate -- db/media-storage.sql`. Su splitter de
+-- sentencias respeta bloques $$ y comentarios de linea.
 -- Las funciones de abajo usan $$ PLANO a proposito. No introducir $tag$ ni
 -- bloques $$ anidados: el splitter solo togglea con $$ y partiria mal el resto.
 --

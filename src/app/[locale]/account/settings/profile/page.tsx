@@ -2,24 +2,45 @@ import { requireFounder } from '@/lib/solutions/server';
 import { authSql } from '@/lib/auth/security';
 import { AccountProfileForm } from '@/components/account-profile-form';
 import { AvatarForm } from '@/components/settings/avatar-form';
+import { getDictionary } from '@/i18n/get-dictionary';
 
-export const dynamic='force-dynamic';
+export const dynamic = 'force-dynamic';
 
-export default async function ProfileSettings(){
- const account=await requireFounder();const sql=authSql();const [row]=await sql`SELECT name,organization,profile,role,(avatar_key IS NOT NULL OR avatar_data IS NOT NULL) AS has_avatar FROM auth_accounts WHERE id=${account.id}`;
- const profile={name:String(row?.name??''),organization:String(row?.organization??''),profile:String(row?.profile??''),role:String(row?.role??'')};
- const card='rounded-2xl border border-stone-200 bg-white p-6 shadow-sm';
- return <section className="space-y-6">
-  <div className={card}>
-   <h2 className="mb-2 text-lg font-medium text-stone-900">Foto de perfil</h2>
-   <p className="mb-6 text-sm leading-relaxed text-stone-500">Solo la ves tú y quien gestiona tu cuenta. No aparece en tu ficha pública.</p>
-   <AvatarForm initial={row?.has_avatar?'/api/account/avatar':null} name={profile.name||account.email}/>
-  </div>
+export default async function ProfileSettings(props: { params: Promise<{ locale: string }> }) {
+  const account = await requireFounder();
+  const dictionary = await getDictionary((await props.params).locale);
+  const dict = dictionary.settings.profile;
+  const sql = authSql();
+  const [row] =
+    await sql`SELECT name,organization,profile,role,(avatar_key IS NOT NULL OR avatar_data IS NOT NULL) AS has_avatar FROM auth_accounts WHERE id=${account.id}`;
+  const profile = {
+    name: String(row?.name ?? ''),
+    organization: String(row?.organization ?? ''),
+    profile: String(row?.profile ?? ''),
+    role: String(row?.role ?? ''),
+  };
+  const card = 'rounded-2xl border border-stone-200 bg-white p-6 shadow-sm';
+  return (
+    <section className="space-y-6">
+      <div className={card}>
+        <h2 className="mb-2 text-lg font-medium text-stone-900">{dict.photoTitle}</h2>
+        <p className="mb-6 text-sm leading-relaxed text-stone-500">{dict.photoDesc}</p>
+        <AvatarForm
+          initial={row?.has_avatar ? '/api/account/avatar' : null}
+          name={profile.name || account.email}
+          dict={dict.avatar}
+        />
+      </div>
 
-  <div className={card}>
-   <h2 className="mb-2 text-lg font-medium text-stone-900">Información personal</h2>
-   <p className="mb-6 text-sm leading-relaxed text-stone-500">Tu nombre acompaña lo que escribes en comentarios y solicitudes de contacto. Elegir un perfil no cambia tus permisos.</p>
-   <AccountProfileForm initial={profile}/>
-  </div>
- </section>;
+      <div className={card}>
+        <h2 className="mb-2 text-lg font-medium text-stone-900">{dict.infoTitle}</h2>
+        <p className="mb-6 text-sm leading-relaxed text-stone-500">{dict.infoDesc}</p>
+        <AccountProfileForm
+          initial={profile}
+          dict={dict.form}
+          options={{ profiles: dictionary.newsletter.profiles, roles: dictionary.newsletter.roles }}
+        />
+      </div>
+    </section>
+  );
 }

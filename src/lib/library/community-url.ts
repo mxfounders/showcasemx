@@ -18,22 +18,48 @@ export type CommunityFilters = {
 };
 
 const clean = (raw: string | undefined, allowed: readonly string[]): string[] =>
-  raw ? Array.from(new Set(raw.split(',').map(v => v.trim()).filter(v => allowed.includes(v)))).slice(0, 7) : [];
+  raw
+    ? Array.from(
+        new Set(
+          raw
+            .split(',')
+            .map(v => v.trim())
+            .filter(v => allowed.includes(v)),
+        ),
+      ).slice(0, 7)
+    : [];
 
-export function readCommunityFilters(params: { q?: string; category?: string; industria?: string; tamano?: string; sort?: string; guardadas?: string; page?: string }): CommunityFilters {
+export function readCommunityFilters(params: {
+  q?: string;
+  category?: string;
+  industria?: string;
+  tamano?: string;
+  sort?: string;
+  guardadas?: string;
+  page?: string;
+}): CommunityFilters {
   return {
     q: typeof params.q === 'string' ? params.q.trim().slice(0, 100) : '',
     categories: clean(params.category, solutionCategories),
     industries: clean(params.industria, solutionIndustries),
     sizes: clean(params.tamano, companySizes),
-    sort: communitySorts.includes(params.sort as CommunitySort) ? (params.sort as CommunitySort) : 'recent',
+    sort: communitySorts.includes(params.sort as CommunitySort)
+      ? (params.sort as CommunitySort)
+      : 'recent',
     savedOnly: params.guardadas === '1',
     page: Math.max(1, Math.min(1000, Number.parseInt(String(params.page ?? '1'), 10) || 1)),
   };
 }
 
 export function communityHasFilters(f: CommunityFilters): boolean {
-  return Boolean(f.q || f.categories.length || f.industries.length || f.sizes.length || f.savedOnly || f.sort !== 'recent');
+  return Boolean(
+    f.q ||
+    f.categories.length ||
+    f.industries.length ||
+    f.sizes.length ||
+    f.savedOnly ||
+    f.sort !== 'recent',
+  );
 }
 
 // Build a /comunidad href from the current filters plus a patch. `page` always

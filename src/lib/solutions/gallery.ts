@@ -1,6 +1,20 @@
 import type { SolutionScreenshot } from './model';
 
-export type SolutionSlide = { key: string; src: string; alt: string; caption?: string; kind: 'site' | 'screenshot' };
+/** Texts for the slides, from the `solutionUi.gallery` dictionary; `{name}` is filled in. */
+export type SlideLabels = {
+  siteAlt: string;
+  siteCaption: string;
+  screenshotAlt: string;
+  unnamed: string;
+};
+
+export type SolutionSlide = {
+  key: string;
+  src: string;
+  alt: string;
+  caption?: string;
+  kind: 'site' | 'screenshot';
+};
 
 /**
  * All the images a ficha's carousel shows, og:image first — see CLAUDE.md §53.
@@ -9,17 +23,35 @@ export type SolutionSlide = { key: string; src: string; alt: string; caption?: s
  * own curated screenshot instead, since a marketing og:image rarely survives
  * being cropped to a small square tile.
  */
-export function solutionSlides(solutionId: string, name: string, opts: {
-  screenshots?: SolutionScreenshot[];
-  hasSiteImage?: boolean;
-  hideSiteImage?: boolean;
-}): SolutionSlide[] {
+export function solutionSlides(
+  solutionId: string,
+  name: string,
+  opts: {
+    screenshots?: SolutionScreenshot[];
+    hasSiteImage?: boolean;
+    hideSiteImage?: boolean;
+    labels: SlideLabels;
+  },
+): SolutionSlide[] {
   const slides: SolutionSlide[] = [];
+  const named = (template: string) => template.replace('{name}', () => name || opts.labels.unnamed);
   if (opts.hasSiteImage && !opts.hideSiteImage) {
-    slides.push({ key: 'site', src: `/api/solutions/${solutionId}/site-image`, alt: `Portada del sitio de ${name || 'la solución'}`, caption: 'Portada tomada de su sitio', kind: 'site' });
+    slides.push({
+      key: 'site',
+      src: `/api/solutions/${solutionId}/site-image`,
+      alt: named(opts.labels.siteAlt),
+      caption: opts.labels.siteCaption,
+      kind: 'site',
+    });
   }
   for (const shot of opts.screenshots ?? []) {
-    slides.push({ key: shot.id, src: `/api/solutions/${solutionId}/media/${shot.id}`, alt: shot.caption || `Captura de ${name || 'la solución'}`, caption: shot.caption, kind: 'screenshot' });
+    slides.push({
+      key: shot.id,
+      src: `/api/solutions/${solutionId}/media/${shot.id}`,
+      alt: shot.caption || named(opts.labels.screenshotAlt),
+      caption: shot.caption,
+      kind: 'screenshot',
+    });
   }
   return slides;
 }
@@ -33,11 +65,14 @@ export function solutionSlides(solutionId: string, name: string, opts: {
  * files (public.ts, library/server.ts, account/page.tsx) used to each encode
  * their own version of this order; this is now the one place it lives.
  */
-export function solutionCover(solutionId: string, opts: {
-  coverScreenshotId?: string;
-  hasSiteImage?: boolean;
-  staticArt?: string;
-}): string | undefined {
+export function solutionCover(
+  solutionId: string,
+  opts: {
+    coverScreenshotId?: string;
+    hasSiteImage?: boolean;
+    staticArt?: string;
+  },
+): string | undefined {
   if (opts.coverScreenshotId) return `/api/solutions/${solutionId}/media/${opts.coverScreenshotId}`;
   if (opts.hasSiteImage) return `/api/solutions/${solutionId}/site-image`;
   return opts.staticArt;

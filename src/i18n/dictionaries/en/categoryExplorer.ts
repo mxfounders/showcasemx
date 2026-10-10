@@ -1,0 +1,41 @@
+import type { Dictionary } from '../../dictionary';
+
+export const categoryExplorer = {
+  emptyTitle: "We don't have a solution for that yet.",
+  emptyDesc:
+    'The catalog is growing. Try billing, online store or automation, or explore another category.',
+  solutionFor: 'for',
+  clearBtn: 'Clear search',
+  option: 'option',
+  options: 'options',
+  solution: 'solution',
+  solutions: 'solutions',
+  applySpaceTitle: 'Your solution could be here.',
+  applySpaceBtn: 'Apply in',
+  availableSpace: 'Available space',
+  realResultsLabel: 'Real catalog results',
+  realSolutionsCount: 'real solution',
+  realSolutionsCountPlural: 'real solutions',
+  availableSlotsCount: 'available slot',
+  availableSlotsCountPlural: 'available slots',
+  fictionalNotice: 'The examples are fictional · They are not available providers',
+  seeSolution: 'See solution',
+  seeExample: 'See example',
+  byLabel: 'By',
+  previewTitle: 'Fictional product · Preview',
+  previewNoticeReal:
+    "Description based on the provider's site. Check there for scope, availability and terms. Its inclusion does not imply independent certification by shwcs.",
+  previewNoticeMock:
+    "This example shows how catalog solutions will be presented. It doesn't represent an available app or a real founder yet.",
+  viewFullBtn: 'View full profile',
+  visitSiteBtn: 'Visit official site',
+  keepExploringBtn: 'Keep exploring',
+  sectionLabel: 'Explore solutions by category',
+  categoriesLabel: 'Categories',
+  searchResultsLabel: 'Search results',
+  categoryResultsLabel: '{category} solutions',
+  coverAlt: 'Cover image for {name}',
+  applySpaceLabel: 'Apply with a solution for {category}, slot {slot}',
+  closePreview: 'Close preview',
+  opensInNewTab: '(opens in a new tab)',
+} as const satisfies Dictionary['categoryExplorer'];

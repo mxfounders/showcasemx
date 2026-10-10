@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { publicProducts } from '@/lib/solutions/public';
@@ -7,12 +8,27 @@ import { i18n } from '@/i18n/config';
 import { industries, localizedIndustries } from '@/lib/taxonomy';
 import { matchIndustry, isRealMatch } from '@/lib/search/facets';
 import { getDictionary } from '@/i18n/get-dictionary';
-import type { Locale } from '@/i18n/config';
+import { localeAlternates } from '@/lib/seo';
 
 // See explorar/[slug]/page.tsx for why {locale, slug} pairs (not just slug)
 // and dynamicParams=false both matter here.
-export function generateStaticParams() { return i18n.locales.flatMap(locale => industries.map(item => ({ locale, slug: item.slug }))); }
+export function generateStaticParams() {
+  return i18n.locales.flatMap(locale => industries.map(item => ({ locale, slug: item.slug })));
+}
 export const dynamicParams = false;
+
+export async function generateMetadata(props: {
+  params: Promise<{ slug: string; locale: string }>;
+}): Promise<Metadata> {
+  const { slug, locale } = await props.params;
+  const info = localizedIndustries(locale).find(item => item.slug === slug);
+  if (!info) return {};
+  return {
+    title: `${info.title} | shwcs`,
+    description: info.description,
+    alternates: localeAlternates(locale, `/industria/${slug}`),
+  };
+}
 
 export default async function IndustriaCategoryPage(props: {
   params: Promise<{ slug: string; locale: string }>;
@@ -24,7 +40,7 @@ export default async function IndustriaCategoryPage(props: {
   const localizedInfo = localizedIndustries(params.locale).find(item => item.slug === params.slug)!;
 
   const products = await publicProducts();
-  const dict = await getDictionary(params.locale as Locale);
+  const dict = await getDictionary(params.locale);
 
   // Matches the founder-declared `industries` field (src/lib/solutions/model.ts)
   // through matchIndustry/isRealMatch, not a raw includes(): a product that

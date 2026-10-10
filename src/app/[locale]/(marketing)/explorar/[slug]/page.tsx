@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { publicProducts } from '@/lib/solutions/public';
@@ -6,7 +7,9 @@ import { CategoryPageSkeleton } from '@/components/catalog/category-page-skeleto
 import { i18n } from '@/i18n/config';
 import { categories, localizedCategories } from '@/lib/taxonomy';
 import { getDictionary } from '@/i18n/get-dictionary';
-import type { Locale } from '@/i18n/config';
+import { localeAlternates } from '@/lib/seo';
+import { sponsoredProducts } from '@/lib/ads/sponsored';
+import { SponsoredSlots } from '@/components/ads/sponsored-slots';
 
 // Must enumerate {locale, slug} pairs, not just slug: this is the innermost
 // dynamic segment, so Next needs the full combination to prerender each
@@ -14,7 +17,9 @@ import type { Locale } from '@/i18n/config';
 // does not get one inferred). Getting this wrong doesn't just skip locales —
 // combined with dynamicParams=false below it 404s even the known-good slugs,
 // because none of them cleanly match a {slug}-only manifest at serve time.
-export function generateStaticParams() { return i18n.locales.flatMap(locale => categories.map(item => ({ locale, slug: item.slug }))); }
+export function generateStaticParams() {
+  return i18n.locales.flatMap(locale => categories.map(item => ({ locale, slug: item.slug })));
+}
 // The slugs are a fixed, closed set (see src/lib/taxonomy.ts): an unknown one
 // should 404 at the routing layer, never attempt an on-demand dynamic render.
 // (An on-demand render here previously crashed outright — the route commits
@@ -23,6 +28,19 @@ export function generateStaticParams() { return i18n.locales.flatMap(locale => c
 // trips Next's static→dynamic guard: "Page changed from static to dynamic at
 // runtime … reason: cookies".)
 export const dynamicParams = false;
+
+export async function generateMetadata(props: {
+  params: Promise<{ slug: string; locale: string }>;
+}): Promise<Metadata> {
+  const { slug, locale } = await props.params;
+  const info = localizedCategories(locale).find(item => item.slug === slug);
+  if (!info) return {};
+  return {
+    title: `${info.title} | shwcs`,
+    description: info.description,
+    alternates: localeAlternates(locale, `/explorar/${slug}`),
+  };
+}
 
 export default async function ExplorarCategoryPage(props: {
   params: Promise<{ slug: string; locale: string }>;
@@ -35,12 +53,14 @@ export default async function ExplorarCategoryPage(props: {
   // Spanish value the filter below matches against (see localizedCategories).
   const localizedInfo = localizedCategories(params.locale).find(item => item.slug === params.slug)!;
 
-  const products = await publicProducts();
-  const dict = await getDictionary(params.locale as Locale);
+  const [products, dict, sponsored] = await Promise.all([
+    publicProducts(),
+    getDictionary(params.locale),
+    sponsoredProducts('category', params.slug),
+  ]);
 
-  const categoryProducts = products.filter(p =>
-    p.category === categoryInfo.label ||
-    p.categories?.includes(categoryInfo.label)
+  const categoryProducts = products.filter(
+    p => p.category === categoryInfo.label || p.categories?.includes(categoryInfo.label),
   );
 
   return (
@@ -56,6 +76,11 @@ export default async function ExplorarCategoryPage(props: {
         products={categoryProducts}
         locale={params.locale}
         dict={dict.catalog}
+        sponsored={
+          sponsored.length > 0 && (
+            <SponsoredSlots items={sponsored} locale={params.locale} dict={dict.ads.slot} />
+          )
+        }
       />
     </Suspense>
   );

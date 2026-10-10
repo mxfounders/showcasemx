@@ -2,14 +2,15 @@
 
 import { useState } from 'react';
 import { ThumbsUp, ThumbsDown, Check } from 'lucide-react';
+import type { Dictionary } from '@/i18n/dictionary';
 
-export function ArticleFeedback({ dict }: { dict?: { feedbackThanks: string; feedbackAsk: string; feedbackUp: string; feedbackDown: string } }) {
+export function ArticleFeedback({ dict }: { dict: Dictionary['blog']['article'] }) {
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
 
   return (
     <div className="flex items-center gap-4">
       <span className="text-sm font-medium text-stone-500 transition-opacity">
-        {feedback ? (dict?.feedbackThanks ?? '¡Gracias por tu opinión!') : (dict?.feedbackAsk ?? '¿Te resultó útil?')}
+        {feedback ? dict.feedbackThanks : dict.feedbackAsk}
       </span>
       <div className="flex gap-2">
         <button
@@ -20,10 +21,10 @@ export function ArticleFeedback({ dict }: { dict?: { feedbackThanks: string; fee
             feedback === 'up'
               ? 'border-[#365DC4] bg-[#365DC4] text-white'
               : feedback === 'down'
-              ? 'border-stone-100 bg-stone-50 text-stone-300 cursor-default'
-              : 'border-stone-200 bg-white text-stone-400 hover:border-[#365DC4] hover:text-[#365DC4]'
+                ? 'border-stone-100 bg-stone-50 text-stone-300 cursor-default'
+                : 'border-stone-200 bg-white text-stone-400 hover:border-[#365DC4] hover:text-[#365DC4]'
           }`}
-          aria-label={dict?.feedbackUp ?? 'Sí, fue útil'}
+          aria-label={dict.feedbackUp}
         >
           {feedback === 'up' ? <Check className="size-4" /> : <ThumbsUp className="size-4" />}
         </button>
@@ -35,10 +36,10 @@ export function ArticleFeedback({ dict }: { dict?: { feedbackThanks: string; fee
             feedback === 'down'
               ? 'border-stone-800 bg-stone-800 text-white'
               : feedback === 'up'
-              ? 'border-stone-100 bg-stone-50 text-stone-300 cursor-default'
-              : 'border-stone-200 bg-white text-stone-400 hover:border-stone-800 hover:text-stone-800'
+                ? 'border-stone-100 bg-stone-50 text-stone-300 cursor-default'
+                : 'border-stone-200 bg-white text-stone-400 hover:border-stone-800 hover:text-stone-800'
           }`}
-          aria-label={dict?.feedbackDown ?? 'No fue útil'}
+          aria-label={dict.feedbackDown}
         >
           {feedback === 'down' ? <Check className="size-4" /> : <ThumbsDown className="size-4" />}
         </button>

@@ -1,14 +1,29 @@
 import { neon } from '@neondatabase/serverless';
 import { getDatabaseUrl } from '@/lib/database-url';
 import { hashToken } from './password';
-export function authSql() { const url = getDatabaseUrl(); if (!url) throw new Error('Storage unavailable'); return neon(url); }
+export function authSql() {
+  const url = getDatabaseUrl();
+  if (!url) throw new Error('Storage unavailable');
+  return neon(url);
+}
 export function requestIdentity(headers: Headers) {
-  const candidate = (headers.get('x-forwarded-for')?.split(',')[0] ?? headers.get('x-real-ip') ?? '').trim();
+  const candidate = (
+    headers.get('x-forwarded-for')?.split(',')[0] ??
+    headers.get('x-real-ip') ??
+    ''
+  ).trim();
   // Vercel replaces its forwarding headers. Bound the value here and persist
   // only its hash below, never the raw network identifier.
-  return candidate && candidate.length <= 128 && /^[0-9a-f:.]+$/i.test(candidate) ? candidate : 'unknown';
+  return candidate && candidate.length <= 128 && /^[0-9a-f:.]+$/i.test(candidate)
+    ? candidate
+    : 'unknown';
 }
-export async function securityLimit(scope: string, identity: string, maximum = 8, globalMaximum = 60) {
+export async function securityLimit(
+  scope: string,
+  identity: string,
+  maximum = 8,
+  globalMaximum = 60,
+) {
   const sql = authSql();
   const key = `${scope}:${hashToken(identity)}`;
   const global = `${scope}:global`;

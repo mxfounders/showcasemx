@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/i18n/navigation';
 import { Check, ChevronDown } from 'lucide-react';
 
 // Canonical dropdown pattern from CLAUDE.md §28: .selector-dropdown-trigger /
@@ -36,9 +36,14 @@ type NavigationalProps = BaseProps & {
   onChange?: never;
 };
 
-function triggerLabel(label: string, options: readonly FilterOption[], values: readonly string[]): string {
+function triggerLabel(
+  label: string,
+  options: readonly FilterOption[],
+  values: readonly string[],
+): string {
   if (values.length === 0) return label;
-  if (values.length === 1) return options.find(option => option.value === values[0])?.label ?? label;
+  if (values.length === 1)
+    return options.find(option => option.value === values[0])?.label ?? label;
   return `${label} · ${values.length}`;
 }
 
@@ -52,27 +57,51 @@ export function FilterMenu(props: ControlledProps | NavigationalProps) {
 
   return (
     <details
-      {...(navigational ? {} : { open: props.open, onToggle: (event: React.SyntheticEvent<HTMLDetailsElement>) => props.onOpenChange(event.currentTarget.open) })}
+      {...(navigational
+        ? {}
+        : {
+            open: props.open,
+            onToggle: (event: React.SyntheticEvent<HTMLDetailsElement>) =>
+              props.onOpenChange(event.currentTarget.open),
+          })}
       className="group relative shrink-0"
     >
-      <summary aria-label={label} data-selected={!cleared} className="selector-dropdown-trigger [&::-webkit-details-marker]:hidden">
+      <summary
+        aria-label={label}
+        data-selected={!cleared}
+        className="selector-dropdown-trigger [&::-webkit-details-marker]:hidden"
+      >
         <span className="max-w-40 truncate">{triggerLabel(label, options, values)}</span>
-        <ChevronDown aria-hidden="true" className="size-4 shrink-0 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" />
+        <ChevronDown
+          aria-hidden="true"
+          className="size-4 shrink-0 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
+        />
       </summary>
       <div className="absolute left-0 top-[calc(100%+0.5rem)] z-30 min-w-56 overflow-hidden rounded-2xl border border-stone-200 bg-white p-2 text-stone-700 shadow-[0_18px_45px_-20px_rgba(41,37,36,0.35)]">
-        {allowClear && (
-          navigational ? (
-            <Link href={props.clearHref} aria-current={cleared ? 'true' : undefined} className={rowClass(cleared)}>
+        {allowClear &&
+          (navigational ? (
+            <Link
+              href={props.clearHref}
+              aria-current={cleared ? 'true' : undefined}
+              className={rowClass(cleared)}
+            >
               <span>{clearLabel}</span>
               {cleared && <Check aria-hidden="true" className="size-4 shrink-0" />}
             </Link>
           ) : (
-            <button type="button" aria-pressed={cleared} onClick={() => { props.onChange(''); props.onOpenChange(false); }} className={rowClass(cleared)}>
+            <button
+              type="button"
+              aria-pressed={cleared}
+              onClick={() => {
+                props.onChange('');
+                props.onOpenChange(false);
+              }}
+              className={rowClass(cleared)}
+            >
               <span>{clearLabel}</span>
               {cleared && <Check aria-hidden="true" className="size-4 shrink-0" />}
             </button>
-          )
-        )}
+          ))}
         {options.map(option => {
           const active = values.includes(option.value);
           const content = (
@@ -82,11 +111,25 @@ export function FilterMenu(props: ControlledProps | NavigationalProps) {
             </>
           );
           return navigational ? (
-            <Link key={option.value} href={props.href(option.value)} aria-current={active ? 'true' : undefined} className={rowClass(active)}>
+            <Link
+              key={option.value}
+              href={props.href(option.value)}
+              aria-current={active ? 'true' : undefined}
+              className={rowClass(active)}
+            >
               {content}
             </Link>
           ) : (
-            <button key={option.value} type="button" aria-pressed={active} onClick={() => { props.onChange(option.value); props.onOpenChange(false); }} className={rowClass(active)}>
+            <button
+              key={option.value}
+              type="button"
+              aria-pressed={active}
+              onClick={() => {
+                props.onChange(option.value);
+                props.onOpenChange(false);
+              }}
+              className={rowClass(active)}
+            >
               {content}
             </button>
           );

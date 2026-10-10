@@ -1,20 +1,24 @@
+/**
+ * Option values stored in `contact_inquiries`. Their labels live in the `contactForm`
+ * dictionary, keyed by value, so the form and the staff email stay consistent.
+ */
 export const inquiryReasons = [
-  { value: 'find', label: 'Encontrar una solución', detail: 'Busco software, una agencia o un servicio para mi empresa.' },
-  { value: 'submit', label: 'Presentar un proyecto', detail: 'Quiero publicar o mejorar la presencia de lo que construyo.' },
-  { value: 'partnership', label: 'Alianza o comunidad', detail: 'Tengo una colaboración, evento o iniciativa que proponer.' },
-  { value: 'press', label: 'Prensa o contenido', detail: 'Quiero conversar, investigar o contar una historia.' },
-  { value: 'support', label: 'Ayuda con mi cuenta', detail: 'Necesito resolver algo dentro de shwcs.' },
-  { value: 'other', label: 'Otra conversación', detail: 'Mi mensaje no encaja en las opciones anteriores.' },
+  { value: 'find' },
+  { value: 'submit' },
+  { value: 'partnership' },
+  { value: 'press' },
+  { value: 'support' },
+  { value: 'other' },
 ] as const;
 
 export const inquiryUrgencies = [
-  { value: 'exploring', label: 'Solo estoy explorando' },
-  { value: 'month', label: 'Quiero resolverlo este mes' },
-  { value: 'soon', label: 'Me gustaría hablar pronto' },
+  { value: 'exploring' },
+  { value: 'month' },
+  { value: 'soon' },
 ] as const;
 
-export type InquiryReason = typeof inquiryReasons[number]['value'];
-export type InquiryUrgency = typeof inquiryUrgencies[number]['value'];
+export type InquiryReason = (typeof inquiryReasons)[number]['value'];
+export type InquiryUrgency = (typeof inquiryUrgencies)[number]['value'];
 export type ContactInquiry = {
   reason: InquiryReason;
   name: string;
@@ -44,13 +48,30 @@ export function validateContactInquiry(input: unknown): ContactInquiry | null {
   const role = text(value.role, 100);
   const message = text(value.message, 2400);
   let website = text(value.website, 500);
-  if (!reason || !urgency || name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || organization.length < 2 || message.length < 20 || value.consent !== true) return null;
+  if (
+    !reason ||
+    !urgency ||
+    name.length < 2 ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
+    organization.length < 2 ||
+    message.length < 20 ||
+    value.consent !== true
+  )
+    return null;
   if (website) {
     try {
       const url = new URL(website);
-      if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password || !url.hostname.includes('.')) return null;
+      if (
+        !['https:', 'http:'].includes(url.protocol) ||
+        url.username ||
+        url.password ||
+        !url.hostname.includes('.')
+      )
+        return null;
       website = url.href;
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   }
   return { reason, name, email, organization, role, website, message, urgency };
 }

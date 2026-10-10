@@ -4,11 +4,18 @@ import { verifyPassword } from '@/lib/auth/password';
 import { authSql, securityLimit } from '@/lib/auth/security';
 import { failure, solutionBody } from '@/lib/solutions/http';
 import { deleteObjects } from '@/lib/storage/blob';
+import { cancelAccountBookings } from '@/lib/ads/account';
+import { getDictionary } from '@/i18n/get-dictionary';
+import { requestLocale } from '@/i18n/negotiate';
+import { i18n } from '@/i18n/config';
 export const runtime = 'nodejs';
 
-// Next only allows its own fields as route exports, so this stays module-local.
-// The client copy lives in components/settings/data-controls.tsx.
-const DELETE_CONFIRMATION = 'ELIMINAR';
+// The typed word is the one the form shows in its language (settings.data.delete.confirmWord).
+// Either language's word is accepted, so switching language mid-flow never blocks a deletion.
+async function confirmWords() {
+  const dictionaries = await Promise.all(i18n.locales.map(locale => getDictionary(locale)));
+  return dictionaries.map(dictionary => dictionary.settings.data.delete.confirmWord);
+}
 
 /**
  * Permanent account deletion (right to erasure).
@@ -25,19 +32,32 @@ const DELETE_CONFIRMATION = 'ELIMINAR';
  * guaranteed backstop within one cycle.
  */
 export async function POST(request: NextRequest) {
-  if (request.headers.get('origin') !== request.nextUrl.origin) return failure('Usa el formulario de tu cuenta.', 403);
+  const dictionary = await getDictionary(requestLocale(request));
+  const t = dictionary.settings.errors;
+  if (request.headers.get('origin') !== request.nextUrl.origin)
+    return failure(t.useAccountForm, 403);
   try {
     const account = await getSession(request.cookies.get(sessionCookie)?.value);
-    if (!account) return failure('Vuelve a iniciar sesión.', 401);
+    if (!account) return failure(t.signInAgain, 401);
     const body = await solutionBody(request);
-    if (typeof body?.password !== 'string' || body.password.length > 4096) return failure('Escribe tu contraseña para confirmar.', 400);
-    if (body.confirm !== DELETE_CONFIRMATION) return failure(`Escribe ${DELETE_CONFIRMATION} para confirmar.`, 400);
-    if (!await securityLimit('account-delete', account.id, 5)) return failure('Demasiados intentos. Intenta más tarde.', 429);
+    if (typeof body?.password !== 'string' || body.password.length > 4096)
+      return failure(t.deletePasswordMissing, 400);
+    if (!(await confirmWords()).includes(String(body.confirm)))
+      return failure(
+        t.deleteConfirmMissing.replace('{word}', dictionary.settings.data.delete.confirmWord),
+        400,
+      );
+    if (!(await securityLimit('account-delete', account.id, 5)))
+      return failure(t.tooManyAttempts, 429);
 
     const sql = authSql();
     const [row] = await sql`SELECT password_hash FROM auth_accounts WHERE id = ${account.id}`;
-    if (!row) return failure('Vuelve a iniciar sesión.', 401);
-    if (!await verifyPassword(body.password, String(row.password_hash))) return failure('La contraseña no es correcta.', 400);
+    if (!row) return failure(t.signInAgain, 401);
+    if (!(await verifyPassword(body.password, String(row.password_hash))))
+      return failure(t.wrongPassword, 400);
+
+    // Sponsored bookings are cancelled and refunded first; the account stays if a refund fails.
+    if (!(await cancelAccountBookings(account.id))) return failure(t.deleteBookingsPending, 503);
 
     // Collect this account's blob keys before the cascade removes the rows.
     const keyRows = await sql`
@@ -50,17 +70,25 @@ export async function POST(request: NextRequest) {
       SELECT avatar_key AS key FROM auth_accounts WHERE id = ${account.id} AND avatar_key IS NOT NULL`;
 
     // Matching the hash again makes a concurrent password change abort the delete.
-    const deleted = await sql`DELETE FROM auth_accounts WHERE id = ${account.id} AND password_hash = ${row.password_hash} RETURNING id`;
-    if (!deleted.length) return failure('Tu acceso cambió. Vuelve a iniciar sesión.', 409);
+    const deleted =
+      await sql`DELETE FROM auth_accounts WHERE id = ${account.id} AND password_hash = ${row.password_hash} RETURNING id`;
+    if (!deleted.length) return failure(t.accessChanged, 409);
 
     // Inline, best-effort: honours the no-retention-window promise. The triggers
     // already enqueued the same keys, so a failure here just defers to the sweep.
-    try { await deleteObjects(keyRows.map((r) => String(r.key)), AbortSignal.timeout(3_000)); } catch { /* sweep backstop */ }
+    try {
+      await deleteObjects(
+        keyRows.map(r => String(r.key)),
+        AbortSignal.timeout(3_000),
+      );
+    } catch {
+      /* sweep backstop */
+    }
 
     const response = NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
     response.cookies.set(sessionCookie, '', { ...cookieOptions, maxAge: 0 });
     return response;
   } catch {
-    return failure('No pudimos eliminar la cuenta. Intenta de nuevo.', 503);
+    return failure(t.deleteUnavailable, 503);
   }
 }

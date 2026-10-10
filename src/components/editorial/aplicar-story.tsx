@@ -1,50 +1,37 @@
 'use client';
 
-import Link from 'next/link';
-import { ArrowRight, CheckCircle2, ShieldCheck, PenTool } from 'lucide-react';
+import Link from '@/i18n/navigation';
+import { ArrowRight, CheckCircle2, ShieldCheck, PenTool, type LucideIcon } from 'lucide-react';
+import type { Dictionary } from '@/i18n/dictionary';
 
-const steps = [
-  {
-    icon: PenTool,
-    title: '1. Redacta con claridad',
-    desc: 'Empieza con un borrador en tu cuenta. Necesitarás explicar el problema central que resuelve tu proyecto, definir a tu cliente ideal y agregar capturas de pantalla reales o demos. Evita el lenguaje de marketing vacío; busca la claridad técnica.',
-    color: '#E4EBFC',
-    text: '#264DAE',
-  },
-  {
-    icon: ShieldCheck,
-    title: '2. Verificación de dominio',
-    desc: 'Exigimos que confirmes ser el propietario o representante autorizado del proyecto. Durante el registro, validaremos tu identidad corporativa vinculando el dominio oficial de la empresa a tu cuenta de fundador en shwcs.',
-    color: '#E4EDE2',
-    text: '#416B50',
-  },
-  {
-    icon: CheckCircle2,
-    title: '3. Revisión editorial',
-    desc: 'Nuestro equipo evaluará que la ficha cumpla con los estándares de información. Si falta contexto, te pediremos ajustes específicos. Una vez aprobada, tu ficha se publicará en el catálogo y tendrás acceso al panel de métricas.',
-    color: '#F4E4DA',
-    text: '#A94E35',
-  }
+type StepId = keyof Dictionary['apply']['steps'];
+
+const steps: readonly { id: StepId; icon: LucideIcon; color: string; text: string }[] = [
+  { id: 'draft', icon: PenTool, color: '#E4EBFC', text: '#264DAE' },
+  { id: 'domain', icon: ShieldCheck, color: '#E4EDE2', text: '#416B50' },
+  { id: 'review', icon: CheckCircle2, color: '#F4E4DA', text: '#A94E35' },
 ];
 
-export function AplicarStory({ dict }: { dict?: any }) {
-  const activeSteps = dict?.steps?.map((step: any, i: number) => ({ ...steps[i], ...step })) || steps;
-
+export function AplicarStory({ dict }: { dict: Dictionary['apply'] }) {
   return (
     <article className="pb-24 sm:pb-32">
       {/* ── HERO ─────────────────────────────────────────────── */}
       <section className="mx-auto max-w-[1500px] px-5 pt-10 sm:px-10 sm:pt-12 lg:px-16 lg:pt-20">
         <div className="grid gap-8 border-b border-stone-200 pb-10 lg:grid-cols-[1.3fr_0.7fr] lg:items-end lg:gap-20 lg:pb-14">
           <h1 className="max-w-5xl text-5xl font-semibold leading-[0.94] tracking-[-0.06em] sm:text-6xl lg:text-7xl">
-            {dict?.title || "Postula tu proyecto"}
+            {dict.title}
           </h1>
           <div className="max-w-md space-y-5 lg:justify-self-end lg:pb-1">
-            <p className="text-lg leading-relaxed tracking-[-0.02em] text-stone-600">
-              {dict?.desc || "shwcs es un directorio curado B2B. Te explicamos exactamente qué necesitas para entrar y cómo funciona nuestro proceso de revisión."}
-            </p>
-            <Link href="/criterios" className="group inline-flex items-center gap-2 text-sm font-medium text-[#A94E35]">
-              {dict?.link || "Ver los criterios de entrada"}
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none" aria-hidden="true" />
+            <p className="text-lg leading-relaxed tracking-[-0.02em] text-stone-600">{dict.desc}</p>
+            <Link
+              href="/criterios"
+              className="group inline-flex items-center gap-2 text-sm font-medium text-[#A94E35]"
+            >
+              {dict.link}
+              <ArrowRight
+                className="size-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none"
+                aria-hidden="true"
+              />
             </Link>
           </div>
         </div>
@@ -53,11 +40,12 @@ export function AplicarStory({ dict }: { dict?: any }) {
       {/* ── EL PROCESO ───────────────────────────────────────── */}
       <section className="mx-auto max-w-[1500px] px-5 pt-10 sm:px-10 lg:px-16 lg:pt-16">
         <div className="grid gap-6 lg:grid-cols-3">
-          {activeSteps.map((step: any) => {
+          {steps.map(step => {
             const Icon = step.icon;
+            const copy = dict.steps[step.id];
             return (
               <div
-                key={step.title}
+                key={step.id}
                 className="flex flex-col rounded-[24px] p-8 sm:p-10"
                 style={{ backgroundColor: step.color, color: step.text }}
               >
@@ -65,17 +53,14 @@ export function AplicarStory({ dict }: { dict?: any }) {
                   <Icon className="size-7" />
                 </div>
                 <h2 className="mb-4 text-2xl font-semibold tracking-[-0.03em] sm:text-3xl">
-                  {step.title}
+                  {copy.title}
                 </h2>
-                <p className="text-base leading-relaxed opacity-80 sm:text-lg">
-                  {step.desc}
-                </p>
+                <p className="text-base leading-relaxed opacity-80 sm:text-lg">{copy.desc}</p>
               </div>
             );
           })}
         </div>
       </section>
-
     </article>
   );
 }

@@ -1,9 +1,19 @@
-export function credentialErrors(email: string, password: string) {
-  const errors: { email?: string; password?: string } = {};
-  if (!email.trim()) errors.email = 'Escribe tu correo para continuar.';
-  else if (email.trim().length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) errors.email = 'Revisa tu correo. Por ejemplo: nombre@empresa.com.';
-  if (!password) errors.password = 'Escribe tu contraseña.';
-  else if (password.length < 6) errors.password = 'Tu contraseña necesita al menos 6 caracteres.';
-  else if (password.length > 4096) errors.password = 'Esta contraseña es demasiado larga para procesarla.';
+/**
+ * Stable, locale-neutral codes. Client forms and API routes map them to the
+ * reader's language through `dict.auth.credentialErrors`.
+ */
+export type EmailError = 'emailMissing' | 'emailInvalid';
+export type PasswordError = 'passwordMissing' | 'passwordShort' | 'passwordLong';
+export type CredentialError = EmailError | PasswordError;
+export type CredentialErrors = { email?: EmailError; password?: PasswordError };
+
+export function credentialErrors(email: string, password: string): CredentialErrors {
+  const errors: CredentialErrors = {};
+  if (!email.trim()) errors.email = 'emailMissing';
+  else if (email.trim().length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
+    errors.email = 'emailInvalid';
+  if (!password) errors.password = 'passwordMissing';
+  else if (password.length < 6) errors.password = 'passwordShort';
+  else if (password.length > 4096) errors.password = 'passwordLong';
   return errors;
 }

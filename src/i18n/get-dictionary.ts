@@ -1,10 +1,15 @@
-import type { Locale } from "./config";
+import { i18n, isLocale } from './config';
+import type { Dictionary } from './dictionary';
 
-const dictionaries = {
-  en: () => import("./dictionaries/en").then((module) => module.en as any),
-  es: () => import("./dictionaries/es").then((module) => module.es as any),
+const loaders: Record<string, () => Promise<Dictionary>> = {
+  es: () => import('./dictionaries/es').then(module => module.es),
+  en: () => import('./dictionaries/en').then(module => module.en),
 };
 
-export const getDictionary = async (locale: Locale) => {
-  return dictionaries[locale]?.() ?? dictionaries.es();
-};
+/**
+ * Loads the dictionary for a route's `[locale]` segment. Unknown values fall back to
+ * the default locale, so callers can pass `params.locale` straight through.
+ */
+export function getDictionary(locale: string): Promise<Dictionary> {
+  return loaders[isLocale(locale) ? locale : i18n.defaultLocale]();
+}

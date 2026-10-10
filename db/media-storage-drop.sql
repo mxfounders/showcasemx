@@ -6,7 +6,7 @@
 -- columns — a Neon branch does not cover blob deletions, so keep the branch and
 -- keep STORAGE_SWEEP_ENABLED off until this has been verified in place.
 --
--- Apply with scripts/migrate-media-storage-drop.cjs.
+-- Apply with `npm run db:migrate -- db/media-storage-drop.sql`.
 
 -- Recreate the view WITHOUT content_base64 first: DROP COLUMN would fail on the
 -- dependency. CREATE OR REPLACE VIEW is instant and transactional, and this file

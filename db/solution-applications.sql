@@ -1,4 +1,7 @@
--- Apply only to the intended Neon environment. Independent of the draft product schema.
+-- LEGACY — do not apply to new databases.
+-- Table behind the retired anonymous intake; POST /api/applications now answers 410
+-- and points to /account/solutions/new. Kept only to document rows that may still
+-- exist in older environments. Ownership must never be inferred from these emails.
 CREATE TABLE IF NOT EXISTS solution_applications (
   id uuid PRIMARY KEY,
   name varchar(100) NOT NULL,

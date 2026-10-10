@@ -1,11 +1,11 @@
-import { cookies } from 'next/headers';
-import Link from 'next/link';
+import { cookies, headers } from 'next/headers';
+import Link from '@/i18n/navigation';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
-import { getSession,sessionCookie } from '@/lib/auth/session';
+import { getSession, sessionCookie } from '@/lib/auth/session';
 import { actionButtonStyle } from '@/lib/brand-colors';
+import { i18n, isLocale, localeHeader } from '@/i18n/config';
 import { getDictionary } from '@/i18n/get-dictionary';
-import type { Locale } from '@/i18n/config';
 import type { Metadata } from 'next';
 
 // Some routes with data-driven notFound() (an arbitrary /soluciones/[id] or
@@ -17,25 +17,30 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function NotFound() {
-  // Since this is not-found, we might not get the locale from params directly in some Next.js versions.
-  // But we can fallback to 'es'
-  const locale = 'es';
-  
-  let authenticated=false;
-  try{authenticated=Boolean(await getSession((await cookies()).get(sessionCookie)?.value));}catch{}
-  
-  const dict = await getDictionary(locale as Locale);
+  // not-found receives no params; the middleware forwards the route's locale instead.
+  const requested = (await headers()).get(localeHeader) ?? '';
+  const locale = isLocale(requested) ? requested : i18n.defaultLocale;
+
+  let authenticated = false;
+  try {
+    authenticated = Boolean(await getSession((await cookies()).get(sessionCookie)?.value));
+  } catch {}
+
+  const dict = await getDictionary(locale);
 
   return (
     <>
-      <Navbar authenticated={authenticated} dict={dict.navbar} locale={locale}/>
-      <main id="main-content" className="pt-14 flex flex-col items-center justify-center min-h-[60vh] text-center px-6">
-        <h1 className="text-9xl font-bold tracking-tighter" style={{ color: '#365DC4' }}>404</h1>
-        <p className="mt-6 text-xl font-medium text-stone-900 sm:text-2xl">
-          Página no encontrada
-        </p>
+      <Navbar authenticated={authenticated} dict={dict.navbar} locale={locale} />
+      <main
+        id="main-content"
+        className="pt-14 flex flex-col items-center justify-center min-h-[60vh] text-center px-6"
+      >
+        <h1 className="text-9xl font-bold tracking-tighter" style={{ color: '#365DC4' }}>
+          404
+        </h1>
+        <p className="mt-6 text-xl font-medium text-stone-900 sm:text-2xl">{dict.notFound.title}</p>
         <p className="mt-3 text-base text-stone-500 max-w-md mx-auto leading-relaxed">
-          Lo sentimos, no pudimos encontrar la página que estás buscando. Puede que haya sido movida o ya no exista.
+          {dict.notFound.description}
         </p>
         <div className="mt-10">
           <Link
@@ -43,11 +48,11 @@ export default async function NotFound() {
             style={actionButtonStyle}
             className="action-button inline-flex h-12 items-center justify-center rounded-full px-8 text-sm font-medium transition-transform hover:scale-105 active:scale-95"
           >
-            Volver al inicio
+            {dict.notFound.backHome}
           </Link>
         </div>
       </main>
-      <Footer dict={dict.footer} locale={locale}/>
+      <Footer dict={dict.footer} locale={locale} />
     </>
   );
 }

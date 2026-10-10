@@ -3,6 +3,8 @@ import { getSession, sessionCookie } from '@/lib/auth/session';
 import { hashToken } from '@/lib/auth/password';
 import { authSql, securityLimit } from '@/lib/auth/security';
 import { failure, solutionBody } from '@/lib/solutions/http';
+import { getDictionary } from '@/i18n/get-dictionary';
+import { requestLocale } from '@/i18n/negotiate';
 export const runtime = 'nodejs';
 
 /**
@@ -14,30 +16,38 @@ export const runtime = 'nodejs';
  * already stores. The client only ever sees that hash, never a usable token.
  */
 export async function POST(request: NextRequest) {
-  if (request.headers.get('origin') !== request.nextUrl.origin) return failure('Usa el formulario de tu cuenta.', 403);
+  const t = (await getDictionary(requestLocale(request))).settings.errors;
+  if (request.headers.get('origin') !== request.nextUrl.origin)
+    return failure(t.useAccountForm, 403);
   try {
     const account = await getSession(request.cookies.get(sessionCookie)?.value);
-    if (!account) return failure('Vuelve a iniciar sesión.', 401);
+    if (!account) return failure(t.signInAgain, 401);
     const body = await solutionBody(request);
     const action = typeof body?.action === 'string' ? body.action : '';
-    if (!['revoke', 'revoke-others'].includes(action)) return failure('Acción no válida.', 400);
-    if (!await securityLimit('account-sessions', account.id, 40)) return failure('Demasiados cambios. Intenta más tarde.', 429);
+    if (!['revoke', 'revoke-others'].includes(action)) return failure(t.invalidAction, 400);
+    if (!(await securityLimit('account-sessions', account.id, 40)))
+      return failure(t.tooManyChanges, 429);
 
     const current = hashToken(request.cookies.get(sessionCookie)?.value ?? '');
     const sql = authSql();
 
     if (action === 'revoke-others') {
-      const rows = await sql`DELETE FROM auth_sessions WHERE account_id = ${account.id} AND token_hash <> ${current} RETURNING token_hash`;
-      return NextResponse.json({ ok: true, closed: rows.length }, { headers: { 'Cache-Control': 'no-store' } });
+      const rows =
+        await sql`DELETE FROM auth_sessions WHERE account_id = ${account.id} AND token_hash <> ${current} RETURNING token_hash`;
+      return NextResponse.json(
+        { ok: true, closed: rows.length },
+        { headers: { 'Cache-Control': 'no-store' } },
+      );
     }
 
     const target = typeof body?.tokenHash === 'string' ? body.tokenHash : '';
-    if (!/^[a-f0-9]{64}$/.test(target)) return failure('Sesión no encontrada.', 400);
-    if (target === current) return failure('Esta es tu sesión actual. Usa cerrar sesión.', 400);
-    const rows = await sql`DELETE FROM auth_sessions WHERE account_id = ${account.id} AND token_hash = ${target} RETURNING token_hash`;
-    if (!rows.length) return failure('Esa sesión ya no está activa. Recarga la página.', 404);
+    if (!/^[a-f0-9]{64}$/.test(target)) return failure(t.sessionNotFound, 400);
+    if (target === current) return failure(t.sessionIsCurrent, 400);
+    const rows =
+      await sql`DELETE FROM auth_sessions WHERE account_id = ${account.id} AND token_hash = ${target} RETURNING token_hash`;
+    if (!rows.length) return failure(t.sessionGone, 404);
     return NextResponse.json({ ok: true, closed: 1 }, { headers: { 'Cache-Control': 'no-store' } });
   } catch {
-    return failure('No pudimos cerrar la sesión. Intenta de nuevo.', 503);
+    return failure(t.sessionsUnavailable, 503);
   }
 }

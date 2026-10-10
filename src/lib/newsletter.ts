@@ -1,20 +1,24 @@
+// Values only, in display order. Labels live in the dictionaries
+// (`dict.newsletter.profiles` / `dict.newsletter.roles`), keyed by these values.
 export const newsletterProfiles = [
-  { value: 'founder', label: 'Soy fundador', detail: 'Construyo o vendo una solución.' },
-  { value: 'buyer', label: 'Soy comprador', detail: 'Busco soluciones para mi empresa.' },
-  { value: 'both', label: 'Un poco de ambos', detail: 'Construyo y también busco soluciones.' },
-  { value: 'exploring', label: 'Estoy explorando', detail: 'Quiero conocer lo que se está creando.' },
+  { value: 'founder' },
+  { value: 'buyer' },
+  { value: 'both' },
+  { value: 'exploring' },
 ] as const;
 export const newsletterRoles = [
-  { value: 'leadership', label: 'Fundador / Dirección' },
-  { value: 'product_tech', label: 'Producto / Tecnología' },
-  { value: 'sales_marketing', label: 'Ventas / Marketing' },
-  { value: 'operations', label: 'Operaciones' },
-  { value: 'finance_procurement', label: 'Finanzas / Compras' },
-  { value: 'other', label: 'Otro rol' },
+  { value: 'leadership' },
+  { value: 'product_tech' },
+  { value: 'sales_marketing' },
+  { value: 'operations' },
+  { value: 'finance_procurement' },
+  { value: 'other' },
 ] as const;
-export type NewsletterProfile = typeof newsletterProfiles[number]['value'];
-export type NewsletterRole = typeof newsletterRoles[number]['value'];
-export function validateNewsletter(value: unknown): { email: string; profile: NewsletterProfile; role: NewsletterRole } | null {
+export type NewsletterProfile = (typeof newsletterProfiles)[number]['value'];
+export type NewsletterRole = (typeof newsletterRoles)[number]['value'];
+export function validateNewsletter(
+  value: unknown,
+): { email: string; profile: NewsletterProfile; role: NewsletterRole } | null {
   if (!value || typeof value !== 'object') return null;
   const input = value as Record<string, unknown>;
   if (input.consent !== true || input.company || typeof input.email !== 'string') return null;
