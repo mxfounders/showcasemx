@@ -29,14 +29,14 @@ La ruta privada sigue validando sesión y propietario incluso cuando la lista se
 Aplicar `db/public-collections.sql` después de `db/buyer-library.sql`:
 
 ```
-node scripts/migrate-collections.cjs
+npm run db:migrate -- db/public-collections.sql
 ```
 
 Migración aditiva/idempotente, transaccional, aplicada a la base configurada en esta entrega. Añade `visibility` (private/public, default private), `categories text[]`, `public_description`, `curator_name`, índice parcial de listas públicas. No migra textos privados a campos públicos ni altera dueños. Si el despliegue usa otra base, aplicar allí antes de servir el código.
 
 API existente `/api/library` create-list/update-list incorpora `visibility`, `categories`, `publicDescription`, `curatorName`, `publishConfirmed`. Campos omitidos conservan compatibilidad creando una lista privada; clientes antiguos que editan sin nuevos campos la dejan privada. Sesión, origen, cuota, frecuencia, longitud y versiones siguen protegidos. Límites existentes: 30 listas/200 proyectos guardados por cuenta. No hay permisos de roles nuevos.
 
-Aplicar después `db/community-social.sql` con `node scripts/migrate-community-social.cjs`. Crea likes, listas guardadas y comentarios con claves foráneas y borrado en cascada. Una cuenta solo aporta un like y un guardado por lista. El API `/api/community` exige mismo origen, sesión, lista pública y límites de frecuencia; toggles atómicos y comentarios con UUID del cliente hacen seguros los reintentos.
+Aplicar después `db/community-social.sql` con `npm run db:migrate -- db/community-social.sql`. Crea likes, listas guardadas y comentarios con claves foráneas y borrado en cascada. Una cuenta solo aporta un like y un guardado por lista. El API `/api/community` exige mismo origen, sesión, lista pública y límites de frecuencia; toggles atómicos y comentarios con UUID del cliente hacen seguros los reintentos.
 
 Archivos principales: `src/lib/library/community.ts`, `model.ts`, `server.ts`, API library; componentes `board-card`, `board-gallery`, `list-form`, `community-icon`, `share-collection`; rutas de comunidad y listas.
 

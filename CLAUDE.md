@@ -8,8 +8,11 @@ base configurada y producción.
 
 ## 1. Producto y propósito
 
-shwcs conecta empresas mexicanas con proyectos B2B que pueden ayudarlas:
-software, agencias y servicios. No vender shwcs como un software empresarial
+shwcs conecta empresas con proyectos B2B que pueden ayudarlas: software,
+agencias y servicios. **Abierto a cualquier mercado** (decisión del propietario, 10 de
+octubre de 2026): México es el primer mercado, no el límite. Nada nuevo se diseña solo
+para México o solo en MXN; lo local (CFDI, SAT) entra como adaptador por país sobre una
+regla global (§70, docs/strategy.md). No vender shwcs como un software empresarial
 ni como una certificación de proveedores. Su valor es selección, contexto para
 evaluar y acceso a quienes construyen las soluciones.
 
@@ -114,7 +117,7 @@ No asignar otros proyectos por nombre, dominio o coincidencia de correo.
 
 Next.js 15.5.24 App Router, React 19.2.8, TypeScript estricto, Tailwind 3, GSAP,
 lucide-react. Neon HTTP mediante @neondatabase/serverless. Sharp para avatares y capturas.
-No Clerk. AI SDK está instalado pero no conectado a un flujo del producto.
+No Clerk, sin ORM y sin SDK de IA (retirados en la limpieza de §62). Stripe (`stripe@23.0.0`) para anuncios (§64).
 jose valida JWT de Google. PostCSS 8.5.26 mediante override para Next; APIs dinámicas async.
 
 src/app:
@@ -142,10 +145,9 @@ src/components:
 - contacts/: formularios de solicitud/respuesta, bandejas y actualización manual.
 - settings/: perfil/seguridad/conexiones.
 
-db/*.sql: esquema operativo del MVP mediante migraciones SQL aditivas.
-src/db/schema.ts: diseño Drizzle anterior (users/products/leads/vector).
-No tratarlo como fuente de verdad de auth_accounts/founder_solutions/contact_requests.
-No ejecutar drizzle-kit push para «sincronizar» todo sin revisar la divergencia.
+db/*.sql: único esquema operativo, migraciones SQL aditivas aplicadas con
+`npm run db:migrate -- db/<archivo>.sql`. El diseño Drizzle anterior y sus
+dependencias se retiraron del repositorio (§62).
 
 ## 5. Rutas y límites de acceso
 
@@ -389,25 +391,13 @@ Un timeout no confirma fracaso de la escritura: revisar bandeja antes de repetir
 getDatabaseUrl usa, en orden: NEON_DATABASE_URL, DATABASE_URL, POSTGRES_URL.
 Son secretos solo de servidor; no imprimir valores, hosts con credenciales ni tokens.
 
-Orden de esquema operativo para base nueva:
-1. db/auth.sql
-2. db/account-profile.sql
-3. db/account-settings.sql
-4. db/founder-solutions.sql
-5. db/buyer-library.sql
-6. db/contact-requests.sql
-7. db/catalog-ownership.sql
-8. db/solution-media-dashboard.sql
-9. db/solution-profile.sql
-10. db/newsletter-subscribers.sql
-11. db/newsletter-segments.sql
-12. db/launch-foundation.sql (tras auth/settings/soluciones/contactos)
-13. db/account-security.sql (tras auth.sql; segundo factor y sesiones con dispositivo)
-14. db/solution-site-image.sql (tras founder-solutions.sql; portada og:image del sitio)
+Orden de esquema operativo para base nueva: la lista completa (33 archivos, verificada
+sobre una base vacía el 10 de octubre de 2026) vive en docs/database.md. Aplicar con
+`npm run db:migrate -- <archivo> [<archivo> …]`, una transacción por archivo.
 
 Newsletter es independiente, pero segments exige subscribers.
-db/solution-applications.sql y src/db/schema.ts son diseños anteriores;
-no migrar usuarios/datos a esas tablas por suposición.
+db/solution-applications.sql es el intake anónimo retirado (encabezado LEGACY);
+no aplicarlo ni migrar usuarios/datos a esa tabla por suposición.
 
 Las migraciones aditivas de auth/perfil/settings/soluciones/newsletter/biblioteca
 se aplicaron previamente a la conexión local configurada. contact-requests.sql y catalog-ownership.sql
@@ -419,11 +409,11 @@ Esto NO confirma que otro proyecto/base de Vercel tenga las tablas.
 
 - Revisar SQL y destino antes de modificar una base.
 - No reescribir ni borrar datos reales para una prueba.
-- No hacer push de esquema Drizzle masivo sin conciliar el esquema operativo.
 - Rollback de contactos requiere eliminar contact_events antes de contact_requests;
   borra esos datos, no es un rollback sin pérdida. No ejecutarlo automáticamente.
 - No separar SQL ingenuamente por punto y coma: funciones PL/pgSQL usan bloques
-  $$ y comentarios. scripts/migrate-launch.cjs respeta esos delimitadores.
+  $$ y comentarios. scripts/migrate.cjs (`npm run db:migrate`) respeta esos
+  delimitadores y lo cubre tests/migrate.test.ts.
 - Sin framework unificado de migraciones. El worker limpia tokens de
   recuperación/verificación/OAuth y contadores caducados; requiere programación.
   Limpieza de sesiones y archivos abandonados sigue pendiente.
@@ -449,9 +439,13 @@ Esto NO confirma que otro proyecto/base de Vercel tenga las tablas.
 
 Comandos:
 - npm run dev: Next dev.
-- npm run lint: ESLint.
+- npm run check: format:check + lint + typecheck + test + build (lo mismo que CI).
+- npm run format / format:check: Prettier (.prettierrc.json).
+- npm run lint: ESLint CLI con cero advertencias (sin `any`).
 - npm run typecheck: TypeScript sin emitir.
 - npm test: pruebas unitarias.
+- npm run db:migrate -- db/<archivo>.sql: aplica migraciones.
+- npm run ads:rates: tarifas y ubicaciones de anuncios (§64).
 - npm run preflight: configuración de lanzamiento sin secretos.
 - RUN_LAUNCH_INTEGRATION=1 node tests/integration/launch.cjs:
   verificación/avisos/TXT/reportes/métricas/desvinculación con cuentas temporales.
@@ -460,7 +454,6 @@ Comandos:
 - RUN_MEDIA_INTEGRATION=1 node tests/integration/media-dashboard.cjs:
   integración de capturas, publicación protegida, concurrencia y dashboard.
 - npm run build: producción.
-- npm run check: lint + typecheck + build.
 - npm run start: servir build ya generado.
 
 Nunca ejecutar next dev y next build con el mismo .next a la vez. Se observaron
@@ -476,7 +469,10 @@ respuestas, cierre/reapertura, conflictos de versión, retiro e historial atómi
 finally elimina solo cuentas del test, datos en cascada y sus contadores.
 No usar cuentas reales del usuario ni enviar emails.
 
-Pruebas unitarias actuales: 45 pasando. Lint y TypeScript correctos.
+Pruebas unitarias: 178 pasando al 10 de octubre de 2026 (ver §71). Lint y TypeScript correctos.
+Integraciones nuevas: `RUN_REVIEWS_INTEGRATION=1 node tests/integration/reviews.cjs` y
+`RUN_COMPLIANCE_INTEGRATION=1 node tests/integration/compliance.cjs` (esta con un SAT
+simulado; ver su encabezado). Ambas aceptan `APP_ORIGIN` para apuntar a un build aislado.
 Integraciones de capturas/dashboard y regresión de contactos pasando. Build aislado
 correcto. Verificación y límites de esta entrega en docs/launch.md y docs/media-dashboard.md;
 no inferir validación de producción de estos resultados.
@@ -507,6 +503,7 @@ Leer según área:
 - docs/account-settings.md: perfil/contraseña/recuperación.
 - docs/newsletter-auth.md: newsletter y acceso inicial.
 - docs/roadmap.md: estado consolidado del plan de producto.
+- docs/ops.md: backoffice de operaciones (acceso, sesiones, modo seguro, bitácora encadenada, pantallas y procedimientos).
 - docs/database.md, docs/env.md, docs/stack.md: referencias técnicas.
 - docs/product.md, docs/design.md, docs/colors.md, docs/listings.md: producto y estética.
 
@@ -1188,7 +1185,7 @@ Las políticas de privacidad, términos y cookies en `src/app/[locale]/(marketin
 - Acceso, Rectificación, Cancelación, Oposición (LFPDPPP)
 - Portabilidad, limitación, derecho al olvido (GDPR)
 - Canal: hola@shwcs.site — 20 días hábiles de respuesta
-- Autoridades: INAI (México), autoridad de control del Estado miembro (UE)
+- Autoridades: Secretaría Anticorrupción y Buen Gobierno (México; sustituyó al INAI con la LFPDPPP vigente desde el 21 de marzo de 2025) y autoridad de control del Estado miembro (UE)
 
 ## 43. Rediseño de configuración (Estética de Tarjetas) — 2 septiembre 2026
 
@@ -2626,3 +2623,506 @@ de redacción distinto, no una sustitución mecánica, y no se hizo aquí).
   lista pública en la base de desarrollo (§57 ya lo dejó documentado: el
   desarrollo local no tiene listas públicas sembradas); se verificó por
   tipos — mismo patrón exacto ya probado en vivo en las otras rutas.
+
+## 62. Limpieza «nivel artesanía» — 9 octubre 2026
+
+Petición del usuario: borrar basura y dejar el repositorio bien estructurado. Nada se
+commiteó ni desplegó en esta entrega; el estado previo sin commitear (i18n de cuenta a
+medias, copy sin referencias a México, precios en USD) se preservó.
+
+- **Basura eliminada (con confirmación del usuario)**: 21 scripts de parche en la raíz
+  (`patch_*.js`, `fix_auth_pages*.js`, `find_spanish.js`, `update_*.js`), 46 codemods de
+  un solo uso en `scripts/`, `backfill-media-blob.cjs` (leía `content_base64`, ya
+  eliminada), `AccountNavbar`/`AccountMenu` (sin importadores) y `src/lib/applications.ts`
+  (solo lo usaban pruebas del intake retirado). En `ops/`: logo duplicado sin uso y
+  carpetas vacías. Los 17 `migrate-*.cjs` idénticos se sustituyeron por
+  `scripts/migrate.cjs` (`npm run db:migrate`), con el mismo splitter verificado contra
+  los 29 `.sql` y pruebas propias.
+- **Herramientas**: Prettier en todo el código (`.prettierrc.json`; las líneas de hasta
+  2 000 caracteres desaparecieron), ESLint CLI con `--max-warnings 0` también sobre
+  `scripts/` y `tests/` (antes no se revisaban), cero `any`, lint en `ops/`,
+  `npm run check` igual a CI y `.github/workflows/ci.yml` (la documentación ya lo daba
+  por existente). Se quitaron `typescript.ignoreBuildErrors` y
+  `eslint.ignoreDuringBuilds` de `next.config.mjs`: el build vuelve a verificar tipos y lint.
+- **Restos retirados**: dependencias sin uso (AI SDK, Drizzle, pgvector, shadcn,
+  tailwindcss-animate), ~60 variables CSS y el modo oscuro de shadcn que nada usaba,
+  rutas de contenido de Tailwind inexistentes, exports sin importadores (knip limpio).
+- **Bugs encontrados y corregidos**:
+  - `/comunidad` y `/comunidad/[id]` lanzaban `TypeError` (diccionario esqueleto con otra forma).
+  - La ficha pública y los filtros del catálogo en español salían **sin títulos ni
+    etiquetas**: el diccionario tenía cadenas vacías y los componentes usaban `??`.
+  - 10 de los 16 artículos del blog daban 404 (`generateStaticParams` solo listaba los destacados).
+  - El middleware perdía el query al añadir el idioma (`/sign-in?next=…` llegaba sin `next`)
+    y los enlaces internos sin prefijo cambiaban de idioma según el navegador; ahora usa
+    el idioma de la página de origen (Referer) y conserva el query.
+  - **Privacidad**: cinco tarjetas cargaban favicons desde `google.com/s2/favicons`, lo
+    que exponía la IP de cada visitante a Google; ahora `ProjectMark` solo muestra
+    favicons servidos por shwcs o la inicial del proyecto.
+  - La página 404 siempre salía en español; el middleware pasa el idioma en `x-locale`.
+- **Verificación**: 141 pruebas unitarias, tipos y lint limpios, build de producción
+  correcto en copia aislada. El HTML renderizado de 98 páginas (es/en, anónimo y con
+  sesión) se comparó contra el código original reconstruido y construido con los mismos
+  datos: en español solo cambian los bugs corregidos y lo pedido. Las 28 migraciones se
+  aplicaron en orden sobre un Postgres vacío (PGlite).
+- **Lección operativa**: `.env.production.local` apunta a `shwcs_production` y tiene
+  prioridad en `next build`/`next start`. Una verificación local debe forzar la base de
+  desarrollo por variables de entorno. Hubo lecturas accidentales (solo GET, sin
+  escrituras) contra producción antes de detectarlo.
+
+## 63. Arquitectura de idiomas vigente — 9 octubre 2026
+
+Sustituye lo que §49, §60 y §61 afirmaban sobre el inglés: esas secciones describían
+traducciones que nunca llegaron al código (en.ts carecía de `soluciones`, `catalog`,
+`community` y `solutionUi`; la cuenta usaba secciones inexistentes). Hoy toda la
+interfaz, incluida la cuenta, está en español e inglés.
+
+- `src/i18n/dictionaries/{es,en}/<sección>.ts`: una sección por archivo. El español es
+  la fuente: su forma define `Dictionary` (`src/i18n/dictionary.ts`) y cada sección en
+  inglés usa `as const satisfies Dictionary['<sección>']`, así que una clave faltante o
+  sobrante es un error de compilación.
+- Componentes: `dict: Dictionary['<sección>']` obligatorio; sin `dict?.x || 'texto'`.
+- `getDictionary(locale: string)` acepta el `params.locale` crudo. `requestLocale(request)`
+  (`src/i18n/negotiate.ts`) da el idioma de una petición a la API: las rutas responden
+  sus errores en el idioma de la página que las llamó.
+- Validadores compartidos (credenciales, soluciones, contactos) devuelven códigos
+  estables; la interfaz o la ruta los traducen.
+- `common` + `commonText(locale)` y `useLocale()` para los pocos textos de componentes
+  que solo conocen el idioma (salto al contenido, logo, carga, limpiar búsqueda).
+- Los 16 artículos del blog tienen contenido en ambos idiomas (`content: Record<Locale, …>`).
+- **Sigue en español a propósito**: correos (las cuentas no guardan idioma; requiere
+  columna y migración), mensajes guardados en la base (títulos de avisos de los
+  triggers, «Postulación enviada a revisión»), contenido escrito por usuarios y el
+  correo interno del formulario de contacto. La palabra para borrar la cuenta ya es por
+  idioma (`ELIMINAR`/`DELETE`, §69) y el servidor acepta cualquiera de las dos.
+- **Navegación (§69)**: `Link`, `useRouter` y `usePathname` se importan de
+  `@/i18n/navigation`, nunca de `next/link`/`next/navigation` (salvo el cambio de idioma
+  y `navbar-search`). Los componentes escriben rutas semánticas (`/account/saved`) y el
+  envoltorio añade el idioma. En servidor: `localeRedirect()` de `@/i18n/redirect`.
+- **Decisiones pendientes**: el consentimiento de contacto en inglés usa la misma
+  versión `contact-v1`; varios títulos conservan punto final contra §37 para no cambiar
+  el texto visible.
+
+## 64. Espacios patrocinados con Stripe — 9 octubre 2026
+
+Decisión del usuario: anuncios cobrados por tiempo (como Product Hunt o LinkedIn), con
+integración propia de Stripe, sin vender posiciones. Referencia completa: docs/ads.md.
+
+- Reglas: siempre «Patrocinado» y separado; máximo 2 por categoría y día; nunca entra al
+  orden orgánico; solo fichas aprobadas; métricas propias agregadas sin píxeles.
+- Ubicaciones: categoría, inicio y newsletter (cerrada hasta que se envíen campañas).
+  Días naturales en hora de Ciudad de México, de 1 a 90, en USD o MXN, impuestos encima
+  con Stripe Tax (`txcd_10701000`). OXXO excluido.
+- Política de reembolsos investigada contra Meta, LinkedIn, X, Reddit, Google, Product
+  Hunt, BuySellAds e IAB: se reembolsa cada día que empieza ≥ 24 h después de cancelar;
+  retiro por shwcs reembolsa todo lo no servido (o desde mañana si hubo incumplimiento);
+  disputas pausan sin reembolso aparte; eliminar la cuenta cancela y reembolsa antes de borrar.
+- Términos (`/terminos#publicidad`), Privacidad (`/privacidad#pagos`, Stripe y Vercel como
+  subprocesadores, retención fiscal, medición agregada) y Cookies actualizados en ambos
+  idiomas. Se corrigió «no empleamos el correo para publicidad de terceros», incompatible
+  con menciones patrocinadas. Las secciones legales tienen anclas estables. **Requieren
+  revisión legal humana**; no se definió ley aplicable ni jurisdicción (decisión del propietario).
+- Migración `db/ad-campaigns.sql` aplicada solo a `neondb`. Stripe Tax de la cuenta de
+  prueba está pendiente (falta domicilio fiscal y registros): con impuestos activos el
+  checkout falla con mensaje claro y sin cargo. Plugin y MCP de Stripe instalados; el
+  MCP requiere autenticarse con `/mcp`.
+- Verificación: unitarias de modelo y API, y prueba de punta a punta contra Stripe en
+  modo prueba (24/24): sesión real, PaymentIntent real, webhook firmado, espacio visible,
+  métricas, cancelación con reembolso real confirmado por `charge.refunded`, sin doble
+  reembolso y cupo. Datos de prueba eliminados de `neondb` y de Stripe.
+- Pendiente: tarifas reales, Stripe Tax y webhook de producción, migración en
+  `shwcs_production`, panel en ops (la reescritura de `ops/` la llevaba otra sesión),
+  CFDI, reembolso automático al despublicar y detección automática de caídas.
+
+## 65. Inventario único de pendientes — 10 octubre 2026
+
+Lista vigente. Sustituye los «pendiente» dispersos en secciones anteriores; si una
+sección histórica dice otra cosa, manda esta. «Verificar» significa que desde esta
+sesión no se pudo comprobar (la CLI y el conector de Vercel no tienen acceso al
+equipo `mxfounders` en esta máquina).
+
+### A. Acción del propietario (cuentas, credenciales, decisiones)
+
+1. **Servidor de desarrollo roto**: el `npm run dev` de la terminal del propietario
+   (puerto 3000) quedó corrupto porque un `next build` de esta sesión escribió en el
+   mismo `.next` (§13). Arreglo: Ctrl+C, `rm -rf .next`, `npm run dev`.
+2. **Nada de §62–§64 está commiteado ni desplegado.** Producción conserva los bugs que
+   se corrigieron aquí: `/comunidad` roto, ficha y filtros sin títulos en español, 10
+   artículos del blog en 404 y favicons cargados desde Google.
+3. **Stripe**: domicilio fiscal y registros en Stripe Tax (prueba y producción);
+   endpoint `https://shwcs.site/api/webhooks/stripe` con los eventos de docs/ads.md;
+   `STRIPE_SECRET_KEY` (clave restringida) y `STRIPE_WEBHOOK_SECRET` en Vercel; tarifas
+   reales con `npm run ads:rates`; autenticar el MCP de Stripe con `/mcp`; **regenerar
+   la clave secreta de prueba**, que se pegó en el chat.
+4. ~~Migraciones en `shwcs_production`~~ **Hecho el 10 de octubre (§71)**: producción
+   tiene todo el orden de docs/database.md, incluidas `ad-campaigns`, `billing`,
+   `solution-reviews` y `compliance`; `media-renditions` y `ops-hardening` ya estaban.
+5. **Facturación CFDI con Cord** (§67, ya construida): quién es el emisor (RFC y CSD de
+   shwcs o de la empresa de Cord/Flouvia); `CORD_API_KEY` de esa cuenta (`sk_test_` para
+   repetir la prueba contra el sandbox real, `sk_live_` en Vercel); confirmar los nombres
+   de los campos fiscales del cliente en Cord; tratamiento de compradores extranjeros y si
+   el recibo de Stripe se conserva junto al CFDI (hoy: sí, para todos).
+6. **Contador**: código de impuesto `txcd_10701000`, IVA en exportación de servicios,
+   retenciones si el emisor es persona física.
+7. **Legal**: revisión humana de Términos, Privacidad y Cookies tras la sección de
+   publicidad (§64); ley aplicable y jurisdicción (no definidas); si el consentimiento
+   de contacto en inglés necesita su propia versión; reevaluar `LAUNCH_LEGAL_REVIEWED`.
+8. **Google OAuth**: credenciales y prueba real.
+9. **Correo**: prueba humana de recepción desde producción (Resend ya verificado, §42).
+10. **Verificar en Vercel**: `AUTH_TOTP_KEY` (§49), `VIEW_HASH_SECRET` activo tras un
+    redeploy (§55), `OPS_MEDIA_SECRET`, `CATALOG_REVALIDATE_SECRET`.
+11. **Responsable editorial** y estado real de Cord en producción (§45 decía `pending`).
+
+### B. Código y producto
+
+- **Anuncios**: acciones en ops (pausar, retirar con el motivo que decide el
+  reembolso; la vista de solo lectura ya existe, §68); reembolso automático cuando una ficha pierde la publicación; detección de
+  caídas (regla de 4 h) y días de reposición; menciones en el newsletter; correos
+  propios de confirmación.
+- **Idiomas**: correos en inglés (requiere guardar el idioma de la cuenta); mensajes
+  guardados en la base (títulos de avisos de los triggers, eventos de solución);
+  revisión del inglés por un hablante nativo; títulos con punto final contra §37;
+  respaldo `'Solución'` en `src/lib/library/server.ts` (hoy no visible).
+- **Newsletter**: campañas, plantillas, rebotes y quejas, double opt-in.
+- **Moderación**: reportes de comentarios en fichas por visitantes (§56); bloqueo,
+  apelaciones, reputación y defensa ante multicuentas.
+- **Catálogo**: filtros de capacidad e integración en Guardados (§59); el texto de
+  `landing-stacking-cards` describe funciones que no existen (§46); `notFound()` responde
+  200 en rutas con `loading.tsx` (limitación de Next, §53).
+- **Operación**: limpieza de sesiones caducadas y archivos abandonados (§11); retención de
+  `contact_inquiries` (§36); cuota global de almacenamiento por cuenta (§16).
+- **Repositorio**: CLAUDE.md pesa ~180 KB y conviene consolidarlo en un documento de
+  estado vigente más un histórico. (El formato de `ops/` ya quedó aplicado, §68.)
+
+### C. Facturación (§67, construida el 10 de octubre)
+
+- Pendiente de código: descarga del PDF/XML desde la cuenta, panel en ops para documentos
+  `failed` y reemisión manual, y repetir la prueba de punta a punta contra el sandbox real
+  de Cord en cuanto exista la llave.
+
+## 66. Registro de cambios de la sesión del 9–10 de octubre de 2026
+
+Todo sin commitear, sobre `0ecac6b` más el trabajo previo sin commitear (i18n de cuenta a
+medias, copy sin México, precios en USD). Respaldo de ese estado previo en el
+scratchpad de la sesión (patch + tar). Detalle de cada área en §62 (limpieza), §63
+(idiomas) y §64 (anuncios).
+
+**Borrado**
+- Raíz: 21 scripts de parche (`patch_*.js`, `fix_auth_pages*.js`, `find_spanish.js`,
+  `update_en_fase1.js`, `update_tasks.js`); ya estaban borrados `components.json`,
+  `drizzle.config.ts`, `src/db/*`, `src/components/ui/button.tsx`, `test-script.ts`.
+- `scripts/`: 46 codemods de un solo uso, `backfill-media-blob.cjs` y los 17 `migrate-*.cjs`.
+- `src/`: `navigation/account-menu.tsx`, `navigation/account-navbar.tsx`,
+  `lib/applications.ts`, los diccionarios monolíticos `es.ts`/`en.ts`, código muerto
+  (`capabilitiesByCategory`, `*Options` sin uso, `catalogRoutes`, `normalizeQuery`,
+  `normalizeLibrarySearch`).
+- Dependencias: `tailwindcss-animate` (y antes AI SDK, Drizzle, pgvector, shadcn).
+- `ops/`: `brand/` duplicado y carpetas vacías (la sesión de ops restauró el logo blanco
+  en `public/`, que su nuevo modo oscuro sí usa).
+
+**Nuevo**
+- Herramientas: `.prettierrc.json`, `.prettierignore`, `.github/workflows/ci.yml`,
+  `.vercelignore` reescrito, `scripts/migrate.cjs`, `scripts/ad-rates.cjs`.
+- Idiomas: `src/i18n/dictionary.ts`, `negotiate.ts`, `common.ts`, `use-locale.ts`,
+  `dictionaries/{es,en}/` con 36 secciones (incluidas `ads`, `meta`, `common`).
+- Anuncios: `db/ad-campaigns.sql`, `src/lib/ads/*` (modelo, servidor, checkout, Stripe,
+  reembolsos, liquidación, cuenta, formato, patrocinados), `src/app/api/ads/*`,
+  `src/app/api/webhooks/stripe`, `src/components/ads/*`,
+  `src/app/[locale]/account/solutions/[id]/promote`.
+- Otros: `src/components/project-mark.tsx`, `src/lib/seo.ts` (hreflang/canonical),
+  `docs/ads.md`; pruebas `migrate`, `i18n-locale`, `i18n-taxonomy`, `ads-model`, `ads-api`.
+
+**Modificado**
+- Formato Prettier en todo el código (sin cambios de comportamiento).
+- ~190 archivos de `src/` para idiomas: cada componente con `dict` tipado; validadores
+  con códigos; las rutas de la API responden en el idioma de la página; metadata
+  traducida; blog con contenido en inglés; búsqueda con vocabulario, plurales y
+  palabras vacías en inglés.
+- Configuración: `next.config.mjs` (sin `ignoreBuildErrors`), `.eslintrc.json`,
+  `tailwind.config.ts` y `globals.css` (sin restos de shadcn), `package.json` (scripts,
+  `prettier`, `stripe@23.0.0`).
+- Comportamiento: middleware (idioma de la página de origen, conserva el query,
+  cabecera `x-locale`), 404 en el idioma de la ruta, enlaces del blog y la ficha,
+  eliminación de cuenta que cancela y reembolsa reservas, enlace «Promocionar».
+- Legal (es/en): sección «Publicidad y espacios patrocinados», sección «Pagos y espacios
+  patrocinados», subprocesadores (Vercel, Stripe), bases legales, newsletter, retención,
+  cookies, anclas estables y revisión fechada en octubre de 2026.
+- Documentación: README reescrito; `docs/database.md` (orden completo de 29 migraciones
+  verificado), `stack.md`, `env.md`, `community-*.md`, `solution-social.md`; este archivo
+  (§4, §11, §13, §62–§66).
+- `ops/` (solo por esta sesión): ESLint y su script, `postcss.config.mjs`, `next.config.mjs`,
+  exports recortados en `lib/auth.ts` y `lib/totp.ts`. Todo lo demás que aparece cambiado
+  o nuevo en `ops/` (rutas `elevate`, `session`, `security`, panel nuevo,
+  `db/ops-hardening.sql`, `tests/ops-security.test.ts`) es de la otra sesión.
+
+**Facturación (10 de octubre)**: §67 y docs/billing.md; archivos nuevos `db/billing.sql`,
+`src/lib/billing/*`, `src/components/billing/*`, `src/app/api/account/billing`,
+`src/app/[locale]/account/settings/billing`, diccionario `billing`, `tests/billing.test.ts`.
+
+**Base de datos (solo `neondb`, desarrollo)**: aplicadas `db/ad-campaigns.sql` y `db/billing.sql`. Datos de
+prueba de la sesión (cuentas, ficha, lista, reservas, eventos, tarifas, cliente de
+Stripe de prueba) eliminados. Producción no se modificó; hubo lecturas accidentales (§62).
+
+**Verificación al cierre**: 141 pruebas unitarias, lint con cero advertencias, tipos
+limpios, build de producción en copia aislada, comparación de 98 páginas contra el
+código original y prueba de anuncios de punta a punta contra Stripe en modo prueba (24/24).
+
+## 67. Facturación en la cuenta — 10 octubre 2026
+
+Petición del propietario: una sección de facturación en Ajustes de la cuenta, con CFDI
+emitidos por el motor de Cord (cordhq.app, producto del propietario). Stripe cobra y
+calcula el impuesto; Cord emite el documento fiscal. Cada uno hace lo suyo.
+
+**Lo que ofrece la API pública de Cord** (OpenAPI `2026-10-01`, `https://cordhq.app/api/v1`,
+`Authorization: Bearer sk_test_|sk_live_`, cabecera `Cord-Version`):
+`POST /clientes` (guarda `rfc`, `regimenFiscal`, `usoCfdi`, `cpFiscal`, `countryCode`),
+`POST /facturas` (borrador, `document_mode: fiscal`, líneas con `tax_rate`),
+`POST /facturas/{id}` con `action` = `finalize` (timbrar) | `payment` | `credit_note`
+(CFDI de egreso) | `send` | `void`; respuesta con `folio_fiscal` y `estado_fiscal`
+(`pending|issued|cancelled|error`). `Idempotency-Key` en toda escritura. Sandbox con
+`POST /test_helpers/fiscal` para forzar `pac_caido`, `receptor_invalido`,
+`certificado_vencido`, `timbre_duplicado`. Límite mensual de llamadas según plan
+(Starter 1 000 ≈ 200 ventas). No documentado: nombres exactos de los campos fiscales al
+crear el cliente y descarga del PDF/XML; se confirman contra el sandbox.
+
+**Diseño**
+- `/account/settings/billing` (pestaña «Facturación»): datos fiscales del comprador
+  (país; en México razón social exacta, RFC, régimen fiscal SAT, código postal fiscal y
+  uso de CFDI; fuera de México nombre legal e identificador fiscal opcional; correo para
+  facturas) e historial de pagos de todas sus reservas: monto, impuestos, reembolsos,
+  recibo de Stripe, estado del CFDI con su folio y notas de crédito.
+- Comprar un espacio exige datos de facturación completos (venta solo B2B). Los datos se
+  copian al cliente de Stripe para que Checkout llegue prellenado.
+- `db/billing.sql`: `billing_profiles` (se borra con la cuenta) y `billing_documents`
+  (facturas y notas de crédito con copia del receptor; sobreviven como registro fiscal).
+- Cola con reintentos: el webhook de Stripe encola la factura al confirmarse el pago y una
+  nota de crédito por cada reembolso exitoso (`refund.*`, idempotente por id de reembolso);
+  un trabajador la procesa justo después (`after()`) y el cron diario reintenta con
+  espera exponencial. Si Cord o el PAC fallan, el anuncio no se afecta.
+- Sin `CORD_API_KEY` no se emite nada y la interfaz dice «factura en preparación».
+
+**Decisiones por defecto, pendientes de confirmar (§65 A5–A6)**: CFDI solo para
+compradores con país México; extranjeros reciben el recibo/factura de Stripe; el recibo
+de Stripe se conserva para todos como comprobante de pago; uso de CFDI `G03` por defecto.
+
+
+**Estado: construido.** Referencia completa en docs/billing.md.
+
+- `db/billing.sql` (aplicada solo a `neondb`): `billing_profiles` y `billing_documents`.
+- `src/lib/billing/`: `model.ts` (catálogos SAT, `readBillingProfile`, `cfdiTaxRate`,
+  espera exponencial), `cord.ts` (cliente de la API, `CordError` por código, versión
+  fijada, `Idempotency-Key`), `server.ts` (perfil con control de versión, historial, cola y
+  trabajador con `FOR UPDATE SKIP LOCKED`).
+- `POST /api/account/billing`; `/account/settings/billing` con `BillingProfileForm` y
+  `PaymentHistory`; pestaña «Facturación» en Ajustes; el checkout de anuncios exige el
+  perfil y prellena el cliente de Stripe; el webhook encola CFDI y notas de crédito
+  (`refund.created`/`refund.updated`) y los procesa con `after()`; el cron diario
+  reintenta; la exportación de datos incluye la facturación.
+- Dos bugs encontrados por la prueba y corregidos antes de cerrar: el perfil nacía en
+  versión 0 (una ventana desactualizada podía sobrescribirlo) y la actualización con
+  versión ≥ 1 no escribía nada.
+- Verificación: 10 unitarias nuevas (`tests/billing.test.ts`); punta a punta 22/22 contra
+  Stripe en modo prueba, `neondb` y un Cord simulado según su OpenAPI (CFDI con 16 % tras
+  el pago, caída del PAC y reintento del cron, nota de crédito desde un reembolso real,
+  comprador de EE. UU. sin CFDI, exportación). La prueba de anuncios (§64) se volvió a
+  correr con perfil fiscal: 24/24. Datos de prueba eliminados.
+## 68. Ops a nivel producción: seguridad, cobertura total y diseño — 10 octubre 2026
+
+Petición del propietario: mejorar ops «a nivel dios» en seguridad, funcionalidad y
+estética, sin que ninguna función quede fuera. Referencia completa: `docs/ops.md`.
+Sustituye lo que §44 decía de la bitácora «de solo inserción» por convención y del
+TOTP: ahora ambos están reforzados en código y en la base.
+
+- **Migración `db/ops-hardening.sql`** (aditiva, después de `ops-console.sql`):
+  `ops_sessions.elevated_until`, `solution_reviewers.enroll_by` y bitácora encadenada
+  (`chain_seq`, `prev_hash`, `row_hash`, función `ops_audit_row_hash`, triggers que
+  bloquean `UPDATE`/`DELETE`/`TRUNCATE` salvo el `SET NULL` de `actor_id`). Rellena la
+  cadena de las filas existentes. Aplicada en `neondb` (142 eventos) y en
+  `shwcs_production` (10 oct, ejecutada por el propietario con `neondb_owner`): 22
+  eventos encadenados sin rupturas, tres triggers activos y permisos del rol
+  `shwcs_app_production` comprobados (insertar/leer la bitácora, ejecutar las funciones
+  de hash, actualizar las columnas nuevas).
+- **Seguridad**: consumo atómico de TOTP/códigos de respaldo en una sola sentencia
+  (probado con peticiones simultáneas), reuso detectado como tal, plazo de 72 h para
+  configurar el autenticador tras un alta o reinicio desde el panel, sesiones de 8 h
+  con cierre a los 30 min sin uso y atadas al user agent, máximo 5 por cuenta, modo
+  seguro de 10 min para toda acción sobre cuentas, equipo, exportaciones y cierres
+  masivos (5 códigos fallidos cierran la sesión), middleware con CSP por nonce sin
+  `unsafe-inline`/`unsafe-eval`, HSTS con preload, COOP/CORP, allowlist opcional
+  `OPS_IP_ALLOWLIST`, alertas opcionales por correo (`RESEND_API_KEY` +
+  `OPS_ALERT_FROM` en `shwcs-ops`). Todas las rutas pasan por `opsRoute()`
+  (`ops/src/lib/api.ts`) y las mutaciones principales escriben la bitácora en la misma
+  sentencia que el cambio.
+- **Corrección de divergencia**: §44/§51 afirmaban que `POST /api/reports` impedía
+  resolver un reporte propio, pero el código no lo hacía (y la integración dependía de
+  eso). Ahora la guarda existe en reportes de fichas y de comunidad.
+- **Cobertura**: páginas nuevas Contactos (solo metadatos y estados), Seguridad
+  (sesiones propias, códigos de respaldo, postura, intentos fallidos, límites activos,
+  verificación de la cadena, cierre global de sesiones), Sistema (base, tablas, Blob,
+  colas, residuos, salud del producto, configuración sin valores) y Anuncios (solo
+  lectura de `db/ad-campaigns.sql`: ingresos, reembolsos, disputas, espacios y tarifas;
+  tolera que la tabla no exista). Detalle completo de cuenta y de postulación como
+  páginas (con diff palabra por palabra contra lo publicado y navegación `j`/`k` por la
+  cola), exportaciones CSV auditadas (admin + modo seguro, sin inyección de fórmulas),
+  paleta `⌘K` con búsqueda global, atajos `g`+letra.
+- **Privacidad (sin cambios de frontera)**: además de lo de §44, ops ya no muestra
+  **qué** proyectos guardó un comprador, solo cuántos. La prueba busca marcadores
+  privados también en el HTML/RSC renderizado.
+- **Diseño**: tokens semánticos claro/oscuro (tema por cookie, sin parpadeo), Inter y
+  JetBrains Mono autoalojadas, componentes propios (tablas, pestañas, diálogos nativos,
+  toasts, skeletons) y gráficas SVG con eje único, tabla alternativa, tooltip por
+  teclado y paleta validada para daltonismo en ambos temas (azul de marca, naranja,
+  aqua). Iconos hacia componentes cliente se pasan como elemento (`icon={<Ban />}`).
+- **Verificación**: 148 pruebas unitarias (7 nuevas en `tests/ops-security.test.ts`),
+  lint y tipos limpios en raíz y `ops/`, build de producción de ops, cabeceras y CSP
+  comprobadas en `next start`, batería end-to-end propia de 45 comprobaciones de
+  seguridad contra la base de desarrollo, revisión visual de todas las pantallas (claro,
+  oscuro, móvil) y `tests/integration/ops.cjs` en verde contra un producto aislado
+  (`MAIN_PORT` nuevo). La guarda del último admin se salta en `neondb` porque hay otros
+  admins reales; la prueba lo informa en vez de tocar filas reales.
+- **No hecho aquí**: despliegue de ops, variables nuevas en Vercel (las agrega el
+  propietario), acciones de anuncios en ops, passkeys/WebAuthn.
+
+## 69. QA de la cuenta y navegación con idioma — 10 octubre 2026
+
+Recorrido automatizado de la cuenta contra un build de producción aislado y la base de
+desarrollo, con cuentas `@example.invalid` borradas al terminar: registro, acceso,
+onboarding, las 20 páginas de la cuenta en ambos idiomas, borrador, lista, avatar,
+facturación, avisos, sesiones, verificación en dos pasos (alta, acceso en dos pasos,
+código de respaldo de un uso, desactivación), cambio de contraseña, recuperación,
+exportación, cierre de sesión y eliminación. **122/122** tras los arreglos; 17 páginas
+públicas × 2 idiomas sin errores ni enlaces internos sin idioma.
+
+Encontrado y corregido:
+
+- **Cada clic dentro de la cuenta pasaba por un 307.** ~115 enlaces y `router.push`
+  internos (sidebar, ajustes, avisos, listas, contactos) no llevaban idioma; el
+  middleware los redirigía y Next no precarga un enlace que acaba en redirección
+  (mismo síntoma que §52 en el sitio público, aquí en la cuenta). Nuevo
+  `src/i18n/navigation.tsx` (`Link`, `useRouter`, `usePathname` con idioma) y
+  `src/i18n/paths.ts` (`localePath`, `stripLocale`, con pruebas); 90 archivos migrados.
+- **La sidebar nunca marcaba la página activa**: comparaba `/es/account/saved` contra
+  `/account/saved`. `usePathname` del envoltorio devuelve la ruta sin idioma.
+- **Redirecciones del servidor sin idioma** (onboarding, guardas `requireFounder`/
+  `requireBuyer`, alias `/account/profile` y `/account/notifications`, contacto propio):
+  un usuario en inglés con navegador en español acababa en el onboarding en español.
+  Ahora `localeRedirect()` usa la cabecera `x-locale` del middleware.
+- **Borrar la cuenta en inglés pedía escribir «ELIMINAR».** Palabra por idioma en
+  `settings.data.delete.confirmWord`; el servidor acepta ambas.
+- Política de privacidad: nombra a la Secretaría Anticorrupción y Buen Gobierno como
+  autoridad mexicana (la LFPDPPP de 2025 extinguió al INAI). Corregido también §42.
+
+Comprobado y correcto: registro sin enumeración de cuentas, mismo error para correo
+desconocido y contraseña incorrecta, correo insensible a mayúsculas, el registro no abre
+sesión, cerrar otras sesiones, 2FA completo, exportación sin hash ni secreto TOTP,
+SVG rechazado como avatar, borrado en cascada. Sin proveedor de correo, verificación y
+recuperación responden 503 honesto, nunca «enviado».
+
+Observaciones de diseño, no defectos: el límite de acceso (10 por correo cada 15 min)
+cuenta también los accesos correctos; cambiar la contraseña cierra también la sesión
+actual (GitHub o Google la conservan); las herramientas de confianza (`/trust`) solo
+existen tras publicar.
+
+Estrategia frente a Product Hunt: `docs/strategy.md`.
+
+## 70. Reseñas verificadas y mercado global — 10 octubre 2026
+
+Primera entrega de la fase 1 de `docs/strategy.md` (auditoría frente a Product Hunt), elegida
+por el propietario. Contrato completo en `docs/reviews.md`. A mitad de la entrega el
+propietario fijó que shwcs es **para cualquier mercado** (§1): nada de esto depende de
+México ni de MXN.
+
+- Una reseña por cuenta y solución publicada: estrellas, ¿la recomienda?, título, para qué
+  la usa, lo mejor, lo que mejoraría, tiempo de uso y, opcionales, tamaño de empresa y
+  país (cualquier ISO 3166-1, construido desde `Intl`, sin lista fija).
+- Niveles calculados al leer, nunca guardados ni enviados al navegador como correo o
+  dominio: sin verificar (solo la ve su autor), correo verificado, correo de empresa.
+  «Cliente comprobado» queda pendiente: necesita la identidad fiscal del proveedor en la
+  ficha; México (CFDI ante el SAT) sería el primer adaptador.
+- Conflictos bloqueados: el dueño no reseña lo suyo; nadie reseña desde el dominio del
+  proveedor. El dueño responde en público y nunca borra ni edita (regla de §46). Solo ops
+  oculta, desde un reporte y con el motivo que ve el autor; ops puede restaurar.
+- Ranking: `solutionScore` suma `estrellas × peso` (correo 1, empresa 1.5) con el mismo
+  decaimiento; una reseña baja nunca resta. Publicado en `/criterios`. Las tarjetas del
+  catálogo y el título de la ficha muestran estrellas y número de reseñas.
+- Ops: pestaña «Reseñas» en `/panel/reportes`, `POST /api/review-reports`
+  (`resolve`/`dismiss`/`hide`/`restore`) con auditoría en la misma sentencia y etiquetas en
+  `AUDIT_ACTIONS`; contador de la barra lateral, KPI y cola del panel incluyen estos
+  reportes. Coordinado con la sesión shwcs-d7, dueña de los cambios sin commit de `ops/`.
+- Privacidad y términos: qué se publica de una reseña y qué no; sección «Reseñas» con las
+  reglas (experiencia propia, sin conflictos ni incentivos condicionados, moderación).
+- Exportación de datos: ahora incluye reseñas y comentarios (`published`); antes no
+  incluía nada de lo que la cuenta publica.
+- Migración `db/solution-reviews.sql` aplicada a `neondb` y, el 10 de octubre, a
+  `shwcs_production` (§71); verificada sobre una base vacía (PGlite) e idempotente.
+  Orden 32 en docs/database.md.
+
+Verificación: 169 unitarias (9 nuevas en `tests/reviews.test.ts`); lint, tipos y formato
+limpios en el producto y en ops; `tests/integration/reviews.cjs` contra un build de
+producción aislado; moderación en ops punta a punta contra un build aislado de ops; la QA
+de la cuenta (§69) sigue en 122/122; capturas en escritorio y móvil revisadas a ojo, de las
+que salieron tres ajustes (caja de respuesta invisible sobre el fondo, Sí/No sin aspecto de
+botón y un «—» como placeholder). Sin commit ni despliegue.
+
+Pendiente de esta entrega: ocultar desde ops sin reporte previo. (Compra comprobada,
+avisos, filtros y migración en producción se cerraron en §71.)
+
+## 71. Producción al día, registros públicos y compra comprobada — 10 octubre 2026
+
+Petición del propietario: «aplica en prod db y sigue con lo pendiente», y después
+actualizar roadmap y este archivo y hacer push a `main`. Contrato nuevo en
+`docs/compliance.md`; `docs/reviews.md` y `docs/roadmap.md` actualizados.
+
+### Migraciones en `shwcs_production`
+
+Antes de aplicar se leyó el estado real: ya tenía `media-renditions` y `ops-hardening`;
+faltaban `ad-campaigns`, `billing`, `solution-reviews` y (nueva) `compliance`. Se
+aplicaron con el rol propietario sobre `/shwcs_production` (§45), una transacción por
+archivo, sin tocar datos (6 cuentas, 4 soluciones, igual antes y después). Los privilegios
+por defecto del propietario dan `arwd` al rol de la app, verificado tabla por tabla. Los
+espacios patrocinados quedaron cerrados (`enabled=false`, sin tarifas).
+
+### Cierre de los pendientes de reseñas (§70)
+
+- **Avisos al fundador**: triggers en `db/solution-reviews.sql`. Se avisa cuando la reseña
+  se vuelve pública (al escribirla con correo verificado, o después, al verificar el autor
+  su correo); clave `review:<id>` para avisar una sola vez; categoría `solution`, así que
+  sigue la preferencia de correo de fichas; enlace dentro de `/account` (§31).
+- **Vista del dueño**: `OwnerReviewDigest` en `/account/solutions/[id]` (promedio,
+  número, sin respuesta, enlace a responder en la ficha).
+- **Filtros** dentro de las reseñas con el patrón de §28 (orden, estrellas, tamaño, país),
+  solo con valores presentes; la reseña propia siempre arriba (`src/lib/reviews/filters.ts`).
+
+### Registros públicos y «Compra comprobada»
+
+- Identidad fiscal del proveedor (`solution_tax_identities`): privada, nunca en
+  `published_data`; la declara el dueño en una tarjeta de su ficha. Cualquier país; RFC
+  estricto en México (`src/lib/compliance/rfc.ts`, ahora compartido con facturación).
+- Lista 69-B del SAT espejada en `sat_69b_list` por el cron diario (`refreshSat69b`,
+  petición condicional por ETag, reemplazo atómico, error guardado como código). El
+  monitor sube a `maxDuration = 300`. La ficha pública muestra el resultado y sus fechas,
+  nunca el RFC (`ComplianceNote`).
+- Nivel de reseña **«Compra comprobada»**: el autor envía el CFDI (UUID, RFC emisor y
+  receptor, total) con consentimiento; el emisor debe ser el RFC declarado; se consulta el
+  servicio público del SAT (dos formatos de total) y solo `Vigente` cuenta. Se guarda solo
+  `sha256` del UUID (un comprobante, una reseña). Peso en el orden: estrellas × 3.
+- Privacidad actualizada (es/en): identidad fiscal y consulta del CFDI. Exportación de la
+  cuenta: identidad fiscal propia y comprobantes (sin la huella).
+- Países y monedas: `src/lib/countries.ts` reúne los códigos ISO desde `Intl` para
+  reseñas e identidad fiscal.
+
+### Verificación
+
+178 unitarias (8 nuevas en `tests/compliance.test.ts`, 1 de filtros en
+`tests/reviews.test.ts`); lint, tipos y formato limpios. El lector de la 69-B contra el
+archivo real del SAT: 14 054 RFC, corte 2025-12-31, 91 filas tachadas descartadas.
+`tests/integration/compliance.cjs` y `tests/integration/reviews.cjs` en verde contra un
+build de producción aislado, con el cron descargando la lista real a `neondb`.
+Capturas revisadas a ojo (nota de cumplimiento, formulario del CFDI, tarjeta fiscal,
+filtros, vista del dueño); de ahí salió contar cada reseña una sola vez en su nivel más
+alto. **No probado**: «Compra comprobada» con un CFDI real (solo contra un SAT simulado).
+
+### Pendiente
+
+Probar con un CFDI real; adaptadores de otros países (VIES, Companies House); REPSE y PAC;
+identidad fiscal en ops; comparar el RFC receptor con la facturación de quien reseña.
+

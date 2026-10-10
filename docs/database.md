@@ -7,8 +7,8 @@
 > estas funciones describen entregas anteriores.
 
 El MVP utiliza SQL parametrizado con Neon HTTP y migraciones aditivas en db/*.sql.
-src/db/schema.ts conserva un diseño Drizzle anterior; NO representa el esquema
-operativo completo. No ejecutar drizzle-kit push para sincronizarlo sin conciliación.
+No hay ORM. Cada archivo se aplica con `npm run db:migrate -- db/<archivo>.sql`
+(una transacción por archivo; el splitter respeta bloques $$ y comentarios).
 
 ## Tablas operativas
 
@@ -34,6 +34,11 @@ por email no verificado, nombre de perfil o dominio parecido.
 
 ## Orden para base nueva
 
+Aplicar en este orden con `npm run db:migrate -- <archivo> [<archivo> …]`
+(una transacción por archivo). Verificado sobre una base vacía. Todos son re-aplicables
+salvo media-storage.sql y media-storage-drop.sql, fases de una sola vez de la
+migración a object storage:
+
 1. db/auth.sql
 2. db/account-profile.sql
 3. db/account-settings.sql
@@ -45,17 +50,36 @@ por email no verificado, nombre de perfil o dominio parecido.
 9. db/solution-profile.sql
 10. db/newsletter-subscribers.sql
 11. db/newsletter-segments.sql
-12. db/public-collections.sql
-13. db/community-social.sql
-14. db/contact-inquiries.sql
+12. db/launch-foundation.sql — avisos, verificación, Google, dominio, reportes, métricas
+13. db/public-collections.sql
+14. db/community-social.sql
+15. db/contact-inquiries.sql
+16. db/ops-console.sql — backoffice: sesiones, TOTP y bitácora de ops
+17. db/account-security.sql — segundo factor y sesiones con dispositivo
+18. db/solution-social.sql
+19. db/solution-site-image.sql
+20. db/catalog-performance.sql
+21. db/community-search.sql
+22. db/ranking-integrity.sql
+23. db/community-reports.sql
+24. db/community-search-trgm.sql — requiere la extensión pg_trgm
+25. db/community-facets.sql
+26. db/media-storage.sql — object storage, fase 1
+27. db/media-storage-drop.sql — IRREVERSIBLE en bases con datos; en una base nueva es inocuo
+28. db/media-renditions.sql
+29. db/ad-campaigns.sql — espacios patrocinados y pagos con Stripe (docs/ads.md)
+30. db/ops-hardening.sql — modo seguro, plazo de alta 2FA y bitácora de ops encadenada y de solo inserción (después de ops-console.sql; ver docs/ops.md)
+31. db/billing.sql — datos fiscales y CFDI de los pagos (docs/billing.md)
+32. db/solution-reviews.sql — reseñas verificadas y sus reportes (docs/reviews.md); el catálogo la consulta, así que va antes del despliegue
+33. db/compliance.sql — identidad fiscal privada, espejo de la lista 69-B del SAT y comprobantes de compra de reseñas (docs/compliance.md)
 
+db/solution-applications.sql es el intake anónimo retirado: no aplicarlo.
 Newsletter es independiente; segments depende de subscribers.
 La conexión usa NEON_DATABASE_URL, luego DATABASE_URL y luego POSTGRES_URL.
 No imprimir cadenas de conexión ni copiar .env.local a documentación.
 
-Migraciones previas y contact-requests.sql fueron aplicadas/pruebas en la base
-configurada localmente. Otra base o proyecto Vercel requiere verificación separada.
-No existe aún un sistema unificado de migraciones versionadas.
+No hay tabla de versiones: qué migraciones tiene cada base (desarrollo `neondb`,
+producción `shwcs_production`) se registra en CLAUDE.md al aplicarlas.
 
 ## Datos públicos y privados
 
@@ -64,6 +88,10 @@ No existe aún un sistema unificado de migraciones versionadas.
 - Guardados apuntan a catalog:cord, catalog:flouvia o solution:UUID, sin copiar ficha.
 - Consultas de biblioteca y solicitudes acotadas a la sesión; SQL sin caché para
   información actual. No compartir notas con el dueño del proyecto.
+- Reseñas: públicas solo con estado `published` y correo del autor verificado; el nivel
+  (correo / correo de empresa) se calcula al leer desde la cuenta y nunca se guarda ni se
+  publica el correo o su dominio. El dueño de la ficha responde pero no borra; ops oculta
+  con motivo. Los reportes sobreviven al borrado de la reseña (`review_id` SET NULL).
 - Contactos guardan snapshot del nombre público, correo de cuenta y contexto
   autorizado; destinatario fijo y UNIQUE comprador/proyecto.
 - Transiciones e historial de contacto se escriben atómicamente; versión evita
@@ -84,15 +112,13 @@ No modificar datos reales para probar estos límites.
 
 ## Diseño anterior y futuro
 
-src/db/schema.ts define users, products, product_embeddings, endorsements y leads.
-Tiene enums propios y vector(1536), pero no integra automáticamente la identidad
-operativa ni las solicitudes actuales. No usar esa tabla leads para las nuevas
-oportunidades; no crear leads a partir de búsquedas/guardados.
-
-Antes de adoptar ese diseño: decidir migración de identidad, unicidad de embeddings,
-slugs/índices, permisos, retención y pgvector. Su presencia no demuestra que la
-extensión o todas esas tablas estén aplicadas a la conexión configurada.
-db/solution-applications.sql corresponde al intake anterior retirado.
+El diseño Drizzle anterior (users, products, product_embeddings con vector(1536),
+endorsements, leads) se retiró del repositorio junto con drizzle-orm y pgvector.
+Si alguna de esas tablas existe en una base antigua, no forma parte del esquema
+operativo. Adoptar embeddings exigiría decidir identidad, unicidad, permisos,
+retención y la extensión pgvector desde cero.
+db/solution-applications.sql documenta la tabla del intake anónimo retirado; no
+aplicarla a bases nuevas.
 
 ## Operación y referencias
 

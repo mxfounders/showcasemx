@@ -68,7 +68,7 @@ ya lleva la comunidad de listas en CLAUDE.md §23.
 
 ## Datos y migración
 
-`db/solution-social.sql`, aplicada con `node scripts/migrate-solution-social.cjs`
+`db/solution-social.sql`, aplicada con `npm run db:migrate -- db/solution-social.sql`
 a `neondb` (desarrollo) y a `shwcs_production` (con el rol propietario
 `neondb_owner`, no el rol de aplicación `shwcs_app_production` que no tiene
 permisos DDL). Otro entorno necesita aplicarla explícitamente antes de servir

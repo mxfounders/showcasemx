@@ -1,13 +1,15 @@
-# Roadmap — estado consolidado, 5 de septiembre de 2026
+# Roadmap — estado consolidado, 10 de octubre de 2026
 
-Sustituye la versión del 31 de agosto: aquella quedó desactualizada frente al
-trabajo real de septiembre (backoffice de operación, capa social, onboarding,
-seguridad avanzada, fases del catálogo, búsqueda semántica y capacidades
-declaradas). El detalle completo de cada entrega vive en `CLAUDE.md` (§20 en
-adelante); esta tabla es el resumen, no la fuente de verdad.
+Sustituye la versión del 5 de septiembre. Añade todo lo construido en octubre
+(entregas 22–30): limpieza y CI, el sitio completo en inglés, anuncios con Stripe,
+facturación con CFDI, ops a nivel producción, QA de la cuenta, reseñas verificadas,
+registros públicos y la estrategia frente a Product Hunt. El detalle de cada entrega vive
+en `CLAUDE.md` (§20 en adelante); esta tabla es el resumen, no la fuente de verdad.
 
 Producto: descubrir → evaluar → guardar/comparar → contactar → seguir la respuesta.
 Una misma cuenta compra y publica. El modo del inicio no concede permisos.
+**Abierto a cualquier mercado** (10 oct 2026): México es el primer mercado, no el
+límite; lo local entra como adaptador por país. Estrategia en [strategy.md](strategy.md).
 
 | # | Entrega | Estado | Pendiente |
 | --- | --- | --- | --- |
@@ -29,9 +31,18 @@ Una misma cuenta compra y publica. El modo del inicio no concede permisos.
 | 16 | Onboarding y configuración avanzada | Bienvenida de tres pasos, verificación en dos pasos opcional, sesiones con dispositivo, exportación/eliminación de cuenta | Falta `AUTH_TOTP_KEY` en Vercel: 2FA no disponible aún en producción |
 | 17 | Ficha enriquecida (fase 2–3 del catálogo) | Carrusel de imágenes, portada automática desde el sitio del proyecto, logos reales de redes, industrias/tamaños declarados | Video hospedado, verificación automática de resultados |
 | 18 | Catálogo rápido y difícil de manipular (fase 1 y 4) | Navegación sin bloqueos, caché con revalidación por evento, decaimiento temporal, deduplicación de vistas | Revalidar catálogo entre ops y producto sin esperar el TTL de respaldo |
-| 19 | Moderación de comunidad y búsqueda | Reportes de listas/comentarios en ops, búsqueda con `pg_trgm` | Migraciones aplicadas solo en desarrollo, no en `shwcs_production` |
+| 19 | Moderación de comunidad y búsqueda | Reportes de listas/comentarios en ops, búsqueda con `pg_trgm`; migraciones ya en producción | Bloqueo, apelaciones y defensa ante multicuentas |
 | 20 | Búsqueda semántica y capacidades declaradas | Vocabulario por categoría/industria/capacidad, filtros del catálogo derivados del resultado real, formulario de 17 preguntas | Extender capacidad/integración a filtros de Guardados y comunidad |
-| 21 | Almacenamiento de imágenes | Capturas y portadas en Vercel Blob, no como base64 en Postgres | Renditions responsivas (Fase B) sin aplicar a `shwcs_production` |
+| 21 | Almacenamiento de imágenes | Capturas y portadas en Vercel Blob; renditions 400/800/1600 con loader propio; migraciones en producción | Backfill de renditions cuando haya capturas en producción |
+| 22 | Limpieza «nivel artesanía» (§62) | Scripts muertos, dependencias y CSS sin uso fuera; Prettier, ESLint sin advertencias, `npm run check`, CI en GitHub Actions, migrador único `npm run db:migrate` | — |
+| 23 | Todo el sitio en inglés (§63, §69) | Diccionarios por sección con paridad verificada al compilar; cuenta, legal, blog y errores de la API en ambos idiomas; enlaces y redirecciones con idioma (sin saltos 307) | Correos en inglés (falta guardar el idioma de la cuenta); revisión por hablante nativo |
+| 24 | Espacios patrocinados (§64, docs/ads.md) | Stripe Checkout por días, USD/MXN con impuestos, separado del orden orgánico, sin píxeles; reembolsos y disputas automáticos; tablas en producción con espacios cerrados | Stripe Tax, webhook y llaves en Vercel; tarifas reales; acciones en ops |
+| 25 | Facturación (§67, docs/billing.md) | Datos fiscales en Ajustes, CFDI y notas de crédito con Cord, cola con reintentos | Llave de Cord y emisor con CSD; descarga de PDF/XML |
+| 26 | Ops a nivel producción (§68, docs/ops.md) | Bitácora encadenada, modo seguro, sesiones atadas, CSP con nonce, páginas de contactos, seguridad, sistema y anuncios, ⌘K | Acciones de anuncios, passkeys |
+| 27 | QA de la cuenta (§69) | Recorrido automatizado de 122 comprobaciones: registro, 2FA, sesiones, exportación, borrado; sidebar con página activa | — |
+| 28 | Reseñas verificadas (§70, docs/reviews.md) | Una por cuenta, niveles correo / correo de empresa / compra comprobada, respuesta pública del fundador, reportes y moderación en ops, peso en el orden, avisos al fundador, filtros, vista del dueño | Comprobantes fuera de México |
+| 29 | Registros públicos (§71, docs/compliance.md) | Identidad fiscal privada del proveedor; espejo diario de la lista 69-B del SAT; «Compra comprobada» con CFDI consultado ante el SAT | Probar con un CFDI real; VIES/Companies House; REPSE y PAC |
+| 30 | Estrategia frente a Product Hunt (docs/strategy.md) | Auditoría con investigación de PH, G2, Capterra y el mercado; tesis y fases | Fases 2–6 (datos por mercado, valor continuo para fundadores, comparativas, compra en equipo) |
 
 ## Estado real de producción — corregido el 3 de septiembre (§45)
 
@@ -47,17 +58,24 @@ acción explícita del propietario. Desde la entrega #20, además, `capabilities
 es obligatorio para publicar, así que Cord necesitará declarar sus capacidades
 antes de poder aprobarse.
 
+## Producción al 10 de octubre de 2026
+
+`shwcs_production` tiene todas las migraciones del orden de docs/database.md, incluidas
+las de octubre: `ad-campaigns`, `billing`, `solution-reviews` y `compliance` (aplicadas
+el 10 de octubre con el rol propietario; el rol de la app recibe permisos por defecto).
+Los espacios patrocinados están cerrados hasta fijar tarifas. La lista 69-B se llena con
+el primer cron diario después del despliegue.
+
 ## Siguiente entrega útil
 
-1. Activar `AUTH_TOTP_KEY` en Vercel (2FA), confirmar Google OAuth y
-   remitente/scheduler de avisos en producción.
-2. Aplicar `db/community-reports.sql`, `db/community-search-trgm.sql` y
-   `db/community-facets.sql` a `shwcs_production` (entregas #19–20).
-3. Declarar `catalog_key`/publicar Cord (y crear Flouvia) en producción,
-   ahora con sus capacidades, integraciones y precio declarados.
-4. Responsable editorial, criterios operativos y revisión legal completa del
-   dominio `ops.shwcs.site`.
-5. Escuchar a fundadores/compradores reales antes de construir CRM/chat.
+1. **Oferta**: publicar Cord en producción e invitar a 30–50 proyectos con ficha
+   completa (fase 0 de strategy.md).
+2. Credenciales: `AUTH_TOTP_KEY`, Google OAuth, Stripe (Tax, webhook, llaves), Cord;
+   prueba humana de correo desde producción.
+3. Probar «Compra comprobada» con un CFDI real.
+4. Fase 2 de strategy.md: datos de decisión por mercado (países, monedas, idioma y
+   horario de soporte, métodos de pago).
+5. Responsable editorial y revisión legal humana de Términos, Privacidad y Cookies.
 
 No conectado: campañas de newsletter, IA/vector, monitoreo externo. Guardados,
 listas y notas siguen privados; ops nunca lee `contact_requests.details`,
@@ -69,4 +87,6 @@ Detalles: [entrega de lanzamiento](launch.md), [ficha guiada](guided-solution-fo
 [contactos](contacts.md), [biblioteca](buyer-library.md),
 [listas de comunidad](community-lists.md), [capa social](solution-social.md),
 [operaciones](operations.md), [fichas y filtros](listings.md),
+[reseñas](reviews.md), [registros públicos](compliance.md), [anuncios](ads.md),
+[facturación](billing.md), [ops](ops.md), [estrategia](strategy.md),
 [contexto maestro](../CLAUDE.md).

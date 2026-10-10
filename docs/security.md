@@ -51,13 +51,24 @@ Google, Resend o Neon ni sustituye una prueba de penetración independiente.
 
 ## Backoffice de operaciones
 
-`ops/` (ver CLAUDE.md §44) es una app y una identidad de sesión separadas del
-producto: cookie, tabla de sesiones (`ops_sessions`) y contraseña compartida con
-`auth_accounts` pero **TOTP obligatorio** además de la contraseña, con códigos de
-respaldo de un solo uso y anti-repetición por paso. Toda mutación exige `Origin`
-exacto, motivo ≥10 caracteres y queda en `ops_audit_log` (actor, acción, sujeto, IP).
-Dos niveles (`reviewer`/`admin`); solo `admin` suspende cuentas, cambia roles o lee
-la bitácora. El producto sigue sin MFA propio; solo el backoffice lo exige.
+`ops/` es una app y una identidad de sesión separadas del producto (cookie y tabla
+`ops_sessions` propias; contraseña compartida con `auth_accounts`). Resumen de
+controles, con el detalle en [ops.md](ops.md):
+
+- TOTP obligatorio con códigos de respaldo; consumo del factor, quema del reto y
+  apertura de la sesión en una sola sentencia (sin carreras de reuso). Plazo de
+  72 h para configurar el autenticador tras un alta o reinicio desde el panel.
+- Sesiones de 8 h con cierre a los 30 min sin uso, atadas al user agent que las
+  creó, máximo 5 por cuenta; alertas por correo de dispositivos nuevos (opcional).
+- Modo seguro: un código TOTP nuevo, válido 10 min, para toda acción sobre cuentas,
+  equipo, exportaciones y cierres masivos de sesión.
+- CSP con nonce por petición sin `unsafe-inline`/`unsafe-eval` en producción, HSTS
+  con preload, COOP/CORP, allowlist opcional de redes y rechazo temprano sin cookie
+  en el middleware; cada página y ruta valida además la sesión en la base.
+- Bitácora `ops_audit_log` de solo inserción y encadenada con SHA-256, verificable
+  desde el panel; las mutaciones principales la escriben en la misma sentencia.
+- Dos niveles (`reviewer`/`admin`); solo `admin` suspende cuentas, cambia el
+  equipo, exporta datos y lee la bitácora y el estado del sistema.
 
 ## Límites de esta revisión
 

@@ -6,9 +6,9 @@
 | Interfaz | Tailwind 3, GSAP, Lucide, piezas propias; cinco acentos suaves |
 | Datos | Neon HTTP parametrizado; db/*.sql es el esquema operativo |
 | Auth | Scrypt, sesiones opacas hash, cookies HttpOnly, recuperación/verificación; OAuth Google con jose |
-| Imágenes | Sharp, WebP; almacenamiento base64 acotado del MVP |
+| Imágenes | Sharp, WebP; bytes en Vercel Blob privado, metadatos y permisos en Neon |
 | Correo | API Resend + outbox transaccional; falta activar proveedor/scheduler |
-| IA | AI SDK/OpenAI y vector en esquema histórico; sin flujo de producto conectado |
+| IA | Ninguna: la búsqueda es léxica y local (src/lib/search) |
 | Hosting | Configuración Vercel presente; proyecto correcto y despliegue pendientes |
 
 La actualización de Next usa async cookies/params/searchParams y pruebas adaptadas.
@@ -24,8 +24,8 @@ Root layout: HTML, Inter y salto al contenido.
 account: sidebar, cuenta, publicaciones, biblioteca, contactos, avisos y métricas.
 api: handlers con autorización, validación, límites y consultas parametrizadas.
 
-src/db/schema.ts conserva el diseño Drizzle anterior. No aplicar drizzle-kit push
-como si representara auth_accounts, founder_solutions y las tablas nuevas.
+El esquema vive solo en db/*.sql y se aplica con `npm run db:migrate -- db/<archivo>.sql`.
+No hay ORM: el diseño Drizzle anterior y sus dependencias se retiraron.
 
 ## Comprobaciones
 

@@ -21,7 +21,7 @@ Guardar una lista no avisa al curador ni revela quién la guardó. `/account/com
 `db/community-social.sql` crea `community_list_likes`, `community_saved_lists` y `community_list_comments`. Las relaciones dependen de cuentas/listas con `ON DELETE CASCADE`. Aplicar con:
 
 ```bash
-node scripts/migrate-community-social.cjs
+npm run db:migrate -- db/community-social.sql
 ```
 
 La migración ya se aplicó a la conexión local configurada. Cada proyecto o base de despliegue debe verificarse por separado.

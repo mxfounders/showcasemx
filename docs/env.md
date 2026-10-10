@@ -19,10 +19,16 @@ variables. Separar bases de desarrollo, preview y producción.
 | AUTH_REQUIRE_VERIFIED_EMAIL | true para exigir verificación antes de crear contactos; activar tras probar entrega. |
 | NEXT_PUBLIC_SHOW_DEMO_PROJECTS | false/ausente por defecto. true muestra ejemplos de diseño no contratables. No usar en catálogo público real. |
 | LAUNCH_LEGAL_REVIEWED | true solo después de revisión humana de responsable, contacto y políticas; preflight no valida contenido legal. |
-| OPENAI_API_KEY | Opcional/futuro. No hay búsqueda IA implementada. |
 | BLOB_READ_WRITE_TOKEN | Token estático del store privado de Vercel Blob (`shwcs-blob`). Necesario en **local y en scripts** (backfill, integración): OIDC no funciona fuera del runtime de Vercel. En Production/Preview de Vercel el SDK usa OIDC (`VERCEL_OIDC_TOKEN` + `BLOB_STORE_ID`, inyectados por la integración) y este token va vacío. **En local NO poner `BLOB_STORE_ID` junto al token estático** o el SDK lo ignora en favor de OIDC. Sin credenciales, las subidas responden 503 (sin éxito simulado). Ver CLAUDE.md §58. |
 | OPS_MEDIA_SECRET | Secreto de 32+ bytes hex compartido, **mismo valor** en `shwcs` y `shwcs-ops`. `ops/` no lleva token de Blob: proxea los bytes de capturas por `POST`→`GET /api/internal/media/[solutionId]/[assetId]` del producto con `Authorization: Bearer`. Sin él (o sin `PRODUCT_APP_ORIGIN` en ops), el drawer de revisión de ops no muestra capturas. |
+| OPS_IP_ALLOWLIST | Solo en `shwcs-ops`, opcional. IPs o CIDR separados por coma o espacio (`203.0.113.7, 10.0.0.0/8, 2001:db8::/32`). Cualquier otra red recibe 404 en todo el backoffice, login incluido. Confía en `x-real-ip`/`x-forwarded-for` de Vercel; no usar fuera de Vercel. |
+| OPS_ALERT_FROM | Solo en `shwcs-ops`, opcional. Remitente de las alertas de seguridad de ops (nuevo dispositivo, código de respaldo usado, autenticador configurado, cambios de equipo). Requiere también `RESEND_API_KEY` en `shwcs-ops`; si falta, usa `AUTH_EMAIL_FROM` y, sin ninguno, las alertas se omiten y Sistema lo indica. |
 | STORAGE_SWEEP_ENABLED | `true` activa el barredor de blobs huérfanos dentro de `/api/internal/monitor` (cron diario). Dejar sin poner hasta después de dropear `content_base64`: un rollback que ponga `storage_key` a NULL con el barredor activo borraría bytes vivos. En producción ya está en `true` (5 sep). |
+| STRIPE_SECRET_KEY | Clave secreta de Stripe para los espacios patrocinados (`src/lib/ads/stripe.ts`). Prueba (`sk_test_`) en local; en producción una clave restringida solo en Vercel. Sin ella el checkout responde 503. Ver [ads.md](ads.md). |
+| STRIPE_WEBHOOK_SECRET | Secreto de firma del endpoint `/api/webhooks/stripe` (dashboard) o el que imprime `stripe listen` en local. Sin él el webhook responde 503 y los pagos solo se concilian al volver de Checkout. |
+| STRIPE_AUTOMATIC_TAX | Solo `off` para pruebas locales contra una cuenta sin Stripe Tax configurado. Ausente = impuestos obligatorios; nunca ponerlo en Vercel. |
+| CORD_API_KEY | Llave secreta de Cord (`sk_test_` sandbox, `sk_live_` producción) de la cuenta emisora de shwcs, con CSD cargado. Emite CFDI y notas de crédito ([billing.md](billing.md)). Sin ella los documentos esperan en `pending` y no se emite nada. |
+| CORD_API_URL | Solo pruebas o un entorno de staging de Cord. Ausente = `https://cordhq.app/api/v1`. |
 
 La conexión local de Neon tiene aplicadas las migraciones operativas, incluida
 launch-foundation.sql. Eso no confirma otro entorno de Vercel. Revisar orden y
@@ -43,3 +49,11 @@ local ya tiene ambos valores y una clave Resend; repetirlos en el proyecto corre
 de Vercel y probar recepción, rebote y enlaces antes de declarar correo activo.
 `ops.shwcs.site` no debe reutilizar este origen como callback de forma implícita:
 definir su estrategia de autenticación y alcance cuando exista esa aplicación.
+
+## Registros públicos (docs/compliance.md)
+
+| Variable | Uso |
+| --- | --- |
+| `SAT_CFDI_URL` | Solo pruebas: servicio simulado de consulta de CFDI. En producción no se define y se usa el del SAT. |
+
+La lista 69-B se descarga en el cron diario existente (`CRON_SECRET`); no requiere variable propia.
