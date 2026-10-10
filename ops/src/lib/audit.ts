@@ -1,4 +1,5 @@
 import { getDb } from './db';
+import { clientIp } from './net';
 
 export interface AuditEntry {
   actorId: string | null;
@@ -11,24 +12,30 @@ export interface AuditEntry {
   ip?: string | null;
 }
 
-/** Best-effort, append-only. A logging failure must never block the action it describes. */
-export async function audit(entry: AuditEntry): Promise<void> {
+/**
+ * Append-only and hash-chained in the database (db/ops-hardening.sql). Best-effort
+ * here: a logging failure must never block the action it describes, so it returns
+ * false and the caller can tell the operator the entry is missing. Mutations that
+ * matter write their entry inside the same SQL statement instead (see the routes).
+ */
+export async function audit(entry: AuditEntry): Promise<boolean> {
   try {
     const sql = getDb();
     await sql`
       INSERT INTO ops_audit_log (actor_id, actor_email, action, subject_type, subject_id, reason, metadata, ip)
       VALUES (
         ${entry.actorId}, ${entry.actorEmail}, ${entry.action}, ${entry.subjectType}, ${entry.subjectId},
-        ${entry.reason ?? ''}, ${JSON.stringify(entry.metadata ?? {})}, ${entry.ip ?? null}
+        ${(entry.reason ?? '').slice(0, 1000)}, ${JSON.stringify(entry.metadata ?? {})}::jsonb, ${entry.ip ?? null}
       )
     `;
+    return true;
   } catch (err) {
-    console.error('[ops/audit] failed to write audit entry', err);
+    console.error('[ops/audit] failed to write audit entry', entry.action, err);
+    return false;
   }
 }
 
+/** @deprecated use clientIp from ./net — kept for older imports. */
 export function requestIp(headers: Headers): string | null {
-  const forwarded = headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0]?.trim().slice(0, 128) || null;
-  return headers.get('x-real-ip')?.slice(0, 128) || null;
+  return clientIp(headers);
 }

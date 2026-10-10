@@ -5,7 +5,7 @@ const STEP_SECONDS = 30;
 const DIGITS = 6;
 const WINDOW = 1; // accept one step before/after to absorb clock drift
 
-export function base32Encode(buf: Buffer): string {
+function base32Encode(buf: Buffer): string {
   let bits = 0;
   let value = 0;
   let output = '';
@@ -21,7 +21,7 @@ export function base32Encode(buf: Buffer): string {
   return output;
 }
 
-export function base32Decode(input: string): Buffer {
+function base32Decode(input: string): Buffer {
   const clean = input.toUpperCase().replace(/[^A-Z2-7]/g, '');
   let bits = 0;
   let value = 0;
@@ -56,12 +56,8 @@ function hotp(secret: Buffer, counter: bigint): string {
   return String(code % 10 ** DIGITS).padStart(DIGITS, '0');
 }
 
-export function currentStep(at: number = Date.now()): bigint {
+function currentStep(at: number = Date.now()): bigint {
   return BigInt(Math.floor(at / 1000 / STEP_SECONDS));
-}
-
-export function generateTotp(secretBase32: string, step: bigint = currentStep()): string {
-  return hotp(base32Decode(secretBase32), step);
 }
 
 /**

@@ -1,61 +1,57 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { requireOpsApi, isUuid, sameOrigin, opsLimit, requestIdentity, audit, requestIp } from '@/lib/auth';
-import { getDb } from '@/lib/db';
-import { failure, opsBody } from '@/lib/http';
+import { opsRoute } from '@/lib/api';
+import { failure, intParam, isUuid, ok, oneOf } from '@/lib/http';
+import { MAIL_FILTERS, mailOverview } from '@/lib/data/mail';
 
 export const runtime = 'nodejs';
 
-export async function GET() {
-  const user = await requireOpsApi();
-  if (user instanceof Response) return user;
+export const GET = opsRoute({}, async ({ url }) => {
+  const data = await mailOverview(
+    oneOf(url.searchParams.get('filter'), MAIL_FILTERS, 'problems'),
+    intParam(url, 'page', 1, 1, 10000),
+  );
+  return ok(data);
+});
 
-  try {
-    const sql = getDb();
+// Retrying re-queues the notice for the product's worker; ops never sends the
+// product's emails itself, so nothing here can double-send outside the worker's
+// own idempotency.
+export const POST = opsRoute(
+  {
+    admin: body => body.action === 'retry_all_failed',
+    elevated: body => body.action === 'retry_all_failed',
+    limit: ['mail-retry', 120, 600],
+  },
+  async ({ body, user, sql, ip }) => {
+    if (body.action === 'retry_all_failed') {
+      const rows = await sql`
+        WITH changed AS (
+          UPDATE account_notifications SET attempts = 0, next_attempt_at = now(), email_state = 'pending', locked_at = NULL
+          WHERE email_state = 'failed' AND created_at > now() - interval '23 hours'
+          RETURNING id
+        ), logged AS (
+          INSERT INTO ops_audit_log (actor_id, actor_email, action, subject_type, subject_id, reason, metadata, ip)
+          SELECT ${user.id}, ${user.email}, 'mail_retry', 'notification', 'bulk', '',
+            jsonb_build_object('count', count(*)), ${ip} FROM changed HAVING count(*) > 0
+        )
+        SELECT count(*)::int AS n FROM changed
+      `;
+      return ok({
+        message: `${rows[0]?.n ?? 0} avisos volvieron a la cola (solo los de las últimas 23 h).`,
+      });
+    }
+    if (body.action !== 'retry' || !isUuid(body.id)) return failure('Solicitud inválida.', 400);
     const rows = await sql`
-      SELECT n.id, n.category, n.title, n.email_state, n.attempts, n.next_attempt_at, n.created_at,
-        a.email AS owner_email
-      FROM account_notifications n
-      JOIN auth_accounts a ON a.id = n.owner_id
-      WHERE n.email_state IN ('pending', 'sending', 'failed')
-      ORDER BY n.email_state = 'failed' DESC, n.created_at DESC
-      LIMIT 200
-    `;
-    return NextResponse.json({
-      ok: true,
-      items: rows.map(r => ({
-        id: String(r.id), category: String(r.category), title: String(r.title),
-        emailState: String(r.email_state), attempts: Number(r.attempts),
-        nextAttemptAt: String(r.next_attempt_at), createdAt: String(r.created_at),
-        ownerEmail: String(r.owner_email),
-      })),
-    }, { headers: { 'Cache-Control': 'no-store' } });
-  } catch (err) {
-    console.error('[ops/mail]', err);
-    return failure('Error interno.', 503);
-  }
-}
-
-export async function POST(req: NextRequest) {
-  const user = await requireOpsApi();
-  if (user instanceof Response) return user;
-  if (!sameOrigin(req)) return failure('Origen no autorizado.', 403);
-  if (!(await opsLimit('mail-retry', requestIdentity(req.headers), 60, 300))) return failure('Demasiados cambios. Intenta más tarde.', 429);
-
-  const body = await opsBody(req);
-  if (body?.action !== 'retry' || !isUuid(body?.id)) return failure('Solicitud inválida.', 400);
-
-  try {
-    const sql = getDb();
-    const rows = await sql`
-      UPDATE account_notifications SET attempts = 0, next_attempt_at = now(), email_state = 'pending', locked_at = NULL
-      WHERE id = ${body.id} AND email_state IN ('failed', 'pending')
-      RETURNING id
+      WITH changed AS (
+        UPDATE account_notifications SET attempts = 0, next_attempt_at = now(), email_state = 'pending', locked_at = NULL
+        WHERE id = ${body.id} AND email_state IN ('failed', 'pending')
+        RETURNING id
+      ), logged AS (
+        INSERT INTO ops_audit_log (actor_id, actor_email, action, subject_type, subject_id, reason, metadata, ip)
+        SELECT ${user.id}, ${user.email}, 'mail_retry', 'notification', id::text, '', '{}'::jsonb, ${ip} FROM changed
+      )
+      SELECT id FROM changed
     `;
     if (!rows.length) return failure('No se pudo reintentar este aviso.', 409);
-    await audit({ actorId: user.id, actorEmail: user.email, action: 'mail_retry', subjectType: 'notification', subjectId: String(body.id), ip: requestIp(req.headers) });
-    return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
-  } catch (err) {
-    console.error('[ops/mail]', err);
-    return failure('Error interno.', 503);
-  }
-}
+    return ok({});
+  },
+);

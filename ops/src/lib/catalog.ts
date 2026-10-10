@@ -16,6 +16,9 @@ export async function triggerCatalogRevalidate() {
     });
     if (!response.ok) console.error('[ops] catalog revalidate rejected', response.status);
   } catch (err) {
-    console.error('[ops] catalog revalidate unreachable; catalog stays on the 300s TTL fallback.', err);
+    console.error(
+      '[ops] catalog revalidate unreachable; catalog stays on the 300s TTL fallback.',
+      err,
+    );
   }
 }

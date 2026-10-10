@@ -1,31 +1,36 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { getOpsSession } from '@/lib/auth';
+import { peekOpsSession } from '@/lib/auth';
+import { AuthShell } from './AuthShell';
 import LoginForm from './LoginForm';
 
 export const metadata: Metadata = { title: 'Acceso' };
 
-export default async function LoginPage() {
-  const user = await getOpsSession();
-  if (user) redirect('/panel');
+const REASONS: Record<string, { tone: 'amber' | 'blue'; text: string }> = {
+  expired: { tone: 'amber', text: 'Tu sesión terminó. Vuelve a entrar para continuar.' },
+  idle: { tone: 'amber', text: 'Cerramos tu sesión tras 30 minutos sin actividad.' },
+  revoked: {
+    tone: 'amber',
+    text: 'Cerramos tu sesión por seguridad tras varios códigos incorrectos.',
+  },
+  logout: { tone: 'blue', text: 'Cerraste sesión correctamente.' },
+};
 
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  if (await peekOpsSession()) redirect('/panel');
+  const params = await searchParams;
+  const reason = typeof params.reason === 'string' ? REASONS[params.reason] : undefined;
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-white p-6">
-      <div className="w-full max-w-[400px] flex flex-col items-center">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/shwcs-logo-blue.png" alt="shwcs" className="h-8 w-auto mb-10" />
-
-        <div className="w-full">
-          <h2 className="text-2xl font-bold text-center text-stone-900 mb-2 tracking-tight">
-            Iniciar sesión
-          </h2>
-          <p className="text-sm text-center text-stone-500 mb-8">
-            Acceso exclusivo para el equipo de operaciones.
-          </p>
-
-          <LoginForm />
-        </div>
-      </div>
-    </main>
+    <AuthShell
+      step={0}
+      title="Acceso a operaciones"
+      description="Exclusivo para el equipo de shwcs. Usa tu correo y contraseña de shwcs."
+    >
+      <LoginForm notice={reason} />
+    </AuthShell>
   );
 }

@@ -2,39 +2,52 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/Button';
+import { Alert, Field } from '@/components/ui/Field';
+import { OtpInput } from '@/components/ui/OtpInput';
 
 export default function TotpForm() {
   const router = useRouter();
   const [code, setCode] = useState('');
+  const [backup, setBackup] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [restart, setRestart] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-    const trimmed = code.trim();
-    if (!/^\d{6}$/.test(trimmed) && !/^\d{8}$/.test(trimmed)) {
-      setError('Ingresa un código de 6 dígitos, o uno de respaldo de 8.');
+  async function submit(value: string) {
+    if (loading) return;
+    const clean = value.replace(/\D/g, '');
+    if (!(backup ? /^\d{8}$/ : /^\d{6}$/).test(clean)) {
+      setError(backup ? 'Los códigos de respaldo tienen 8 dígitos.' : 'Escribe los 6 dígitos.');
       return;
     }
-
     setLoading(true);
+    setError('');
     try {
       const res = await fetch('/api/auth/totp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: trimmed }),
+        body: JSON.stringify({ code: clean }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.ok) {
         router.replace('/panel');
-      } else if (res.status === 409) {
-        router.replace('/login/enroll');
-      } else if (res.status === 401 && /sesión de acceso expirada/i.test(data.error ?? '')) {
-        router.replace('/login');
-      } else {
-        setError(data.error ?? 'Error al verificar.');
+        return;
       }
+      if (res.status === 409) {
+        router.replace('/login/enroll');
+        return;
+      }
+      if (typeof data.remaining === 'number') {
+        setError(
+          `${data.error} Te quedan ${data.remaining} ${data.remaining === 1 ? 'intento' : 'intentos'}.`,
+        );
+      } else {
+        // Expired, burned or replayed challenge: this login attempt cannot continue.
+        setError(data.error ?? 'No pudimos verificar el código.');
+        if (res.status !== 400) setRestart(true);
+      }
+      setCode('');
     } catch {
       setError('No se pudo conectar. Revisa tu conexión.');
     } finally {
@@ -43,35 +56,68 @@ export default function TotpForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
-      <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-stone-700">Código</span>
-        <input
-          type="text"
-          inputMode="numeric"
-          autoComplete="one-time-code"
+    <form
+      onSubmit={event => {
+        event.preventDefault();
+        void submit(code);
+      }}
+      className="flex flex-col gap-4"
+      noValidate
+    >
+      {backup ? (
+        <Field
+          label="Código de respaldo"
+          htmlFor="backup"
+          hint="Cada código de respaldo funciona una sola vez."
+        >
+          <input
+            id="backup"
+            value={code}
+            onChange={event => setCode(event.target.value.replace(/\D/g, '').slice(0, 8))}
+            inputMode="numeric"
+            autoComplete="off"
+            autoFocus
+            placeholder="12345678"
+            className="control num h-11 text-center text-lg tracking-[0.35em]"
+          />
+        </Field>
+      ) : (
+        <OtpInput
           value={code}
-          onChange={e => setCode(e.target.value.replace(/[^\d]/g, '').slice(0, 8))}
-          placeholder="123456"
-          required
+          onChange={setCode}
+          onComplete={submit}
           autoFocus
-          className="px-4 py-3 rounded-xl border border-stone-300 text-base tracking-[0.3em] text-center bg-white outline-none transition focus:border-[#3562cc] focus:ring-2 focus:ring-[#3562cc]/15 w-full"
+          disabled={loading}
+          invalid={Boolean(error)}
         />
-      </label>
-
-      {error && (
-        <div role="alert" className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
-          {error}
-        </div>
       )}
-
+      {error && <Alert>{error}</Alert>}
+      {restart ? (
+        <a
+          href="/login"
+          className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-accent text-sm font-medium text-white transition hover:bg-accent-strong"
+        >
+          Volver a iniciar sesión
+        </a>
+      ) : (
+        <Button type="submit" tone="solid" size="md" loading={loading} className="h-11 w-full">
+          Entrar al panel
+        </Button>
+      )}
       <button
-        type="submit"
-        disabled={loading}
-        className="mt-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-[#e4ebfc] text-[#365dc4] font-semibold text-base transition hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(40,87,197,.14)] active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+        type="button"
+        onClick={() => {
+          setBackup(value => !value);
+          setCode('');
+          setError('');
+        }}
+        className="text-center text-[13px] font-medium text-accent-fg hover:underline"
       >
-        {loading ? 'Verificando…' : 'Entrar al panel'}
+        {backup ? 'Usar mi app autenticadora' : '¿Sin acceso a tu app? Usa un código de respaldo'}
       </button>
+      <a href="/login" className="text-center text-[12.5px] text-muted hover:text-fg">
+        Volver a empezar
+      </a>
     </form>
   );
 }

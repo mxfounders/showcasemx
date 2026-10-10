@@ -1,7 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { requireOpsApi, isUuid, sameOrigin, opsLimit, requestIdentity, audit, requestIp } from '@/lib/auth';
-import { getDb } from '@/lib/db';
-import { failure, opsBody } from '@/lib/http';
+import { opsRoute } from '@/lib/api';
+import { failure, isUuid, ok } from '@/lib/http';
 import { triggerCatalogRevalidate } from '@/lib/catalog';
 
 export const runtime = 'nodejs';
@@ -20,72 +18,53 @@ const NEW_STATUS: Record<string, string> = {
   withdraw: 'changes_requested',
 };
 
-// Self-review is deliberately allowed here: unlike solution_reports (community
-// moderation), only the account holder decides what happens to their own
-// listings, and the sole ops admin currently owns Cord. Every decision is still
-// attributed by actor_id in solution_events and audited below. See CLAUDE.md §7.
-
-export async function POST(req: NextRequest) {
-  const user = await requireOpsApi();
-  if (user instanceof Response) return user;
-  if (!sameOrigin(req)) return failure('Origen no autorizado.', 403);
-  if (!(await opsLimit('review', requestIdentity(req.headers), 60, 400))) return failure('Demasiados cambios. Intenta más tarde.', 429);
-
-  const body = await opsBody(req);
-  const solutionId = body?.solutionId;
-  const action = body?.action;
-  const message = body?.message;
-  const version = body?.version;
-
+// Self-review is deliberately allowed (CLAUDE.md §51): only the account holder
+// decides what happens to their own listing, and the sole ops admin owns Cord.
+// Every decision is still attributed by actor_id in solution_events and written
+// to the audit log in the same statement as the change itself.
+export const POST = opsRoute({ limit: ['review', 120, 600] }, async ({ body, user, sql, ip }) => {
+  const { solutionId, action, message, version } = body;
   if (!isUuid(solutionId)) return failure('ID inválido.', 400);
-  if (typeof action !== 'string' || !Object.keys(ALLOWED_FROM).includes(action)) return failure('Acción inválida.', 400);
-  if (typeof message !== 'string' || message.trim().length < 5 || message.length > 2000) {
+  if (typeof action !== 'string' || !(action in ALLOWED_FROM))
+    return failure('Acción inválida.', 400);
+  if (typeof message !== 'string' || message.trim().length < 5 || message.length > 2000)
     return failure('El mensaje debe tener 5-2000 caracteres.', 400);
-  }
-  if (typeof version !== 'number' || !Number.isSafeInteger(version)) return failure('Versión requerida.', 400);
+  if (typeof version !== 'number' || !Number.isSafeInteger(version))
+    return failure('Versión requerida.', 400);
 
-  try {
-    const sql = getDb();
-    const isPublishing = action === 'publish';
-    const isWithdrawing = action === 'withdraw';
-    const targetStatus = NEW_STATUS[action];
-    const allowedStatuses = ALLOWED_FROM[action];
+  const text = message.trim();
+  const isPublishing = action === 'publish';
+  const isWithdrawing = action === 'withdraw';
 
-    const result = await sql.transaction([
-      sql`SELECT id FROM founder_solutions WHERE id = ${solutionId} FOR UPDATE`,
-      sql`WITH changed AS (
-        UPDATE founder_solutions SET
-          status = ${targetStatus},
-          version = version + 1,
-          updated_at = now(),
-          published_at = CASE WHEN ${isPublishing} THEN now() WHEN ${isWithdrawing} THEN NULL ELSE published_at END,
-          published_data = CASE WHEN ${isPublishing} THEN data WHEN ${isWithdrawing} THEN NULL ELSE published_data END
-        WHERE id = ${solutionId} AND version = ${version}
-          AND status = ANY(${allowedStatuses}::text[])
-        RETURNING id, status, version
-      ), event AS (
-        INSERT INTO solution_events (solution_id, status, message, actor_id)
-        SELECT id, status, ${message.trim()}, ${user.id} FROM changed
-      )
-      SELECT * FROM changed`,
-    ]);
+  const rows = await sql`
+    WITH changed AS (
+      UPDATE founder_solutions SET
+        status = ${NEW_STATUS[action]},
+        version = version + 1,
+        updated_at = now(),
+        published_at = CASE WHEN ${isPublishing} THEN now() WHEN ${isWithdrawing} THEN NULL ELSE published_at END,
+        published_data = CASE WHEN ${isPublishing} THEN data WHEN ${isWithdrawing} THEN NULL ELSE published_data END
+      WHERE id = ${solutionId} AND version = ${version} AND status = ANY(${ALLOWED_FROM[action]}::text[])
+      RETURNING id, status, version
+    ), event AS (
+      INSERT INTO solution_events (solution_id, status, message, actor_id)
+      SELECT id, status, ${text}, ${user.id} FROM changed
+    ), logged AS (
+      INSERT INTO ops_audit_log (actor_id, actor_email, action, subject_type, subject_id, reason, metadata, ip)
+      SELECT ${user.id}, ${user.email}, ${'solution_' + action}, 'solution', id::text, left(${text}, 1000),
+        jsonb_build_object('fromVersion', ${version}::int, 'toStatus', status), ${ip}
+      FROM changed
+    )
+    SELECT * FROM changed
+  `;
+  if (!rows.length)
+    return failure(
+      'La postulación cambió o no admite esta acción. Recarga e intenta de nuevo.',
+      409,
+    );
 
-    const rows = result[1];
-    if (!rows.length) return failure('La postulación cambió o no admite esta acción. Recarga e intenta de nuevo.', 409);
+  // Only publish/withdraw change what the catalog reads.
+  if (isPublishing || isWithdrawing) await triggerCatalogRevalidate();
 
-    await audit({
-      actorId: user.id, actorEmail: user.email, action: `solution_${action}`,
-      subjectType: 'solution', subjectId: solutionId, reason: message.trim(), ip: requestIp(req.headers),
-    });
-
-    // Only publish/withdraw change published_data; reject and changes_requested
-    // (from pending) never touch what the catalog reads, so there is nothing
-    // to invalidate for those two.
-    if (isPublishing || isWithdrawing) await triggerCatalogRevalidate();
-
-    return NextResponse.json({ ok: true, newStatus: String(rows[0].status) }, { headers: { 'Cache-Control': 'no-store' } });
-  } catch (err) {
-    console.error('[ops/review]', err);
-    return failure('Error interno.', 503);
-  }
-}
+  return ok({ newStatus: String(rows[0].status), version: Number(rows[0].version) });
+});
