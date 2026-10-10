@@ -3126,3 +3126,23 @@ alto. **No probado**: «Compra comprobada» con un CFDI real (solo contra un SAT
 Probar con un CFDI real; adaptadores de otros países (VIES, Companies House); REPSE y PAC;
 identidad fiscal en ops; comparar el RFC receptor con la facturación de quien reseña.
 
+
+### Despliegue del 10 de octubre (push a `main`)
+
+Push de `be4ab82` (tres commits: app, ops y docs). Resultado: **`shwcs` desplegó bien**;
+**`shwcs-ops` falló** y **CI falló** solo en `npm audit --omit=dev`.
+
+- `shwcs-ops`: el `.vercelignore` de la raíz (creado en §62) excluía `ops/`, y el proyecto
+  de ops construye desde esa misma subida con Root Directory `ops`, así que se quedaba sin
+  código. Se quitó la línea; el producto nunca importa de `ops/`. Los registros de Vercel
+  no se pudieron leer desde esta máquina (la CLI y el conector no tienen acceso a
+  `mxfounders`): la causa se dedujo de que el job de ops en CI pasa y antes no existía ese
+  archivo.
+- `npm audit`: avisos nuevos de `next` (<15.5.27), `sharp` (<0.35.5) y `source-map-js`, más
+  la cadena de Tailwind 3 que entraba como producción por `@tailwindcss/typography` en
+  `dependencies`. Arreglo: `next` 15.5.27, `sharp` 0.35.5, `source-map-js` 1.2.2 y
+  `@tailwindcss/typography` movido a `devDependencies` (herramienta de build). Resultado:
+  0 vulnerabilidades en dependencias de producción. Lint, tipos, 178 pruebas, build y la QA
+  de la cuenta (avatar con `sharp`) siguen en verde.
+- Lección: `npm audit fix --omit=dev` también reinstala sin dependencias de desarrollo;
+  después hay que correr `npm install`.

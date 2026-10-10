@@ -1,7 +1,8 @@
 # Files the app does not need to build or run on Vercel.
 
-# Separate Vercel project (shwcs-ops).
-ops/
+# ops/ must stay: the shwcs-ops project builds from this same upload (Root Directory
+# "ops"), so ignoring it here leaves that project with no source. The product build
+# never imports from ops/.
 
 # Documentation, agent context and local tooling state.
 docs/
