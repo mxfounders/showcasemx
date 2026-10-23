@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Flag, ImageIcon, LayoutGrid, RefreshCcw } from 'lucide-react';
+import { AppsIcon, FlagIcon, ImageIcon, SyncIcon } from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
 import {
   listSolutions,
@@ -109,7 +109,7 @@ export default async function PostulacionesPage({
         <TBody>
           {data.items.length === 0 ? (
             <EmptyRow colSpan={6}>
-              <EmptyState compact icon={LayoutGrid} title="Sin postulaciones en este filtro" />
+              <EmptyState compact icon={AppsIcon} title="Sin postulaciones en este filtro" />
             </EmptyRow>
           ) : (
             data.items.map(item => (
@@ -145,12 +145,12 @@ export default async function PostulacionesPage({
                   <div className="flex flex-wrap gap-1">
                     {item.catalogKey && <Badge tone="lavender">{item.catalogKey}</Badge>}
                     {item.hasPublished && item.status !== 'published' && (
-                      <Badge tone="blue" icon={RefreshCcw}>
+                      <Badge tone="blue" icon={SyncIcon}>
                         Pública
                       </Badge>
                     )}
                     {item.openReports > 0 && (
-                      <Badge tone="terracotta" icon={Flag}>
+                      <Badge tone="terracotta" icon={FlagIcon}>
                         {item.openReports}
                       </Badge>
                     )}

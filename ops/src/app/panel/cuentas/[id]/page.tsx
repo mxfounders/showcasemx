@@ -2,16 +2,16 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
-  Ban,
-  BadgeCheck,
-  EyeOff,
-  Fingerprint,
-  LogOut,
-  MailCheck,
-  RotateCcw,
-  ShieldCheck,
-  UserRound,
-} from 'lucide-react';
+  BlockIcon,
+  EyeOffIcon,
+  FingerprintIcon,
+  LogOutIcon,
+  MailCheckIcon,
+  PersonIcon,
+  ShieldIcon,
+  UndoIcon,
+  VerifiedIcon,
+} from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
 import { isUuid } from '@/lib/http';
 import { accountDetail, type AccountDetail } from '@/lib/data/accounts';
@@ -71,7 +71,7 @@ function SecurityTab({ d }: { d: AccountDetail }) {
               {
                 label: 'Verificación en dos pasos',
                 value: a.twoFactorAt ? (
-                  <Badge tone="sage" icon={Fingerprint}>
+                  <Badge tone="sage" icon={FingerprintIcon}>
                     Activa desde {fmtDate(a.twoFactorAt)}
                   </Badge>
                 ) : (
@@ -269,25 +269,25 @@ export default async function AccountPage({
             </p>
             <div className="mt-3 flex flex-wrap gap-1.5">
               {a.suspendedAt && (
-                <Badge tone="terracotta" icon={Ban}>
+                <Badge tone="terracotta" icon={BlockIcon}>
                   Suspendida
                 </Badge>
               )}
               {a.emailVerifiedAt ? (
-                <Badge tone="sage" icon={BadgeCheck}>
+                <Badge tone="sage" icon={VerifiedIcon}>
                   Correo verificado
                 </Badge>
               ) : (
                 <Badge tone="amber">Correo sin verificar</Badge>
               )}
               {a.twoFactorAt && (
-                <Badge tone="sage" icon={Fingerprint}>
+                <Badge tone="sage" icon={FingerprintIcon}>
                   2FA
                 </Badge>
               )}
               {a.googleEmail && <Badge>Google</Badge>}
               {a.isOps && a.ops && (
-                <Badge tone="blue" icon={ShieldCheck}>
+                <Badge tone="blue" icon={ShieldIcon}>
                   Ops · {LEVEL[a.ops.level]?.label}
                 </Badge>
               )}
@@ -301,7 +301,7 @@ export default async function AccountPage({
           {admin && !a.emailVerifiedAt && (
             <ActionButton
               label="Verificar correo"
-              icon={<MailCheck />}
+              icon={<MailCheckIcon />}
               endpoint={endpoint}
               payload={{ action: 'verify_email' }}
               success="Correo marcado como verificado"
@@ -316,7 +316,7 @@ export default async function AccountPage({
           {!self && (
             <ActionButton
               label="Cerrar sesiones"
-              icon={<LogOut />}
+              icon={<LogOutIcon />}
               endpoint={endpoint}
               payload={{ action: 'revoke_sessions' }}
               success="Sesiones cerradas"
@@ -334,7 +334,7 @@ export default async function AccountPage({
             (a.suspendedAt ? (
               <ActionButton
                 label="Reactivar"
-                icon={<RotateCcw />}
+                icon={<UndoIcon />}
                 tone="success"
                 endpoint={endpoint}
                 payload={{ action: 'reactivate' }}
@@ -348,7 +348,7 @@ export default async function AccountPage({
             ) : (
               <ActionButton
                 label="Suspender"
-                icon={<Ban />}
+                icon={<BlockIcon />}
                 tone="danger"
                 endpoint={endpoint}
                 payload={{ action: 'suspend' }}
@@ -366,7 +366,7 @@ export default async function AccountPage({
           {admin && !self && (
             <ActionButton
               label="Despublicar todo"
-              icon={<EyeOff />}
+              icon={<EyeOffIcon />}
               tone="danger"
               endpoint={endpoint}
               payload={{ action: 'unpublish_all' }}
@@ -515,7 +515,7 @@ export default async function AccountPage({
           <TBody>
             {d.solutions.length === 0 ? (
               <EmptyRow colSpan={5}>
-                <EmptyState compact icon={UserRound} title="No ha creado fichas" />
+                <EmptyState compact icon={PersonIcon} title="No ha creado fichas" />
               </EmptyRow>
             ) : (
               d.solutions.map(solution => (

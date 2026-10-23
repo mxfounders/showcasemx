@@ -1,5 +1,11 @@
 import type { Metadata } from 'next';
-import { CheckCircle2, Laptop, LogOut, ShieldAlert, XCircle } from 'lucide-react';
+import {
+  CheckCircleIcon,
+  CloseCircleIcon,
+  LaptopIcon,
+  LogOutIcon,
+  ShieldAlertIcon,
+} from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
 import { mySecurity, securityOverview } from '@/lib/data/security';
 import { verifyAuditChain } from '@/lib/data/audit';
@@ -22,9 +28,9 @@ function Posture({ ok, label, detail }: { ok: boolean; label: string; detail: st
   return (
     <li className="flex items-start gap-3 py-2.5">
       {ok ? (
-        <CheckCircle2 aria-hidden className="mt-0.5 size-[18px] shrink-0 text-sage" />
+        <CheckCircleIcon aria-hidden className="mt-0.5 size-[18px] shrink-0 text-sage" />
       ) : (
-        <XCircle aria-hidden className="mt-0.5 size-[18px] shrink-0 text-amber" />
+        <CloseCircleIcon aria-hidden className="mt-0.5 size-[18px] shrink-0 text-amber" />
       )}
       <div>
         <p className="text-[13.5px] font-medium text-fg">
@@ -77,7 +83,7 @@ export default async function SeguridadPage() {
                 others > 0 ? (
                   <ActionButton
                     label="Cerrar las demás"
-                    icon={<LogOut />}
+                    icon={<LogOutIcon />}
                     tone="danger"
                     size="xs"
                     endpoint="/api/me/sessions"
@@ -102,7 +108,7 @@ export default async function SeguridadPage() {
                     className="flex items-center gap-4 py-3 first:pt-0 last:pb-0"
                   >
                     <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-surface-3 text-muted">
-                      <Laptop aria-hidden className="size-[18px]" />
+                      <LaptopIcon aria-hidden className="size-[18px]" />
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="flex flex-wrap items-center gap-2 text-[13.5px] font-medium">
@@ -202,7 +208,7 @@ export default async function SeguridadPage() {
             <h2 className="text-[17px] font-semibold tracking-tight">Todo el backoffice</h2>
             <ActionButton
               label="Cerrar todas las sesiones de ops"
-              icon={<LogOut />}
+              icon={<LogOutIcon />}
               tone="danger"
               endpoint="/api/security/lockdown"
               payload={{}}
@@ -223,7 +229,7 @@ export default async function SeguridadPage() {
               value={failed24h}
               tone="danger"
               hint={`${fmtNumber(failed7d)} en 7 días`}
-              icon={<ShieldAlert aria-hidden className="size-4" />}
+              icon={<ShieldAlertIcon aria-hidden className="size-4" />}
             />
             <Stat
               label="Bloqueos por intentos (7 d)"

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Clock } from 'lucide-react';
+import { ClockIcon } from '@/components/icons/gota';
 import { Dialog } from '../ui/Dialog';
 import { Button } from '../ui/Button';
 import { mmss, remaining, useSession } from './SessionContext';
@@ -93,7 +93,7 @@ export function SessionGuard() {
       size="sm"
       icon={
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-soft text-amber">
-          <Clock aria-hidden className="size-5" />
+          <ClockIcon aria-hidden className="size-5" />
         </span>
       }
       title={absoluteEnding ? 'Tu sesión está por terminar' : '¿Sigues ahí?'}

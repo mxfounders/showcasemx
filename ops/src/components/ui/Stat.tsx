@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRightIcon } from '@/components/icons/gota';
 import { fmtCompact } from '@/lib/format';
 import { Sparkline } from '../charts/Sparkline';
 import { cn } from './cn';
@@ -31,7 +31,7 @@ export function Stat({
           {label}
         </span>
         {href && (
-          <ArrowUpRight
+          <ArrowUpRightIcon
             aria-hidden
             className="size-4 text-subtle opacity-0 transition group-hover:opacity-100"
           />

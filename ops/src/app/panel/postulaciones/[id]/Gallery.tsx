@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, ImageOff } from 'lucide-react';
+import { ChevronLeftIcon, ChevronRightIcon, ImageOffIcon } from '@/components/icons/gota';
 import { Dialog } from '@/components/ui/Dialog';
 
 interface Shot {
@@ -23,7 +23,7 @@ function Thumb({ shot, onOpen }: { shot: Shot; onOpen: () => void }) {
       >
         {failed ? (
           <span className="flex aspect-[16/10] flex-col items-center justify-center gap-2 px-4 text-center text-[12px] text-muted">
-            <ImageOff aria-hidden className="size-5" />
+            <ImageOffIcon aria-hidden className="size-5" />
             No se pudo cargar. Revisa OPS_MEDIA_SECRET y PRODUCT_APP_ORIGIN.
           </span>
         ) : (
@@ -72,7 +72,7 @@ export function Gallery({ shots }: { shots: Shot[] }) {
                   setOpen(i => (i === null ? 0 : (i - 1 + shots.length) % shots.length))
                 }
               >
-                <ChevronLeft aria-hidden className="size-5" />
+                <ChevronLeftIcon aria-hidden className="size-5" />
               </button>
               <button
                 type="button"
@@ -80,7 +80,7 @@ export function Gallery({ shots }: { shots: Shot[] }) {
                 aria-label="Siguiente"
                 onClick={() => setOpen(i => (i === null ? 0 : (i + 1) % shots.length))}
               >
-                <ChevronRight aria-hidden className="size-5" />
+                <ChevronRightIcon aria-hidden className="size-5" />
               </button>
             </>
           ) : undefined

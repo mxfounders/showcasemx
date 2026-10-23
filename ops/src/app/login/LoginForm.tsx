@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { ArrowRightIcon, EyeIcon, EyeOffIcon } from '@/components/icons/gota';
 import { Button } from '@/components/ui/Button';
 import { Alert, Field } from '@/components/ui/Field';
 
@@ -82,9 +82,9 @@ export default function LoginForm({
             className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg p-2 text-subtle transition hover:text-fg"
           >
             {show ? (
-              <EyeOff aria-hidden className="size-4" />
+              <EyeOffIcon aria-hidden className="size-4" />
             ) : (
-              <Eye aria-hidden className="size-4" />
+              <EyeIcon aria-hidden className="size-4" />
             )}
           </button>
         </div>
@@ -95,7 +95,7 @@ export default function LoginForm({
         tone="solid"
         size="md"
         loading={loading}
-        iconRight={loading ? undefined : ArrowRight}
+        iconRight={loading ? undefined : ArrowRightIcon}
         className="mt-1 h-11 w-full"
       >
         {loading ? 'Verificando…' : 'Continuar'}

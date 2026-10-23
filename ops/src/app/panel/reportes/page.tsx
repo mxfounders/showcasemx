@@ -1,17 +1,16 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
-  CheckCircle2,
-  EyeOff,
-  Flag,
-  MessageSquare,
-  RotateCcw,
-  ScrollText,
-  Star,
-  Trash2,
-  Undo2,
-  X,
-} from 'lucide-react';
+  CheckCircleIcon,
+  CloseIcon,
+  CommentIcon,
+  EyeOffIcon,
+  FlagIcon,
+  LogIcon,
+  StarIcon,
+  TrashIcon,
+  UndoIcon,
+} from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
 import {
   listCommunityReports,
@@ -85,21 +84,21 @@ export default async function ReportesPage({
               href: hrefWith('/panel/reportes', params, { tipo: null, page: null }),
               active: kind === 'fichas',
               count: counts.solutionOpen,
-              icon: Flag,
+              icon: FlagIcon,
             },
             {
               label: 'Comunidad',
               href: hrefWith('/panel/reportes', params, { tipo: 'comunidad', page: null }),
               active: kind === 'comunidad',
               count: counts.communityOpen,
-              icon: MessageSquare,
+              icon: CommentIcon,
             },
             {
               label: 'Reseñas',
               href: hrefWith('/panel/reportes', params, { tipo: 'resenas', page: null }),
               active: kind === 'resenas',
               count: counts.reviewOpen,
-              icon: Star,
+              icon: StarIcon,
             },
           ]}
         />
@@ -116,7 +115,7 @@ export default async function ReportesPage({
       {data.items.length === 0 ? (
         <Card>
           <EmptyState
-            icon={CheckCircle2}
+            icon={CheckCircleIcon}
             title={status === 'open' ? 'No hay reportes abiertos' : 'Sin reportes en este filtro'}
             description="Cuando alguien reporte una ficha, una reseña o un contenido de la comunidad aparecerá aquí."
           />
@@ -177,7 +176,7 @@ export default async function ReportesPage({
                     <div className="flex shrink-0 flex-wrap gap-2 lg:w-[220px] lg:flex-col">
                       <ActionButton
                         label="Resolver sin cambios"
-                        icon={<CheckCircle2 />}
+                        icon={<CheckCircleIcon />}
                         tone="success"
                         endpoint="/api/reports"
                         payload={{
@@ -193,7 +192,7 @@ export default async function ReportesPage({
                       />
                       <ActionButton
                         label="Descartar"
-                        icon={<X />}
+                        icon={<CloseIcon />}
                         endpoint="/api/reports"
                         payload={{
                           reportId: report.id,
@@ -209,7 +208,7 @@ export default async function ReportesPage({
                       {report.solutionPublished && (
                         <ActionButton
                           label="Retirar la ficha"
-                          icon={<Undo2 />}
+                          icon={<UndoIcon />}
                           tone="danger"
                           endpoint="/api/reports"
                           payload={{
@@ -243,7 +242,7 @@ export default async function ReportesPage({
                       </Badge>
                       <Badge
                         tone="lavender"
-                        icon={report.subjectType === 'comment' ? MessageSquare : ScrollText}
+                        icon={report.subjectType === 'comment' ? CommentIcon : LogIcon}
                       >
                         {report.subjectType === 'comment' ? 'Comentario' : 'Lista'}
                       </Badge>
@@ -299,7 +298,7 @@ export default async function ReportesPage({
                     <div className="flex shrink-0 flex-wrap gap-2 lg:w-[220px] lg:flex-col">
                       <ActionButton
                         label="Resolver sin cambios"
-                        icon={<CheckCircle2 />}
+                        icon={<CheckCircleIcon />}
                         tone="success"
                         endpoint="/api/community-reports"
                         payload={{
@@ -315,7 +314,7 @@ export default async function ReportesPage({
                       />
                       <ActionButton
                         label="Descartar"
-                        icon={<X />}
+                        icon={<CloseIcon />}
                         endpoint="/api/community-reports"
                         payload={{
                           reportId: report.id,
@@ -329,7 +328,7 @@ export default async function ReportesPage({
                         label={
                           report.subjectType === 'comment' ? 'Borrar comentario' : 'Volver privada'
                         }
-                        icon={<Trash2 />}
+                        icon={<TrashIcon />}
                         tone="danger"
                         endpoint="/api/community-reports"
                         payload={{
@@ -365,7 +364,7 @@ export default async function ReportesPage({
                         {REVIEW_REPORT_REASON[report.reason] ?? report.reason}
                       </Badge>
                       {report.review?.hidden && (
-                        <Badge tone="amber" icon={EyeOff}>
+                        <Badge tone="amber" icon={EyeOffIcon}>
                           Reseña oculta
                         </Badge>
                       )}
@@ -432,7 +431,7 @@ export default async function ReportesPage({
                         <>
                           <ActionButton
                             label="Resolver sin cambios"
-                            icon={<CheckCircle2 />}
+                            icon={<CheckCircleIcon />}
                             tone="success"
                             endpoint="/api/review-reports"
                             payload={{
@@ -448,7 +447,7 @@ export default async function ReportesPage({
                           />
                           <ActionButton
                             label="Descartar"
-                            icon={<X />}
+                            icon={<CloseIcon />}
                             endpoint="/api/review-reports"
                             payload={{
                               reportId: report.id,
@@ -464,7 +463,7 @@ export default async function ReportesPage({
                           {report.review && !report.review.hidden && (
                             <ActionButton
                               label="Ocultar la reseña"
-                              icon={<EyeOff />}
+                              icon={<EyeOffIcon />}
                               tone="danger"
                               endpoint="/api/review-reports"
                               payload={{
@@ -485,7 +484,7 @@ export default async function ReportesPage({
                       {report.review?.hidden && (
                         <ActionButton
                           label="Restaurar la reseña"
-                          icon={<RotateCcw />}
+                          icon={<UndoIcon />}
                           endpoint="/api/review-reports"
                           payload={{ action: 'restore', reviewId: report.review.id }}
                           success="Reseña restaurada"

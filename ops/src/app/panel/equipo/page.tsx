@@ -1,16 +1,15 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
-  ArrowDownCircle,
-  ArrowUpCircle,
-  CalendarClock,
-  Fingerprint,
-  LogOut,
-  Power,
-  PowerOff,
-  RotateCcw,
-  Trash2,
-} from 'lucide-react';
+  ArrowDownCircleIcon,
+  ArrowUpCircleIcon,
+  CalendarClockIcon,
+  ClockIcon,
+  FingerprintIcon,
+  LogOutIcon,
+  PowerIcon,
+  TrashIcon,
+} from '@/components/icons/gota';
 import { requireAdminPage } from '@/lib/auth';
 import { teamMembers } from '@/lib/data/team';
 import { fmtDateTime } from '@/lib/format';
@@ -69,7 +68,7 @@ export default async function EquipoPage() {
                 member.level === 'reviewer'
                   ? {
                       label: 'Subir a administrador',
-                      icon: <ArrowUpCircle />,
+                      icon: <ArrowUpCircleIcon />,
                       endpoint: '/api/team',
                       payload: { action: 'set_level', accountId: member.id, level: 'admin' },
                       success: 'Nivel actualizado',
@@ -80,7 +79,7 @@ export default async function EquipoPage() {
                     }
                   : {
                       label: 'Bajar a revisor',
-                      icon: <ArrowDownCircle />,
+                      icon: <ArrowDownCircleIcon />,
                       endpoint: '/api/team',
                       payload: { action: 'set_level', accountId: member.id, level: 'reviewer' },
                       success: 'Nivel actualizado',
@@ -94,7 +93,7 @@ export default async function EquipoPage() {
             if (!self && !member.disabledAt) {
               actions.push({
                 label: 'Cerrar sus sesiones',
-                icon: <LogOut />,
+                icon: <LogOutIcon />,
                 endpoint: '/api/team',
                 payload: { action: 'revoke_sessions', accountId: member.id },
                 success: 'Sesiones cerradas',
@@ -105,7 +104,7 @@ export default async function EquipoPage() {
               });
               actions.push({
                 label: 'Reiniciar autenticador',
-                icon: <Fingerprint />,
+                icon: <FingerprintIcon />,
                 endpoint: '/api/team',
                 payload: { action: 'reset_totp', accountId: member.id },
                 success: 'Autenticador reiniciado',
@@ -119,7 +118,7 @@ export default async function EquipoPage() {
             if (!member.totpConfirmed && !member.disabledAt) {
               actions.push({
                 label: 'Renovar invitación (3 días)',
-                icon: <CalendarClock />,
+                icon: <CalendarClockIcon />,
                 endpoint: '/api/team',
                 payload: { action: 'renew_enrollment', accountId: member.id },
                 success: 'Invitación renovada',
@@ -132,7 +131,7 @@ export default async function EquipoPage() {
             if (member.disabledAt) {
               actions.push({
                 label: 'Reactivar acceso',
-                icon: <Power />,
+                icon: <PowerIcon />,
                 endpoint: '/api/team',
                 payload: { action: 'enable', accountId: member.id },
                 success: 'Acceso reactivado',
@@ -141,7 +140,7 @@ export default async function EquipoPage() {
             } else {
               actions.push({
                 label: 'Desactivar acceso',
-                icon: <PowerOff />,
+                icon: <PowerIcon slash />,
                 danger: true,
                 endpoint: '/api/team',
                 payload: { action: 'disable', accountId: member.id },
@@ -157,7 +156,7 @@ export default async function EquipoPage() {
             }
             actions.push({
               label: 'Quitar del equipo',
-              icon: <Trash2 />,
+              icon: <TrashIcon />,
               danger: true,
               endpoint: '/api/team',
               payload: { action: 'remove', accountId: member.id },
@@ -205,7 +204,7 @@ export default async function EquipoPage() {
                 <TD>
                   {member.totpConfirmed ? (
                     <div>
-                      <Badge tone="sage" icon={Fingerprint}>
+                      <Badge tone="sage" icon={FingerprintIcon}>
                         Configurado
                       </Badge>
                       <p
@@ -216,7 +215,7 @@ export default async function EquipoPage() {
                     </div>
                   ) : (
                     <div>
-                      <Badge tone="amber" icon={RotateCcw}>
+                      <Badge tone="amber" icon={ClockIcon}>
                         Pendiente
                       </Badge>
                       {member.enrollBy && (

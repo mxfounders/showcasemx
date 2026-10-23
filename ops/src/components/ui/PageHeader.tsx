@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeftIcon } from '@/components/icons/gota';
 
 export function PageHeader({
   title,
@@ -23,7 +23,10 @@ export function PageHeader({
             href={back.href}
             className="group mb-2 inline-flex items-center gap-1 text-[13px] font-medium text-muted transition hover:text-fg"
           >
-            <ChevronLeft aria-hidden className="size-4 transition group-hover:-translate-x-0.5" />
+            <ChevronLeftIcon
+              aria-hidden
+              className="size-4 transition group-hover:-translate-x-0.5"
+            />
             {back.label}
           </Link>
         )}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useId, useState, type ReactNode } from 'react';
-import { AlertTriangle, PenLine } from 'lucide-react';
+import { AlertIcon, EditIcon } from '@/components/icons/gota';
 import { Dialog } from '../ui/Dialog';
 import { Button } from '../ui/Button';
 import { Alert } from '../ui/Field';
@@ -85,9 +85,9 @@ export function ReasonDialog({
           }
         >
           {destructive ? (
-            <AlertTriangle aria-hidden className="size-5" />
+            <AlertIcon aria-hidden className="size-5" />
           ) : (
-            <PenLine aria-hidden className="size-5" />
+            <EditIcon aria-hidden className="size-5" />
           )}
         </span>
       }

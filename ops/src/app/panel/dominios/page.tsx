@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Globe } from 'lucide-react';
+import { GlobeIcon } from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
 import { DOMAIN_FILTERS, listDomains, type DomainFilter } from '@/lib/data/domains';
 import { daysSince, fmtDate } from '@/lib/format';
@@ -62,7 +62,7 @@ export default async function DominiosPage({
         <TBody>
           {data.items.length === 0 ? (
             <EmptyRow colSpan={6}>
-              <EmptyState compact icon={Globe} title="Sin dominios en este filtro" />
+              <EmptyState compact icon={GlobeIcon} title="Sin dominios en este filtro" />
             </EmptyRow>
           ) : (
             data.items.map(item => (

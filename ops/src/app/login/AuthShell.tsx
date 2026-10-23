@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Fingerprint, LockKeyhole, ScrollText } from 'lucide-react';
+import { FingerprintIcon, LockIcon, LogIcon } from '@/components/icons/gota';
 import { cn } from '@/components/ui/cn';
 
 const STEPS = ['Contraseña', 'Verificación'];
@@ -75,13 +75,13 @@ export function AuthShell({
 
         <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[12px] text-muted">
           <li className="flex items-center gap-1.5">
-            <Fingerprint aria-hidden className="size-3.5" /> Dos pasos obligatorios
+            <FingerprintIcon aria-hidden className="size-3.5" /> Dos pasos obligatorios
           </li>
           <li className="flex items-center gap-1.5">
-            <LockKeyhole aria-hidden className="size-3.5" /> Sesión de 8 h, 30 min sin uso
+            <LockIcon aria-hidden className="size-3.5" /> Sesión de 8 h, 30 min sin uso
           </li>
           <li className="flex items-center gap-1.5">
-            <ScrollText aria-hidden className="size-3.5" /> Cada acceso queda registrado
+            <LogIcon aria-hidden className="size-3.5" /> Cada acceso queda registrado
           </li>
         </ul>
       </div>

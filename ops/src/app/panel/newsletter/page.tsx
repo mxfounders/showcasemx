@@ -1,6 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Newspaper, UserCheck, UserMinus, UserPlus } from 'lucide-react';
+import {
+  NewspaperIcon,
+  PersonCheckIcon,
+  PersonMinusIcon,
+  PersonPlusIcon,
+} from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
 import { newsletterOverview, NEWSLETTER_FILTERS } from '@/lib/data/newsletter';
 import { PROFILE, ROLE } from '@/lib/labels';
@@ -44,22 +49,22 @@ export default async function NewsletterPage({
         <Stat
           label="Activas"
           value={t.active}
-          icon={<UserCheck aria-hidden className="size-4" />}
+          icon={<PersonCheckIcon aria-hidden className="size-4" />}
         />
         <Stat
           label="Altas en 30 días"
           value={t.new30d}
-          icon={<UserPlus aria-hidden className="size-4" />}
+          icon={<PersonPlusIcon aria-hidden className="size-4" />}
         />
         <Stat
           label="Bajas en 30 días"
           value={t.left30d}
-          icon={<UserMinus aria-hidden className="size-4" />}
+          icon={<PersonMinusIcon aria-hidden className="size-4" />}
         />
         <Stat
           label="Histórico"
           value={t.all}
-          icon={<Newspaper aria-hidden className="size-4" />}
+          icon={<NewspaperIcon aria-hidden className="size-4" />}
           hint={`${t.unsubscribed} se dieron de baja`}
         />
       </section>
@@ -134,7 +139,7 @@ export default async function NewsletterPage({
         <TBody>
           {data.items.length === 0 ? (
             <EmptyRow colSpan={6}>
-              <EmptyState compact icon={Newspaper} title="Sin suscripciones en este filtro" />
+              <EmptyState compact icon={NewspaperIcon} title="Sin suscripciones en este filtro" />
             </EmptyRow>
           ) : (
             data.items.map(item => (

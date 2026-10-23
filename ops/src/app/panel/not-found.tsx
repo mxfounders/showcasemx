@@ -1,11 +1,11 @@
-import { SearchX } from 'lucide-react';
+import { SearchXIcon } from '@/components/icons/gota';
 import { ButtonLink } from '@/components/ui/Button';
 
 export default function NotFound() {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
       <span className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-surface-3 text-muted">
-        <SearchX aria-hidden className="size-6" />
+        <SearchXIcon aria-hidden className="size-6" />
       </span>
       <h1 className="text-lg font-semibold">No encontramos esto</h1>
       <p className="mt-1 max-w-md text-sm text-muted">

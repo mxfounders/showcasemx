@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { LucideIcon } from 'lucide-react';
+import type { GotaIcon } from '@/components/icons/gota';
 import { cn } from './cn';
 
 export interface TabItem {
@@ -7,7 +7,7 @@ export interface TabItem {
   href: string;
   active: boolean;
   count?: number;
-  icon?: LucideIcon;
+  icon?: GotaIcon;
 }
 
 /** Underline tabs for sections of one page (URL-driven, so back/forward works). */
@@ -28,7 +28,7 @@ export function Tabs({ items, label }: { items: TabItem[]; label: string }) {
                   : 'border-transparent text-muted hover:border-line-strong hover:text-fg',
               )}
             >
-              {Icon && <Icon aria-hidden className="size-4" strokeWidth={1.8} />}
+              {Icon && <Icon aria-hidden className="size-4" />}
               {text}
               {count !== undefined && (
                 <span

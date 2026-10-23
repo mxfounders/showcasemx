@@ -3,7 +3,14 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Command, LogOut, Menu, ShieldCheck, ShieldOff, X } from 'lucide-react';
+import {
+  CloseIcon,
+  CommandIcon,
+  LogOutIcon,
+  MenuIcon,
+  ShieldIcon,
+  ShieldOffIcon,
+} from '@/components/icons/gota';
 import { Avatar } from '../ui/Avatar';
 import { Count } from '../ui/Badge';
 import { Kbd } from '../ui/Kbd';
@@ -52,14 +59,14 @@ function SecureModeChip() {
         }}
         className="flex h-9 w-full items-center gap-2.5 rounded-xl border border-dashed border-line px-3 text-left text-[12.5px] font-medium text-muted transition hover:border-accent/40 hover:text-accent-fg"
       >
-        <ShieldOff aria-hidden className="size-4" />
+        <ShieldOffIcon aria-hidden className="size-4" />
         Modo seguro inactivo
       </button>
     );
 
   return (
     <div className="flex h-9 items-center gap-2.5 rounded-xl bg-accent-soft px-3 text-[12.5px] text-accent-fg">
-      <ShieldCheck aria-hidden className="size-4 shrink-0" />
+      <ShieldIcon aria-hidden className="size-4 shrink-0" />
       <span className="flex-1 font-medium">
         Modo seguro <span className="num opacity-80">{mmss(left)}</span>
       </span>
@@ -119,7 +126,6 @@ function NavLinks({
                     >
                       <item.Icon
                         aria-hidden
-                        strokeWidth={1.8}
                         className="size-[17px] shrink-0 transition-transform group-hover:-translate-y-px motion-reduce:transform-none"
                       />
                       <span className="flex-1 truncate">{item.label}</span>
@@ -177,7 +183,7 @@ function Account() {
           title="Cerrar sesión"
           className="rounded-lg p-1.5 text-subtle transition hover:bg-surface-3 hover:text-terracotta"
         >
-          <LogOut aria-hidden className="size-4" />
+          <LogOutIcon aria-hidden className="size-4" />
         </button>
       </div>
     </div>
@@ -191,7 +197,7 @@ function SearchTrigger() {
       onClick={() => window.dispatchEvent(new CustomEvent('ops:open-command-palette'))}
       className="flex h-9 w-full items-center gap-2.5 rounded-xl border border-line bg-surface-2 px-3 text-[13px] text-muted transition hover:border-line-strong hover:text-fg"
     >
-      <Command aria-hidden className="size-4" />
+      <CommandIcon aria-hidden className="size-4" />
       <span className="flex-1 text-left">Buscar o saltar a…</span>
       <Kbd>⌘K</Kbd>
     </button>
@@ -242,7 +248,7 @@ export function Sidebar({ counts }: { counts: Record<CountKey, number> }) {
             onClick={() => window.dispatchEvent(new CustomEvent('ops:open-command-palette'))}
             className="rounded-lg p-2 text-muted hover:bg-surface-3 hover:text-fg"
           >
-            <Command aria-hidden className="size-[18px]" />
+            <CommandIcon aria-hidden className="size-[18px]" />
           </button>
           <button
             type="button"
@@ -251,7 +257,7 @@ export function Sidebar({ counts }: { counts: Record<CountKey, number> }) {
             onClick={() => setMobileOpen(true)}
             className="rounded-lg p-2 text-muted hover:bg-surface-3 hover:text-fg"
           >
-            <Menu aria-hidden className="size-5" />
+            <MenuIcon aria-hidden className="size-5" />
           </button>
         </div>
       </div>
@@ -272,7 +278,7 @@ export function Sidebar({ counts }: { counts: Record<CountKey, number> }) {
                 onClick={() => setMobileOpen(false)}
                 className="rounded-lg p-1.5 text-subtle hover:bg-surface-3"
               >
-                <X aria-hidden className="size-5" />
+                <CloseIcon aria-hidden className="size-5" />
               </button>
             </div>
             <nav className="flex-1 overflow-y-auto px-3 pb-4">

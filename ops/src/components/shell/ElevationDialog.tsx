@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldIcon } from '@/components/icons/gota';
 import { Dialog } from '../ui/Dialog';
 import { Button } from '../ui/Button';
 import { OtpInput } from '../ui/OtpInput';
@@ -89,7 +89,7 @@ export function ElevationDialog() {
       size="sm"
       icon={
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-fg">
-          <ShieldCheck aria-hidden className="size-5" />
+          <ShieldIcon aria-hidden className="size-5" />
         </span>
       }
       title="Confirma que eres tú"

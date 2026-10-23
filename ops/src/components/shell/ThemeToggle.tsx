@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Monitor, Moon, Sun } from 'lucide-react';
+import { DesktopIcon, MoonIcon, SunIcon } from '@/components/icons/gota';
 import { THEME_COOKIE, type ThemePreference } from '@/lib/theme';
 import { cn } from '../ui/cn';
 
-const OPTIONS: Array<{ value: ThemePreference; label: string; Icon: typeof Sun }> = [
-  { value: 'light', label: 'Claro', Icon: Sun },
-  { value: 'dark', label: 'Oscuro', Icon: Moon },
-  { value: 'system', label: 'Sistema', Icon: Monitor },
+const OPTIONS: Array<{ value: ThemePreference; label: string; Icon: typeof SunIcon }> = [
+  { value: 'light', label: 'Claro', Icon: SunIcon },
+  { value: 'dark', label: 'Oscuro', Icon: MoonIcon },
+  { value: 'system', label: 'Sistema', Icon: DesktopIcon },
 ];
 
 function apply(theme: ThemePreference) {

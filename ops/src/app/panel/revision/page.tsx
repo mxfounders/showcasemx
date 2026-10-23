@@ -1,14 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
-  ArrowRight,
-  CheckCircle2,
-  Flag,
+  ArrowRightIcon,
+  CheckCircleIcon,
+  FlagIcon,
   ImageIcon,
-  RefreshCcw,
-  ShieldQuestion,
-  Sparkles,
-} from 'lucide-react';
+  ShieldQuestionIcon,
+  SparklesIcon,
+  SyncIcon,
+} from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
 import { listSolutions } from '@/lib/data/solutions';
 import { daysSince, fmtDateTime } from '@/lib/format';
@@ -85,7 +85,7 @@ export default async function RevisionPage({
       {data.items.length === 0 ? (
         <div className="rounded-2xl border border-line bg-surface shadow-card">
           <EmptyState
-            icon={q ? ShieldQuestion : CheckCircle2}
+            icon={q ? ShieldQuestionIcon : CheckCircleIcon}
             title={
               q
                 ? 'Sin coincidencias'
@@ -124,7 +124,7 @@ export default async function RevisionPage({
                       {item.hasPublished && (
                         <Badge
                           tone="blue"
-                          icon={RefreshCcw}
+                          icon={SyncIcon}
                           title="Ya tiene una versión pública; esta es una actualización"
                         >
                           Actualización
@@ -141,13 +141,13 @@ export default async function RevisionPage({
                     </p>
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {item.ownerNew && (
-                        <Badge tone="amber" icon={Sparkles}>
+                        <Badge tone="amber" icon={SparklesIcon}>
                           Cuenta nueva
                         </Badge>
                       )}
                       {!item.ownerVerified && <Badge tone="amber">Correo sin verificar</Badge>}
                       {item.openReports > 0 && (
-                        <Badge tone="terracotta" icon={Flag}>
+                        <Badge tone="terracotta" icon={FlagIcon}>
                           {item.openReports} reportes
                         </Badge>
                       )}
@@ -158,7 +158,7 @@ export default async function RevisionPage({
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-2">
                     <AgeBadge days={days} />
-                    <ArrowRight
+                    <ArrowRightIcon
                       aria-hidden
                       className="size-4 text-subtle transition group-hover:translate-x-0.5 group-hover:text-accent-fg"
                     />

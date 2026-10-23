@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, type ReactNode } from 'react';
-import { X } from 'lucide-react';
+import { CloseIcon } from '@/components/icons/gota';
 import { cn } from './cn';
 
 /** Side panel on a native modal <dialog> (focus containment + Escape for free). */
@@ -68,7 +68,7 @@ export function Drawer({
               onClick={onClose}
               className="-mr-2 rounded-lg p-1.5 text-subtle transition hover:bg-surface-3 hover:text-fg"
             >
-              <X aria-hidden className="size-[18px]" />
+              <CloseIcon aria-hidden className="size-[18px]" />
             </button>
           </header>
           <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>

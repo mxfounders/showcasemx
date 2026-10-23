@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Search, X } from 'lucide-react';
+import { CloseIcon, SearchIcon } from '@/components/icons/gota';
 import { cn } from './cn';
 
 /** Debounced search box bound to a URL param; the server page does the filtering. */
@@ -45,7 +45,7 @@ export function SearchField({
 
   return (
     <div className={cn('relative', className)}>
-      <Search
+      <SearchIcon
         aria-hidden
         className={cn(
           'pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-subtle',
@@ -69,7 +69,7 @@ export function SearchField({
           onClick={() => setValue('')}
           className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-subtle transition hover:text-fg"
         >
-          <X aria-hidden className="size-3.5" />
+          <CloseIcon aria-hidden className="size-3.5" />
         </button>
       )}
     </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Download } from 'lucide-react';
+import { DownloadIcon } from '@/components/icons/gota';
 import { requestElevation } from '@/lib/client';
 import { toast } from '@/lib/toast';
 import { Button } from '../ui/Button';
@@ -56,7 +56,7 @@ export function ExportButton({ kind, label = 'Exportar CSV' }: { kind: string; l
   }
 
   return (
-    <Button tone="secondary" icon={Download} loading={busy} onClick={() => run()}>
+    <Button tone="secondary" icon={DownloadIcon} loading={busy} onClick={() => run()}>
       {label}
     </Button>
   );

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Megaphone } from 'lucide-react';
+import { MegaphoneIcon } from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
 import { AD_FILTERS, adsOverview, type AdFilter } from '@/lib/data/ads';
 import { fmtDate, fmtMoney, fmtNumber, fmtPercent } from '@/lib/format';
@@ -169,7 +169,7 @@ export default async function AnunciosPage({
         <TBody>
           {data.items.length === 0 ? (
             <EmptyRow colSpan={7}>
-              <EmptyState compact icon={Megaphone} title="Sin campañas en este filtro" />
+              <EmptyState compact icon={MegaphoneIcon} title="Sin campañas en este filtro" />
             </EmptyRow>
           ) : (
             data.items.map(item => {

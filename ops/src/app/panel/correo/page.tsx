@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { CheckCircle2, Mail, RefreshCw } from 'lucide-react';
+import { CheckCircleIcon, MailIcon, RefreshIcon } from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
 import { mailOverview, MAIL_FILTERS, type MailFilter } from '@/lib/data/mail';
 import { fmtNumber } from '@/lib/format';
@@ -48,7 +48,7 @@ export default async function CorreoPage({
           user.level === 'admin' && (c.failed ?? 0) > 0 ? (
             <ActionButton
               label="Reintentar fallidos recientes"
-              icon={<RefreshCw />}
+              icon={<RefreshIcon />}
               tone="primary"
               endpoint="/api/mail"
               payload={{ action: 'retry_all_failed' }}
@@ -135,7 +135,7 @@ export default async function CorreoPage({
             <EmptyRow colSpan={7}>
               <EmptyState
                 compact
-                icon={filter === 'problems' ? CheckCircle2 : Mail}
+                icon={filter === 'problems' ? CheckCircleIcon : MailIcon}
                 title={
                   filter === 'problems' ? 'Sin problemas de entrega' : 'Sin avisos en este filtro'
                 }
@@ -176,7 +176,7 @@ export default async function CorreoPage({
                   {['failed', 'pending'].includes(item.emailState) && (
                     <ActionButton
                       label="Reintentar"
-                      icon={<RefreshCw />}
+                      icon={<RefreshIcon />}
                       tone="ghost"
                       size="xs"
                       endpoint="/api/mail"

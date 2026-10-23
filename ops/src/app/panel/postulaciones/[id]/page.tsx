@@ -2,25 +2,25 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
-  ArrowLeft,
-  ArrowRight,
-  CheckCircle2,
-  Circle,
-  ExternalLink,
-  Eye,
-  Globe,
-  Heart,
-  History,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  BookmarkIcon,
+  ChartLineIcon,
+  CheckCircleIcon,
+  CommentIcon,
+  CursorClickIcon,
+  ExternalLinkIcon,
+  EyeIcon,
+  FlagIcon,
+  GlobeIcon,
+  HandshakeIcon,
+  HeartIcon,
+  HistoryIcon,
   ImageIcon,
-  LineChart,
-  Lock,
-  MessageSquare,
-  MousePointerClick,
-  Bookmark,
-  Handshake,
-  Flag,
-  RefreshCcw,
-} from 'lucide-react';
+  LockIcon,
+  RadioUnselectedIcon,
+  SyncIcon,
+} from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
 import { isUuid } from '@/lib/http';
 import { solutionDetail, type SolutionDetail } from '@/lib/data/solutions';
@@ -100,7 +100,7 @@ function ExternalUrl({ value }: { value: unknown }) {
       className="inline-flex items-center gap-1 break-all text-accent-fg hover:underline"
     >
       {href.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-      <ExternalLink aria-hidden className="size-3 shrink-0" />
+      <ExternalLinkIcon aria-hidden className="size-3 shrink-0" />
     </a>
   );
 }
@@ -160,7 +160,7 @@ function FichaTab({
               label: 'Correo privado de contacto',
               value: asText(d.contactEmail) ? (
                 <span className="inline-flex items-center gap-1.5">
-                  <Lock aria-hidden className="size-3.5 text-subtle" />
+                  <LockIcon aria-hidden className="size-3.5 text-subtle" />
                   {asText(d.contactEmail)}
                   <Badge>Nunca público</Badge>
                 </span>
@@ -321,7 +321,7 @@ function FichaTab({
             rel="noopener noreferrer"
             className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-accent-fg hover:underline"
           >
-            Ver la ficha pública en shwcs <ExternalLink aria-hidden className="size-3.5" />
+            Ver la ficha pública en shwcs <ExternalLinkIcon aria-hidden className="size-3.5" />
           </a>
         )}
       </Section>
@@ -439,7 +439,7 @@ export default async function SolutionPage({
           href={fromQueue ? '/panel/revision' : '/panel/postulaciones'}
           className="group inline-flex items-center gap-1 text-[13px] font-medium text-muted hover:text-fg"
         >
-          <ArrowLeft aria-hidden className="size-4 transition group-hover:-translate-x-0.5" />
+          <ArrowLeftIcon aria-hidden className="size-4 transition group-hover:-translate-x-0.5" />
           {fromQueue ? 'Cola de revisión' : 'Postulaciones'}
         </Link>
         {fromQueue && isPending && (
@@ -451,7 +451,7 @@ export default async function SolutionPage({
               href={prevHref ?? '#'}
               tone="secondary"
               size="xs"
-              icon={ArrowLeft}
+              icon={ArrowLeftIcon}
               aria-disabled={!prevHref}
               className={!prevHref ? 'pointer-events-none opacity-40' : ''}
             >
@@ -461,7 +461,7 @@ export default async function SolutionPage({
               href={nextHref ?? '#'}
               tone="secondary"
               size="xs"
-              iconRight={ArrowRight}
+              iconRight={ArrowRightIcon}
               aria-disabled={!nextHref}
               className={!nextHref ? 'pointer-events-none opacity-40' : ''}
             >
@@ -479,7 +479,7 @@ export default async function SolutionPage({
             </h1>
             <SolutionStatusBadge status={s.status} />
             {s.publishedData && s.status !== 'published' && (
-              <Badge tone="blue" icon={RefreshCcw}>
+              <Badge tone="blue" icon={SyncIcon}>
                 Tiene versión pública
               </Badge>
             )}
@@ -500,7 +500,7 @@ export default async function SolutionPage({
         <div className="flex shrink-0 items-center gap-2">
           <IdChip value={s.id} display={s.id.slice(0, 8)} />
           {safeHref(s.data.website) && (
-            <ButtonLink href={safeHref(s.data.website)!} external tone="secondary" icon={Globe}>
+            <ButtonLink href={safeHref(s.data.website)!} external tone="secondary" icon={GlobeIcon}>
               Abrir sitio
             </ButtonLink>
           )}
@@ -559,7 +559,7 @@ export default async function SolutionPage({
                 (changes.length === 0 ? (
                   <EmptyState
                     compact
-                    icon={CheckCircle2}
+                    icon={CheckCircleIcon}
                     title="Sin diferencias"
                     description="El borrador es idéntico a la versión pública."
                   />
@@ -604,7 +604,7 @@ export default async function SolutionPage({
               {tab === 'historial' && (
                 <div className="space-y-8">
                   {detail.events.length === 0 ? (
-                    <EmptyState compact icon={History} title="Sin eventos" />
+                    <EmptyState compact icon={HistoryIcon} title="Sin eventos" />
                   ) : (
                     <Timeline
                       items={detail.events.map(event => {
@@ -649,20 +649,20 @@ export default async function SolutionPage({
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {[
-                      { label: 'Vistas (total)', value: detail.metrics.viewsAll, Icon: Eye },
+                      { label: 'Vistas (total)', value: detail.metrics.viewsAll, Icon: EyeIcon },
                       {
                         label: 'Clics al sitio',
                         value: detail.metrics.clicksAll,
-                        Icon: MousePointerClick,
+                        Icon: CursorClickIcon,
                       },
                       {
                         label: 'CTR',
                         value: fmtPercent(detail.metrics.clicksAll, detail.metrics.viewsAll),
-                        Icon: LineChart,
+                        Icon: ChartLineIcon,
                       },
-                      { label: 'Solicitudes', value: detail.metrics.contacts, Icon: Handshake },
-                      { label: 'Me gusta', value: detail.metrics.likes, Icon: Heart },
-                      { label: 'Guardados', value: detail.metrics.saves, Icon: Bookmark },
+                      { label: 'Solicitudes', value: detail.metrics.contacts, Icon: HandshakeIcon },
+                      { label: 'Me gusta', value: detail.metrics.likes, Icon: HeartIcon },
+                      { label: 'Guardados', value: detail.metrics.saves, Icon: BookmarkIcon },
                     ].map(({ label, value, Icon }) => (
                       <div key={label} className="rounded-xl border border-line p-3.5">
                         <p className="flex items-center gap-1.5 text-[12.5px] text-muted">
@@ -692,7 +692,7 @@ export default async function SolutionPage({
 
               {tab === 'reportes' &&
                 (detail.reports.length === 0 ? (
-                  <EmptyState compact icon={Flag} title="Sin reportes" />
+                  <EmptyState compact icon={FlagIcon} title="Sin reportes" />
                 ) : (
                   <ul className="divide-y divide-line">
                     {detail.reports.map(report => (
@@ -723,7 +723,7 @@ export default async function SolutionPage({
                           href="/panel/reportes"
                           tone="primary"
                           size="sm"
-                          iconRight={ArrowRight}
+                          iconRight={ArrowRightIcon}
                         >
                           Resolver en Reportes
                         </ButtonLink>
@@ -734,7 +734,7 @@ export default async function SolutionPage({
 
               {tab === 'comentarios' &&
                 (detail.comments.length === 0 ? (
-                  <EmptyState compact icon={MessageSquare} title="Sin comentarios públicos" />
+                  <EmptyState compact icon={CommentIcon} title="Sin comentarios públicos" />
                 ) : (
                   <ul className="divide-y divide-line">
                     {detail.comments.map(comment => (
@@ -838,9 +838,9 @@ export default async function SolutionPage({
                 {items.map(item => (
                   <li key={item.label} className="flex items-center gap-2 text-[13px]">
                     {item.done ? (
-                      <CheckCircle2 aria-hidden className="size-4 shrink-0 text-sage" />
+                      <CheckCircleIcon aria-hidden className="size-4 shrink-0 text-sage" />
                     ) : (
-                      <Circle
+                      <RadioUnselectedIcon
                         aria-hidden
                         className={`size-4 shrink-0 ${item.required ? 'text-terracotta' : 'text-subtle'}`}
                       />

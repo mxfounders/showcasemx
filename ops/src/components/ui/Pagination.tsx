@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeftIcon, ChevronRightIcon } from '@/components/icons/gota';
 import { fmtNumber } from '@/lib/format';
 import { cn } from './cn';
 
@@ -40,7 +40,7 @@ export function Pagination({
           className={cn(linkClass, page <= 1 && disabled)}
           scroll={false}
         >
-          <ChevronLeft aria-hidden className="size-4" /> Anterior
+          <ChevronLeftIcon aria-hidden className="size-4" /> Anterior
         </Link>
         <Link
           href={hrefFor(page + 1)}
@@ -49,7 +49,7 @@ export function Pagination({
           className={cn(linkClass, !hasMore && disabled)}
           scroll={false}
         >
-          Siguiente <ChevronRight aria-hidden className="size-4" />
+          Siguiente <ChevronRightIcon aria-hidden className="size-4" />
         </Link>
       </div>
     </nav>

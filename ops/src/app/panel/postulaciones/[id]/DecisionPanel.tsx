@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Ban, CheckCircle2, MessageSquareWarning, Undo2 } from 'lucide-react';
+import { BlockIcon, CheckCircleIcon, MessageAlertIcon, UndoIcon } from '@/components/icons/gota';
 import { api, errorMessage } from '@/lib/client';
 import { toast } from '@/lib/toast';
 import { Button } from '@/components/ui/Button';
@@ -118,7 +118,7 @@ export function DecisionPanel({
           <Button
             tone="success"
             size="md"
-            icon={CheckCircle2}
+            icon={CheckCircleIcon}
             disabled={!valid || busy !== null}
             loading={busy === 'publish'}
             onClick={() => decide('publish')}
@@ -129,7 +129,7 @@ export function DecisionPanel({
             {status === 'pending' && (
               <Button
                 tone="secondary"
-                icon={MessageSquareWarning}
+                icon={MessageAlertIcon}
                 disabled={!valid || busy !== null}
                 loading={busy === 'changes_requested'}
                 onClick={() => decide('changes_requested')}
@@ -139,7 +139,7 @@ export function DecisionPanel({
             )}
             <Button
               tone="danger"
-              icon={Ban}
+              icon={BlockIcon}
               disabled={!valid || busy !== null}
               className={status === 'pending' ? '' : 'col-span-2'}
               onClick={() => setConfirm('reject')}
@@ -152,7 +152,7 @@ export function DecisionPanel({
         <Button
           tone="danger"
           size="md"
-          icon={Undo2}
+          icon={UndoIcon}
           className="w-full"
           disabled={!valid || busy !== null}
           onClick={() => setConfirm('withdraw')}

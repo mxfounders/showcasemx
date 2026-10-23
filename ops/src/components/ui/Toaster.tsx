@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CheckCircle2, Info, X, XCircle } from 'lucide-react';
+import { CheckCircleIcon, CloseCircleIcon, CloseIcon, InfoIcon } from '@/components/icons/gota';
 import type { ToastPayload } from '@/lib/toast';
 import { cn } from './cn';
 
-const icons = { success: CheckCircle2, error: XCircle, info: Info };
+const icons = { success: CheckCircleIcon, error: CloseCircleIcon, info: InfoIcon };
 const tints = { success: 'text-sage', error: 'text-terracotta', info: 'text-accent-fg' };
 
 export function Toaster() {
@@ -38,11 +38,7 @@ export function Toaster() {
             role={item.tone === 'error' ? 'alert' : 'status'}
             className="pointer-events-auto flex w-full animate-toast-in items-start gap-3 rounded-2xl border border-line bg-surface px-4 py-3 shadow-pop"
           >
-            <Icon
-              aria-hidden
-              className={cn('mt-0.5 size-[18px] shrink-0', tints[item.tone])}
-              strokeWidth={2}
-            />
+            <Icon aria-hidden className={cn('mt-0.5 size-[18px] shrink-0', tints[item.tone])} />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-fg">{item.title}</p>
               {item.description && (
@@ -55,7 +51,7 @@ export function Toaster() {
               onClick={() => setItems(list => list.filter(entry => entry.id !== item.id))}
               className="-mr-1 rounded-md p-0.5 text-subtle transition hover:text-fg"
             >
-              <X aria-hidden className="size-4" />
+              <CloseIcon aria-hidden className="size-4" />
             </button>
           </div>
         );

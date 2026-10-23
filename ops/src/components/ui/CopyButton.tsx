@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Copy } from 'lucide-react';
+import { CheckIcon, CopyIcon } from '@/components/icons/gota';
 import { cn } from './cn';
 
 export function CopyButton({
@@ -34,9 +34,9 @@ export function CopyButton({
       )}
     >
       {copied ? (
-        <Check aria-hidden className="size-3.5 text-sage" />
+        <CheckIcon aria-hidden className="size-3.5 text-sage" />
       ) : (
-        <Copy aria-hidden className="size-3.5" />
+        <CopyIcon aria-hidden className="size-3.5" />
       )}
     </button>
   );

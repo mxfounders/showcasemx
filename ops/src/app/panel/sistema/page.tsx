@@ -1,5 +1,11 @@
 import type { Metadata } from 'next';
-import { CheckCircle2, Database, HardDrive, Server, XCircle } from 'lucide-react';
+import {
+  CheckCircleIcon,
+  CloseCircleIcon,
+  DatabaseIcon,
+  HardDriveIcon,
+  ServerIcon,
+} from '@/components/icons/gota';
 import { requireAdminPage } from '@/lib/auth';
 import { probeProduct, systemOverview } from '@/lib/data/system';
 import { configStatus } from '@/lib/env';
@@ -30,9 +36,9 @@ function Check({ ok, label, detail }: { ok: boolean; label: string; detail: stri
   return (
     <li className="flex items-center gap-3 py-2.5">
       {ok ? (
-        <CheckCircle2 aria-hidden className="size-[18px] shrink-0 text-sage" />
+        <CheckCircleIcon aria-hidden className="size-[18px] shrink-0 text-sage" />
       ) : (
-        <XCircle aria-hidden className="size-[18px] shrink-0 text-terracotta" />
+        <CloseCircleIcon aria-hidden className="size-[18px] shrink-0 text-terracotta" />
       )}
       <span className="flex-1 text-[13.5px] font-medium">{label}</span>
       <span className={`text-right text-[12.5px] ${ok ? 'text-muted' : 'text-terracotta'}`}>
@@ -59,14 +65,14 @@ export default async function SistemaPage() {
         <Stat
           label="Latencia de base de datos"
           value={fmtDuration(system.pingMs)}
-          icon={<Database aria-hidden className="size-4" />}
+          icon={<DatabaseIcon aria-hidden className="size-4" />}
           hint={`PostgreSQL ${system.database.version.split(' ')[0]}`}
         />
         <Stat
           label="Tamaño de la base"
           value={fmtBytes(system.database.bytes)}
           hint={`${system.database.connections} conexiones · ${system.database.name}`}
-          icon={<HardDrive aria-hidden className="size-4" />}
+          icon={<HardDriveIcon aria-hidden className="size-4" />}
         />
         <Stat
           label="Producto (shwcs.site)"
@@ -77,7 +83,7 @@ export default async function SistemaPage() {
               ? `${fmtDuration(product.ms)}${product.status ? ` · HTTP ${product.status}` : ''}${product.error ? ` · ${product.error}` : ''}`
               : 'Falta PRODUCT_APP_ORIGIN'
           }
-          icon={<Server aria-hidden className="size-4" />}
+          icon={<ServerIcon aria-hidden className="size-4" />}
         />
         <Stat
           label="Residuos por limpiar"

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, type ReactNode } from 'react';
-import { X } from 'lucide-react';
+import { CloseIcon } from '@/components/icons/gota';
 import { cn } from './cn';
 
 /**
@@ -77,7 +77,7 @@ export function Dialog({
                 onClick={onClose}
                 className="-mr-2 -mt-1 rounded-lg p-1.5 text-subtle transition hover:bg-surface-3 hover:text-fg"
               >
-                <X aria-hidden className="size-4" />
+                <CloseIcon aria-hidden className="size-4" />
               </button>
             )}
           </div>

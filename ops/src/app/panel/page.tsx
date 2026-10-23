@@ -1,16 +1,16 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
-  ArrowRight,
-  CheckCircle2,
-  ClipboardCheck,
-  Flag,
-  Inbox,
-  KeyRound,
-  Mail,
-  ShieldAlert,
-  Sparkles,
-} from 'lucide-react';
+  ArrowRightIcon,
+  CheckCircleIcon,
+  ClipboardCheckIcon,
+  FlagIcon,
+  InboxIcon,
+  KeyIcon,
+  MailIcon,
+  ShieldAlertIcon,
+  SparklesIcon,
+} from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
 import { dashboardData } from '@/lib/data/dashboard';
 import { daysSince, fmtNumber, TIME_ZONE } from '@/lib/format';
@@ -102,7 +102,7 @@ export default async function PanelHome() {
         }
         actions={
           k.pending > 0 ? (
-            <ButtonLink href="/panel/revision" tone="solid" icon={ClipboardCheck}>
+            <ButtonLink href="/panel/revision" tone="solid" icon={ClipboardCheckIcon}>
               Revisar {k.pending} {k.pending === 1 ? 'ficha' : 'fichas'}
             </ButtonLink>
           ) : undefined
@@ -125,7 +125,7 @@ export default async function PanelHome() {
           )}
           {data.previousLogin && (
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-line bg-surface px-4 py-2.5 text-[13px] text-muted shadow-card">
-              <KeyRound aria-hidden className="size-4 text-subtle" />
+              <KeyIcon aria-hidden className="size-4 text-subtle" />
               <span>Tu acceso anterior:</span>
               <span className="font-medium text-fg-2">
                 {data.previousLogin.device ?? 'dispositivo desconocido'}
@@ -152,7 +152,7 @@ export default async function PanelHome() {
           value={k.pending}
           tone="attention"
           href="/panel/revision"
-          icon={<ClipboardCheck aria-hidden className="size-4" />}
+          icon={<ClipboardCheckIcon aria-hidden className="size-4" />}
           hint={
             !k.oldestPending
               ? 'Cola vacía'
@@ -166,7 +166,7 @@ export default async function PanelHome() {
           value={k.openReports}
           tone="danger"
           href="/panel/reportes"
-          icon={<Flag aria-hidden className="size-4" />}
+          icon={<FlagIcon aria-hidden className="size-4" />}
           hint="Fichas y comunidad"
         />
         <Stat
@@ -174,7 +174,7 @@ export default async function PanelHome() {
           value={k.inquiries}
           tone="attention"
           href="/panel/mensajes"
-          icon={<Inbox aria-hidden className="size-4" />}
+          icon={<InboxIcon aria-hidden className="size-4" />}
           hint="Formulario de contacto"
         />
         <Stat
@@ -182,7 +182,7 @@ export default async function PanelHome() {
           value={k.mailFailed}
           tone="danger"
           href="/panel/correo"
-          icon={<Mail aria-hidden className="size-4" />}
+          icon={<MailIcon aria-hidden className="size-4" />}
           hint={k.mailQueued ? `${fmtNumber(k.mailQueued)} en cola` : 'Nada en cola'}
         />
       </section>
@@ -193,7 +193,7 @@ export default async function PanelHome() {
             title="Actividad del catálogo"
             description="Vistas y clics al sitio oficial, últimos 30 días (días en UTC)."
             action={
-              <ButtonLink href="/panel/metricas" tone="ghost" size="xs" iconRight={ArrowRight}>
+              <ButtonLink href="/panel/metricas" tone="ghost" size="xs" iconRight={ArrowRightIcon}>
                 Métricas
               </ButtonLink>
             }
@@ -279,7 +279,7 @@ export default async function PanelHome() {
             title="Cola de revisión"
             description="La más antigua primero"
             action={
-              <ButtonLink href="/panel/revision" tone="ghost" size="xs" iconRight={ArrowRight}>
+              <ButtonLink href="/panel/revision" tone="ghost" size="xs" iconRight={ArrowRightIcon}>
                 Todas
               </ButtonLink>
             }
@@ -288,7 +288,7 @@ export default async function PanelHome() {
             {data.reviews.length === 0 ? (
               <EmptyState
                 compact
-                icon={CheckCircle2}
+                icon={CheckCircleIcon}
                 title="Todo revisado"
                 description="No hay fichas esperando decisión."
               />
@@ -318,14 +318,14 @@ export default async function PanelHome() {
             title="Reportes abiertos"
             description="Moderación pendiente"
             action={
-              <ButtonLink href="/panel/reportes" tone="ghost" size="xs" iconRight={ArrowRight}>
+              <ButtonLink href="/panel/reportes" tone="ghost" size="xs" iconRight={ArrowRightIcon}>
                 Todos
               </ButtonLink>
             }
           />
           <CardBody>
             {data.reports.length === 0 ? (
-              <EmptyState compact icon={CheckCircle2} title="Sin reportes abiertos" />
+              <EmptyState compact icon={CheckCircleIcon} title="Sin reportes abiertos" />
             ) : (
               <ul>
                 {data.reports.map(item => (
@@ -353,14 +353,14 @@ export default async function PanelHome() {
             title="Mensajes"
             description="Formulario de contacto"
             action={
-              <ButtonLink href="/panel/mensajes" tone="ghost" size="xs" iconRight={ArrowRight}>
+              <ButtonLink href="/panel/mensajes" tone="ghost" size="xs" iconRight={ArrowRightIcon}>
                 Bandeja
               </ButtonLink>
             }
           />
           <CardBody>
             {data.inquiries.length === 0 ? (
-              <EmptyState compact icon={CheckCircle2} title="Bandeja al día" />
+              <EmptyState compact icon={CheckCircleIcon} title="Bandeja al día" />
             ) : (
               <ul>
                 {data.inquiries.map(item => {
@@ -394,7 +394,12 @@ export default async function PanelHome() {
             description="Cada acción de ops queda en la bitácora encadenada."
             action={
               user.level === 'admin' ? (
-                <ButtonLink href="/panel/bitacora" tone="ghost" size="xs" iconRight={ArrowRight}>
+                <ButtonLink
+                  href="/panel/bitacora"
+                  tone="ghost"
+                  size="xs"
+                  iconRight={ArrowRightIcon}
+                >
                   Bitácora
                 </ButtonLink>
               ) : undefined
@@ -402,7 +407,7 @@ export default async function PanelHome() {
           />
           <CardBody>
             {data.activity.length === 0 ? (
-              <EmptyState compact icon={Sparkles} title="Sin actividad todavía" />
+              <EmptyState compact icon={SparklesIcon} title="Sin actividad todavía" />
             ) : (
               <div className="divide-y divide-line">
                 {data.activity.map(entry => (
@@ -442,7 +447,7 @@ export default async function PanelHome() {
                 tone="secondary"
                 size="sm"
                 className="mt-2 w-full"
-                iconRight={ArrowRight}
+                iconRight={ArrowRightIcon}
               >
                 Ver sistema
               </ButtonLink>
@@ -458,9 +463,9 @@ function HealthRow({ ok, label, detail }: { ok: boolean; label: string; detail: 
   return (
     <div className="flex items-center gap-3">
       {ok ? (
-        <CheckCircle2 aria-hidden className="size-[18px] shrink-0 text-sage" />
+        <CheckCircleIcon aria-hidden className="size-[18px] shrink-0 text-sage" />
       ) : (
-        <ShieldAlert aria-hidden className="size-[18px] shrink-0 text-terracotta" />
+        <ShieldAlertIcon aria-hidden className="size-[18px] shrink-0 text-terracotta" />
       )}
       <span className="flex-1 font-medium text-fg-2">{label}</span>
       <span className={ok ? 'text-muted' : 'font-medium text-terracotta'}>

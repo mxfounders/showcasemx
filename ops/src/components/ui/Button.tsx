@@ -6,7 +6,7 @@ import {
   type ReactElement,
   type ReactNode,
 } from 'react';
-import type { LucideIcon } from 'lucide-react';
+import type { GotaIcon } from '@/components/icons/gota';
 import { cn } from './cn';
 
 export type ButtonTone =
@@ -34,11 +34,11 @@ const sizes: Record<ButtonSize, string> = {
 const iconSizes: Record<ButtonSize, string> = { xs: 'size-3.5', sm: 'size-4', md: 'size-4' };
 
 /**
- * A Lucide component, or an already-rendered icon element. Server Components
- * must pass the element form (`icon={<Ban />}`) to client components such as
+ * A Gota icon component, or an already-rendered icon element. Server Components
+ * must pass the element form (`icon={<BlockIcon />}`) to client components such as
  * ActionButton: component references cannot cross the RSC boundary.
  */
-export type IconProp = LucideIcon | ReactElement<{ className?: string }>;
+export type IconProp = GotaIcon | ReactElement<{ className?: string }>;
 
 interface Shared {
   tone?: ButtonTone;
@@ -67,8 +67,8 @@ export function renderIcon(icon: IconProp | undefined, className: string) {
   if (!icon) return null;
   if (isValidElement(icon))
     return cloneElement(icon, { className, 'aria-hidden': true } as { className: string });
-  const Component = icon as LucideIcon;
-  return <Component aria-hidden className={className} strokeWidth={1.9} />;
+  const Component = icon as GotaIcon;
+  return <Component aria-hidden className={className} />;
 }
 
 function Inner({ icon, iconRight, loading, size = 'sm', children }: Shared) {
@@ -158,7 +158,7 @@ export function IconButton({
   className,
   size = 'sm',
   ...rest
-}: { label: string; icon: LucideIcon; size?: ButtonSize } & ComponentPropsWithoutRef<'button'>) {
+}: { label: string; icon: GotaIcon; size?: ButtonSize } & ComponentPropsWithoutRef<'button'>) {
   const box =
     size === 'xs'
       ? 'size-7 rounded-lg'
@@ -177,7 +177,7 @@ export function IconButton({
       )}
       {...rest}
     >
-      <Icon aria-hidden className="size-4" strokeWidth={1.9} />
+      <Icon aria-hidden className="size-4" />
     </button>
   );
 }

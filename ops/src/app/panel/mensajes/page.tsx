@@ -1,6 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { CheckCircle2, ExternalLink, Inbox, Mail, RotateCcw, UserRound } from 'lucide-react';
+import {
+  CheckCircleIcon,
+  ExternalLinkIcon,
+  InboxIcon,
+  MailIcon,
+  PersonIcon,
+  UndoIcon,
+} from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
 import { INQUIRY_FILTERS, listInquiries } from '@/lib/data/inquiries';
 import { INQUIRY_REASON, INQUIRY_URGENCY } from '@/lib/labels';
@@ -92,7 +99,7 @@ export default async function MensajesPage({
       {data.items.length === 0 ? (
         <Card>
           <EmptyState
-            icon={filter === 'pending' ? CheckCircle2 : Inbox}
+            icon={filter === 'pending' ? CheckCircleIcon : InboxIcon}
             title={filter === 'pending' ? 'Bandeja al día' : 'Sin mensajes'}
             description="Los mensajes del formulario de contacto aparecerán aquí."
           />
@@ -176,7 +183,7 @@ export default async function MensajesPage({
                           </Badge>
                         )}
                         {selected.handledAt ? (
-                          <Badge tone="sage" icon={CheckCircle2}>
+                          <Badge tone="sage" icon={CheckCircleIcon}>
                             Atendido
                           </Badge>
                         ) : (
@@ -190,13 +197,13 @@ export default async function MensajesPage({
                       href={`mailto:${encodeURIComponent(selected.email)}?subject=${encodeURIComponent('Re: tu mensaje a shwcs')}`}
                       className={buttonClass('primary', 'sm')}
                     >
-                      <Mail aria-hidden className="size-4" strokeWidth={1.9} />
+                      <MailIcon aria-hidden className="size-4" />
                       Responder
                     </a>
                     {selected.handledAt ? (
                       <ActionButton
                         label="Reabrir"
-                        icon={<RotateCcw />}
+                        icon={<UndoIcon />}
                         endpoint="/api/inquiries"
                         payload={{ id: selected.id, action: 'reopen' }}
                         success="Mensaje marcado como pendiente"
@@ -204,7 +211,7 @@ export default async function MensajesPage({
                     ) : (
                       <ActionButton
                         label="Marcar atendido"
-                        icon={<CheckCircle2 />}
+                        icon={<CheckCircleIcon />}
                         tone="success"
                         endpoint="/api/inquiries"
                         payload={{ id: selected.id }}
@@ -231,7 +238,7 @@ export default async function MensajesPage({
                           className="inline-flex items-center gap-1 text-accent-fg hover:underline"
                         >
                           {selected.website?.replace(/^https?:\/\//, '')}
-                          <ExternalLink aria-hidden className="size-3" />
+                          <ExternalLinkIcon aria-hidden className="size-3" />
                         </a>
                       ) : null,
                     },
@@ -253,7 +260,7 @@ export default async function MensajesPage({
                     href={`/panel/cuentas/${selected.accountId}`}
                     className="inline-flex items-center gap-1.5 text-[13px] font-medium text-accent-fg hover:underline"
                   >
-                    <UserRound aria-hidden className="size-4" /> Tiene cuenta en shwcs: ver cuenta
+                    <PersonIcon aria-hidden className="size-4" /> Tiene cuenta en shwcs: ver cuenta
                   </Link>
                 )}
               </CardBody>

@@ -2,7 +2,7 @@
 
 import { useTransition } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDownIcon } from '@/components/icons/gota';
 import { cn } from './cn';
 
 /** Native select (keyboard + screen-reader friendly) bound to one URL param. */
@@ -50,7 +50,7 @@ export function UrlSelect({
           </option>
         ))}
       </select>
-      <ChevronDown
+      <ChevronDownIcon
         aria-hidden
         className="pointer-events-none absolute right-2.5 size-4 text-subtle"
       />

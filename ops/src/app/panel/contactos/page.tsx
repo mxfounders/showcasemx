@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Handshake, Lock } from 'lucide-react';
+import { HandshakeIcon, LockIcon } from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
 import { CONTACT_STATUSES, listContacts } from '@/lib/data/contacts';
 import { CONTACT_STATUS } from '@/lib/labels';
@@ -41,7 +41,7 @@ export default async function ContactosPage({
         description="Solicitudes de compradores a fundadores. Ops ve quién, a qué proyecto, en qué estado y cuándo; nunca qué escribieron."
         meta={
           <span className="inline-flex items-center gap-1.5 text-[12.5px] text-muted">
-            <Lock aria-hidden className="size-3.5" /> Frontera de privacidad: sin detalles ni
+            <LockIcon aria-hidden className="size-3.5" /> Frontera de privacidad: sin detalles ni
             mensajes
           </span>
         }
@@ -106,7 +106,7 @@ export default async function ContactosPage({
         <TBody>
           {data.items.length === 0 ? (
             <EmptyRow colSpan={8}>
-              <EmptyState compact icon={Handshake} title="Sin solicitudes en este filtro" />
+              <EmptyState compact icon={HandshakeIcon} title="Sin solicitudes en este filtro" />
             </EmptyRow>
           ) : (
             data.items.map(item => (

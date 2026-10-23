@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Table2 } from 'lucide-react';
+import { TableIcon } from '@/components/icons/gota';
 import { fmtCompact, fmtDay, fmtNumber } from '@/lib/format';
 import { niceTicks, rgb, type SeriesColor } from './scale';
 
@@ -111,7 +111,7 @@ export function AreaChart({
           aria-pressed={showTable}
           className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[12px] font-medium text-muted transition hover:bg-surface-3 hover:text-fg"
         >
-          <Table2 aria-hidden className="size-3.5" />
+          <TableIcon aria-hidden className="size-3.5" />
           {showTable ? 'Ver gráfica' : 'Ver tabla'}
         </button>
       </div>

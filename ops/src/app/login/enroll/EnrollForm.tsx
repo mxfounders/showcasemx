@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Copy, Download } from 'lucide-react';
+import { CheckIcon, CopyIcon, DownloadIcon } from '@/components/icons/gota';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Field';
 import { OtpInput } from '@/components/ui/OtpInput';
@@ -171,9 +171,9 @@ export default function EnrollForm() {
                 aria-label="Copiar clave"
               >
                 {copied === 'secret' ? (
-                  <Check aria-hidden className="size-4 text-sage" />
+                  <CheckIcon aria-hidden className="size-4 text-sage" />
                 ) : (
-                  <Copy aria-hidden className="size-4" />
+                  <CopyIcon aria-hidden className="size-4" />
                 )}
               </button>
             </div>
@@ -204,7 +204,7 @@ export default function EnrollForm() {
           <div className="flex gap-2">
             <Button
               tone="secondary"
-              icon={copied === 'codes' ? Check : Copy}
+              icon={copied === 'codes' ? CheckIcon : CopyIcon}
               className="flex-1"
               onClick={() => {
                 void copy(data.backupCodes.join('\n'), 'codes');
@@ -213,7 +213,7 @@ export default function EnrollForm() {
             >
               Copiar
             </Button>
-            <Button tone="secondary" icon={Download} className="flex-1" onClick={download}>
+            <Button tone="secondary" icon={DownloadIcon} className="flex-1" onClick={download}>
               Descargar .txt
             </Button>
           </div>

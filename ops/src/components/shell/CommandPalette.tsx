@@ -3,20 +3,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  ArrowRight,
-  CornerDownLeft,
-  FileText,
-  Inbox,
-  List,
-  LogOut,
-  Monitor,
-  Moon,
-  Search,
-  ShieldCheck,
-  Sun,
-  User,
-  type LucideIcon,
-} from 'lucide-react';
+  ArrowRightIcon,
+  ArrowTurnDownLeftIcon,
+  DesktopIcon,
+  DocumentIcon,
+  InboxIcon,
+  ListBulletsIcon,
+  LogOutIcon,
+  MoonIcon,
+  PersonIcon,
+  SearchIcon,
+  ShieldIcon,
+  SunIcon,
+  type GotaIcon,
+} from '@/components/icons/gota';
 import { requestElevation } from '@/lib/client';
 import { Kbd } from '../ui/Kbd';
 import { cn } from '../ui/cn';
@@ -37,15 +37,15 @@ interface Command {
   group: string;
   label: string;
   hint?: string;
-  Icon: LucideIcon;
+  Icon: GotaIcon;
   run: () => void;
 }
 
-const RESULT_ICON: Record<SearchResult['type'], LucideIcon> = {
-  account: User,
-  solution: FileText,
-  list: List,
-  inquiry: Inbox,
+const RESULT_ICON: Record<SearchResult['type'], GotaIcon> = {
+  account: PersonIcon,
+  solution: DocumentIcon,
+  list: ListBulletsIcon,
+  inquiry: InboxIcon,
 };
 const RESULT_GROUP: Record<SearchResult['type'], string> = {
   account: 'Cuentas',
@@ -153,7 +153,7 @@ export function CommandPalette() {
         group: 'Acciones',
         label: 'Activar modo seguro',
         hint: 'elevar totp 2fa sudo',
-        Icon: ShieldCheck,
+        Icon: ShieldIcon,
         run: () => {
           setOpen(false);
           void requestElevation(
@@ -166,7 +166,7 @@ export function CommandPalette() {
         group: 'Acciones',
         label: 'Tema claro',
         hint: 'apariencia',
-        Icon: Sun,
+        Icon: SunIcon,
         run: () => setThemeFromCommand('light'),
       },
       {
@@ -174,7 +174,7 @@ export function CommandPalette() {
         group: 'Acciones',
         label: 'Tema oscuro',
         hint: 'apariencia noche',
-        Icon: Moon,
+        Icon: MoonIcon,
         run: () => setThemeFromCommand('dark'),
       },
       {
@@ -182,7 +182,7 @@ export function CommandPalette() {
         group: 'Acciones',
         label: 'Tema del sistema',
         hint: 'apariencia automático',
-        Icon: Monitor,
+        Icon: DesktopIcon,
         run: () => setThemeFromCommand('system'),
       },
       {
@@ -190,7 +190,7 @@ export function CommandPalette() {
         group: 'Acciones',
         label: 'Cerrar sesión',
         hint: 'salir logout',
-        Icon: LogOut,
+        Icon: LogOutIcon,
         run: async () => {
           await fetch('/api/auth/logout', {
             method: 'POST',
@@ -251,7 +251,7 @@ export function CommandPalette() {
       {open && (
         <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-pop">
           <div className="flex items-center gap-3 border-b border-line px-4">
-            <Search
+            <SearchIcon
               aria-hidden
               className={cn('size-[18px] shrink-0 text-subtle', loading && 'animate-pulse')}
             />
@@ -305,7 +305,7 @@ export function CommandPalette() {
                       index === active ? 'bg-accent-soft text-accent-fg' : 'text-fg-2',
                     )}
                   >
-                    <command.Icon aria-hidden className="size-4 shrink-0" strokeWidth={1.8} />
+                    <command.Icon aria-hidden className="size-4 shrink-0" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[13.5px] font-medium">
                         {command.label}
@@ -317,9 +317,9 @@ export function CommandPalette() {
                       )}
                     </span>
                     {index === active ? (
-                      <CornerDownLeft aria-hidden className="size-3.5 opacity-70" />
+                      <ArrowTurnDownLeftIcon aria-hidden className="size-3.5 opacity-70" />
                     ) : (
-                      <ArrowRight aria-hidden className="size-3.5 opacity-0" />
+                      <ArrowRightIcon aria-hidden className="size-3.5 opacity-0" />
                     )}
                   </button>
                 </li>

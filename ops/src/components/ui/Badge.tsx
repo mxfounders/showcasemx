@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { LucideIcon } from 'lucide-react';
+import type { GotaIcon } from '@/components/icons/gota';
 import { cn } from './cn';
 
 export type Tone = 'neutral' | 'blue' | 'sage' | 'lavender' | 'terracotta' | 'amber';
@@ -23,7 +23,7 @@ export function Badge({
 }: {
   tone?: Tone;
   dot?: boolean;
-  icon?: LucideIcon;
+  icon?: GotaIcon;
   children: ReactNode;
   className?: string;
   title?: string;
@@ -40,7 +40,7 @@ export function Badge({
       {dot && (
         <span aria-hidden className={cn('size-1.5 shrink-0 rounded-full', tones[tone].dot)} />
       )}
-      {Icon && <Icon aria-hidden className="size-3 shrink-0" strokeWidth={2.2} />}
+      {Icon && <Icon aria-hidden className="size-3 shrink-0" />}
       <span className="truncate">{children}</span>
     </span>
   );

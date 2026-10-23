@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Keyboard } from 'lucide-react';
+import { KeyboardIcon } from '@/components/icons/gota';
 import { Dialog } from '../ui/Dialog';
 import { Kbd } from '../ui/Kbd';
 import { useSession } from './SessionContext';
@@ -102,7 +102,7 @@ export function Shortcuts() {
       size="md"
       icon={
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-surface-3 text-fg-2">
-          <Keyboard aria-hidden className="size-5" />
+          <KeyboardIcon aria-hidden className="size-5" />
         </span>
       }
       title="Atajos de teclado"

@@ -1,30 +1,30 @@
 import {
-  BarChart3,
-  ClipboardCheck,
-  Cpu,
-  Flag,
-  Globe,
-  Handshake,
-  Home,
-  Inbox,
-  LayoutGrid,
-  Megaphone,
-  Mail,
-  MessagesSquare,
-  Newspaper,
-  ScrollText,
-  ShieldCheck,
-  UserCog,
-  Users,
-  type LucideIcon,
-} from 'lucide-react';
+  AppsIcon,
+  ChartBarIcon,
+  ClientsIcon,
+  ClipboardCheckIcon,
+  CpuIcon,
+  FlagIcon,
+  GlobeIcon,
+  HandshakeIcon,
+  HomeIcon,
+  InboxIcon,
+  LogIcon,
+  MailIcon,
+  MegaphoneIcon,
+  MessagesIcon,
+  NewspaperIcon,
+  PersonGearIcon,
+  ShieldIcon,
+  type GotaIcon,
+} from '@/components/icons/gota';
 
 export type CountKey = 'reviews' | 'reports' | 'inquiries' | 'mail';
 
 export interface NavItem {
   href: string;
   label: string;
-  Icon: LucideIcon;
+  Icon: GotaIcon;
   exact?: boolean;
   admin?: boolean;
   count?: CountKey;
@@ -35,71 +35,92 @@ export const NAV: Array<{ section: string; items: NavItem[] }> = [
   {
     section: 'Operación',
     items: [
-      { href: '/panel', label: 'Inicio', Icon: Home, exact: true, keywords: 'dashboard resumen' },
+      {
+        href: '/panel',
+        label: 'Inicio',
+        Icon: HomeIcon,
+        exact: true,
+        keywords: 'dashboard resumen',
+      },
       {
         href: '/panel/revision',
         label: 'Revisión',
-        Icon: ClipboardCheck,
+        Icon: ClipboardCheckIcon,
         count: 'reviews',
         keywords: 'cola pendientes aprobar',
       },
       {
         href: '/panel/postulaciones',
         label: 'Postulaciones',
-        Icon: LayoutGrid,
+        Icon: AppsIcon,
         keywords: 'fichas soluciones proyectos',
       },
       {
         href: '/panel/reportes',
         label: 'Reportes',
-        Icon: Flag,
+        Icon: FlagIcon,
         count: 'reports',
         keywords: 'denuncias moderación',
       },
-      { href: '/panel/dominios', label: 'Dominios', Icon: Globe, keywords: 'txt verificación dns' },
+      {
+        href: '/panel/dominios',
+        label: 'Dominios',
+        Icon: GlobeIcon,
+        keywords: 'txt verificación dns',
+      },
     ],
   },
   {
     section: 'Plataforma',
     items: [
-      { href: '/panel/cuentas', label: 'Cuentas', Icon: Users, keywords: 'usuarios personas' },
+      {
+        href: '/panel/cuentas',
+        label: 'Cuentas',
+        Icon: ClientsIcon,
+        keywords: 'usuarios personas',
+      },
       {
         href: '/panel/contactos',
         label: 'Contactos',
-        Icon: Handshake,
+        Icon: HandshakeIcon,
         keywords: 'solicitudes oportunidades leads',
       },
       {
         href: '/panel/comunidad',
         label: 'Comunidad',
-        Icon: MessagesSquare,
+        Icon: MessagesIcon,
         keywords: 'listas comentarios',
       },
       {
         href: '/panel/mensajes',
         label: 'Mensajes',
-        Icon: Inbox,
+        Icon: InboxIcon,
         count: 'inquiries',
         keywords: 'contacto formulario',
       },
       {
         href: '/panel/correo',
         label: 'Correo',
-        Icon: Mail,
+        Icon: MailIcon,
         count: 'mail',
         keywords: 'avisos outbox resend',
       },
-      { href: '/panel/newsletter', label: 'Newsletter', Icon: Newspaper, keywords: 'suscriptores' },
+      {
+        href: '/panel/newsletter',
+        label: 'Newsletter',
+        Icon: NewspaperIcon,
+        keywords: 'suscriptores',
+      },
       {
         href: '/panel/anuncios',
         label: 'Anuncios',
-        Icon: Megaphone,
+        Icon: MegaphoneIcon,
         keywords: 'patrocinados stripe pagos ingresos campañas',
       },
       {
         href: '/panel/metricas',
         label: 'Métricas',
-        Icon: BarChart3,
+        Icon: ChartBarIcon,
         keywords: 'vistas clics analytics',
       },
     ],
@@ -110,27 +131,27 @@ export const NAV: Array<{ section: string; items: NavItem[] }> = [
       {
         href: '/panel/seguridad',
         label: 'Seguridad',
-        Icon: ShieldCheck,
+        Icon: ShieldIcon,
         keywords: 'sesiones 2fa accesos',
       },
       {
         href: '/panel/sistema',
         label: 'Sistema',
-        Icon: Cpu,
+        Icon: CpuIcon,
         admin: true,
         keywords: 'salud base de datos storage',
       },
       {
         href: '/panel/equipo',
         label: 'Equipo',
-        Icon: UserCog,
+        Icon: PersonGearIcon,
         admin: true,
         keywords: 'revisores administradores',
       },
       {
         href: '/panel/bitacora',
         label: 'Bitácora',
-        Icon: ScrollText,
+        Icon: LogIcon,
         admin: true,
         keywords: 'auditoría log',
       },

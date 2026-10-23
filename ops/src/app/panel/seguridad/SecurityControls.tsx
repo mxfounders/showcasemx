@@ -2,7 +2,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Copy, Download, KeyRound, ShieldCheck, ShieldEllipsis } from 'lucide-react';
+import {
+  CheckIcon,
+  CopyIcon,
+  DownloadIcon,
+  KeyIcon,
+  ShieldEmptyIcon,
+  ShieldIcon,
+} from '@/components/icons/gota';
 import { api, errorMessage, requestElevation } from '@/lib/client';
 import { toast } from '@/lib/toast';
 import { Button } from '@/components/ui/Button';
@@ -22,9 +29,9 @@ export function SecureModeCard() {
           className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${left > 0 ? 'bg-accent-soft text-accent-fg' : 'bg-surface-3 text-muted'}`}
         >
           {left > 0 ? (
-            <ShieldCheck aria-hidden className="size-5" />
+            <ShieldIcon aria-hidden className="size-5" />
           ) : (
-            <ShieldEllipsis aria-hidden className="size-5" />
+            <ShieldEmptyIcon aria-hidden className="size-5" />
           )}
         </span>
         <div>
@@ -96,7 +103,7 @@ export function BackupCodesButton({ left }: { left: number }) {
           <span
             className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${left <= 2 ? 'bg-amber-soft text-amber' : 'bg-surface-3 text-muted'}`}
           >
-            <KeyRound aria-hidden className="size-5" />
+            <KeyIcon aria-hidden className="size-5" />
           </span>
           <div>
             <p className="text-[14px] font-medium">{left} códigos de respaldo disponibles</p>
@@ -132,7 +139,7 @@ export function BackupCodesButton({ left }: { left: number }) {
         <div className="mt-3 flex gap-2">
           <Button
             tone="secondary"
-            icon={copied ? Check : Copy}
+            icon={copied ? CheckIcon : CopyIcon}
             className="flex-1"
             onClick={async () => {
               await navigator.clipboard.writeText(codes?.join('\n') ?? '').catch(() => undefined);
@@ -142,7 +149,7 @@ export function BackupCodesButton({ left }: { left: number }) {
           >
             Copiar
           </Button>
-          <Button tone="secondary" icon={Download} className="flex-1" onClick={download}>
+          <Button tone="secondary" icon={DownloadIcon} className="flex-1" onClick={download}>
             Descargar .txt
           </Button>
         </div>

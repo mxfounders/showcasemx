@@ -1,6 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { BarChart3, Eye, Handshake, MousePointerClick, UserPlus } from 'lucide-react';
+import {
+  ChartBarIcon,
+  CursorClickIcon,
+  EyeIcon,
+  HandshakeIcon,
+  PersonPlusIcon,
+} from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
 import { METRIC_RANGES, platformMetrics } from '@/lib/data/metrics';
 import { fmtNumber, fmtPercent } from '@/lib/format';
@@ -80,27 +86,27 @@ export default async function MetricasPage({
           label="Vistas de fichas"
           value={sum('views')}
           trend={data.series.map(d => d.views)}
-          icon={<Eye aria-hidden className="size-4" />}
+          icon={<EyeIcon aria-hidden className="size-4" />}
         />
         <Stat
           label="Clics al sitio oficial"
           value={sum('clicks')}
           hint={`CTR ${fmtPercent(sum('clicks'), sum('views'))}`}
           trend={data.series.map(d => d.clicks)}
-          icon={<MousePointerClick aria-hidden className="size-4" />}
+          icon={<CursorClickIcon aria-hidden className="size-4" />}
         />
         <Stat
           label="Solicitudes de contacto"
           value={sum('requests')}
           hint={`${fmtPercent(sum('requests'), sum('views'))} de las vistas`}
           trend={data.series.map(d => d.requests)}
-          icon={<Handshake aria-hidden className="size-4" />}
+          icon={<HandshakeIcon aria-hidden className="size-4" />}
         />
         <Stat
           label="Cuentas nuevas"
           value={sum('signups')}
           trend={data.series.map(d => d.signups)}
-          icon={<UserPlus aria-hidden className="size-4" />}
+          icon={<PersonPlusIcon aria-hidden className="size-4" />}
         />
       </section>
       <div className="mb-6 grid items-start gap-6 xl:grid-cols-3">
@@ -205,7 +211,7 @@ export default async function MetricasPage({
           <TBody>
             {data.projects.length === 0 ? (
               <EmptyRow colSpan={8}>
-                <EmptyState compact icon={BarChart3} title="Sin fichas publicadas" />
+                <EmptyState compact icon={ChartBarIcon} title="Sin fichas publicadas" />
               </EmptyRow>
             ) : (
               data.projects.map(project => (

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ChevronRight, ScrollText } from 'lucide-react';
+import { ChevronRightIcon, LogIcon } from '@/components/icons/gota';
 import { requireAdminPage } from '@/lib/auth';
 import { auditFacets, listAudit, verifyAuditChain } from '@/lib/data/audit';
 import { AUDIT_GROUP_LABEL, auditAction, type AuditGroup } from '@/lib/labels';
@@ -111,7 +111,7 @@ export default async function BitacoraPage({
 
           <Card>
             {data.items.length === 0 ? (
-              <EmptyState icon={ScrollText} title="Sin eventos con estos filtros" />
+              <EmptyState icon={LogIcon} title="Sin eventos con estos filtros" />
             ) : (
               <ul className="divide-y divide-line">
                 {data.items.map(entry => {
@@ -122,7 +122,7 @@ export default async function BitacoraPage({
                     <li key={entry.id}>
                       <details className="group/row [&_summary::-webkit-details-marker]:hidden">
                         <summary className="flex cursor-pointer list-none items-start gap-3 px-5 py-3.5 transition hover:bg-surface-2">
-                          <ChevronRight
+                          <ChevronRightIcon
                             aria-hidden
                             className="mt-0.5 size-4 shrink-0 text-subtle transition group-open/row:rotate-90"
                           />

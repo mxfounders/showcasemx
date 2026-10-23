@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreIcon } from '@/components/icons/gota';
 import { api, errorMessage } from '@/lib/client';
 import { toast } from '@/lib/toast';
 import { cn } from '../ui/cn';
@@ -58,7 +58,7 @@ export function ActionMenu({
         onClick={() => setOpen(value => !value)}
         className="rounded-lg p-1.5 text-muted transition hover:bg-surface-3 hover:text-fg"
       >
-        <MoreHorizontal aria-hidden className="size-4" />
+        <MoreIcon aria-hidden className="size-4" />
       </button>
       {open && (
         <ul

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { LucideIcon } from 'lucide-react';
+import type { GotaIcon } from '@/components/icons/gota';
 import { cn } from './cn';
 
 export function EmptyState({
@@ -10,7 +10,7 @@ export function EmptyState({
   compact,
   className,
 }: {
-  icon?: LucideIcon;
+  icon?: GotaIcon;
   title: string;
   description?: ReactNode;
   action?: ReactNode;
@@ -27,7 +27,7 @@ export function EmptyState({
     >
       {Icon && (
         <span className="mb-3 flex size-11 items-center justify-center rounded-2xl border border-line bg-surface-2 text-subtle">
-          <Icon aria-hidden className="size-5" strokeWidth={1.7} />
+          <Icon aria-hidden className="size-5" />
         </span>
       )}
       <p className="text-sm font-semibold text-fg">{title}</p>

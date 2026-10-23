@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Ban, Fingerprint, Users } from 'lucide-react';
+import { BlockIcon, ClientsIcon, FingerprintIcon } from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
 import {
   ACCOUNT_FILTERS,
@@ -94,7 +94,7 @@ export default async function CuentasPage({
         <TBody>
           {data.items.length === 0 ? (
             <EmptyRow colSpan={6}>
-              <EmptyState compact icon={Users} title="Sin cuentas en este filtro" />
+              <EmptyState compact icon={ClientsIcon} title="Sin cuentas en este filtro" />
             </EmptyRow>
           ) : (
             data.items.map(account => (
@@ -124,7 +124,7 @@ export default async function CuentasPage({
                 <TD>
                   <div className="relative z-10 flex flex-wrap gap-1">
                     {account.suspendedAt && (
-                      <Badge tone="terracotta" icon={Ban}>
+                      <Badge tone="terracotta" icon={BlockIcon}>
                         Suspendida
                       </Badge>
                     )}
@@ -135,7 +135,7 @@ export default async function CuentasPage({
                     )}
                     {!account.emailVerifiedAt && <Badge tone="amber">Sin verificar</Badge>}
                     {account.twoFactor && (
-                      <Badge tone="sage" icon={Fingerprint}>
+                      <Badge tone="sage" icon={FingerprintIcon}>
                         2FA
                       </Badge>
                     )}

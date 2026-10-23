@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react';
+import { ArrowDownIcon, ArrowUpIcon, ChevronUpDownIcon } from '@/components/icons/gota';
 import { cn } from './cn';
 
 /** Semantic table with horizontal scroll contained in its card. */
@@ -60,12 +60,12 @@ export function TH({
       {children}
       {sort.active ? (
         sort.direction === 'asc' ? (
-          <ArrowUp aria-hidden className="size-3" />
+          <ArrowUpIcon aria-hidden className="size-3" />
         ) : (
-          <ArrowDown aria-hidden className="size-3" />
+          <ArrowDownIcon aria-hidden className="size-3" />
         )
       ) : (
-        <ChevronsUpDown
+        <ChevronUpDownIcon
           aria-hidden
           className="size-3 opacity-0 transition group-hover:opacity-60"
         />

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { History } from 'lucide-react';
+import { HistoryIcon } from '@/components/icons/gota';
 import { api, errorMessage } from '@/lib/client';
 import { contactStatus } from '@/lib/labels';
 import { Drawer } from '@/components/ui/Drawer';
@@ -38,7 +38,7 @@ export function ContactTimeline({ id, project }: { id: string; project: string }
     <>
       <IconButton
         label="Ver línea de tiempo"
-        icon={History}
+        icon={HistoryIcon}
         onClick={show}
         className="relative z-10"
       />

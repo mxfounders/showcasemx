@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { UserPlus } from 'lucide-react';
+import { PersonPlusIcon } from '@/components/icons/gota';
 import { api, errorMessage } from '@/lib/client';
 import { toast } from '@/lib/toast';
 import { Button } from '@/components/ui/Button';
@@ -40,7 +40,7 @@ export function AddMember() {
 
   return (
     <>
-      <Button tone="solid" icon={UserPlus} onClick={() => setOpen(true)}>
+      <Button tone="solid" icon={PersonPlusIcon} onClick={() => setOpen(true)}>
         Agregar miembro
       </Button>
       <Dialog

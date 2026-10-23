@@ -1,6 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Bookmark, EyeOff, Flag, Heart, List, MessageSquare, MessagesSquare } from 'lucide-react';
+import {
+  BookmarkIcon,
+  CommentIcon,
+  EyeOffIcon,
+  FlagIcon,
+  HeartIcon,
+  ListBulletsIcon,
+  MessagesIcon,
+} from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
 import { communityOverview } from '@/lib/data/community';
 import { fmtNumber } from '@/lib/format';
@@ -40,24 +48,24 @@ export default async function ComunidadPage({
         <Stat
           label="Listas públicas"
           value={data.stats.publicLists}
-          icon={<List aria-hidden className="size-4" />}
+          icon={<ListBulletsIcon aria-hidden className="size-4" />}
         />
         <Stat
           label="Comentarios"
           value={data.stats.listComments + data.stats.solutionComments}
           hint={`${fmtNumber(data.stats.listComments)} en listas · ${fmtNumber(data.stats.solutionComments)} en fichas`}
-          icon={<MessageSquare aria-hidden className="size-4" />}
+          icon={<CommentIcon aria-hidden className="size-4" />}
         />
         <Stat
           label="Me gusta"
           value={data.stats.listLikes + data.stats.solutionLikes}
           hint={`${fmtNumber(data.stats.solutionLikes)} a fichas`}
-          icon={<Heart aria-hidden className="size-4" />}
+          icon={<HeartIcon aria-hidden className="size-4" />}
         />
         <Stat
           label="Listas guardadas"
           value={data.stats.savedLists}
-          icon={<Bookmark aria-hidden className="size-4" />}
+          icon={<BookmarkIcon aria-hidden className="size-4" />}
         />
       </section>
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -68,19 +76,19 @@ export default async function ComunidadPage({
               label: 'Listas públicas',
               href: hrefWith('/panel/comunidad', params, { vista: null }),
               active: view === 'listas',
-              icon: List,
+              icon: ListBulletsIcon,
             },
             {
               label: 'Comentarios en listas',
               href: hrefWith('/panel/comunidad', params, { vista: 'comentarios' }),
               active: view === 'comentarios',
-              icon: MessagesSquare,
+              icon: MessagesIcon,
             },
             {
               label: 'Comentarios en fichas',
               href: hrefWith('/panel/comunidad', params, { vista: 'fichas' }),
               active: view === 'fichas',
-              icon: MessageSquare,
+              icon: CommentIcon,
             },
           ]}
         />
@@ -91,7 +99,7 @@ export default async function ComunidadPage({
         data.lists.items.length === 0 ? (
           <Card>
             <EmptyState
-              icon={List}
+              icon={ListBulletsIcon}
               title="Sin listas públicas"
               description="Cuando alguien publique una lista aparecerá aquí."
             />
@@ -114,7 +122,7 @@ export default async function ComunidadPage({
                     </p>
                   </div>
                   {list.openReports > 0 && (
-                    <Badge tone="terracotta" icon={Flag}>
+                    <Badge tone="terracotta" icon={FlagIcon}>
                       {list.openReports}
                     </Badge>
                   )}
@@ -137,15 +145,15 @@ export default async function ComunidadPage({
                   <p className="num flex items-center gap-3 text-[12.5px] text-muted">
                     <span>{list.itemCount} proyectos</span>
                     <span className="flex items-center gap-1">
-                      <Heart aria-hidden className="size-3.5" />
+                      <HeartIcon aria-hidden className="size-3.5" />
                       {list.likeCount}
                     </span>
                     <span className="flex items-center gap-1">
-                      <Bookmark aria-hidden className="size-3.5" />
+                      <BookmarkIcon aria-hidden className="size-3.5" />
                       {list.saveCount}
                     </span>
                     <span className="flex items-center gap-1">
-                      <MessageSquare aria-hidden className="size-3.5" />
+                      <CommentIcon aria-hidden className="size-3.5" />
                       {list.commentCount}
                     </span>
                     <span>
@@ -154,7 +162,7 @@ export default async function ComunidadPage({
                   </p>
                   <ActionButton
                     label="Volver privada"
-                    icon={<EyeOff />}
+                    icon={<EyeOffIcon />}
                     tone="ghost"
                     size="xs"
                     endpoint="/api/community"
@@ -175,7 +183,7 @@ export default async function ComunidadPage({
         )
       ) : comments.items.length === 0 ? (
         <Card>
-          <EmptyState icon={MessageSquare} title="Sin comentarios" />
+          <EmptyState icon={CommentIcon} title="Sin comentarios" />
         </Card>
       ) : (
         <Card>
