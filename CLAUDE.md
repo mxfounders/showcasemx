@@ -116,7 +116,7 @@ No asignar otros proyectos por nombre, dominio o coincidencia de correo.
 ## 4. Stack y estructura
 
 Next.js 15.5.24 App Router, React 19.2.8, TypeScript estricto, Tailwind 3, GSAP,
-lucide-react. Neon HTTP mediante @neondatabase/serverless. Sharp para avatares y capturas.
+Gota (los íconos de Flouvia, §72). Neon HTTP mediante @neondatabase/serverless. Sharp para avatares y capturas.
 No Clerk, sin ORM y sin SDK de IA (retirados en la limpieza de §62). Stripe (`stripe@23.0.0`) para anuncios (§64).
 jose valida JWT de Google. PostCSS 8.5.26 mediante override para Next; APIs dinámicas async.
 
@@ -447,6 +447,7 @@ Comandos:
 - npm run db:migrate -- db/<archivo>.sql: aplica migraciones.
 - npm run ads:rates: tarifas y ubicaciones de anuncios (§64).
 - npm run preflight: configuración de lanzamiento sin secretos.
+- npm run gota:sync: dibuja los íconos de Gota que importa el código, en app y ops (§72).
 - RUN_LAUNCH_INTEGRATION=1 node tests/integration/launch.cjs:
   verificación/avisos/TXT/reportes/métricas/desvinculación con cuentas temporales.
 - RUN_CONTACT_INTEGRATION=1 node tests/integration/contacts.cjs:
@@ -469,7 +470,7 @@ respuestas, cierre/reapertura, conflictos de versión, retiro e historial atómi
 finally elimina solo cuentas del test, datos en cascada y sus contadores.
 No usar cuentas reales del usuario ni enviar emails.
 
-Pruebas unitarias: 178 pasando al 10 de octubre de 2026 (ver §71). Lint y TypeScript correctos.
+Pruebas unitarias: 181 pasando al 23 de octubre de 2026 (ver §72). Lint y TypeScript correctos.
 Integraciones nuevas: `RUN_REVIEWS_INTEGRATION=1 node tests/integration/reviews.cjs` y
 `RUN_COMPLIANCE_INTEGRATION=1 node tests/integration/compliance.cjs` (esta con un SAT
 simulado; ver su encabezado). Ambas aceptan `APP_ORIGIN` para apuntar a un build aislado.
@@ -1491,11 +1492,11 @@ Dos peticiones del usuario sobre la ficha. Detalle de la portada en
 
 ### Logos de las redes
 
-lucide retiró los iconos de marca, así que `src/components/icons/social-icons.tsx`
+Gota (§72) no dibuja logos de marca, así que `src/components/icons/social-icons.tsx`
 dibuja los siete logos como SVG en línea sobre rejilla 24×24 con `currentColor`:
 LinkedIn, X, Instagram, YouTube, GitHub, TikTok y Product Hunt. Los cuatro tipos
 genéricos de `publicLinkKinds` (Sitio web, Documentación, Precios, Contacto)
-siguen usando lucide para no abrir un set paralelo. Se usan en los dos sitios de
+usan íconos de Gota para no abrir un set paralelo. Se usan en los dos sitios de
 la ficha donde había solo texto: los enlaces de cada creador y las cápsulas de
 «Sigue al proyecto». El logo acompaña al texto, no lo sustituye: un icono suelto
 de «Documentación» o «Precios» no se entiende. Cada glifo es `aria-hidden`; el
@@ -2971,7 +2972,7 @@ TOTP: ahora ambos están reforzados en código y en la base.
   JetBrains Mono autoalojadas, componentes propios (tablas, pestañas, diálogos nativos,
   toasts, skeletons) y gráficas SVG con eje único, tabla alternativa, tooltip por
   teclado y paleta validada para daltonismo en ambos temas (azul de marca, naranja,
-  aqua). Iconos hacia componentes cliente se pasan como elemento (`icon={<Ban />}`).
+  aqua). Iconos hacia componentes cliente se pasan como elemento (`icon={<BlockIcon />}`).
 - **Verificación**: 148 pruebas unitarias (7 nuevas en `tests/ops-security.test.ts`),
   lint y tipos limpios en raíz y `ops/`, build de producción de ops, cabeceras y CSP
   comprobadas en `next start`, batería end-to-end propia de 45 comprobaciones de
@@ -3146,3 +3147,68 @@ Push de `be4ab82` (tres commits: app, ops y docs). Resultado: **`shwcs` despleg�
   de la cuenta (avatar con `sharp`) siguen en verde.
 - Lección: `npm audit fix --omit=dev` también reinstala sin dependencias de desarrollo;
   después hay que correr `npm install`.
+
+## 72. Íconos: Gota sustituye a lucide — 23 octubre 2026
+
+Decisión del dueño de Flouvia: shwcs dibuja con Gota, la librería de íconos de Flouvia
+(MIT, Flouvia, S.A.S. de C.V.), y el Showcase de Gota lo presenta como producto que la
+usa. `lucide-react` salió de `package.json` y de `ops/package.json`; ni `src/` ni
+`ops/src/` lo importan.
+
+### Cómo se usa
+
+- Todo ícono se importa de `@/components/icons/gota` (en app y en ops) con el nombre
+  de Gota: `ArrowRightIcon`, `BlockIcon`, `PriceTagIcon`… Los nombres no siempre son los
+  de lucide (`Ban` → `BlockIcon`, `Tag` → `PriceTagIcon`, `MessageSquare` →
+  `CommentIcon`); el catálogo está en gota.flouvia.com.
+- Props de Gota: `variant` (`outline`/`fill`), `weight` (`light`/`regular`/`bold` o
+  número), `enclosure` (`circle`/`square`) y `slash`. Tamaño por defecto 24 px, como
+  lucide; `size-*` o `size` lo cambian. El trazo vive dentro del dibujo: `strokeWidth`,
+  `stroke` y `fill` no son props (TypeScript los rechaza). Sin `aria-label` el ícono es
+  `aria-hidden`.
+- Funciona en Server y Client Components. Hacia un componente cliente se pasa como
+  elemento (`icon={<BlockIcon />}`), nunca la referencia al componente.
+- Un ícono nuevo, o un estilo nuevo en uno existente (`variant="fill"`, otro `weight`),
+  exige `npm run gota:sync`: hasta entonces el typecheck falla, porque cada ícono solo
+  acepta los estilos que se dibujaron.
+
+### `npm run gota:sync`
+
+Gota no está en npm hasta su v1, así que `scripts/gota-sync.mjs` lee el `dist/` ya
+construido de su repo (`../gota` o `../flouvia-icons`; `-- --from <ruta>` para otro).
+Recorre `src/` y `ops/src/`, junta qué íconos se importan y con qué props, los dibuja
+con el motor de Gota y escribe en cada app:
+- `components/icons/gota/<icono>.ts`: un componente por ícono con sus dibujos ya
+  renderizados (sin motor en el navegador), tipado con los props que se dibujaron;
+- `components/icons/gota/index.ts`: la lista que importa el código;
+- `components/icons/gota/package.json` con `sideEffects: false`, para que cada página
+  cargue solo sus íconos y no la lista entera;
+- `components/icons/gota/LICENSE` (MIT de Gota).
+
+El componente común es `src/components/icons/gota-base.tsx`; ops recibe una copia
+generada (las dos apps compilan por separado). Todo lo generado se versiona (Vercel y CI
+no tienen el repo de Gota), dice en su primera línea que no se edita y Prettier lo
+ignora. En la v1, `@flouvia/gota/react/icons` sustituye a todo esto y solo cambia la
+ruta del import.
+
+### Lo que cambia a la vista
+
+Los íconos de marca de `social-icons.tsx` siguen siendo propios (§50). Todos los
+demás usan el peso regular de Gota (trazo 1.5, contra el 2 por defecto de lucide): los
+18 `strokeWidth` que afinaban íconos de lucide (de 1.5 a 2.2) desaparecen. Si alguno
+necesita más presencia, se pide con `weight` y se vuelve a correr el sync.
+
+### Verificación
+
+- `npm run check` (formato, lint, tipos, 181 pruebas, build) y lint, tipos y build de
+  `ops/` en verde. `tests/gota-icons.test.ts`: tamaño y accesibilidad por defecto, ids de
+  máscara únicos por instancia y que cada dibujo generado se encuentre con sus props.
+- Peso: First Load JS igual que con lucide (±1 kB por ruta; compartido 102 kB). Sin
+  `sideEffects: false` cada página cargaba los 108 íconos (+9 a +13 kB).
+- Capturas antes/después con el mismo entorno de 15 rutas públicas (inicio ES/EN,
+  explorar, colección, industria, comunidad, blog y artículo, FAQ, criterios, contacto,
+  acceso, registro, newsletter, 404) en escritorio y móvil, más el login de ops: mismas
+  alturas y mismo número de SVG; solo cambia el dibujo de cada ícono.
+- **No capturado**: páginas con sesión (cuenta y panel de ops) y la ficha
+  `/soluciones/[id]` (la base de desarrollo no tiene fichas publicadas). Las cubren los
+  tipos y el build.

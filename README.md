@@ -16,7 +16,7 @@ Producción: [shwcs.site](https://shwcs.site). Backoffice editorial: `ops.shwcs.
 | Capa        | Elección                                                                  |
 | ----------- | ------------------------------------------------------------------------- |
 | Aplicación  | Next.js 15 (App Router, Server Components), React 19, TypeScript estricto |
-| Interfaz    | Tailwind CSS 3, GSAP, lucide-react                                        |
+| Interfaz    | Tailwind CSS 3, GSAP, Gota (los íconos de Flouvia)                        |
 | Datos       | Neon Postgres por HTTP (`@neondatabase/serverless`), SQL parametrizado    |
 | Archivos    | Vercel Blob privado; Sharp normaliza toda imagen a WebP                   |
 | Autenticación | Propia: scrypt, sesiones opacas, TOTP opcional, Google OAuth (PKCE)     |
@@ -73,6 +73,7 @@ la base de producción: `.env.production.local`, si existe, tiene prioridad sobr
 | `npm run db:migrate -- db/<archivo>.sql` | Aplica migraciones, una transacción por archivo |
 | `npm run ads:rates`    | Muestra o cambia tarifas y ubicaciones de anuncios            |
 | `npm run preflight`    | Revisa la configuración de lanzamiento sin imprimir secretos |
+| `npm run gota:sync`    | Dibuja los íconos de Gota que importa el código (app y ops)  |
 
 No ejecutes `next dev` y `next build` a la vez sobre el mismo `.next`.
 

@@ -3,7 +3,7 @@
 | Capa | Tecnología / estado |
 | --- | --- |
 | Aplicación | Next.js 15.5.24, React 19.2.8, App Router, TypeScript estricto |
-| Interfaz | Tailwind 3, GSAP, Lucide, piezas propias; cinco acentos suaves |
+| Interfaz | Tailwind 3, GSAP, Gota (íconos de Flouvia, `npm run gota:sync`), piezas propias; cinco acentos suaves |
 | Datos | Neon HTTP parametrizado; db/*.sql es el esquema operativo |
 | Auth | Scrypt, sesiones opacas hash, cookies HttpOnly, recuperación/verificación; OAuth Google con jose |
 | Imágenes | Sharp, WebP; bytes en Vercel Blob privado, metadatos y permisos en Neon |
