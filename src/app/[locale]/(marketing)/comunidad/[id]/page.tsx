@@ -79,6 +79,8 @@ export default async function PublicCollectionPage({
               <Link
                 key={category}
                 href={`/comunidad?category=${encodeURIComponent(category)}`}
+                rel="nofollow"
+                prefetch={false}
                 style={{ color: tone.solid, backgroundColor: tone.soft }}
                 className="rounded-full px-3 py-2 text-xs"
               >

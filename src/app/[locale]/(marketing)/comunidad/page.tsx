@@ -19,8 +19,10 @@ import { localeAlternates } from '@/lib/seo';
 export const dynamic = 'force-dynamic';
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }): Promise<Metadata> {
   const { locale } = await params;
   const { community } = (await getDictionary(locale)).meta;
@@ -28,6 +30,11 @@ export async function generateMetadata({
     title: community.title,
     description: community.description,
     alternates: localeAlternates(locale, '/comunidad'),
+    // A filtered or searched view is one of countless combinations: never a search
+    // result of its own (§73). Plain pagination stays indexable.
+    robots: communityHasFilters(readCommunityFilters(await searchParams))
+      ? { index: false, follow: true }
+      : undefined,
   };
 }
 
@@ -149,6 +156,8 @@ export default async function CommunityPage({
           {filters.page > 1 ? (
             <Link
               href={communityHref(filters, { page: filters.page - 1 })}
+              rel={active ? 'nofollow' : undefined}
+              prefetch={false}
               className="inline-flex items-center gap-2 text-sm text-[#365DC4]"
             >
               <ArrowLeftIcon className="size-4" />
@@ -163,6 +172,8 @@ export default async function CommunityPage({
           {hasMore ? (
             <Link
               href={communityHref(filters, { page: filters.page + 1 })}
+              rel={active ? 'nofollow' : undefined}
+              prefetch={false}
               className="inline-flex items-center gap-2 text-sm text-[#365DC4]"
             >
               {dict.pagination.next}

@@ -11,5 +11,7 @@ export function navigationHref(href: string, locale: string) {
 }
 export function availableNavigation(href: string) {
   // Now we allow /colecciones/* to show up in the menu!
-  return !['/drops', '/fundadores', '/eventos', '/destacados', '/colecciones'].includes(href);
+  return !['/drops', '/fundadores', '/eventos', '/destacados', '/colecciones', '/sponsor'].includes(
+    href,
+  );
 }

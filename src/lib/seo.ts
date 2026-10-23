@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import { i18n, isLocale } from '@/i18n/config';
 
+/** Canonical public origin (§34), for files that need absolute URLs: robots, sitemap. */
+export const siteOrigin = 'https://shwcs.site';
+
 /**
  * Canonical + hreflang links for a public page that exists at the same path
  * under every locale (`/es/blog`, `/en/blog`). Paths are relative and resolve

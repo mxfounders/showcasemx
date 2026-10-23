@@ -2,27 +2,17 @@ import { notFound } from 'next/navigation';
 import { ChangelogStory } from '@/components/editorial/changelog-story';
 import { ProjectStory } from '@/components/editorial/project-story';
 import { FaqStory } from '@/components/editorial/faq-story';
-import { LegalStory, type LegalPageId } from '@/components/editorial/legal-story';
+import { LegalStory } from '@/components/editorial/legal-story';
 import { ProcesoStory } from '@/components/editorial/proceso-story';
 import { CriteriosStory } from '@/components/editorial/criterios-story';
 import { AplicarStory } from '@/components/editorial/aplicar-story';
 import type { Dictionary } from '@/i18n/dictionary';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { i18n } from '@/i18n/config';
+import { infoSlugs, isInfoSlug, unindexedInfoPages, type InfoSlug } from '@/lib/info-pages';
 
 // Editorial pages render their own story component; legal pages share LegalStory.
 // All copy, including each page's <title>, comes from the locale's dictionary.
-const storyPages = ['aplicar', 'criterios', 'proceso', 'faq', 'el-proyecto', 'changelog'] as const;
-const legalPages = ['privacidad', 'terminos', 'cookies'] as const satisfies readonly LegalPageId[];
-
-type InfoSlug = (typeof storyPages)[number] | (typeof legalPages)[number];
-
-const infoSlugs: readonly InfoSlug[] = [...storyPages, ...legalPages];
-
-function isInfoSlug(value: string): value is InfoSlug {
-  return (infoSlugs as readonly string[]).includes(value);
-}
-
 function pageTitle(dict: Dictionary, info: InfoSlug) {
   switch (info) {
     case 'aplicar':
@@ -61,7 +51,10 @@ export async function generateMetadata({
   const dict = await getDictionary(locale);
   return {
     title: isInfoSlug(info) ? `${pageTitle(dict, info)} | shwcs` : 'shwcs',
-    robots: ['privacidad', 'terminos'].includes(info) ? { index: false, follow: true } : undefined,
+    robots:
+      isInfoSlug(info) && unindexedInfoPages.includes(info)
+        ? { index: false, follow: true }
+        : undefined,
   };
 }
 

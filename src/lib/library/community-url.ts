@@ -17,16 +17,25 @@ export type CommunityFilters = {
   page: number;
 };
 
+// One URL per set of filters: values travel in taxonomy order, never click order, so
+// ?category=Ventas,Cobros and ?category=Cobros,Ventas cannot both exist as pages for a
+// crawler to walk (CLAUDE.md §73).
+const ordered = (values: readonly string[], allowed: readonly string[]): string[] =>
+  [...values].sort((a, b) => allowed.indexOf(a) - allowed.indexOf(b));
+
 const clean = (raw: string | undefined, allowed: readonly string[]): string[] =>
   raw
-    ? Array.from(
-        new Set(
-          raw
-            .split(',')
-            .map(v => v.trim())
-            .filter(v => allowed.includes(v)),
-        ),
-      ).slice(0, 7)
+    ? ordered(
+        Array.from(
+          new Set(
+            raw
+              .split(',')
+              .map(v => v.trim())
+              .filter(v => allowed.includes(v)),
+          ),
+        ).slice(0, 7),
+        allowed,
+      )
     : [];
 
 export function readCommunityFilters(params: {
@@ -69,9 +78,11 @@ export function communityHref(f: CommunityFilters, patch: Partial<CommunityFilte
   const next = { ...f, page: 1, ...patch };
   const params = new URLSearchParams();
   if (next.q) params.set('q', next.q);
-  if (next.categories.length) params.set('category', next.categories.join(','));
-  if (next.industries.length) params.set('industria', next.industries.join(','));
-  if (next.sizes.length) params.set('tamano', next.sizes.join(','));
+  if (next.categories.length)
+    params.set('category', ordered(next.categories, solutionCategories).join(','));
+  if (next.industries.length)
+    params.set('industria', ordered(next.industries, solutionIndustries).join(','));
+  if (next.sizes.length) params.set('tamano', ordered(next.sizes, companySizes).join(','));
   if (next.sort !== 'recent') params.set('sort', next.sort);
   if (next.savedOnly) params.set('guardadas', '1');
   if (next.page > 1) params.set('page', String(next.page));

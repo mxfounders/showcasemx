@@ -9,6 +9,7 @@ import {
   escapeLikeTerm,
 } from '../src/lib/library/community-model';
 import { POST as communityPost } from '../src/app/api/community/route';
+import { communityHref, readCommunityFilters, toggleAxis } from '../src/lib/library/community-url';
 test('publication is opt-in; legacy inputs and private metadata never become public copy', () => {
   assert.deepEqual(
     listPublicationDetails({ purpose: 'Confidential budget', note: 'Private note' }),
@@ -103,4 +104,18 @@ test('community mutations reject foreign origins and anonymous participation bef
     }),
   );
   assert.equal(anonymous.status, 401);
+});
+
+test('one community URL per set of filters, whatever the click order', () => {
+  const filters = readCommunityFilters({ category: 'Ventas,Cobros', tamano: 'pyme,micro' });
+  assert.deepEqual(filters.categories, ['Cobros', 'Ventas']);
+  assert.deepEqual(filters.sizes, ['micro', 'pyme']);
+  const forward = communityHref(filters, {
+    categories: toggleAxis(filters.categories, 'Finanzas'),
+  });
+  const reversed = communityHref(
+    readCommunityFilters({ category: 'Ventas,Finanzas,Cobros', tamano: 'micro,pyme' }),
+  );
+  assert.equal(forward, reversed);
+  assert.equal(forward, '/comunidad?category=Cobros%2CFinanzas%2CVentas&tamano=micro%2Cpyme');
 });

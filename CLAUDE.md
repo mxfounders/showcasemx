@@ -137,6 +137,8 @@ src/lib:
 - catalog-preview.ts: catálogo estático, ejemplos y tipos.
 - catalog-search.ts: búsqueda local; no inferencia de IA.
 - brand-colors.ts: paleta compartida.
+- routes.ts: páginas posibles bajo /[locale]; el middleware responde 404 al resto (§73).
+- info-pages.ts: páginas informativas y legales de /[locale]/[info].
 
 src/components:
 - navigation/: sidebar y piezas compartidas de marca.
@@ -470,7 +472,7 @@ respuestas, cierre/reapertura, conflictos de versión, retiro e historial atómi
 finally elimina solo cuentas del test, datos en cascada y sus contadores.
 No usar cuentas reales del usuario ni enviar emails.
 
-Pruebas unitarias: 181 pasando al 23 de octubre de 2026 (ver §72). Lint y TypeScript correctos.
+Pruebas unitarias: 187 pasando al 11 de noviembre de 2026 (ver §72 y §73). Lint y TypeScript correctos.
 Integraciones nuevas: `RUN_REVIEWS_INTEGRATION=1 node tests/integration/reviews.cjs` y
 `RUN_COMPLIANCE_INTEGRATION=1 node tests/integration/compliance.cjs` (esta con un SAT
 simulado; ver su encabezado). Ambas aceptan `APP_ORIGIN` para apuntar a un build aislado.
@@ -2743,6 +2745,13 @@ equipo `mxfounders` en esta máquina).
 
 ### A. Acción del propietario (cuentas, credenciales, decisiones)
 
+0. **Vercel: desbloqueo de cortesía hasta el 11 de diciembre** (§73). El equipo estuvo
+   pausado del 11 de octubre al 11 de noviembre; Vercel lo reactivó con límites ×3 por
+   30 días, **una sola vez**: si después se excede el Hobby, la única salida es Pro.
+   Activar en Firewall los rulesets Bot Protection y AI Bots y una regla para `.php`,
+   `/.env`, `/.git`, `/wp-`; revisar en Observability (ruta y user agent) que el
+   consumo bajó antes del 11 de diciembre. Falta la dirección de facturación del
+   método de pago (aviso «Action Required» del panel).
 1. **Servidor de desarrollo roto**: el `npm run dev` de la terminal del propietario
    (puerto 3000) quedó corrupto porque un `next build` de esta sesión escribió en el
    mismo `.next` (§13). Arreglo: Ctrl+C, `rm -rf .next`, `npm run dev`.
@@ -2788,7 +2797,10 @@ equipo `mxfounders` en esta máquina).
   apelaciones, reputación y defensa ante multicuentas.
 - **Catálogo**: filtros de capacidad e integración en Guardados (§59); el texto de
   `landing-stacking-cards` describe funciones que no existen (§46); `notFound()` responde
-  200 en rutas con `loading.tsx` (limitación de Next, §53).
+  200 en rutas con `loading.tsx` (limitación de Next, §53): desde §73 solo afecta a UUIDs
+  bien formados que no existen; el resto lo resuelve el middleware con 404 real.
+- **Consumo**: inicio, listado del blog, comunidad y acceso siguen dinámicos; volver
+  estático el inicio requiere decidir cómo resolver «Entrar» sin el servidor (§25, §73).
 - **Operación**: limpieza de sesiones caducadas y archivos abandonados (§11); retención de
   `contact_inquiries` (§36); cuota global de almacenamiento por cuenta (§16).
 - **Repositorio**: CLAUDE.md pesa ~180 KB y conviene consolidarlo en un documento de
@@ -3212,3 +3224,105 @@ necesita más presencia, se pide con `weight` y se vuelve a correr el sync.
 - **No capturado**: páginas con sesión (cuenta y panel de ops) y la ficha
   `/soluciones/[id]` (la base de desarrollo no tiene fichas publicadas). Las cubren los
   tipos y el build.
+
+## 73. Pausa de Vercel Hobby: auditoría de consumo y freno a bots — 23 octubre 2026
+
+El 11 de octubre Vercel pausó el equipo `mxfounders` (plan Hobby) por exceder el uso
+justo en los 30 días previos. Cifras del panel: Fast Origin Transfer 30.43 GB / 10 GB
+(la que disparó la pausa), Fluid Active CPU 9 h 54 min / 4 h, Function Invocations
+2 M / 1 M, CDN Requests 1.5 M / 1 M. La pausa no se levanta sola al reiniciarse la
+ventana de 30 días: el 11 de noviembre, con el uso ya dentro de Hobby, Vercel ofreció un
+**desbloqueo de cortesía de una sola vez** (límites ×3 hasta el 11 de diciembre) y el
+propietario lo aceptó. Si el consumo vuelve a exceder Hobby después, solo queda Pro.
+
+### Diagnóstico
+
+Web Analytics registró **64 eventos en 30 días**: casi no hubo visitas humanas. El
+consumo vino de bots y escáneres de vulnerabilidades, y cada petición suya salía cara.
+Se reprodujo en un build de producción local (copia aislada, base de desarrollo, solo
+lecturas):
+
+- **Cualquier ruta con punto devolvía la página de inicio completa con 200** (~213 KB,
+  28 KB comprimida): `/wp-login.php`, `/.env`, `/xmlrpc.php`, `/robots.txt`,
+  `/sitemap.xml`, `/llms.txt`, `/apple-touch-icon.png`… Causa: el matcher del middleware
+  se saltaba toda ruta con punto, `[locale]` aceptaba cualquier valor, `getDictionary`
+  caía al español y el inicio es `force-dynamic`. No había `robots.txt`: los buscadores
+  recibían HTML y ninguna regla. (`/.env` nunca expuso secretos: servía el inicio.)
+- **`/comunidad` era una trampa infinita para crawlers**: 19 enlaces de filtro por
+  página, multiselección y orden de clic dentro de la URL (`Ventas,Cobros` ≠
+  `Cobros,Ventas`), por idioma; todo `force-dynamic` con consultas (~140 ms).
+- **Los errores respondían 200**: `/es/no-existe`, `/wp-admin/x.php`, `/api/x` o una
+  ficha inexistente renderizaban ~100 KB con 200, lo que invita a seguir escaneando.
+- Casi todo lo público es dinámico (el layout de marketing lee cookie y sesión para
+  el botón «Entrar», §25), y el middleware corre en cada página.
+- Las cuentas cuadran: 30.43 GB entre ~1 M de renders ≈ 30 KB, el tamaño comprimido
+  del inicio. Es consistente, no prueba.
+- Descartados: polling de avisos (§31) y de sesión en ops (60 s), solo con la pestaña del
+  propietario abierta; crons (2 al día); imágenes (ya con caché); métricas (necesitan JS).
+- No se leyeron los registros reales: la CLI de esta máquina solo ve el equipo
+  `flouvia` y el conector de Vercel requiere `/mcp`. Confirmar en Observability
+  agrupando por ruta y user agent.
+
+### Cambios (desplegados el 11 de noviembre de 2026)
+
+- **Middleware con rutas conocidas** (`src/middleware.ts`, `src/lib/routes.ts`): antes
+  de renderizar comprueba idioma (`es`/`en`), primer segmento conocido, slugs de los
+  conjuntos cerrados (categorías, industrias, colecciones, blog, páginas informativas),
+  formato UUID en `soluciones` y `comunidad`, y que ningún segmento tenga punto. Lo
+  demás recibe `notFoundResponse()` (`src/lib/not-found-response.ts`): 404 real,
+  ~1.5 KB de HTML propio con la copia de `notFound`, wordmark y paleta, sin React ni
+  base de datos. Las URLs sin idioma que sí son páginas siguen redirigiendo (307).
+- **Matcher**: ya no excluye toda ruta con punto. Excluye `api/`, `_next/`, `_vercel/`,
+  `__nextjs`, los directorios de `public/` (`brand/`, `icons/`, `images/`) y cada
+  archivo servido en la raíz (`favicon.ico`, `icon.png`, `apple-icon.png`,
+  `og-image.png`, `manifest.webmanifest`, `robots.txt`, `sitemap.xml`). **Un archivo
+  nuevo en la raíz de `public/` o una ruta de metadatos nueva en `src/app` debe
+  añadirse ahí**; `tests/routes.test.ts` falla si falta. El middleware juzga las formas
+  de transporte de Next (`.rsc`, `.prefetch.rsc`, `.segments/…`) como su página.
+- **`/api` desconocida**: `src/app/api/[...path]/route.ts` responde 404 vacío con
+  `s-maxage=86400` (la CDN lo cachea por URL hasta el siguiente despliegue). Antes caía
+  en `[locale]/[...catchAll]` y renderizaba el not-found con 200.
+- **`robots.txt` y `sitemap.xml` estáticos** (`src/app/robots.ts`, `src/app/sitemap.ts`):
+  robots bloquea `/api/`, cuenta, acceso y formularios con `?next=`, búsquedas del inicio
+  y combinaciones de filtros de comunidad, y deja rastrear su paginación
+  (`/comunidad?page=`). Prefijos explícitos por idioma, sin comodines. El sitemap lista
+  las páginas indexables en ambos idiomas con hreflang, incluidas las fichas publicadas;
+  hereda la ventana de 5 min de `publicProducts`. Privacidad y Términos siguen fuera
+  mientras sean noindex (`unindexedInfoPages`).
+- **Filtros de comunidad**: valores en orden de taxonomía al leer y al construir la URL
+  (una URL por conjunto de filtros), enlaces de filtro con `rel="nofollow"` y
+  `prefetch={false}` (cada pestaña visible costaba una invocación por visita),
+  `noindex, follow` en vistas filtradas o con búsqueda; la paginación sin filtros sigue
+  indexable.
+- `infoSlugs` pasó de `[info]/page.tsx` a `src/lib/info-pages.ts`, compartido por la
+  ruta, el middleware y el sitemap. `siteOrigin` en `src/lib/seo.ts`.
+- El enlace «Sponsor» del footer (`/sponsor`) nunca tuvo página; ahora se oculta en
+  `availableNavigation` como los demás destinos sin implementar (§5).
+
+### Verificación
+
+184 pruebas unitarias (6 nuevas: tabla de rutas contra el árbol real de
+`src/app/[locale]` con los slugs reales, rutas rechazadas, 404 del middleware por idioma,
+redirecciones y formas de transporte, matcher compilado con el propio compilador de Next
+contra `public/` y `src/app`, y orden único de filtros). Lint, tipos y formato limpios.
+Build de producción aislado: middleware de 66 KB (antes 44 KB), `/robots.txt` y
+`/sitemap.xml` estáticos. En `next start` contra `neondb`: las sondas de escáner pasan de
+200 con 213 KB a 404 con 1.5 KB; `/api/x` da 404 vacío; inicio, categorías, blog, legales,
+comunidad, acceso y contacto siguen en 200; `/terminos` sigue redirigiendo; la cuenta
+anónima sigue yendo a sign-in. Página 404 revisada a ojo. Al desplegar (11 de
+noviembre) se rebasó sobre el cambio a Gota (§72): 187 pruebas, tipos, lint, formato,
+build y la misma prueba en vivo en verde.
+
+### Límites y pendientes
+
+- Una ficha o lista con UUID bien formado que no existe sigue respondiendo 200 con
+  `noindex` (el `notFound()` de la página queda bajo `loading.tsx`, §53). Los escáneres
+  no generan esas URLs.
+- El inicio, el listado del blog, comunidad y acceso siguen siendo dinámicos. Volver
+  estático el inicio exige sacar del servidor la decisión «Entrar»/«Ir a mi panel»
+  (§25): decisión del propietario.
+- No se bloquearon crawlers de IA en robots: decisión del propietario (visibilidad en
+  respuestas de IA frente a consumo).
+- Firewall de Vercel (acción del propietario en el panel): rulesets administrados Bot
+  Protection y AI Bots, y una regla que bloquee `.php`, `/.env`, `/.git` y `/wp-`.
+  Vercel no cobra el tráfico que el firewall bloquea.
