@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from '@/i18n/navigation';
 import gsap from 'gsap';
-import { ArrowRight, ArrowLeft, Check } from 'lucide-react';
+import { ArrowLeftIcon, ArrowRightIcon, CheckIcon } from '@/components/icons/gota';
 import { actionButtonStyle, brandColors } from '@/lib/brand-colors';
 import {
   newsletterProfiles,
@@ -88,7 +88,7 @@ export function NewsletterForm({ dict: t }: { dict: Dictionary['newsletter'] }) 
           style={actionButtonStyle}
           className="mb-6 inline-flex size-12 items-center justify-center rounded-full"
         >
-          <Check aria-hidden="true" className="size-6" />
+          <CheckIcon aria-hidden="true" className="size-6" />
         </span>
         <h2
           ref={question}
@@ -103,7 +103,7 @@ export function NewsletterForm({ dict: t }: { dict: Dictionary['newsletter'] }) 
           style={actionButtonStyle}
           className="action-button mt-8 inline-flex items-center gap-2 rounded-full px-6 py-3 font-medium"
         >
-          {t.successBtn} <ArrowRight aria-hidden="true" className="size-4" />
+          {t.successBtn} <ArrowRightIcon aria-hidden="true" className="size-4 button-arrow" />
         </Link>
       </div>
     );
@@ -253,7 +253,7 @@ export function NewsletterForm({ dict: t }: { dict: Dictionary['newsletter'] }) 
           className="action-button inline-flex items-center justify-center gap-3 rounded-full px-6 py-3.5 text-sm font-medium disabled:cursor-wait disabled:opacity-60"
         >
           {pending ? t.registering : step === 2 ? t.subscribeBtn : t.continueBtn}
-          <ArrowRight aria-hidden="true" className="size-4" />
+          <ArrowRightIcon aria-hidden="true" className="size-4 button-arrow" />
         </button>
         {step > 0 && (
           <button
@@ -265,7 +265,7 @@ export function NewsletterForm({ dict: t }: { dict: Dictionary['newsletter'] }) 
             }}
             className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm text-stone-500 transition-colors hover:text-stone-900 focus-visible:outline focus-visible:outline-2 disabled:opacity-50"
           >
-            <ArrowLeft aria-hidden="true" className="size-4" />
+            <ArrowLeftIcon aria-hidden="true" className="size-4" />
             {t.backBtn}
           </button>
         )}

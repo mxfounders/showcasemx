@@ -7,7 +7,13 @@ import Image from 'next/image';
 import Link from '@/i18n/navigation';
 import gsap from 'gsap';
 import { actionButtonStyle, brandColors } from '@/lib/brand-colors';
-import { ArrowDownLeft, ArrowUpRight, Check, Plus, X } from 'lucide-react';
+import {
+  ArrowDownLeftIcon,
+  ArrowUpRightIcon,
+  CheckIcon,
+  CloseIcon,
+  PlusIcon,
+} from '@/components/icons/gota';
 import {
   previewCategories,
   localizedPreviewAction,
@@ -48,7 +54,7 @@ function ProductVisual({ variant, color }: { variant: number; color: string }) {
         ) : variant === 1 ? (
           <div className="flex h-14 items-center justify-center gap-4">
             <div className="flex size-12 items-center justify-center rounded-full border border-stone-300">
-              <ArrowDownLeft className="size-5 text-stone-700" />
+              <ArrowDownLeftIcon className="size-5 text-stone-700" />
             </div>
             <div className="space-y-2">
               <div className="h-2 w-20 rounded bg-stone-700" />
@@ -70,7 +76,7 @@ function ProductVisual({ variant, color }: { variant: number; color: string }) {
             {[0, 1, 2].map(i => (
               <div key={i} className="flex items-center gap-2">
                 <span className="flex size-3 items-center justify-center rounded-full bg-stone-800">
-                  <Check className="size-2 text-white" />
+                  <CheckIcon className="size-2 text-white" />
                 </span>
                 <div className="h-1.5 flex-1 rounded bg-stone-200" />
                 <div className="h-1 w-6 rounded bg-stone-300" />
@@ -213,7 +219,7 @@ export function CategoryExplorer({
                       {item.products.length === 1 ? dict.option : dict.options}
                     </span>
                   </span>
-                  <ArrowUpRight
+                  <ArrowUpRightIcon
                     aria-hidden="true"
                     className={`size-4 transition-[transform,opacity] duration-300 motion-reduce:transition-none ${results === null && selected === index ? 'opacity-100' : '-translate-x-1 translate-y-1 opacity-0 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100'}`}
                   />
@@ -308,7 +314,7 @@ export function CategoryExplorer({
                       <span className="text-[20px] font-semibold tracking-[-0.03em] text-stone-900">
                         {product.name}
                       </span>
-                      <ArrowUpRight
+                      <ArrowUpRightIcon
                         aria-hidden="true"
                         className="ml-auto size-4 text-stone-400 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transform-none"
                       />
@@ -324,7 +330,7 @@ export function CategoryExplorer({
                         <span className="shrink-0 text-stone-600">{dict.seeSolution}</span>
                       ) : (
                         <span className="inline-flex shrink-0 items-center gap-1 text-stone-600">
-                          {dict.seeExample} <Plus aria-hidden="true" className="size-3" />
+                          {dict.seeExample} <PlusIcon aria-hidden="true" className="size-3" />
                         </span>
                       )}
                     </div>
@@ -369,7 +375,7 @@ export function CategoryExplorer({
                     </span>
                     <span className="mt-4 inline-flex items-center gap-2 text-sm text-stone-500 transition-colors group-hover:text-stone-900">
                       {dict.applySpaceBtn} {categoryLabel}
-                      <Plus
+                      <PlusIcon
                         aria-hidden="true"
                         className="size-4 transition-transform duration-300 group-hover:rotate-90 motion-reduce:transform-none"
                       />
@@ -431,7 +437,7 @@ export function CategoryExplorer({
                 style={actionButtonStyle}
                 className="action-button rounded-full p-2 focus-visible:outline focus-visible:outline-2"
               >
-                <X className="size-5" />
+                <CloseIcon className="size-5" />
               </button>
             </div>
             <h2 id="preview-product-name" className="text-3xl font-semibold tracking-tight">
@@ -464,7 +470,8 @@ export function CategoryExplorer({
                 style={actionButtonStyle}
                 className="mt-6 inline-flex items-center gap-2 rounded-full action-button px-5 py-3 text-sm font-medium"
               >
-                {dict.visitSiteBtn} <ArrowUpRight aria-hidden="true" className="size-4" />
+                {dict.visitSiteBtn}{' '}
+                <ArrowUpRightIcon aria-hidden="true" className="size-4 button-arrow-diagonal" />
                 <span className="sr-only">{` ${dict.opensInNewTab}`}</span>
               </a>
             ) : (

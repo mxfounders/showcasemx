@@ -4,7 +4,7 @@ import { useMemo, useState, useCallback, useEffect, type ReactNode } from 'react
 import { useSearchParams } from 'next/navigation';
 import Link from '@/i18n/navigation';
 import Image from 'next/image';
-import { ArrowUpRight, Star } from 'lucide-react';
+import { ArrowUpRightIcon, StarIcon } from '@/components/icons/gota';
 import type { Dictionary } from '@/i18n/dictionary';
 import { CatalogFilterBar } from './catalog-filter-bar';
 import { ProductVisual } from '@/components/product-visual';
@@ -415,7 +415,7 @@ export function CategoryPageLayout({
           <span className="text-lg font-semibold tracking-tight text-stone-900">
             {product.name}
           </span>
-          <ArrowUpRight
+          <ArrowUpRightIcon
             aria-hidden="true"
             className="ml-auto size-4 text-stone-400 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
           />
@@ -434,7 +434,7 @@ export function CategoryPageLayout({
               .replace('{rating}', product.rating.toFixed(1))
               .replace('{count}', String(product.reviews))}
           >
-            <Star className="size-3.5 fill-[#88631B] text-[#88631B]" aria-hidden="true" />
+            <StarIcon variant="fill" className="size-3.5 text-[#88631B]" aria-hidden="true" />
             <span aria-hidden="true">
               {product.rating.toFixed(1)}
               <span className="text-stone-400"> ({product.reviews})</span>

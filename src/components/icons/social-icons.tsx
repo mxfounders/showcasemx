@@ -1,11 +1,11 @@
-import { Globe, BookOpen, Tag, Mail } from 'lucide-react';
+import { BookOpenIcon, GlobeIcon, MailIcon, PriceTagIcon } from '@/components/icons/gota';
 import type { PublicLink } from '@/lib/solutions/profile';
 
 /**
  * Brand marks for the closed list of link kinds in `publicLinkKinds`.
  *
- * lucide dropped brand icons, so the seven social marks are inline paths on a
- * 24×24 grid drawn with `currentColor`; the four generic kinds keep using lucide
+ * Gota draws no brand marks, so the seven social marks are inline paths on a
+ * 24×24 grid drawn with `currentColor`; the four generic kinds are Gota icons
  * so they match the rest of the interface. Every glyph is decorative: the link
  * itself carries the accessible name.
  */
@@ -56,10 +56,10 @@ const socialIcons: Record<PublicLink['label'], React.ComponentType<IconProps>> =
   GitHub: GitHubIcon,
   TikTok: TikTokIcon,
   'Product Hunt': ProductHuntIcon,
-  'Sitio web': Globe,
-  Documentación: BookOpen,
-  Precios: Tag,
-  Contacto: Mail,
+  'Sitio web': GlobeIcon,
+  Documentación: BookOpenIcon,
+  Precios: PriceTagIcon,
+  Contacto: MailIcon,
 };
 
 /** Falls back to a globe if an older record carries a label no longer listed. */
@@ -70,6 +70,6 @@ export function SocialIcon({
   label: PublicLink['label'];
   className?: string;
 }) {
-  const Icon = socialIcons[label] ?? Globe;
+  const Icon = socialIcons[label] ?? GlobeIcon;
   return <Icon className={className} />;
 }

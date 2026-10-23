@@ -1,6 +1,13 @@
 'use client';
 import Link from '@/i18n/navigation';
-import { Globe, LockKeyhole, ArrowUpRight, Heart, Bookmark, MessageCircle } from 'lucide-react';
+import {
+  ArrowUpRightIcon,
+  BookmarkIcon,
+  CommentIcon,
+  GlobeIcon,
+  HeartIcon,
+  LockIcon,
+} from '@/components/icons/gota';
 import type { BuyerBoard } from '@/lib/library/model';
 import { ProjectCover } from './project-cover';
 import type { Dictionary } from '@/i18n/dictionary';
@@ -40,9 +47,9 @@ export function BoardCard({
             {board.count} {board.count === 1 ? dict.projectSingular : dict.projectPlural}
             <span aria-hidden="true">·</span>
             {board.visibility === 'public' ? (
-              <Globe className="size-3" />
+              <GlobeIcon className="size-3" />
             ) : (
-              <LockKeyhole className="size-3" />
+              <LockIcon className="size-3" />
             )}
             <span>{board.visibility === 'public' ? dict.public : dict.private}</span>
           </p>
@@ -54,21 +61,21 @@ export function BoardCard({
           {stats && (
             <p className="mt-2 flex items-center gap-3 text-xs text-stone-400">
               <span className="inline-flex items-center gap-1">
-                <Heart className="size-3" />
+                <HeartIcon className="size-3" />
                 {stats.likes}
               </span>
               <span className="inline-flex items-center gap-1">
-                <Bookmark className="size-3" />
+                <BookmarkIcon className="size-3" />
                 {stats.saves}
               </span>
               <span className="inline-flex items-center gap-1">
-                <MessageCircle className="size-3" />
+                <CommentIcon className="size-3" />
                 {stats.comments}
               </span>
             </p>
           )}
         </div>
-        <ArrowUpRight
+        <ArrowUpRightIcon
           aria-hidden="true"
           className="mt-1 size-4 shrink-0 text-stone-400 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transform-none"
         />

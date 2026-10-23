@@ -2,7 +2,7 @@ import { ShareCollection } from '@/components/library/share-collection';
 import { ComparisonPicker } from '@/components/library/comparison-picker';
 import Link from '@/i18n/navigation';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, LockKeyhole, Globe } from 'lucide-react';
+import { ArrowLeftIcon, GlobeIcon, LockIcon } from '@/components/icons/gota';
 import { isSolutionId } from '@/lib/solutions/model';
 import {
   requireBuyer,
@@ -49,7 +49,7 @@ export default async function ListPage(props: { params: Promise<{ id: string; lo
         href="/account/lists"
         className="mb-7 inline-flex items-center gap-2 text-sm text-stone-500"
       >
-        <ArrowLeft className="size-4" aria-hidden="true" />
+        <ArrowLeftIcon className="size-4" aria-hidden="true" />
         {t.back}
       </Link>
       <header className="mb-8">
@@ -64,9 +64,9 @@ export default async function ListPage(props: { params: Promise<{ id: string; lo
         )}
         <p className="mt-4 flex items-center gap-2 text-xs text-stone-400">
           {list.visibility === 'public' ? (
-            <Globe className="size-3.5" aria-hidden="true" />
+            <GlobeIcon className="size-3.5" aria-hidden="true" />
           ) : (
-            <LockKeyhole className="size-3.5" aria-hidden="true" />
+            <LockIcon className="size-3.5" aria-hidden="true" />
           )}
           {list.visibility === 'public' ? t.public : t.private} ·{' '}
           {(items.length === 1 ? t.projectSingular : t.projectPlural).replace(

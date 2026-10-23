@@ -1,5 +1,12 @@
 import Link from '@/i18n/navigation';
-import { ArrowUpRight, CalendarDays, Eye, MousePointerClick, Send, TrendingUp } from 'lucide-react';
+import {
+  ArrowUpRightIcon,
+  CalendarIcon,
+  CursorClickIcon,
+  EyeIcon,
+  SendIcon,
+  TrendUpIcon,
+} from '@/components/icons/gota';
 import { brandColors } from '@/lib/brand-colors';
 import { InteractiveActivityChart } from './interactive-activity-chart';
 import type { Dictionary } from '@/i18n/dictionary';
@@ -28,7 +35,7 @@ function Metric({
 }: {
   label: string;
   value: string;
-  Icon: typeof Eye;
+  Icon: typeof EyeIcon;
   tone: keyof typeof brandColors;
   detail: string;
 }) {
@@ -80,7 +87,7 @@ export function MetricsDashboard({
           <p className="mt-4 max-w-xl text-sm leading-relaxed text-stone-500">{dict.intro}</p>
         </div>
         <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-xs text-stone-500">
-          <CalendarDays className="size-4" aria-hidden="true" />
+          <CalendarIcon className="size-4" aria-hidden="true" />
           {dict.period}
         </span>
       </header>
@@ -91,28 +98,28 @@ export function MetricsDashboard({
         <Metric
           label={dict.views}
           value={number.format(totals.views)}
-          Icon={Eye}
+          Icon={EyeIcon}
           tone="blue"
           detail={dict.viewsDetail}
         />
         <Metric
           label={dict.siteClicks}
           value={number.format(totals.clicks)}
-          Icon={MousePointerClick}
+          Icon={CursorClickIcon}
           tone="sage"
           detail={ofViews(totals.clicks, totals.views)}
         />
         <Metric
           label={dict.requests}
           value={number.format(totals.requests)}
-          Icon={Send}
+          Icon={SendIcon}
           tone="terracotta"
           detail={dict.requestsDetail}
         />
         <Metric
           label={dict.conversion}
           value={percentLabel(totals.requests, totals.views, locale)}
-          Icon={TrendingUp}
+          Icon={TrendUpIcon}
           tone="amber"
           detail={dict.conversionDetail}
         />
@@ -216,7 +223,7 @@ export function MetricsDashboard({
                     </span>
                     <span className="mt-1 flex items-center gap-2">
                       <span className="truncate font-medium">{project.name}</span>
-                      <ArrowUpRight className="size-3.5 shrink-0 text-stone-400 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transform-none" />
+                      <ArrowUpRightIcon className="size-3.5 shrink-0 text-stone-400 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transform-none" />
                     </span>
                   </Link>
                   <div>
@@ -293,7 +300,7 @@ export function MetricsDashboard({
         </>
       ) : (
         <div className="border-y border-stone-200 py-16">
-          <Eye className="size-7 text-stone-300" aria-hidden="true" />
+          <EyeIcon className="size-7 text-stone-300" aria-hidden="true" />
           <h2 className="mt-5 text-2xl font-medium tracking-tight">{dict.emptyTitle}</h2>
           <p className="mt-3 max-w-lg text-sm leading-relaxed text-stone-500">{dict.emptyDesc}</p>
           <Link
@@ -301,7 +308,7 @@ export function MetricsDashboard({
             className="mt-6 inline-flex items-center gap-2 text-sm text-[#365DC4]"
           >
             {dict.emptyCta}
-            <ArrowUpRight className="size-4" />
+            <ArrowUpRightIcon className="size-4" />
           </Link>
         </div>
       )}

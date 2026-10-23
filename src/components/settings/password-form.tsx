@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import Link from '@/i18n/navigation';
-import { ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { ArrowRightIcon, EyeIcon, EyeOffIcon } from '@/components/icons/gota';
 import { credentialErrors } from '@/lib/auth/validation';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
@@ -45,7 +45,7 @@ export function PasswordForm({
           className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-[#365DC4]"
         >
           {text.backToLogin}
-          <ArrowRight className="size-4" />
+          <ArrowRightIcon className="size-4" />
         </Link>
       </div>
     );
@@ -172,7 +172,7 @@ export function PasswordForm({
               onClick={() => setVisible(value => !value)}
               className="inline-flex items-center justify-center gap-2 rounded-full py-2.5 px-4 text-sm font-medium text-stone-600 hover:bg-stone-100 transition-colors w-full sm:w-auto"
             >
-              {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              {visible ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
               {visible ? text.hidePasswords : text.showPasswords}
             </button>
           )}

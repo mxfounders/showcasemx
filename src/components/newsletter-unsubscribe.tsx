@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import Link from '@/i18n/navigation';
-import { Check, LoaderCircle } from 'lucide-react';
+import { CheckIcon, LoaderIcon } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
 
@@ -44,7 +44,7 @@ export function NewsletterUnsubscribe({
   if (done)
     return (
       <div role="status">
-        <Check className="mb-5 size-8 text-[#365DC4]" aria-hidden="true" />
+        <CheckIcon className="mb-5 size-8 text-[#365DC4]" aria-hidden="true" />
         <h1 className="text-4xl font-semibold tracking-tight">{dict.doneTitle}</h1>
         <p className="mt-4 max-w-lg leading-relaxed text-stone-500">{dict.doneDesc}</p>
         <Link href="/" className="mt-8 inline-block text-sm text-[#365DC4]">
@@ -64,7 +64,7 @@ export function NewsletterUnsubscribe({
         style={actionButtonStyle}
         className="action-button mt-8 inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {pending && <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />}
+        {pending && <LoaderIcon className="size-4 animate-spin" aria-hidden="true" />}
         {pending ? dict.pending : dict.submit}
       </button>
       {!token && (

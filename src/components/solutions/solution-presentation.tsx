@@ -7,7 +7,13 @@ import { SolutionSocial } from './solution-social';
 import { SimilarSolutions } from './similar-solutions';
 import type { ReactNode } from 'react';
 import Link from '@/i18n/navigation';
-import { ArrowLeft, ArrowUpRight, ArrowRight, Play, CircleAlert } from 'lucide-react';
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ArrowUpRightIcon,
+  ImportantIcon,
+  PlayIcon,
+} from '@/components/icons/gota';
 import { SocialIcon } from '@/components/icons/social-icons';
 import {
   getSolutionCategories,
@@ -134,7 +140,7 @@ export function SolutionPresentation({
         href={preview ? '/account/solutions/' + id : '/#catalogo'}
         className="mb-8 inline-flex items-center gap-2 text-sm text-stone-500 hover:text-stone-900"
       >
-        <ArrowLeft className="size-4" aria-hidden="true" />
+        <ArrowLeftIcon className="size-4" aria-hidden="true" />
         {preview ? dict.backToApplication : dict.backToCatalog}
       </Link>
       {preview && (
@@ -253,7 +259,7 @@ export function SolutionPresentation({
           </summary>
           <div className="mt-4 rounded-2xl border border-stone-200 bg-stone-50/70 p-5">
             <p className="flex items-start gap-2 text-xs leading-relaxed text-stone-500">
-              <CircleAlert aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
+              <ImportantIcon aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
               {dict.missingInfoNote}
             </p>
             <ul className="mt-4 space-y-2">
@@ -387,7 +393,7 @@ export function SolutionPresentation({
                 className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-[#365DC4]"
               >
                 {dict.viewDemoLink}
-                <ArrowUpRight className="size-4" aria-hidden="true" />
+                <ArrowUpRightIcon className="size-4" aria-hidden="true" />
                 <span className="sr-only"> {dict.otherTab}</span>
               </a>
             )}
@@ -421,7 +427,7 @@ export function SolutionPresentation({
                             >
                               <SocialIcon label={link.label} className="size-4 shrink-0" />
                               {localizedLinkKind(link.label, locale)}
-                              <ArrowUpRight className="size-3" aria-hidden="true" />
+                              <ArrowUpRightIcon className="size-3" aria-hidden="true" />
                               <span className="sr-only"> {dict.otherTab}</span>
                             </a>
                           ) : null;
@@ -444,7 +450,7 @@ export function SolutionPresentation({
                 className="action-button flex w-full items-center justify-between gap-2 rounded-full px-5 py-3 text-sm font-medium"
               >
                 {dict.demoButton}
-                <Play className="size-4" aria-hidden="true" />
+                <PlayIcon className="size-4" aria-hidden="true" />
                 <span className="sr-only"> {dict.otherTab}</span>
               </a>
             </div>
@@ -461,7 +467,7 @@ export function SolutionPresentation({
               className="action-button mt-6 flex w-full items-center justify-between gap-2 rounded-full px-5 py-3 text-sm font-medium"
             >
               {dict.officialSite}
-              <ArrowUpRight className="size-4" aria-hidden="true" />
+              <ArrowUpRightIcon className="size-4 button-arrow-diagonal" aria-hidden="true" />
               <span className="sr-only"> {dict.otherTab}</span>
             </a>
           )}
@@ -473,7 +479,7 @@ export function SolutionPresentation({
                 className="action-button mt-3 flex w-full items-center justify-between gap-2 rounded-full px-5 py-3 text-sm font-medium"
               >
                 {dict.contactCta}
-                <ArrowRight className="size-4" aria-hidden="true" />
+                <ArrowRightIcon className="size-4 button-arrow" aria-hidden="true" />
               </Link>
               <div className="mt-3">
                 <SaveProjectButton

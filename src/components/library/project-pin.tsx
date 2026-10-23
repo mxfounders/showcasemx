@@ -1,5 +1,5 @@
 import Link from '@/i18n/navigation';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRightIcon } from '@/components/icons/gota';
 import type { ReactNode } from 'react';
 import type { BuyerProject } from '@/lib/library/model';
 import { ProjectCover } from './project-cover';
@@ -30,7 +30,7 @@ export function ProjectPin({
             <div className="relative aspect-[4/3] overflow-hidden rounded-[24px]">
               <ProjectCover name={project.name} image={project.image} />
               <span className="absolute bottom-3 right-3 flex size-9 items-center justify-center rounded-full bg-white/90 text-stone-700 shadow-sm transition-transform group-hover:-translate-y-1 motion-reduce:transform-none">
-                <ArrowUpRight className="size-4" aria-hidden="true" />
+                <ArrowUpRightIcon className="size-4" aria-hidden="true" />
               </span>
             </div>
             <div className="px-1 pt-4">

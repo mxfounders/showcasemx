@@ -1,7 +1,13 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
-import { ArrowRight, ArrowLeft, Check, ArrowUpRight } from 'lucide-react';
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ArrowUpRightIcon,
+  CheckIcon,
+  SparklesIcon,
+} from '@/components/icons/gota';
 import gsap from 'gsap';
 import { MediaEditor } from './media-editor';
 import { CompletenessGuide } from './completeness-guide';
@@ -33,7 +39,6 @@ import {
   localizedLinkKind,
 } from '@/lib/taxonomy';
 import { suggestCapabilities } from '@/lib/search/facets';
-import { Sparkles } from 'lucide-react';
 import type { Dictionary } from '@/i18n/dictionary';
 const labelsOf = (options: readonly { value: string; label: string }[]) =>
   Object.fromEntries(options.map(item => [item.value, item.label]));
@@ -402,7 +407,7 @@ export function SolutionEditor({
             className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 shadow-sm transition-all hover:bg-stone-50 hover:text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#365DC4]/50 focus:ring-offset-2 disabled:opacity-50"
           >
             {text.saveAndExit}{' '}
-            <ArrowUpRight className="size-3.5 text-stone-400" aria-hidden="true" />
+            <ArrowUpRightIcon className="size-3.5 text-stone-400" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -519,7 +524,7 @@ export function SolutionEditor({
                     {!!suggestions.length && (
                       <div className="rounded-xl border border-dashed border-[#365DC4]/40 bg-[#E4EBFC]/40 p-4">
                         <p className="flex items-center gap-2 text-xs font-medium text-[#365DC4]">
-                          <Sparkles className="size-3.5" aria-hidden="true" />
+                          <SparklesIcon className="size-3.5" aria-hidden="true" />
                           {text.suggestionsTitle}
                         </p>
                         <div className="mt-3 flex flex-wrap gap-2">
@@ -876,7 +881,7 @@ export function SolutionEditor({
           )}
           {message && (
             <p role="status" className="mt-5 inline-flex items-center gap-2 text-xs text-stone-500">
-              <Check className="size-3" />
+              <CheckIcon className="size-3" />
               {message}
             </p>
           )}
@@ -888,7 +893,7 @@ export function SolutionEditor({
               className="action-button inline-flex items-center gap-3 rounded-full px-6 py-3 text-sm font-medium disabled:opacity-40"
             >
               {question.id === 'review' ? text.submit : text.continue}
-              <ArrowRight className="size-4" />
+              <ArrowRightIcon className="size-4 button-arrow" />
             </button>
             {step > 0 && (
               <button
@@ -897,7 +902,7 @@ export function SolutionEditor({
                 onClick={() => void save('save', step - 1)}
                 className="inline-flex items-center gap-2 rounded-full px-3 py-3 text-sm text-stone-500 disabled:opacity-40"
               >
-                <ArrowLeft className="size-4" />
+                <ArrowLeftIcon className="size-4" />
                 {text.previous}
               </button>
             )}

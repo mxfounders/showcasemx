@@ -1,6 +1,6 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { PenLine } from 'lucide-react';
+import { EditIcon } from '@/components/icons/gota';
 import Link from '@/i18n/navigation';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import { countryOptions } from '@/lib/countries';
@@ -117,7 +117,7 @@ export function ReviewSection({
               style={actionButtonStyle}
               className="action-button inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-medium"
             >
-              <PenLine className="size-4" aria-hidden="true" />
+              <EditIcon className="size-4" aria-hidden="true" />
               {mine ? dict.editMine : dict.write}
             </button>
           )}

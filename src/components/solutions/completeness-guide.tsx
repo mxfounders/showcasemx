@@ -1,5 +1,5 @@
 import Link from '@/i18n/navigation';
-import { Check, ArrowUpRight } from 'lucide-react';
+import { ArrowUpRightIcon, CheckIcon } from '@/components/icons/gota';
 import { solutionChecklist } from '@/lib/solutions/completeness';
 import type { SolutionData } from '@/lib/solutions/model';
 import type { Dictionary } from '@/i18n/dictionary';
@@ -56,7 +56,7 @@ export function CompletenessGuide({
                 <span
                   className={`mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border ${item.done ? 'border-[#416B50] bg-[#E4EDE2] text-[#416B50]' : 'border-stone-300'}`}
                 >
-                  {item.done && <Check className="size-3" aria-hidden="true" />}
+                  {item.done && <CheckIcon className="size-3" aria-hidden="true" />}
                 </span>
                 <span>
                   <span className="block">{item.label}</span>
@@ -73,7 +73,7 @@ export function CompletenessGuide({
         className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 shadow-sm transition-all hover:bg-stone-50 hover:text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#365DC4]/50 focus:ring-offset-2"
       >
         {dict.preview}
-        <ArrowUpRight className="size-3.5 text-stone-400" aria-hidden="true" />
+        <ArrowUpRightIcon className="size-3.5 text-stone-400" aria-hidden="true" />
         <span className="sr-only"> {dict.otherTab}</span>
       </Link>
     </section>

@@ -11,40 +11,40 @@ import gsap from 'gsap';
 import { actionButtonStyle, brandColors, getAccentStyle } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
 import {
-  ChevronDown,
-  CreditCard,
-  FileText,
-  Users,
-  BarChart3,
-  Package,
-  Target,
+  AwardIcon,
+  BagIcon,
+  BalanceScaleIcon,
+  BoltIcon,
+  BookOpenIcon,
+  BriefcaseIcon,
+  CalendarIcon,
+  CardIcon,
+  ChartBarIcon,
+  ChevronDownIcon,
+  ClientsIcon,
+  ClipboardCheckIcon,
+  CloseIcon,
+  DashboardIcon,
+  DocumentIcon,
+  FactoryIcon,
+  GearIcon,
+  GlobeIcon,
+  GraduationCapIcon,
+  HardHatIcon,
   HeadphonesIcon,
-  Building2,
-  ShoppingBag,
-  Factory,
-  Scale,
-  HardHat,
-  Heart,
-  GraduationCap,
-  Layers,
-  Briefcase,
-  TrendingUp,
-  BookOpen,
-  Send,
-  LayoutDashboard,
-  UserCircle,
-  Rocket,
-  Globe,
-  Calendar,
-  Mail,
-  Award,
-  ClipboardCheck,
-  HelpCircle,
-  Settings,
-  Menu,
-  X,
-  Zap,
-} from 'lucide-react';
+  HeartIcon,
+  HelpIcon,
+  LayersIcon,
+  MailIcon,
+  MenuIcon,
+  OfficeBuildingIcon,
+  ParcelIcon,
+  PersonCircleIcon,
+  RocketIcon,
+  SendIcon,
+  TargetIcon,
+  TrendUpIcon,
+} from '@/components/icons/gota';
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
@@ -208,7 +208,7 @@ function TriggerButton({
       <span ref={botRef} className="absolute left-3 text-stone-900 leading-none" aria-hidden>
         {label}
       </span>
-      <ChevronDown
+      <ChevronDownIcon
         className={`size-3.5 text-stone-400 ml-0.5 transition-transform duration-300 ease-out ${active ? 'rotate-180' : ''}`}
       />
     </button>
@@ -218,36 +218,36 @@ function TriggerButton({
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 
 const iconMap: Record<string, React.ElementType> = {
-  CreditCard,
-  FileText,
-  Users,
-  BarChart3,
-  Package,
-  Target,
-  HeadphonesIcon,
-  Building2,
-  ShoppingBag,
-  Factory,
-  Scale,
-  HardHat,
-  Heart,
-  GraduationCap,
-  Layers,
-  Briefcase,
-  TrendingUp,
-  BookOpen,
-  Send,
-  ClipboardCheck,
-  Settings,
-  HelpCircle,
-  LayoutDashboard,
-  UserCircle,
-  Rocket,
-  Globe,
-  Calendar,
-  Mail,
-  Award,
-  Zap,
+  card: CardIcon,
+  document: DocumentIcon,
+  clients: ClientsIcon,
+  'chart-bar': ChartBarIcon,
+  parcel: ParcelIcon,
+  target: TargetIcon,
+  headphones: HeadphonesIcon,
+  'office-building': OfficeBuildingIcon,
+  bag: BagIcon,
+  factory: FactoryIcon,
+  'balance-scale': BalanceScaleIcon,
+  'hard-hat': HardHatIcon,
+  heart: HeartIcon,
+  'graduation-cap': GraduationCapIcon,
+  layers: LayersIcon,
+  briefcase: BriefcaseIcon,
+  'trend-up': TrendUpIcon,
+  'book-open': BookOpenIcon,
+  send: SendIcon,
+  'clipboard-check': ClipboardCheckIcon,
+  gear: GearIcon,
+  help: HelpIcon,
+  dashboard: DashboardIcon,
+  'person-circle': PersonCircleIcon,
+  rocket: RocketIcon,
+  globe: GlobeIcon,
+  calendar: CalendarIcon,
+  mail: MailIcon,
+  award: AwardIcon,
+  bolt: BoltIcon,
 };
 
 export function Navbar({
@@ -422,7 +422,7 @@ export function Navbar({
             className="md:hidden p-2 rounded-md text-stone-600 hover:bg-stone-100/80 transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+            {mobileMenuOpen ? <CloseIcon className="size-5" /> : <MenuIcon className="size-5" />}
           </button>
         </div>
       </div>
@@ -547,7 +547,7 @@ export function Navbar({
                   className="flex items-center justify-between w-full text-[16px] font-semibold text-stone-900 mb-2"
                 >
                   {menu.heading}
-                  <ChevronDown
+                  <ChevronDownIcon
                     className={`size-4 text-stone-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                   />
                 </button>

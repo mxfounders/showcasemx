@@ -5,20 +5,20 @@ import { useEffect, useRef, useState } from 'react';
 import Link, { usePathname } from '@/i18n/navigation';
 import Image from 'next/image';
 import {
-  House,
-  ChartNoAxesCombined,
-  Inbox,
-  Send,
-  Bookmark,
-  FolderOpen,
-  LibraryBig,
-  Layers,
-  Compass,
-  Menu,
-  X,
-  Settings2,
-  ChevronsUpDown,
-} from 'lucide-react';
+  BookmarkIcon,
+  BookshelfIcon,
+  ChartComboIcon,
+  ChevronUpDownIcon,
+  CloseIcon,
+  CompassIcon,
+  FolderOpenIcon,
+  GearIcon,
+  HomeIcon,
+  InboxIcon,
+  LayersIcon,
+  MenuIcon,
+  SendIcon,
+} from '@/components/icons/gota';
 import { LogoutButton } from '@/components/logout-button';
 import { CommunityIcon } from '@/components/library/community-icon';
 import { BrandLink } from './brand-link';
@@ -65,47 +65,47 @@ export function AccountSidebar({
     };
   }, [accountOpen]);
   const links = [
-    { href: '/account', label: text.home, Icon: House, tone: brandColors.blue },
+    { href: '/account', label: text.home, Icon: HomeIcon, tone: brandColors.blue },
     {
       href: '/account/solutions',
       label: text.mySolutions,
-      Icon: Layers,
+      Icon: LayersIcon,
       tone: brandColors.sage,
     },
     {
       href: '/account/saved',
       label: text.saved,
-      Icon: Bookmark,
+      Icon: BookmarkIcon,
       tone: brandColors.lavender,
     },
     {
       href: '/account/lists',
       label: text.myLists,
-      Icon: FolderOpen,
+      Icon: FolderOpenIcon,
       tone: brandColors.amber,
     },
     {
       href: '/account/community',
       label: text.savedLists,
-      Icon: LibraryBig,
+      Icon: BookshelfIcon,
       tone: brandColors.terracotta,
     },
     {
       href: '/account/contacts',
       label: text.myContacts,
-      Icon: Send,
+      Icon: SendIcon,
       tone: brandColors.blue,
     },
     {
       href: '/account/opportunities',
       label: text.opportunities,
-      Icon: Inbox,
+      Icon: InboxIcon,
       tone: brandColors.terracotta,
     },
     {
       href: '/account/metrics',
       label: text.metrics,
-      Icon: ChartNoAxesCombined,
+      Icon: ChartComboIcon,
       tone: brandColors.blue,
     },
   ];
@@ -148,9 +148,9 @@ export function AccountSidebar({
             className={`rounded-lg p-2 text-stone-500 transition-colors hover:bg-stone-100 lg:hidden ${focusStyle}`}
           >
             {open ? (
-              <X aria-hidden="true" className="size-5" />
+              <CloseIcon aria-hidden="true" className="size-5" />
             ) : (
-              <Menu aria-hidden="true" className="size-5" />
+              <MenuIcon aria-hidden="true" className="size-5" />
             )}
           </button>
         </div>
@@ -177,7 +177,7 @@ export function AccountSidebar({
                       color: tone.solid,
                     }}
                   >
-                    <Icon aria-hidden="true" strokeWidth={1.7} className="size-4" />
+                    <Icon aria-hidden="true" className="size-4" />
                   </span>
                   {label}
                 </Link>
@@ -217,7 +217,7 @@ export function AccountSidebar({
                 className="flex size-7 shrink-0 items-center justify-center rounded-lg transition-transform duration-200 group-hover:-translate-y-px motion-reduce:transform-none"
                 style={{ backgroundColor: brandColors.sage.soft, color: brandColors.sage.solid }}
               >
-                <Compass aria-hidden="true" strokeWidth={1.7} className="size-4" />
+                <CompassIcon aria-hidden="true" className="size-4" />
               </span>
               {text.exploreCatalog}
             </Link>
@@ -243,7 +243,7 @@ export function AccountSidebar({
                       }}
                       className={`flex items-center gap-2.5 rounded-lg px-3 py-3 text-[13px] text-stone-600 transition-colors hover:bg-stone-50 ${focusStyle}`}
                     >
-                      <Settings2 aria-hidden="true" className="size-4" />
+                      <GearIcon aria-hidden="true" className="size-4" />
                       {text.settings}
                     </Link>
                   </nav>
@@ -277,7 +277,10 @@ export function AccountSidebar({
                   </span>
                   <span className="mt-0.5 block text-[11px] text-stone-400">{text.myAccount}</span>
                 </span>
-                <ChevronsUpDown aria-hidden="true" className="size-3.5 shrink-0 text-stone-400" />
+                <ChevronUpDownIcon
+                  aria-hidden="true"
+                  className="size-3.5 shrink-0 text-stone-400"
+                />
               </button>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import Link from '@/i18n/navigation';
+import { ArrowRightIcon } from '@/components/icons/gota';
 import { brandColors } from '@/lib/brand-colors';
 import { getFeaturedPosts } from '@/lib/blog';
 import type { Dictionary } from '@/i18n/dictionary';
@@ -167,17 +168,8 @@ export function LandingBentoBlogs({
 }
 
 const ArrowIcon = () => (
-  <svg
+  <ArrowRightIcon
+    aria-hidden="true"
     className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M14 5l7 7m0 0l-7 7m7-7H3"
-    />
-  </svg>
+  />
 );

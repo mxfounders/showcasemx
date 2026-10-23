@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ThumbsUp, ThumbsDown, Check } from 'lucide-react';
+import { CheckIcon, ThumbsDownIcon, ThumbsUpIcon } from '@/components/icons/gota';
 import type { Dictionary } from '@/i18n/dictionary';
 
 export function ArticleFeedback({ dict }: { dict: Dictionary['blog']['article'] }) {
@@ -26,7 +26,11 @@ export function ArticleFeedback({ dict }: { dict: Dictionary['blog']['article'] 
           }`}
           aria-label={dict.feedbackUp}
         >
-          {feedback === 'up' ? <Check className="size-4" /> : <ThumbsUp className="size-4" />}
+          {feedback === 'up' ? (
+            <CheckIcon className="size-4" />
+          ) : (
+            <ThumbsUpIcon className="size-4" />
+          )}
         </button>
         <button
           type="button"
@@ -41,7 +45,11 @@ export function ArticleFeedback({ dict }: { dict: Dictionary['blog']['article'] 
           }`}
           aria-label={dict.feedbackDown}
         >
-          {feedback === 'down' ? <Check className="size-4" /> : <ThumbsDown className="size-4" />}
+          {feedback === 'down' ? (
+            <CheckIcon className="size-4" />
+          ) : (
+            <ThumbsDownIcon className="size-4" />
+          )}
         </button>
       </div>
     </div>

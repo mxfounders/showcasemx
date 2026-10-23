@@ -1,5 +1,5 @@
 import Link from '@/i18n/navigation';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRightIcon } from '@/components/icons/gota';
 import type { BuyerProject } from '@/lib/library/model';
 import { localizedOfferingOptions, localizedCategoryDisplayLabel } from '@/lib/taxonomy';
 import type { Dictionary } from '@/i18n/dictionary';
@@ -31,7 +31,7 @@ export function ProjectSummary({
           className="inline-flex items-center gap-1 text-sm text-[#365DC4]"
         >
           {project.external ? t.visitSite : t.viewProfile}
-          <ArrowUpRight className="size-4" aria-hidden="true" />
+          <ArrowUpRightIcon className="size-4" aria-hidden="true" />
           {project.external && <span className="sr-only"> {t.newTab}</span>}
         </Link>
       </div>

@@ -2,7 +2,15 @@
 
 import { useMemo, useState, useRef, useEffect } from 'react';
 import Link from '@/i18n/navigation';
-import { ArrowLeft, ArrowRight, Check, ChevronDown, Grid2X2, List, ListFilter } from 'lucide-react';
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  FilterLinesIcon,
+  ListBulletsIcon,
+  ViewGridIcon,
+} from '@/components/icons/gota';
 import { ExpandingSearch } from '@/components/search/expanding-search';
 import { blogTones, formatBlogDate, type BlogCategory, type BlogPostSummary } from '@/lib/blog';
 import { actionButtonStyle } from '@/lib/brand-colors';
@@ -108,14 +116,14 @@ export function BlogIndex({
               className="flex size-10 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-600 transition-colors hover:border-[#365DC4] hover:text-[#365DC4]"
               aria-label={dict.leftAria}
             >
-              <ArrowLeft className="size-4" />
+              <ArrowLeftIcon className="size-4" />
             </button>
             <button
               onClick={() => scroll('right')}
               className="flex size-10 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-600 transition-colors hover:border-[#365DC4] hover:text-[#365DC4]"
               aria-label={dict.rightAria}
             >
-              <ArrowRight className="size-4" />
+              <ArrowRightIcon className="size-4" />
             </button>
           </div>
         </div>
@@ -169,7 +177,7 @@ export function BlogIndex({
       <div className="grid gap-8 lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-12">
         <aside className="lg:sticky lg:top-28 lg:h-fit">
           <p className="flex items-center gap-2 border-b border-stone-200 pb-4 text-sm font-medium">
-            <ListFilter className="size-4" />
+            <FilterLinesIcon className="size-4" />
             {dict.filterAndSort}
           </p>
           <label
@@ -190,7 +198,7 @@ export function BlogIndex({
                     ? dict.sortOldest
                     : dict.sortTitle}
               </span>
-              <ChevronDown
+              <ChevronDownIcon
                 aria-hidden="true"
                 className="size-4 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
               />
@@ -214,7 +222,7 @@ export function BlogIndex({
                   className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-sm transition-colors hover:bg-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#365DC4] ${sort === value ? 'selector-menu-active' : ''}`}
                 >
                   {label}
-                  {sort === value && <Check aria-hidden="true" className="size-4" />}
+                  {sort === value && <CheckIcon aria-hidden="true" className="size-4" />}
                 </button>
               ))}
             </div>
@@ -253,7 +261,7 @@ export function BlogIndex({
                 onClick={() => setView('grid')}
                 className="selector-tab flex items-center gap-2"
               >
-                <Grid2X2 className="h-4 w-4" />
+                <ViewGridIcon className="h-4 w-4" />
                 <span>{dict.gridLabel}</span>
               </button>
               <button
@@ -263,7 +271,7 @@ export function BlogIndex({
                 onClick={() => setView('list')}
                 className="selector-tab flex items-center gap-2"
               >
-                <List className="h-4 w-4" />
+                <ListBulletsIcon className="h-4 w-4" />
                 <span>{dict.listLabel}</span>
               </button>
             </div>
@@ -318,7 +326,7 @@ export function BlogIndex({
                           {post.excerpt}
                         </p>
                         <span className="mt-auto flex items-center justify-between pt-7 text-sm font-medium text-[#365DC4]">
-                          {dict.readArticle} <ArrowRight className="h-4 w-4 button-arrow" />
+                          {dict.readArticle} <ArrowRightIcon className="h-4 w-4 button-arrow" />
                         </span>
                       </div>
                     </Link>
@@ -334,7 +342,7 @@ export function BlogIndex({
                     style={actionButtonStyle}
                     className="action-button flex items-center gap-2 rounded-full px-5 py-2.5 text-[13.5px] font-medium transition-colors disabled:opacity-40 disabled:pointer-events-none"
                   >
-                    <ArrowLeft className="size-4" /> {dict.previousPage}
+                    <ArrowLeftIcon className="size-4" /> {dict.previousPage}
                   </button>
 
                   <div className="flex items-center gap-1 sm:gap-2">
@@ -372,7 +380,7 @@ export function BlogIndex({
                     style={actionButtonStyle}
                     className="action-button flex items-center gap-2 rounded-full px-5 py-2.5 text-[13.5px] font-medium transition-colors disabled:opacity-40 disabled:pointer-events-none"
                   >
-                    {dict.nextPage} <ArrowRight className="size-4" />
+                    {dict.nextPage} <ArrowRightIcon className="size-4 button-arrow" />
                   </button>
                 </div>
               )}

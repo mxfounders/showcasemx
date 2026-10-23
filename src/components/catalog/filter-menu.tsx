@@ -1,5 +1,5 @@
 import Link from '@/i18n/navigation';
-import { Check, ChevronDown } from 'lucide-react';
+import { CheckIcon, ChevronDownIcon } from '@/components/icons/gota';
 
 // Canonical dropdown pattern from CLAUDE.md §28: .selector-dropdown-trigger /
 // .selector-menu-active. Two modes from one component:
@@ -72,7 +72,7 @@ export function FilterMenu(props: ControlledProps | NavigationalProps) {
         className="selector-dropdown-trigger [&::-webkit-details-marker]:hidden"
       >
         <span className="max-w-40 truncate">{triggerLabel(label, options, values)}</span>
-        <ChevronDown
+        <ChevronDownIcon
           aria-hidden="true"
           className="size-4 shrink-0 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
         />
@@ -86,7 +86,7 @@ export function FilterMenu(props: ControlledProps | NavigationalProps) {
               className={rowClass(cleared)}
             >
               <span>{clearLabel}</span>
-              {cleared && <Check aria-hidden="true" className="size-4 shrink-0" />}
+              {cleared && <CheckIcon aria-hidden="true" className="size-4 shrink-0" />}
             </Link>
           ) : (
             <button
@@ -99,7 +99,7 @@ export function FilterMenu(props: ControlledProps | NavigationalProps) {
               className={rowClass(cleared)}
             >
               <span>{clearLabel}</span>
-              {cleared && <Check aria-hidden="true" className="size-4 shrink-0" />}
+              {cleared && <CheckIcon aria-hidden="true" className="size-4 shrink-0" />}
             </button>
           ))}
         {options.map(option => {
@@ -107,7 +107,7 @@ export function FilterMenu(props: ControlledProps | NavigationalProps) {
           const content = (
             <>
               <span className="truncate">{option.label}</span>
-              {active && <Check aria-hidden="true" className="size-4 shrink-0" />}
+              {active && <CheckIcon aria-hidden="true" className="size-4 shrink-0" />}
             </>
           );
           return navigational ? (

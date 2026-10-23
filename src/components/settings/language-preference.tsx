@@ -1,6 +1,6 @@
 'use client';
 import { usePathname, useRouter } from 'next/navigation';
-import { Check } from 'lucide-react';
+import { CheckIcon } from '@/components/icons/gota';
 import { i18n } from '@/i18n/config';
 import type { Dictionary } from '@/i18n/dictionary';
 
@@ -41,7 +41,7 @@ export function LanguagePreference({
               }}
               className="selector-tab inline-flex items-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#365DC4]"
             >
-              {active && <Check aria-hidden="true" className="size-4" />}
+              {active && <CheckIcon aria-hidden="true" className="size-4" />}
               {names[locale] ?? locale}
             </button>
           );

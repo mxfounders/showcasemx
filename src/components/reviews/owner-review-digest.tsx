@@ -1,4 +1,4 @@
-import { ArrowUpRight, MessageSquareReply } from 'lucide-react';
+import { ArrowUpRightIcon, MessageReplyIcon } from '@/components/icons/gota';
 import Link from '@/i18n/navigation';
 import type { Dictionary } from '@/i18n/dictionary';
 import { Stars } from './stars';
@@ -52,7 +52,7 @@ export function OwnerReviewDigest({
               <span
                 className={`inline-flex items-center gap-1 ${digest.unanswered ? 'text-[#A94E35]' : 'text-[#416B50]'}`}
               >
-                <MessageSquareReply className="size-4" aria-hidden="true" />
+                <MessageReplyIcon className="size-4" aria-hidden="true" />
                 {digest.unanswered === 0
                   ? text.allAnswered
                   : (digest.unanswered === 1 ? text.unansweredOne : text.unansweredMany).replace(
@@ -69,7 +69,7 @@ export function OwnerReviewDigest({
             className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm text-[#365DC4] hover:bg-[#E4EBFC]"
           >
             {text.open}
-            <ArrowUpRight className="size-4" aria-hidden="true" />
+            <ArrowUpRightIcon className="size-4" aria-hidden="true" />
           </Link>
         )}
       </div>

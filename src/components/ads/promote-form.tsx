@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@/i18n/navigation';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRightIcon } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import { addDays, adPlacements, type AdCurrency, type AdPlacement } from '@/lib/ads/model';
 import { formatDay, formatMoney } from '@/lib/ads/format';
@@ -268,7 +268,7 @@ export function PromoteForm({
         className="action-button mt-8 inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-medium disabled:opacity-60"
       >
         {pending ? dict.form.submitting : dict.form.submit}
-        <ArrowRight aria-hidden="true" className="size-4" />
+        <ArrowRightIcon aria-hidden="true" className="size-4 button-arrow" />
       </button>
       {error && (
         <p role="alert" className="mt-4 text-sm text-[#A94E35]">

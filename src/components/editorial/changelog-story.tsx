@@ -3,18 +3,18 @@
 import { useState } from 'react';
 import Link from '@/i18n/navigation';
 import {
-  ArrowRight,
-  BookOpen,
-  ChartNoAxesCombined,
-  Layers3,
-  ShieldCheck,
-  Tags,
-  Search,
-  MessageCircle,
-  GalleryHorizontal,
-  UserRound,
-  type LucideIcon,
-} from 'lucide-react';
+  ArrowRightIcon,
+  BookOpenIcon,
+  ChartComboIcon,
+  CommentIcon,
+  LayersIcon,
+  PersonIcon,
+  PriceTagsIcon,
+  SearchIcon,
+  ShieldIcon,
+  ViewCarouselIcon,
+  type GotaIcon,
+} from '@/components/icons/gota';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Dictionary } from '@/i18n/dictionary';
 
@@ -29,37 +29,61 @@ type Release = {
   month: ReleaseMonth;
   category: ReleaseCategory;
   accent: string;
-  icon: LucideIcon;
+  icon: GotaIcon;
 };
 
 const releases: readonly Release[] = [
-  { id: 'capabilities', month: 'september', category: 'product', accent: '#88631B', icon: Tags },
-  { id: 'conceptSearch', month: 'september', category: 'product', accent: '#365DC4', icon: Search },
+  {
+    id: 'capabilities',
+    month: 'september',
+    category: 'product',
+    accent: '#88631B',
+    icon: PriceTagsIcon,
+  },
+  {
+    id: 'conceptSearch',
+    month: 'september',
+    category: 'product',
+    accent: '#365DC4',
+    icon: SearchIcon,
+  },
   {
     id: 'listingSocial',
     month: 'september',
     category: 'community',
     accent: '#7753A5',
-    icon: MessageCircle,
+    icon: CommentIcon,
   },
   {
     id: 'listingCover',
     month: 'september',
     category: 'product',
     accent: '#B15C3F',
-    icon: GalleryHorizontal,
+    icon: ViewCarouselIcon,
   },
-  { id: 'welcome', month: 'september', category: 'account', accent: '#416B50', icon: UserRound },
-  { id: 'identity', month: 'september', category: 'product', accent: '#365DC4', icon: BookOpen },
-  { id: 'publicLists', month: 'august', category: 'community', accent: '#7753A5', icon: Layers3 },
+  { id: 'welcome', month: 'september', category: 'account', accent: '#416B50', icon: PersonIcon },
+  {
+    id: 'identity',
+    month: 'september',
+    category: 'product',
+    accent: '#365DC4',
+    icon: BookOpenIcon,
+  },
+  {
+    id: 'publicLists',
+    month: 'august',
+    category: 'community',
+    accent: '#7753A5',
+    icon: LayersIcon,
+  },
   {
     id: 'founderSignals',
     month: 'august',
     category: 'panel',
     accent: '#416B50',
-    icon: ChartNoAxesCombined,
+    icon: ChartComboIcon,
   },
-  { id: 'oneAccount', month: 'august', category: 'account', accent: '#B15C3F', icon: ShieldCheck },
+  { id: 'oneAccount', month: 'august', category: 'account', accent: '#B15C3F', icon: ShieldIcon },
 ];
 
 const releaseCategories: readonly CategoryId[] = [
@@ -94,7 +118,7 @@ export function ChangelogStory({ dict }: { dict: ChangelogDict }) {
               href="/contacto"
               className="mt-8 inline-flex items-center gap-2 text-sm font-medium text-[#365DC4] transition-colors hover:text-[#264DAE]"
             >
-              {dict.feedbackBtn} <ArrowRight className="size-4" aria-hidden="true" />
+              {dict.feedbackBtn} <ArrowRightIcon className="size-4" aria-hidden="true" />
             </Link>
           </div>
         </div>
@@ -213,7 +237,7 @@ export function ChangelogStory({ dict }: { dict: ChangelogDict }) {
             className="group inline-flex shrink-0 items-center gap-2 text-sm font-medium text-[#365DC4]"
           >
             {dict.footerBtn}{' '}
-            <ArrowRight
+            <ArrowRightIcon
               className="size-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none"
               aria-hidden="true"
             />

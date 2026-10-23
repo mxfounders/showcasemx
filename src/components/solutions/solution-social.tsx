@@ -1,7 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import Link from '@/i18n/navigation';
-import { MessageCircle, Trash2 } from 'lucide-react';
+import { CommentIcon, TrashIcon } from '@/components/icons/gota';
 import type { SolutionComment } from '@/lib/solutions/social';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
@@ -70,7 +70,7 @@ export function SolutionSocial({
           id="solution-conversation"
           className="flex items-center gap-2 text-2xl font-semibold tracking-tight"
         >
-          <MessageCircle className="size-5" />
+          <CommentIcon className="size-5" />
           {commentsCount}{' '}
           {commentsCount === 1 ? dict.social.commentSingular : dict.social.commentPlural}
         </h2>
@@ -187,7 +187,7 @@ export function SolutionSocial({
                       }
                     }}
                   >
-                    <Trash2 className="size-4" />
+                    <TrashIcon className="size-4" />
                   </button>
                 )}
               </div>

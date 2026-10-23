@@ -1,5 +1,5 @@
 'use client';
-import { Plus, Trash2 } from 'lucide-react';
+import { PlusIcon, TrashIcon } from '@/components/icons/gota';
 import { publicLinkKinds, type PublicLink, type SolutionFounder } from '@/lib/solutions/profile';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import { localizedLinkKind } from '@/lib/taxonomy';
@@ -70,7 +70,7 @@ export function PublicLinksEditor({
               onClick={() => onChange(links.filter((_, i) => i !== index))}
               className="justify-self-end rounded-lg p-3 text-stone-500 hover:bg-stone-200/50"
             >
-              <Trash2 className="size-4" />
+              <TrashIcon className="size-4" />
             </button>
           </div>
         ))}
@@ -82,7 +82,7 @@ export function PublicLinksEditor({
           style={actionButtonStyle}
           className="action-button mt-5 inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm"
         >
-          <Plus className="size-4" />
+          <PlusIcon className="size-4" />
           {dict.addLink}
         </button>
       )}
@@ -173,7 +173,7 @@ export function FoundersEditor({
           style={actionButtonStyle}
           className="action-button mt-5 inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm"
         >
-          <Plus className="size-4" />
+          <PlusIcon className="size-4" />
           {dict.addPerson}
         </button>
       )}

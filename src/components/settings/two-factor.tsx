@@ -1,7 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
-import { ShieldCheck, ShieldOff, Copy, Check } from 'lucide-react';
+import { CheckIcon, CopyIcon, ShieldIcon, ShieldOffIcon } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
 
@@ -100,12 +100,12 @@ export function TwoFactor({
       >
         {copied ? (
           <>
-            <Check aria-hidden="true" className="size-3.5" />
+            <CheckIcon aria-hidden="true" className="size-3.5" />
             {dict.copied}
           </>
         ) : (
           <>
-            <Copy aria-hidden="true" className="size-3.5" />
+            <CopyIcon aria-hidden="true" className="size-3.5" />
             {dict.copy}
           </>
         )}
@@ -129,7 +129,7 @@ export function TwoFactor({
     return (
       <div className="space-y-5">
         <p className="inline-flex items-center gap-2 rounded-full bg-[#E7F0E9] px-3 py-1.5 text-sm font-medium text-[#416B50]">
-          <ShieldCheck aria-hidden="true" className="size-4" />
+          <ShieldIcon aria-hidden="true" className="size-4" />
           {dict.active}
         </p>
         <p className="text-sm leading-relaxed text-stone-500">{dict.activeDesc}</p>
@@ -146,7 +146,7 @@ export function TwoFactor({
             onClick={() => setStage('disable')}
             className="inline-flex items-center justify-center gap-2 rounded-full border border-red-200 bg-red-50/60 px-5 py-2.5 text-sm font-medium text-red-800 transition-colors hover:bg-red-50"
           >
-            <ShieldOff aria-hidden="true" className="size-4" />
+            <ShieldOffIcon aria-hidden="true" className="size-4" />
             {dict.disable}
           </button>
         </div>
@@ -375,7 +375,7 @@ export function TwoFactor({
   return (
     <div className="space-y-5">
       <p className="inline-flex items-center gap-2 rounded-full bg-stone-100 px-3 py-1.5 text-sm font-medium text-stone-600">
-        <ShieldOff aria-hidden="true" className="size-4" />
+        <ShieldOffIcon aria-hidden="true" className="size-4" />
         {dict.inactive}
       </p>
       <p className="text-sm leading-relaxed text-stone-500">{dict.inactiveDesc}</p>
@@ -385,7 +385,7 @@ export function TwoFactor({
         style={actionButtonStyle}
         className="action-button inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium"
       >
-        <ShieldCheck aria-hidden="true" className="size-4" />
+        <ShieldIcon aria-hidden="true" className="size-4" />
         {dict.enable}
       </button>
     </div>

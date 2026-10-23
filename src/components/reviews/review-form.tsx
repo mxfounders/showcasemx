@@ -1,6 +1,6 @@
 'use client';
 import { useId, useRef, useState, type ReactNode } from 'react';
-import { Star } from 'lucide-react';
+import { StarIcon } from '@/components/icons/gota';
 import { useRouter } from '@/i18n/navigation';
 import { actionButtonStyle, brandColors } from '@/lib/brand-colors';
 import {
@@ -194,12 +194,11 @@ export function ReviewForm({
               <span className="sr-only">
                 {(star === 1 ? form.star : form.stars).replace('{count}', String(star))}
               </span>
-              <Star
+              <StarIcon
                 aria-hidden="true"
                 className="size-8 rounded-md transition-transform peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[#365DC4] motion-safe:hover:scale-110"
-                strokeWidth={1.5}
                 style={{ color: star <= values.rating ? brandColors.amber.solid : '#d6d3d1' }}
-                fill={star <= values.rating ? brandColors.amber.solid : 'none'}
+                variant={star <= values.rating ? 'fill' : 'outline'}
               />
             </label>
           ))}

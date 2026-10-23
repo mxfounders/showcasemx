@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
-import { Trash2, X } from 'lucide-react';
+import { CloseIcon, TrashIcon } from '@/components/icons/gota';
 import { brandColors } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
 
@@ -56,7 +56,7 @@ export function DeleteDraftButton({
         }}
         className="inline-flex min-h-10 items-center gap-2 rounded-full px-3 text-xs font-medium text-stone-400 transition-colors hover:bg-[#F6E5DD] hover:text-[#A94E35] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#A94E35]"
       >
-        <Trash2 aria-hidden="true" className="size-3.5" />
+        <TrashIcon aria-hidden="true" className="size-3.5" />
         {dict.trigger}
       </button>
       <dialog
@@ -77,7 +77,7 @@ export function DeleteDraftButton({
               }}
               className="flex size-11 items-center justify-center rounded-2xl"
             >
-              <Trash2 aria-hidden="true" className="size-5" />
+              <TrashIcon aria-hidden="true" className="size-5" />
             </span>
             <button
               type="button"
@@ -86,7 +86,7 @@ export function DeleteDraftButton({
               onClick={close}
               className="rounded-full p-2 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-stone-700"
             >
-              <X aria-hidden="true" className="size-5" />
+              <CloseIcon aria-hidden="true" className="size-5" />
             </button>
           </div>
           <h2 id={`delete-draft-${id}`} className="mt-6 text-2xl font-semibold tracking-tight">

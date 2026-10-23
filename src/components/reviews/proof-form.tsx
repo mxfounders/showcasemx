@@ -1,6 +1,6 @@
 'use client';
 import { useId, useRef, useState } from 'react';
-import { ReceiptText } from 'lucide-react';
+import { ReceiptIcon } from '@/components/icons/gota';
 import { useRouter } from '@/i18n/navigation';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
@@ -46,7 +46,7 @@ export function ProofForm({
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-700 hover:border-stone-300"
       >
-        <ReceiptText className="size-4 text-[#416B50]" aria-hidden="true" />
+        <ReceiptIcon className="size-4 text-[#416B50]" aria-hidden="true" />
         {text.action}
       </button>
     );
@@ -110,7 +110,7 @@ export function ProofForm({
     >
       <div>
         <p className="flex items-center gap-2 text-base font-semibold text-stone-900">
-          <ReceiptText className="size-5 text-[#416B50]" aria-hidden="true" />
+          <ReceiptIcon className="size-5 text-[#416B50]" aria-hidden="true" />
           {text.title}
         </p>
         <p className="mt-2 text-sm leading-relaxed text-stone-500">{text.intro}</p>

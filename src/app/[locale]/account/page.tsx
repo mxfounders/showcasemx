@@ -1,7 +1,7 @@
 import { getDictionary } from '@/i18n/get-dictionary';
 import Link from '@/i18n/navigation';
 import { localeRedirect } from '@/i18n/redirect';
-import { ArrowRight, Plus } from 'lucide-react';
+import { ArrowRightIcon, PlusIcon } from '@/components/icons/gota';
 import { requireFounder, getOwnedSolutions } from '@/lib/solutions/server';
 import { dashboardData } from '@/lib/dashboard/server';
 import { resolveDashboardMode } from '@/lib/dashboard/model';
@@ -108,7 +108,7 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
                         <h3 className="truncate text-xl font-medium tracking-tight">
                           {solution.data.name || dict.unnamed}
                         </h3>
-                        <ArrowRight
+                        <ArrowRightIcon
                           aria-hidden="true"
                           className="size-4 shrink-0 text-stone-400 transition-transform group-hover:translate-x-1 motion-reduce:transform-none"
                         />
@@ -130,7 +130,7 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
                 href="/account/solutions/new"
                 className="group flex aspect-[4/3] flex-col items-center justify-center gap-3 rounded-[24px] border border-dashed border-stone-300 text-sm text-stone-500 transition-colors hover:border-[#365DC4] hover:bg-[#E4EBFC]/40 hover:text-[#365DC4]"
               >
-                <Plus className="size-7" />
+                <PlusIcon className="size-7" />
                 {dict.postSolution}
               </Link>
             </div>
@@ -189,7 +189,7 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
             className="action-button inline-flex items-center gap-3 rounded-full px-5 py-3 text-sm"
           >
             {dict.exploreProjects}
-            <ArrowRight className="size-4" />
+            <ArrowRightIcon className="size-4 button-arrow" />
           </Link>
         )}
         {requests.length > 0 && (
@@ -209,7 +209,7 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
                         {dict.contactStatuses[request.status]}
                       </p>
                     </div>
-                    <ArrowRight className="size-4 text-stone-400 transition-transform group-hover:translate-x-1 motion-reduce:transform-none" />
+                    <ArrowRightIcon className="size-4 text-stone-400 transition-transform group-hover:translate-x-1 motion-reduce:transform-none" />
                   </Link>
                 </li>
               ))}

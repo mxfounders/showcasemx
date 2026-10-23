@@ -1,7 +1,7 @@
 'use client';
 
 import Link from '@/i18n/navigation';
-import { ArrowRight, Plus } from 'lucide-react';
+import { ArrowRightIcon, PlusIcon } from '@/components/icons/gota';
 import { useState } from 'react';
 import type { Dictionary } from '@/i18n/dictionary';
 
@@ -42,7 +42,7 @@ function Item({
               : 'border-black/10 bg-transparent rotate-0 group-hover:bg-black/5'
           }`}
         >
-          <Plus className="size-3.5" aria-hidden="true" />
+          <PlusIcon className="size-3.5" aria-hidden="true" />
         </span>
       </button>
       <div
@@ -81,7 +81,7 @@ export function FaqStory({ dict }: { dict: Dictionary['faq'] }) {
               className="group inline-flex items-center gap-2 text-sm font-medium text-[#A94E35]"
             >
               {dict.link}
-              <ArrowRight
+              <ArrowRightIcon
                 className="size-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none"
                 aria-hidden="true"
               />

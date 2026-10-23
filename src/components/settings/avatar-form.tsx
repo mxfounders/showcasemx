@@ -2,7 +2,7 @@
 import { useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import Image from 'next/image';
-import { Camera } from 'lucide-react';
+import { CameraIcon } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
 export function AvatarForm({
@@ -95,7 +95,7 @@ export function AvatarForm({
               style={actionButtonStyle}
               className="action-button inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm disabled:opacity-50"
             >
-              <Camera className="size-4" aria-hidden="true" />
+              <CameraIcon className="size-4" aria-hidden="true" />
               {pending ? dict.saving : dict.change}
             </button>
             {avatar && (

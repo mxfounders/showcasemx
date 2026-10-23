@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import Link, { useRouter } from '@/i18n/navigation';
-import { ArrowRight, RefreshCw } from 'lucide-react';
+import { ArrowRightIcon, RefreshIcon } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import { libraryButton, libraryField } from '@/components/library/client';
 import type { Dictionary } from '@/i18n/dictionary';
@@ -199,7 +199,7 @@ export function ContactForm({
           <div className="sm:col-span-2">
             <button className={libraryButton} style={actionButtonStyle}>
               {t.form.review}
-              <ArrowRight className="size-4" aria-hidden="true" />
+              <ArrowRightIcon className="size-4" aria-hidden="true" />
             </button>
           </div>
         </fieldset>
@@ -246,7 +246,7 @@ export function ContactForm({
           <div className="mt-7 flex flex-wrap gap-5">
             <button disabled={pending} style={actionButtonStyle} className={libraryButton}>
               {pending ? t.form.sending : t.form.send}
-              <ArrowRight className="size-4" aria-hidden="true" />
+              <ArrowRightIcon className="size-4" aria-hidden="true" />
             </button>
             <button
               type="button"
@@ -410,7 +410,7 @@ export function RefreshContacts({ dict: t }: { dict: ContactsDict }) {
       onClick={() => router.refresh()}
       className="action-button inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-stone-500"
     >
-      <RefreshCw className="size-4" aria-hidden="true" />
+      <RefreshIcon className="size-4" aria-hidden="true" />
       {t.refresh}
     </button>
   );

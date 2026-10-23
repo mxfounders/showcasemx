@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from '@/i18n/navigation';
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeftIcon } from '@/components/icons/gota';
 import { isSolutionId } from '@/lib/solutions/model';
 import { getPublicCollections, getPublicComments } from '@/lib/library/community';
 import { getSession, sessionCookie } from '@/lib/auth/session';
@@ -50,7 +50,7 @@ export default async function PublicCollectionPage({
         href="/comunidad"
         className="mb-9 inline-flex items-center gap-2 text-sm text-stone-500"
       >
-        <ArrowLeft className="size-4" />
+        <ArrowLeftIcon className="size-4" />
         {dict.detail.back}
       </Link>
       <header className="mb-10 border-b border-stone-200 pb-8">

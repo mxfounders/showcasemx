@@ -1,7 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
-import { Plus } from 'lucide-react';
+import { PlusIcon } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
 export function NewSolutionButton({ dict }: { dict: Dictionary['solutionEditor']['newSolution'] }) {
@@ -41,7 +41,7 @@ export function NewSolutionButton({ dict }: { dict: Dictionary['solutionEditor']
           }
         }}
       >
-        <Plus aria-hidden="true" className="size-4" />
+        <PlusIcon aria-hidden="true" className="size-4" />
         {pending ? dict.creating : dict.cta}
       </button>
       {error && (

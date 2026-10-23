@@ -1,4 +1,4 @@
-import { BadgeCheck, ReceiptText } from 'lucide-react';
+import { ReceiptIcon, VerifiedIcon } from '@/components/icons/gota';
 import type { ReviewSummary as Summary } from '@/lib/reviews/server';
 import type { Dictionary } from '@/i18n/dictionary';
 import { Stars } from './stars';
@@ -47,13 +47,13 @@ export function ReviewSummary({
           </p>
           {summary.customers > 0 && (
             <p className="mt-1 flex items-center gap-1.5 text-sm text-stone-500">
-              <ReceiptText className="size-4 text-[#416B50]" aria-hidden="true" />
+              <ReceiptIcon className="size-4 text-[#416B50]" aria-hidden="true" />
               {dict.customerShare.replace('{count}', String(summary.customers))}
             </p>
           )}
           {summary.work > 0 && (
             <p className="mt-1 flex items-center gap-1.5 text-sm text-stone-500">
-              <BadgeCheck className="size-4 text-[#416B50]" aria-hidden="true" />
+              <VerifiedIcon className="size-4 text-[#416B50]" aria-hidden="true" />
               {dict.workShare.replace('{count}', String(summary.work))}
             </p>
           )}

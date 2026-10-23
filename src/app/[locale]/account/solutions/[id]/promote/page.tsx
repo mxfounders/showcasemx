@@ -1,6 +1,6 @@
 import Link from '@/i18n/navigation';
 import { notFound } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeftIcon } from '@/components/icons/gota';
 import { getSolution, requireFounder } from '@/lib/solutions/server';
 import { getSolutionCategories, isSolutionId } from '@/lib/solutions/model';
 import { categories, localizedCategoryDisplayLabel } from '@/lib/taxonomy';
@@ -68,7 +68,7 @@ export default async function PromotePage(props: {
         href={`/${locale}/account/solutions/${solution.id}`}
         className="mb-8 inline-flex items-center gap-2 text-sm text-stone-500"
       >
-        <ArrowLeft aria-hidden="true" className="size-4" />
+        <ArrowLeftIcon aria-hidden="true" className="size-4" />
         {t.page.back}
       </Link>
       <header className="mb-10 max-w-2xl">

@@ -1,7 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
-import { Download, TriangleAlert } from 'lucide-react';
+import { AlertIcon, DownloadIcon } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
 
@@ -60,7 +60,7 @@ export function ExportData({ dict }: { dict: Dictionary['settings']['data']['exp
         style={actionButtonStyle}
         className="action-button inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium disabled:opacity-60"
       >
-        <Download aria-hidden="true" className="size-4" />
+        <DownloadIcon aria-hidden="true" className="size-4" />
         {pending ? dict.preparing : dict.download}
       </button>
     </div>
@@ -111,7 +111,7 @@ export function DeleteAccount({
           onClick={() => setOpen(true)}
           className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-white px-5 py-2.5 text-sm font-medium text-red-800 transition-colors hover:bg-red-50"
         >
-          <TriangleAlert aria-hidden="true" className="size-4" />
+          <AlertIcon aria-hidden="true" className="size-4" />
           {dict.open}
         </button>
       </div>

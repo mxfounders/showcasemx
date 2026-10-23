@@ -1,4 +1,4 @@
-import { ArrowDownLeft, Calendar } from 'lucide-react';
+import { ArrowDownLeftIcon, CalendarIcon } from '@/components/icons/gota';
 
 export function ProductVisual({ variant, color }: { variant: number; color: string }) {
   return (
@@ -30,7 +30,7 @@ export function ProductVisual({ variant, color }: { variant: number; color: stri
         ) : variant === 1 ? (
           <div className="flex h-14 items-center justify-center gap-4">
             <div className="flex size-12 items-center justify-center rounded-full border border-stone-300">
-              <ArrowDownLeft className="size-5 text-stone-700" />
+              <ArrowDownLeftIcon className="size-5 text-stone-700" />
             </div>
           </div>
         ) : variant === 2 ? (
@@ -42,7 +42,7 @@ export function ProductVisual({ variant, color }: { variant: number; color: stri
           </div>
         ) : (
           <div className="flex h-14 items-center gap-3">
-            <Calendar className="size-8 text-stone-300" />
+            <CalendarIcon className="size-8 text-stone-300" />
             <div className="flex-1 space-y-1.5">
               <div className="h-2 w-full rounded-full bg-stone-200" />
               <div className="h-2 w-3/4 rounded-full bg-stone-200" />

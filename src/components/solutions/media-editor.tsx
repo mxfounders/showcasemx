@@ -1,7 +1,13 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { ArrowLeft, ArrowRight, Plus, Trash2, Upload } from 'lucide-react';
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  PlusIcon,
+  TrashIcon,
+  UploadIcon,
+} from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import { libraryButton, libraryError, libraryField } from '@/components/library/client';
 import type { SolutionScreenshot } from '@/lib/solutions/model';
@@ -137,7 +143,7 @@ export function MediaEditor({
                   onClick={() => move(index, -1)}
                   className="rounded-lg p-2 disabled:opacity-30"
                 >
-                  <ArrowLeft className="size-4" />
+                  <ArrowLeftIcon className="size-4" />
                 </button>
                 <button
                   type="button"
@@ -146,7 +152,7 @@ export function MediaEditor({
                   onClick={() => move(index, 1)}
                   className="rounded-lg p-2 disabled:opacity-30"
                 >
-                  <ArrowRight className="size-4" />
+                  <ArrowRightIcon className="size-4" />
                 </button>
                 <button
                   type="button"
@@ -181,7 +187,7 @@ export function MediaEditor({
           style={actionButtonStyle}
           className={libraryButton}
         >
-          <Upload className="size-4" aria-hidden="true" />
+          <UploadIcon className="size-4" aria-hidden="true" />
           {pending ? dict.processing : dict.upload}
         </button>
         <span className="ml-3 text-xs text-stone-500">
@@ -225,7 +231,7 @@ export function MediaEditor({
                     onClick={() => onChange([...value, { id: asset.id, caption: '' }])}
                     className="rounded-lg p-2 text-[#365DC4] disabled:opacity-30"
                   >
-                    <Plus className="size-4" />
+                    <PlusIcon className="size-4" />
                   </button>
                   <button
                     type="button"
@@ -234,7 +240,7 @@ export function MediaEditor({
                     onClick={() => setConfirm(asset.id)}
                     className="rounded-lg p-2 text-stone-500 disabled:opacity-30"
                   >
-                    <Trash2 className="size-4" />
+                    <TrashIcon className="size-4" />
                   </button>
                 </>
               )}

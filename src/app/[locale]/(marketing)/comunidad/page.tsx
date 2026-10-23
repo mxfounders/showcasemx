@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from '@/i18n/navigation';
 import { cookies } from 'next/headers';
-import { Plus, ArrowRight, ArrowLeft } from 'lucide-react';
+import { ArrowLeftIcon, ArrowRightIcon, PlusIcon } from '@/components/icons/gota';
 import { getPublicCollections } from '@/lib/library/community';
 import {
   readCommunityFilters,
@@ -86,7 +86,7 @@ export default async function CommunityPage({
             className="action-button inline-flex items-center gap-3 rounded-full px-5 py-3 text-sm font-medium"
           >
             {dict.createList}
-            <Plus className="size-4" aria-hidden="true" />
+            <PlusIcon className="size-4" aria-hidden="true" />
           </Link>
         </header>
       )}
@@ -136,7 +136,7 @@ export default async function CommunityPage({
             className="mt-6 inline-flex items-center gap-2 text-sm text-[#365DC4]"
           >
             {active ? dict.clearFiltersLink : dict.createListLink}
-            <ArrowRight className="size-4" />
+            <ArrowRightIcon className="size-4" />
           </Link>
         </div>
       )}
@@ -151,7 +151,7 @@ export default async function CommunityPage({
               href={communityHref(filters, { page: filters.page - 1 })}
               className="inline-flex items-center gap-2 text-sm text-[#365DC4]"
             >
-              <ArrowLeft className="size-4" />
+              <ArrowLeftIcon className="size-4" />
               {dict.pagination.previous}
             </Link>
           ) : (
@@ -166,7 +166,7 @@ export default async function CommunityPage({
               className="inline-flex items-center gap-2 text-sm text-[#365DC4]"
             >
               {dict.pagination.next}
-              <ArrowRight className="size-4" />
+              <ArrowRightIcon className="size-4" />
             </Link>
           ) : (
             <span />

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { X, ArrowRight } from 'lucide-react';
+import { ArrowRightIcon, CloseIcon } from '@/components/icons/gota';
 import { SearchIcon } from '@/components/icons/search-icon';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
@@ -108,7 +108,7 @@ export function NavbarSearch({
             style={actionButtonStyle}
             className="action-button flex size-9 shrink-0 items-center justify-center rounded-full"
           >
-            <ArrowRight aria-hidden="true" className="size-4" />
+            <ArrowRightIcon aria-hidden="true" className="size-4 button-arrow" />
           </button>
           <button
             type="button"
@@ -117,7 +117,7 @@ export function NavbarSearch({
             aria-label={dict.searchCloseLabel}
             className="flex size-8 shrink-0 items-center justify-center rounded-full text-stone-500 hover:bg-stone-100"
           >
-            <X aria-hidden="true" className="size-4" />
+            <CloseIcon aria-hidden="true" className="size-4" />
           </button>
         </form>
       )}

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from '@/i18n/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Bookmark, MessageCircle } from 'lucide-react';
+import { BookmarkIcon, CommentIcon, HeartIcon } from '@/components/icons/gota';
 import { brandColors } from '@/lib/brand-colors';
 import { conceptCategories } from '@/lib/search/vocabulary';
 import type { PublishedProduct } from '@/lib/solutions/public';
@@ -198,18 +198,18 @@ export function LandingFeatures({
                               className={`flex items-center gap-2 px-2 py-1 rounded-full text-[11px] font-semibold ${product.ogImage ? 'bg-black/30 backdrop-blur-md text-white/90 border border-white/10' : 'bg-stone-100 text-stone-700'}`}
                             >
                               <span className="inline-flex items-center gap-0.5">
-                                <Heart className="size-3 text-red-500" aria-hidden="true" />
+                                <HeartIcon className="size-3 text-red-500" aria-hidden="true" />
                                 {product.likes ?? 0}
                               </span>
                               <span className="inline-flex items-center gap-0.5">
-                                <Bookmark
+                                <BookmarkIcon
                                   className={`size-3 ${product.ogImage ? 'text-white/70' : 'text-stone-500'}`}
                                   aria-hidden="true"
                                 />
                                 {product.saves ?? 0}
                               </span>
                               <span className="inline-flex items-center gap-0.5">
-                                <MessageCircle
+                                <CommentIcon
                                   className={`size-3 ${product.ogImage ? 'text-white/70' : 'text-stone-500'}`}
                                   aria-hidden="true"
                                 />

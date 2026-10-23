@@ -1,7 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
-import { Plus, Check, Globe, LockKeyhole } from 'lucide-react';
+import { CheckIcon, GlobeIcon, LockIcon, PlusIcon } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import { solutionCategories } from '@/lib/solutions/model';
 import { brandColors, solutionCategoryTones } from '@/lib/brand-colors';
@@ -113,7 +113,7 @@ export function ListForm({
           <div className="grid grid-cols-2 gap-3">
             {(['private', 'public'] as const).map(value => {
               const active = visibility === value,
-                Icon = value === 'private' ? LockKeyhole : Globe;
+                Icon = value === 'private' ? LockIcon : GlobeIcon;
               return (
                 <label
                   key={value}
@@ -169,7 +169,7 @@ export function ListForm({
                   style={active ? { backgroundColor: tone.soft, color: tone.solid } : undefined}
                   className={`rounded-full border px-3 py-2 text-xs transition-colors ${active ? 'border-transparent' : 'border-stone-200 text-stone-500 hover:bg-stone-100'}`}
                 >
-                  {active && <Check className="mr-1 inline size-3" aria-hidden="true" />}
+                  {active && <CheckIcon className="mr-1 inline size-3" aria-hidden="true" />}
                   {localizedCategoryDisplayLabel(category, locale)}
                 </button>
               );
@@ -212,9 +212,9 @@ export function ListForm({
         )}
         <button style={actionButtonStyle} className={libraryButton} type="submit">
           {list ? (
-            <Check className="size-4" aria-hidden="true" />
+            <CheckIcon className="size-4" aria-hidden="true" />
           ) : (
-            <Plus className="size-4" aria-hidden="true" />
+            <PlusIcon className="size-4" aria-hidden="true" />
           )}
           {pending ? t.saving : list ? t.saveChanges : t.create}
         </button>

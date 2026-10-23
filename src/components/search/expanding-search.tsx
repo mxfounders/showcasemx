@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
-import { ArrowRight, X } from 'lucide-react';
+import { ArrowRightIcon, CloseIcon } from '@/components/icons/gota';
 import { SearchIcon } from '@/components/icons/search-icon';
 import { actionButtonStyle } from '@/lib/brand-colors';
 
@@ -128,7 +128,7 @@ export function ExpandingSearch({
               style={actionButtonStyle}
               className="action-button flex size-9 shrink-0 items-center justify-center rounded-full"
             >
-              <ArrowRight className="size-4" aria-hidden="true" />
+              <ArrowRightIcon className="size-4 button-arrow" aria-hidden="true" />
             </button>
             <button
               type="button"
@@ -136,7 +136,7 @@ export function ExpandingSearch({
               onClick={close}
               className="flex size-8 shrink-0 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100"
             >
-              <X className="size-4" aria-hidden="true" />
+              <CloseIcon className="size-4" aria-hidden="true" />
             </button>
           </>
         )}

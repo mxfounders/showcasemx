@@ -1,7 +1,7 @@
 import { getSolutionCategories, solutionEvaluationRows } from '@/lib/solutions/model';
 import Link from '@/i18n/navigation';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, ArrowUpRight } from 'lucide-react';
+import { ArrowLeftIcon, ArrowUpRightIcon } from '@/components/icons/gota';
 import { requireFounder, getSolution, getEvents } from '@/lib/solutions/server';
 import { isSolutionId, isSolutionStatus } from '@/lib/solutions/model';
 import { StatusBadge } from '@/components/solutions/status-badge';
@@ -56,7 +56,7 @@ export default async function SolutionPage(props: {
         href="/account/solutions"
         className="mb-8 inline-flex items-center gap-2 text-sm text-stone-500"
       >
-        <ArrowLeft className="size-4" />
+        <ArrowLeftIcon className="size-4" />
         {text.back}
       </Link>
       <Link
@@ -64,7 +64,7 @@ export default async function SolutionPage(props: {
         target="_blank"
         className="mb-6 ml-5 inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 shadow-sm transition-all hover:bg-stone-50 hover:text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#365DC4]/50 focus:ring-offset-2"
       >
-        {text.preview} <ArrowUpRight className="size-3.5 text-stone-400" aria-hidden="true" />
+        {text.preview} <ArrowUpRightIcon className="size-3.5 text-stone-400" aria-hidden="true" />
       </Link>
       {solution.published_data && (
         <Link
@@ -92,7 +92,7 @@ export default async function SolutionPage(props: {
               className="inline-flex items-center gap-1 text-xs text-stone-500"
             >
               {text.viewPublished}
-              <ArrowUpRight className="size-3" />
+              <ArrowUpRightIcon className="size-3" />
               <span className="sr-only"> {text.otherTab}</span>
             </Link>
           )}

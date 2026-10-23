@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { ChevronDownIcon, SlidersHorizontalIcon } from '@/components/icons/gota';
 import type { Dictionary } from '@/i18n/dictionary';
 import { FilterMenu, type FilterOption } from './filter-menu';
 
@@ -90,7 +90,7 @@ export function CatalogFilterBar({
                 {dict.moreFilters}
                 {overflowActiveCount > 0 ? ` · ${overflowActiveCount}` : ''}
               </span>
-              <ChevronDown
+              <ChevronDownIcon
                 aria-hidden="true"
                 className={`size-4 shrink-0 transition-transform duration-200 motion-reduce:transition-none ${showMore ? 'rotate-180' : ''}`}
               />
@@ -103,7 +103,7 @@ export function CatalogFilterBar({
               onClick={onClear}
               className="flex items-center gap-1.5 ml-2 px-2 py-1 text-[12px] font-medium text-stone-400 hover:text-stone-900 transition-colors shrink-0"
             >
-              <SlidersHorizontal className="size-3.5" />
+              <SlidersHorizontalIcon className="size-3.5" />
               {dict.clear}
             </button>
           )}

@@ -1,7 +1,14 @@
 'use client';
 import { useRef, useState } from 'react';
 import Link, { useRouter } from '@/i18n/navigation';
-import { ArrowRight, Eye, EyeOff, Mail, LockKeyhole, ShieldCheck } from 'lucide-react';
+import {
+  ArrowRightIcon,
+  EyeIcon,
+  EyeOffIcon,
+  LockIcon,
+  MailIcon,
+  ShieldIcon,
+} from '@/components/icons/gota';
 import { authReturnTo } from '@/lib/auth/return-to';
 import { credentialErrors, type CredentialErrors } from '@/lib/auth/validation';
 import { actionButtonStyle } from '@/lib/brand-colors';
@@ -121,7 +128,7 @@ export function AuthForm({
           style={{ backgroundColor: '#E4EBFC', color: '#365DC4' }}
           className="flex size-12 items-center justify-center rounded-2xl"
         >
-          <ShieldCheck aria-hidden="true" className="size-6" />
+          <ShieldIcon aria-hidden="true" className="size-6" />
         </span>
         <h2 className="text-2xl font-semibold tracking-tight">{text.totpTitle}</h2>
         <p className="leading-relaxed text-stone-600">{text.totpDesc}</p>
@@ -158,7 +165,7 @@ export function AuthForm({
           className="action-button inline-flex w-full items-center justify-center gap-3 rounded-full px-6 py-4 font-medium disabled:cursor-wait disabled:opacity-60"
         >
           {pending ? text.totpVerifying : text.totpSubmit}
-          <ArrowRight aria-hidden="true" className="size-4" />
+          <ArrowRightIcon aria-hidden="true" className="size-4 button-arrow" />
         </button>
         <button
           type="button"
@@ -183,7 +190,8 @@ export function AuthForm({
           style={actionButtonStyle}
           className="action-button mt-6 inline-flex items-center gap-2 rounded-full px-6 py-3"
         >
-          {text.registeredAction} <ArrowRight aria-hidden="true" className="size-4" />
+          {text.registeredAction}{' '}
+          <ArrowRightIcon aria-hidden="true" className="size-4 button-arrow" />
         </Link>
       </div>
     );
@@ -240,7 +248,7 @@ export function AuthForm({
         <label htmlFor="account-email" className="sr-only">
           {text.emailLabel}
         </label>
-        <Mail
+        <MailIcon
           aria-hidden="true"
           className="pointer-events-none absolute left-4 top-1/2 size-[18px] -translate-y-1/2 text-stone-400"
         />
@@ -268,7 +276,7 @@ export function AuthForm({
           {text.passwordLabel}
         </label>
         <div className="relative">
-          <LockKeyhole
+          <LockIcon
             aria-hidden="true"
             className="pointer-events-none absolute left-4 top-1/2 size-[18px] -translate-y-1/2 text-stone-400"
           />
@@ -294,9 +302,9 @@ export function AuthForm({
             className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-2 text-stone-400 transition-colors hover:bg-stone-200/50 hover:text-stone-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
           >
             {visible ? (
-              <EyeOff aria-hidden="true" className="size-4" />
+              <EyeOffIcon aria-hidden="true" className="size-4" />
             ) : (
-              <Eye aria-hidden="true" className="size-4" />
+              <EyeIcon aria-hidden="true" className="size-4" />
             )}
           </button>
         </div>
@@ -337,7 +345,7 @@ export function AuthForm({
         className="action-button inline-flex w-full items-center justify-center gap-3 rounded-full px-6 py-4 font-medium disabled:cursor-wait disabled:opacity-60"
       >
         {pending ? text.submitLoading : mode === 'login' ? text.submitLogin : text.submitRegister}
-        <ArrowRight aria-hidden="true" className="size-4" />
+        <ArrowRightIcon aria-hidden="true" className="size-4 button-arrow" />
       </button>
       <p className="text-sm text-stone-500">
         {mode === 'login' ? text.noAccount : text.hasAccount}{' '}

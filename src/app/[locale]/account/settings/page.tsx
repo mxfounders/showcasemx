@@ -1,14 +1,14 @@
 import Link from '@/i18n/navigation';
 import {
-  Bell,
-  UserRound,
-  ShieldCheck,
-  Link2,
-  ArrowRight,
-  DatabaseZap,
-  CircleAlert,
-  CircleCheck,
-} from 'lucide-react';
+  ArrowRightIcon,
+  BellIcon,
+  CheckCircleIcon,
+  DatabaseIcon,
+  ImportantIcon,
+  LinkIcon,
+  PersonIcon,
+  ShieldIcon,
+} from '@/components/icons/gota';
 import { requireFounder } from '@/lib/solutions/server';
 import { authSql } from '@/lib/auth/security';
 import { brandColors } from '@/lib/brand-colors';
@@ -52,7 +52,7 @@ export default async function SettingsPage(props: { params: Promise<{ locale: st
     {
       href: '/account/settings/profile',
       title: dict.profile.title,
-      Icon: UserRound,
+      Icon: PersonIcon,
       tone: brandColors.lavender,
       state: name ? `${name}${organization ? ` · ${organization}` : ''}` : dict.profile.noName,
       done: Boolean(name),
@@ -61,7 +61,7 @@ export default async function SettingsPage(props: { params: Promise<{ locale: st
     {
       href: '/account/settings/security',
       title: dict.security.title,
-      Icon: ShieldCheck,
+      Icon: ShieldIcon,
       tone: brandColors.sage,
       state: twoStep ? dict.security.twoStepOn : dict.security.passwordOnly,
       done: twoStep,
@@ -70,7 +70,7 @@ export default async function SettingsPage(props: { params: Promise<{ locale: st
     {
       href: '/account/settings/connections',
       title: dict.connections.title,
-      Icon: Link2,
+      Icon: LinkIcon,
       tone: brandColors.terracotta,
       state: google ? dict.connections.googleLinked : dict.connections.none,
       done: google,
@@ -79,7 +79,7 @@ export default async function SettingsPage(props: { params: Promise<{ locale: st
     {
       href: '/account/settings/notifications',
       title: dict.notifications.title,
-      Icon: Bell,
+      Icon: BellIcon,
       tone: brandColors.blue,
       state: emailPrefs ? dict.notifications.saved : dict.notifications.defaults,
       done: true,
@@ -88,7 +88,7 @@ export default async function SettingsPage(props: { params: Promise<{ locale: st
     {
       href: '/account/settings/data',
       title: dict.data.title,
-      Icon: DatabaseZap,
+      Icon: DatabaseIcon,
       tone: brandColors.amber,
       state: dict.data.state,
       done: true,
@@ -116,7 +116,7 @@ export default async function SettingsPage(props: { params: Promise<{ locale: st
             id="pendientes"
             className="flex items-center gap-2 text-sm font-semibold text-[#88631B]"
           >
-            <CircleAlert aria-hidden="true" className="size-4" />
+            <ImportantIcon aria-hidden="true" className="size-4" />
             {dict.pendingTitle}
           </h2>
           <ul className="mt-4 space-y-3">
@@ -162,14 +162,17 @@ export default async function SettingsPage(props: { params: Promise<{ locale: st
             <h2 className="mt-5 text-lg font-medium tracking-tight text-stone-900">{title}</h2>
             <p className="mt-2 flex items-start gap-1.5 text-sm leading-relaxed text-stone-600">
               {ready && done && (
-                <CircleCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-[#416B50]" />
+                <CheckCircleIcon
+                  aria-hidden="true"
+                  className="mt-0.5 size-4 shrink-0 text-[#416B50]"
+                />
               )}
               {state}
             </p>
             <p className="mt-1 text-xs text-stone-400">{hint}</p>
             <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-[#365DC4]">
               {dict.open}
-              <ArrowRight
+              <ArrowRightIcon
                 aria-hidden="true"
                 className="size-4 transition-transform group-hover:translate-x-1 motion-reduce:transform-none"
               />

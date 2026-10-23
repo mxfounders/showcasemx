@@ -1,5 +1,5 @@
 import Link from '@/i18n/navigation';
-import { SlidersHorizontal, Bookmark } from 'lucide-react';
+import { BookmarkIcon, SlidersHorizontalIcon } from '@/components/icons/gota';
 import { ExpandingSearch } from '@/components/search/expanding-search';
 import { FilterMenu } from '@/components/catalog/filter-menu';
 import {
@@ -96,7 +96,7 @@ export function CommunityFilterBar({
               aria-pressed={filters.savedOnly}
               className="selector-tab inline-flex items-center gap-2"
             >
-              <Bookmark aria-hidden="true" className="size-3.5" />
+              <BookmarkIcon aria-hidden="true" className="size-3.5" />
               {dict.filters.savedByMe}
             </Link>
           )}
@@ -105,7 +105,7 @@ export function CommunityFilterBar({
               href="/comunidad"
               className="ml-2 flex shrink-0 items-center gap-1.5 px-2 py-1 text-[12px] font-medium text-stone-400 transition-colors hover:text-stone-900"
             >
-              <SlidersHorizontal className="size-3.5" />
+              <SlidersHorizontalIcon className="size-3.5" />
               {dict.filters.clear}
             </Link>
           )}

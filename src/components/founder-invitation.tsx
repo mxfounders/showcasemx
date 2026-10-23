@@ -1,5 +1,5 @@
 import Link from '@/i18n/navigation';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRightIcon } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
 
@@ -21,7 +21,8 @@ export function FounderInvitation({ dict }: { dict: Dictionary['landing'] }) {
             style={actionButtonStyle}
             className="inline-flex items-center gap-3 rounded-full px-6 py-4 font-medium action-button transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4"
           >
-            {dict.founderButton} <ArrowUpRight aria-hidden="true" className="size-5" />
+            {dict.founderButton}{' '}
+            <ArrowUpRightIcon aria-hidden="true" className="size-5 button-arrow-diagonal" />
           </Link>
           <p className="mt-3 text-xs text-stone-500">{dict.founderDisclaimer}</p>
         </div>

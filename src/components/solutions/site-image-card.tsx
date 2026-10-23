@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import Image from 'next/image';
-import { ImageDown, RefreshCw } from 'lucide-react';
+import { ImageIcon, RefreshIcon } from '@/components/icons/gota';
 import type { SolutionData } from '@/lib/solutions/model';
 import type { SiteImageFailure } from '@/lib/solutions/site-image';
 import type { Dictionary } from '@/i18n/dictionary';
@@ -142,7 +142,7 @@ export function SiteImageCard({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <h3 className="flex items-center gap-2 text-sm font-medium text-stone-900">
-            <ImageDown aria-hidden="true" className="size-4 text-stone-400" />
+            <ImageIcon aria-hidden="true" className="size-4 text-stone-400" />
             {dict.title}
           </h3>
           <p className="mt-1 text-xs leading-relaxed text-stone-500">
@@ -157,7 +157,7 @@ export function SiteImageCard({
           disabled={pending}
           className="inline-flex shrink-0 items-center gap-2 rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-50 disabled:opacity-60"
         >
-          <RefreshCw
+          <RefreshIcon
             aria-hidden="true"
             className={`size-3.5 ${pending ? 'animate-spin motion-reduce:animate-none' : ''}`}
           />

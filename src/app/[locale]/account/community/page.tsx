@@ -1,5 +1,5 @@
 import Link from '@/i18n/navigation';
-import { ArrowLeft, ArrowRight, LibraryBig } from 'lucide-react';
+import { ArrowLeftIcon, ArrowRightIcon, BookshelfIcon } from '@/components/icons/gota';
 import { requireBuyer } from '@/lib/library/server';
 import { getPublicCollections } from '@/lib/library/community';
 import { BoardCard } from '@/components/library/board-card';
@@ -73,7 +73,7 @@ export default async function SavedCommunityListsPage({
         </div>
       ) : (
         <div className="border-y border-stone-200 py-14">
-          <LibraryBig className="mb-5 size-8 text-stone-300" aria-hidden="true" />
+          <BookshelfIcon className="mb-5 size-8 text-stone-300" aria-hidden="true" />
           <h2 className="text-2xl font-medium">{t.emptyTitle}</h2>
           <p className="mt-3 max-w-lg text-sm text-stone-500">{t.emptyBody}</p>
           <Link
@@ -95,7 +95,7 @@ export default async function SavedCommunityListsPage({
               href={href(page - 1)}
               className="inline-flex items-center gap-2 text-sm text-[#365DC4]"
             >
-              <ArrowLeft className="size-4" />
+              <ArrowLeftIcon className="size-4" />
               {t.previous}
             </Link>
           ) : (
@@ -107,7 +107,7 @@ export default async function SavedCommunityListsPage({
               className="inline-flex items-center gap-2 text-sm text-[#365DC4]"
             >
               {t.next}
-              <ArrowRight className="size-4" />
+              <ArrowRightIcon className="size-4" />
             </Link>
           ) : (
             <span />

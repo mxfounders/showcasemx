@@ -1,5 +1,5 @@
 import Link from '@/i18n/navigation';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRightIcon } from '@/components/icons/gota';
 import type { Dictionary } from '@/i18n/dictionary';
 import type { PublishedProduct } from '@/lib/solutions/public';
 import { ProjectMark } from '@/components/project-mark';
@@ -44,7 +44,7 @@ export function SimilarSolutions({
             </div>
             <span className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-[#365DC4]">
               {dict.similarCta}
-              <ArrowUpRight
+              <ArrowUpRightIcon
                 aria-hidden="true"
                 className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transform-none"
               />

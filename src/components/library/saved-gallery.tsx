@@ -1,7 +1,7 @@
 'use client';
 import { ExpandingSearch } from '@/components/search/expanding-search';
 import { useState } from 'react';
-import { Check, ChevronDown, X } from 'lucide-react';
+import { CheckIcon, ChevronDownIcon, CloseIcon } from '@/components/icons/gota';
 import type { BuyerList } from '@/lib/library/model';
 import { filterSaved, type SavedEntry } from '@/lib/library/filters';
 import {
@@ -47,7 +47,7 @@ function FilterMenu({
         className="selector-dropdown-trigger [&::-webkit-details-marker]:hidden"
       >
         <span className="max-w-48 truncate">{selected.label}</span>
-        <ChevronDown
+        <ChevronDownIcon
           aria-hidden="true"
           className="size-4 shrink-0 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
         />
@@ -67,7 +67,7 @@ function FilterMenu({
               className={`flex w-full items-center justify-between gap-4 rounded-xl px-4 py-3 text-left text-sm transition-colors hover:bg-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#365DC4] ${active ? 'selector-menu-active' : ''}`}
             >
               <span className="truncate">{option.label}</span>
-              {active && <Check aria-hidden="true" className="size-4 shrink-0" />}
+              {active && <CheckIcon aria-hidden="true" className="size-4 shrink-0" />}
             </button>
           );
         })}
@@ -236,7 +236,7 @@ export function SavedGallery({
               onClick={clear}
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs text-stone-500 hover:bg-stone-200/50"
             >
-              <X className="size-3.5" />
+              <CloseIcon className="size-3.5" />
               {t.clear}
             </button>
           )}

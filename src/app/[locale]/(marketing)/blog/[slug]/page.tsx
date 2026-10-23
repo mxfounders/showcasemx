@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from '@/i18n/navigation';
-import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import { ArrowLeftIcon, ArrowRightIcon, CheckIcon } from '@/components/icons/gota';
 import { notFound } from 'next/navigation';
 import { blogTones, formatBlogDate, getBlogPost, getBlogSlugs, getFeaturedPosts } from '@/lib/blog';
 import { ArticleProgress, CopyArticleLink } from '@/components/blog/article-tools';
@@ -69,7 +69,7 @@ export default async function BlogArticle({
               href="/blog"
               className="action-button inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/5 px-4 py-2.5 text-sm"
             >
-              <ArrowLeft className="h-4 w-4" /> {dict.back}
+              <ArrowLeftIcon className="h-4 w-4" /> {dict.back}
             </Link>
             <span className="text-xs font-medium uppercase tracking-[0.2em] opacity-70">
               {post.categoryLabel}
@@ -139,7 +139,7 @@ export default async function BlogArticle({
                     className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
                     style={{ backgroundColor: tone.background, color: tone.foreground }}
                   >
-                    <Check className="h-3.5 w-3.5" />
+                    <CheckIcon className="h-3.5 w-3.5" />
                   </span>
                   {takeaway}
                 </li>
@@ -215,7 +215,7 @@ export default async function BlogArticle({
               {next.title}
             </h2>
             <span className="mt-auto flex items-center gap-2 pt-8 text-sm">
-              {dict.readNext} <ArrowRight className="h-4 w-4 button-arrow" />
+              {dict.readNext} <ArrowRightIcon className="h-4 w-4 button-arrow" />
             </span>
           </div>
           <div className="flex min-h-40 items-end justify-end border-t border-white/20 p-7 sm:min-h-full sm:border-l sm:border-t-0">

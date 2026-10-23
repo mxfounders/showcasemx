@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { useRouter } from '@/i18n/navigation';
-import { Check } from 'lucide-react';
+import { CheckIcon } from '@/components/icons/gota';
 import {
   newsletterProfiles,
   newsletterRoles,
@@ -203,7 +203,7 @@ export function OnboardingForm({ dict }: { dict: Dictionary['onboarding'] }) {
                       className={`flex size-7 shrink-0 items-center justify-center rounded-lg border text-xs ${selected ? 'border-[#365DC4] bg-[#365DC4] text-white' : 'border-current text-stone-500'}`}
                     >
                       {selected ? (
-                        <Check className="size-4" aria-hidden="true" />
+                        <CheckIcon className="size-4" aria-hidden="true" />
                       ) : (
                         String.fromCharCode(65 + index)
                       )}
@@ -249,7 +249,7 @@ export function OnboardingForm({ dict }: { dict: Dictionary['onboarding'] }) {
                       className={`flex size-7 shrink-0 items-center justify-center rounded-lg border text-xs ${selected ? 'border-[#365DC4] bg-[#365DC4] text-white' : 'border-current text-stone-500'}`}
                     >
                       {selected ? (
-                        <Check className="size-4" aria-hidden="true" />
+                        <CheckIcon className="size-4" aria-hidden="true" />
                       ) : (
                         String.fromCharCode(65 + index)
                       )}

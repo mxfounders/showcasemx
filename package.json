@@ -15,6 +15,7 @@
     "preflight": "node scripts/launch-readiness.cjs",
     "db:migrate": "node scripts/migrate.cjs",
     "ads:rates": "node scripts/ad-rates.cjs",
+    "gota:sync": "node scripts/gota-sync.mjs",
     "setup:secrets": "node scripts/setup-local-secrets.cjs",
     "verify:resend": "node scripts/verify-resend.cjs"
   },
@@ -29,7 +30,6 @@
     "framer-motion": "^13.1.1",
     "gsap": "^3.15.0",
     "jose": "^6.2.10",
-    "lucide-react": "^1.37.0",
     "negotiator": "^1.1.0",
     "next": "^15.5.27",
     "qrcode": "^1.5.4",

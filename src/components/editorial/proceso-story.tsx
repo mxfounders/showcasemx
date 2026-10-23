@@ -1,7 +1,7 @@
 'use client';
 
 import Link from '@/i18n/navigation';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRightIcon } from '@/components/icons/gota';
 import { StepsAccordion } from '@/components/ui/steps-accordion';
 import type { Dictionary } from '@/i18n/dictionary';
 
@@ -23,7 +23,7 @@ export function ProcesoStory({ dict }: { dict: Dictionary['publicationProcess'] 
               className="group inline-flex items-center gap-2 text-sm font-medium text-[#A94E35]"
             >
               {dict.link}
-              <ArrowRight
+              <ArrowRightIcon
                 className="size-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none"
                 aria-hidden="true"
               />

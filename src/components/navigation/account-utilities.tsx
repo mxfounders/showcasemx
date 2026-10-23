@@ -2,7 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link, { useRouter } from '@/i18n/navigation';
-import { Bell, Check, LoaderCircle, Plus, RefreshCw, X } from 'lucide-react';
+import {
+  BellIcon,
+  CheckIcon,
+  CloseIcon,
+  LoaderIcon,
+  PlusIcon,
+  RefreshIcon,
+} from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
 
@@ -198,7 +205,7 @@ export function AccountUtilities({
         style={actionButtonStyle}
         className="action-button flex size-11 items-center justify-center rounded-full"
       >
-        <Plus className="size-5" aria-hidden="true" />
+        <PlusIcon className="size-5" aria-hidden="true" />
       </Link>
       <button
         ref={trigger}
@@ -214,7 +221,7 @@ export function AccountUtilities({
         onClick={() => setOpen(value => !value)}
         className="action-button relative flex size-11 items-center justify-center rounded-full bg-white text-stone-600 shadow-[0_5px_16px_-10px_rgba(41,37,36,0.45)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#365DC4]"
       >
-        <Bell className="size-[19px]" aria-hidden="true" />
+        <BellIcon className="size-[19px]" aria-hidden="true" />
         {unread > 0 && (
           <span
             aria-hidden="true"
@@ -246,9 +253,9 @@ export function AccountUtilities({
                   className="flex size-9 items-center justify-center rounded-full text-[#365DC4] transition-colors hover:bg-[#E4EBFC] disabled:opacity-40"
                 >
                   {pending ? (
-                    <LoaderCircle className="size-4 animate-spin motion-reduce:animate-none" />
+                    <LoaderIcon className="size-4 animate-spin motion-reduce:animate-none" />
                   ) : (
-                    <Check className="size-4" />
+                    <CheckIcon className="size-4" />
                   )}
                 </button>
               )}
@@ -260,7 +267,7 @@ export function AccountUtilities({
                 title={text.refresh}
                 className="flex size-9 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100 disabled:opacity-40"
               >
-                <RefreshCw
+                <RefreshIcon
                   className={`size-3.5 ${loading ? 'animate-spin motion-reduce:animate-none' : ''}`}
                 />
               </button>
@@ -270,7 +277,7 @@ export function AccountUtilities({
                 aria-label={text.close}
                 className="flex size-9 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100"
               >
-                <X className="size-4" />
+                <CloseIcon className="size-4" />
               </button>
             </div>
           </header>
@@ -318,7 +325,7 @@ export function AccountUtilities({
                   className="flex w-full items-center justify-center gap-2 px-5 py-4 text-xs text-[#365DC4] hover:bg-stone-50 disabled:opacity-50"
                 >
                   {loadingMore && (
-                    <LoaderCircle className="size-3.5 animate-spin motion-reduce:animate-none" />
+                    <LoaderIcon className="size-3.5 animate-spin motion-reduce:animate-none" />
                   )}
                   {loadingMore ? text.loadingMore : text.viewOlder}
                 </button>
@@ -326,7 +333,7 @@ export function AccountUtilities({
             </div>
           ) : (
             <div className="px-6 py-10 text-center">
-              <Bell className="mx-auto size-6 text-stone-300" />
+              <BellIcon className="mx-auto size-6 text-stone-300" />
               <p className="mt-3 text-sm text-stone-500">{text.emptyState}</p>
             </div>
           )}

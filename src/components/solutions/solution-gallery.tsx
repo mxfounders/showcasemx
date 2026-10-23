@@ -1,7 +1,13 @@
 'use client';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Image from 'next/image';
-import { ArrowLeft, ArrowRight, Expand, X, Images } from 'lucide-react';
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  CloseIcon,
+  FullscreenIcon,
+  ImagesIcon,
+} from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import type { SolutionSlide } from '@/lib/solutions/gallery';
 import type { Dictionary } from '@/i18n/dictionary';
@@ -132,7 +138,7 @@ export function SolutionGallery({
         </div>
 
         <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-1 text-[11px] font-medium text-white backdrop-blur">
-          <Images aria-hidden="true" className="size-3" />
+          <ImagesIcon aria-hidden="true" className="size-3" />
           {active + 1}/{count}
         </span>
         <button
@@ -142,7 +148,7 @@ export function SolutionGallery({
           aria-label={dict.expand}
           className="absolute bottom-2 right-2 flex size-8 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur transition-colors hover:bg-black/70"
         >
-          <Expand className="size-3.5" aria-hidden="true" />
+          <FullscreenIcon className="size-3.5" aria-hidden="true" />
         </button>
         {count > 1 && (
           <>
@@ -153,7 +159,7 @@ export function SolutionGallery({
               aria-label={dict.previous}
               className="absolute left-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full border border-stone-200 bg-white/90 text-stone-700 shadow-sm backdrop-blur disabled:opacity-0"
             >
-              <ArrowLeft className="size-3.5" aria-hidden="true" />
+              <ArrowLeftIcon className="size-3.5" aria-hidden="true" />
             </button>
             <button
               type="button"
@@ -162,7 +168,7 @@ export function SolutionGallery({
               aria-label={dict.next}
               className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full border border-stone-200 bg-white/90 text-stone-700 shadow-sm backdrop-blur disabled:opacity-0"
             >
-              <ArrowRight className="size-3.5" aria-hidden="true" />
+              <ArrowRightIcon className="size-3.5" aria-hidden="true" />
             </button>
           </>
         )}
@@ -199,7 +205,7 @@ export function SolutionGallery({
             style={actionButtonStyle}
             className="action-button shrink-0 rounded-full p-3"
           >
-            <X className="size-4" />
+            <CloseIcon className="size-4" />
           </button>
         </div>
         <div className="relative h-[65svh]">
@@ -219,7 +225,7 @@ export function SolutionGallery({
               onClick={() => scrollTo((active - 1 + count) % count)}
               className="rounded-lg p-3"
             >
-              <ArrowLeft className="size-5" />
+              <ArrowLeftIcon className="size-5" />
             </button>
             <button
               type="button"
@@ -227,7 +233,7 @@ export function SolutionGallery({
               onClick={() => scrollTo((active + 1) % count)}
               className="rounded-lg p-3"
             >
-              <ArrowRight className="size-5" />
+              <ArrowRightIcon className="size-5" />
             </button>
           </div>
         )}

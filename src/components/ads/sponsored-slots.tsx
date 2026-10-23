@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import Link from '@/i18n/navigation';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRightIcon } from '@/components/icons/gota';
 import { ProjectMark } from '@/components/project-mark';
 import type { PublishedProduct } from '@/lib/solutions/public';
 import type { Dictionary } from '@/i18n/dictionary';
@@ -86,7 +86,7 @@ function SponsoredCard({
       <div className="min-w-0 flex-1">
         <p className="flex items-center gap-2 text-base font-semibold tracking-tight text-stone-900">
           <span className="truncate">{product.name}</span>
-          <ArrowUpRight
+          <ArrowUpRightIcon
             aria-hidden="true"
             className="size-4 shrink-0 text-stone-400 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transform-none"
           />

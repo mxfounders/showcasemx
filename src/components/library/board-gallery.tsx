@@ -1,7 +1,7 @@
 'use client';
 import { ExpandingSearch } from '@/components/search/expanding-search';
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { PlusIcon } from '@/components/icons/gota';
 import type { BuyerBoard } from '@/lib/library/model';
 import { normalizeText } from '@/lib/search/normalize';
 import { actionButtonStyle } from '@/lib/brand-colors';
@@ -32,7 +32,7 @@ export function CreateBoard({
       triggerStyle={tile ? undefined : actionButtonStyle}
       trigger={
         <>
-          <Plus className={tile ? 'size-7' : 'size-4'} />
+          <PlusIcon className={tile ? 'size-7' : 'size-4'} />
           {dict.boards.create}
         </>
       }

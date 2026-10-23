@@ -1,5 +1,5 @@
 import Link from '@/i18n/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeftIcon } from '@/components/icons/gota';
 import { BrandLink } from '@/components/navigation/brand-link';
 import { getDictionary } from '@/i18n/get-dictionary';
 export default async function FocusedLayout({
@@ -19,7 +19,7 @@ export default async function FocusedLayout({
           href="/#catalogo"
           className="group inline-flex items-center gap-2 rounded-full py-2 text-xs text-stone-500 transition-colors hover:text-stone-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 sm:text-sm"
         >
-          <ArrowLeft
+          <ArrowLeftIcon
             aria-hidden="true"
             className="size-4 transition-transform duration-200 group-hover:-translate-x-0.5 motion-reduce:transform-none"
           />

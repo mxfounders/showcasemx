@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import Link, { useRouter } from '@/i18n/navigation';
-import { Bookmark, Check } from 'lucide-react';
+import { BookmarkIcon, CheckIcon } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
 import { libraryButton, libraryError } from './client';
@@ -118,17 +118,17 @@ export function SaveProjectButton({
           <>
             <span>{statusLabel}</span>
             {saved ? (
-              <Bookmark className="size-4" fill="currentColor" aria-hidden="true" />
+              <BookmarkIcon className="size-4" variant="fill" aria-hidden="true" />
             ) : (
-              <Bookmark className="size-4" aria-hidden="true" />
+              <BookmarkIcon className="size-4" aria-hidden="true" />
             )}
           </>
         ) : (
           <>
             {saved ? (
-              <Check className="size-4" aria-hidden="true" />
+              <CheckIcon className="size-4" aria-hidden="true" />
             ) : (
-              <Bookmark className="size-4" aria-hidden="true" />
+              <BookmarkIcon className="size-4" aria-hidden="true" />
             )}
             {statusLabel}
           </>

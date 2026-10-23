@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Link from '@/i18n/navigation';
-import { Check, Link as LinkIcon, ArrowUpRight } from 'lucide-react';
+import { ArrowUpRightIcon, CheckIcon, LinkIcon } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
 export function ShareCollection({
@@ -32,7 +32,7 @@ export function ShareCollection({
           }
         }}
       >
-        {copied ? <Check className="size-4" /> : <LinkIcon className="size-4" />}
+        {copied ? <CheckIcon className="size-4" /> : <LinkIcon className="size-4" />}
         {copied ? dict.share.copied : dict.share.share}
       </button>
       {preview && (
@@ -41,7 +41,7 @@ export function ShareCollection({
           className="inline-flex items-center gap-1 text-sm text-stone-500"
         >
           {dict.share.viewPublic}
-          <ArrowUpRight className="size-4" />
+          <ArrowUpRightIcon className="size-4" />
         </Link>
       )}
       <span role="status" className="sr-only">

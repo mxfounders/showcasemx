@@ -1,5 +1,5 @@
 import Link from '@/i18n/navigation';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRightIcon } from '@/components/icons/gota';
 import type { Dictionary } from '@/i18n/dictionary';
 
 export function ProjectStory({ dict }: { dict: Dictionary['project'] }) {
@@ -27,7 +27,7 @@ export function ProjectStory({ dict }: { dict: Dictionary['project'] }) {
                 className="group inline-flex items-center gap-2 text-sm font-medium text-[#A94E35]"
               >
                 {dict.exploreBtn}
-                <ArrowRight
+                <ArrowRightIcon
                   className="size-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none"
                   aria-hidden="true"
                 />
@@ -49,7 +49,7 @@ export function ProjectStory({ dict }: { dict: Dictionary['project'] }) {
                 className="mt-6 inline-flex items-center gap-2 text-sm font-medium"
               >
                 {dict.card1Btn}
-                <ArrowRight
+                <ArrowRightIcon
                   className="size-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none"
                   aria-hidden="true"
                 />
@@ -66,7 +66,7 @@ export function ProjectStory({ dict }: { dict: Dictionary['project'] }) {
                 className="mt-6 inline-flex items-center gap-2 text-sm font-medium"
               >
                 {dict.card2Btn}
-                <ArrowRight
+                <ArrowRightIcon
                   className="size-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none"
                   aria-hidden="true"
                 />

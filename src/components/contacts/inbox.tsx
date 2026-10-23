@@ -1,5 +1,5 @@
 import Link from '@/i18n/navigation';
-import { Inbox, Send } from 'lucide-react';
+import { InboxIcon, SendIcon } from '@/components/icons/gota';
 import { requireBuyer } from '@/lib/library/server';
 import { listContacts } from '@/lib/contacts/server';
 import { contactStatuses, isContactStatus } from '@/lib/contacts/model';
@@ -22,7 +22,7 @@ export async function ContactsInbox({
     page = Number.isInteger(parsed) && parsed > 0 ? Math.min(parsed, 1000) : 1;
   const rows = await listContacts(account.id, incoming, status, page),
     visible = rows.slice(0, 20),
-    Icon = incoming ? Inbox : Send;
+    Icon = incoming ? InboxIcon : SendIcon;
   const href = (nextPage: number, nextStatus = status) =>
     base +
     '?' +

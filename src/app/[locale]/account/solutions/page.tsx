@@ -1,12 +1,12 @@
 import Link from '@/i18n/navigation';
 import {
-  ArrowUpRight,
-  Layers,
-  ArrowRight,
-  Clock3,
-  PanelsTopLeft,
-  BriefcaseBusiness,
-} from 'lucide-react';
+  ArrowRightIcon,
+  ArrowUpRightIcon,
+  BriefcaseClaspIcon,
+  ClockIcon,
+  LayersIcon,
+  LayoutIcon,
+} from '@/components/icons/gota';
 import { requireFounder, getOwnedSolutions } from '@/lib/solutions/server';
 import { getSolutionCategories, type SolutionStatus } from '@/lib/solutions/model';
 import { solutionChecklist } from '@/lib/solutions/completeness';
@@ -84,7 +84,7 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
             }}
             className="mb-7 flex size-12 items-center justify-center rounded-2xl"
           >
-            <Layers aria-hidden="true" className="size-6" />
+            <LayersIcon aria-hidden="true" className="size-6" />
           </span>
           <h2 className="max-w-xl text-3xl font-medium leading-tight tracking-tight">
             {text.emptyTitle}
@@ -161,10 +161,10 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
                   deletable = solution.status === 'draft' && !solution.published_data;
                 const KindIcon =
                   solution.data.kind === 'Software'
-                    ? PanelsTopLeft
+                    ? LayoutIcon
                     : solution.data.kind === 'Agencia'
-                      ? BriefcaseBusiness
-                      : Layers;
+                      ? BriefcaseClaspIcon
+                      : LayersIcon;
                 const action =
                   solution.status === 'pending'
                     ? text.actionPending
@@ -185,7 +185,7 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
                         style={{ backgroundColor: tone.soft, color: tone.solid }}
                         className="flex size-11 items-center justify-center rounded-2xl"
                       >
-                        <KindIcon aria-hidden="true" strokeWidth={1.7} className="size-5" />
+                        <KindIcon aria-hidden="true" className="size-5" />
                       </span>
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2.5">
@@ -204,7 +204,7 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
                         </p>
                         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-stone-400">
                           <span className="inline-flex items-center gap-1.5">
-                            <Clock3 aria-hidden="true" className="size-3.5" />
+                            <ClockIcon aria-hidden="true" className="size-3.5" />
                             {text.updated}{' '}
                             {new Date(solution.updated_at).toLocaleDateString(dict.dateLocale, {
                               day: 'numeric',
@@ -259,7 +259,7 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
                           style={{ backgroundColor: tone.soft, color: tone.solid }}
                         >
                           {action}
-                          <ArrowRight aria-hidden="true" className="size-4" />
+                          <ArrowRightIcon aria-hidden="true" className="size-4 button-arrow" />
                         </Link>
                         {solution.status === 'published' && (
                           <Link
@@ -268,7 +268,7 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
                             aria-label={text.viewPublicAria.replace('{name}', name)}
                             className="inline-flex size-10 items-center justify-center rounded-full text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
                           >
-                            <ArrowUpRight aria-hidden="true" className="size-4" />
+                            <ArrowUpRightIcon aria-hidden="true" className="size-4" />
                           </Link>
                         )}
                         {deletable && (

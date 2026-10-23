@@ -1,7 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import Link from '@/i18n/navigation';
-import { Heart } from 'lucide-react';
+import { HeartIcon } from '@/components/icons/gota';
 import type { Dictionary } from '@/i18n/dictionary';
 
 /**
@@ -80,7 +80,7 @@ export function LikeButton({
         <span>
           {likes} {dict.like.suffix}
         </span>
-        <Heart className="size-4" aria-hidden="true" fill={like ? 'currentColor' : 'none'} />
+        <HeartIcon className="size-4" aria-hidden="true" variant={like ? 'fill' : 'outline'} />
       </button>
       {login && (
         <p className="mt-3 text-center text-xs leading-relaxed text-stone-500">

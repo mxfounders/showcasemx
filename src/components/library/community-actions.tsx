@@ -1,7 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import Link from '@/i18n/navigation';
-import { Heart, Bookmark, MessageCircle, Trash2, Flag } from 'lucide-react';
+import { BookmarkIcon, CommentIcon, FlagIcon, HeartIcon, TrashIcon } from '@/components/icons/gota';
 import type { PublicComment } from '@/lib/library/community';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import { CommunityReportForm } from './community-report-form';
@@ -95,7 +95,7 @@ export function CommunityActions({
           className={button}
           style={like ? { backgroundColor: '#F6E5DD', color: '#A94E35' } : undefined}
         >
-          <Heart className="size-4" fill={like ? 'currentColor' : 'none'} />
+          <HeartIcon className="size-4" variant={like ? 'fill' : 'outline'} />
           {likes} {a.like}
         </button>
         <button
@@ -106,7 +106,7 @@ export function CommunityActions({
           className={button}
           style={save ? actionButtonStyle : undefined}
         >
-          <Bookmark className="size-4" fill={save ? 'currentColor' : 'none'} />
+          <BookmarkIcon className="size-4" variant={save ? 'fill' : 'outline'} />
           {saves} {a.saveList}
         </button>
       </div>
@@ -139,7 +139,7 @@ export function CommunityActions({
           id="community-conversation"
           className="flex items-center gap-2 text-2xl font-semibold tracking-tight"
         >
-          <MessageCircle className="size-5" />
+          <CommentIcon className="size-5" />
           {commentsCount} {commentsCount === 1 ? a.commentSingular : a.commentPlural}
         </h2>
         <form
@@ -247,7 +247,7 @@ export function CommunityActions({
                       }
                     }}
                   >
-                    <Trash2 className="size-4" />
+                    <TrashIcon className="size-4" />
                   </button>
                 ) : (
                   !reportedComments.has(item.id) && (
@@ -259,7 +259,7 @@ export function CommunityActions({
                         setReportingComment(value => (value === item.id ? null : item.id))
                       }
                     >
-                      <Flag className="size-4" />
+                      <FlagIcon className="size-4" />
                     </button>
                   )
                 )}

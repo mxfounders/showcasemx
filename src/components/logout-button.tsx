@@ -1,5 +1,5 @@
 'use client';
-import { LogOut } from 'lucide-react';
+import { LogOutIcon } from '@/components/icons/gota';
 import { useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { actionButtonStyle } from '@/lib/brand-colors';
@@ -47,7 +47,7 @@ export function LogoutButton({
           }
         }}
       >
-        {quiet && <LogOut aria-hidden="true" className="size-4" />}
+        {quiet && <LogOutIcon aria-hidden="true" className="size-4" />}
         {pending ? dict.logout.loading : dict.logout.label}
       </button>
       {error && (

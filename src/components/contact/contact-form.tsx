@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import Link from '@/i18n/navigation';
-import { ArrowLeft, ArrowRight, Check, RotateCcw } from 'lucide-react';
+import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, UndoIcon } from '@/components/icons/gota';
 import {
   inquiryReasons,
   inquiryUrgencies,
@@ -130,7 +130,7 @@ export function ContactForm({ dict: t }: { dict: Dictionary['contactForm'] }) {
     return (
       <div className="contact-step max-w-xl">
         <span className="flex size-14 items-center justify-center rounded-full bg-[#E4EBFC] text-[#365DC4]">
-          <Check className="size-6" aria-hidden="true" />
+          <CheckIcon className="size-6" aria-hidden="true" />
         </span>
         <h1
           ref={heading}
@@ -149,7 +149,7 @@ export function ContactForm({ dict: t }: { dict: Dictionary['contactForm'] }) {
             style={actionButtonStyle}
             className="action-button inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-sm font-medium"
           >
-            {t.successBtn} <ArrowRight className="size-4" aria-hidden="true" />
+            {t.successBtn} <ArrowRightIcon className="size-4 button-arrow" aria-hidden="true" />
           </Link>
           <button
             type="button"
@@ -160,7 +160,7 @@ export function ContactForm({ dict: t }: { dict: Dictionary['contactForm'] }) {
             }}
             className="inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm text-stone-500 hover:bg-white hover:text-stone-900"
           >
-            <RotateCcw className="size-4" aria-hidden="true" />
+            <UndoIcon className="size-4" aria-hidden="true" />
             {t.successRetry}
           </button>
         </div>
@@ -231,7 +231,7 @@ export function ContactForm({ dict: t }: { dict: Dictionary['contactForm'] }) {
                       className={`flex size-7 shrink-0 items-center justify-center rounded-lg border text-xs ${selected ? 'border-[#365DC4] bg-[#365DC4] text-white' : 'border-current text-stone-500'}`}
                     >
                       {selected ? (
-                        <Check className="size-4" aria-hidden="true" />
+                        <CheckIcon className="size-4" aria-hidden="true" />
                       ) : (
                         String.fromCharCode(65 + index)
                       )}
@@ -356,7 +356,7 @@ export function ContactForm({ dict: t }: { dict: Dictionary['contactForm'] }) {
                           className="peer sr-only"
                         />
                         <span className="flex items-center gap-1.5 rounded-full border border-stone-200 px-3.5 py-2 text-xs text-stone-500 transition-colors hover:border-[#9BB0E7] peer-checked:border-[#365DC4] peer-checked:bg-[#E4EBFC] peer-checked:text-[#365DC4] peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2">
-                          {selected && <Check className="size-3.5" aria-hidden="true" />}
+                          {selected && <CheckIcon className="size-3.5" aria-hidden="true" />}
                           {t.urgencies[option.value]}
                         </span>
                       </label>
@@ -417,7 +417,7 @@ export function ContactForm({ dict: t }: { dict: Dictionary['contactForm'] }) {
             className="action-button inline-flex min-w-36 items-center justify-center gap-3 rounded-full px-6 py-3.5 text-sm font-medium disabled:cursor-wait disabled:opacity-60"
           >
             {pending ? t.sending : step === 3 ? t.submitBtn : t.continueBtn}
-            <ArrowRight className="size-4" aria-hidden="true" />
+            <ArrowRightIcon className="size-4 button-arrow" aria-hidden="true" />
           </button>
           <span className="hidden text-[11px] text-stone-400 sm:inline">{t.enterHint}</span>
         </div>
@@ -431,7 +431,7 @@ export function ContactForm({ dict: t }: { dict: Dictionary['contactForm'] }) {
             }}
             className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm text-stone-500 transition-colors hover:bg-white hover:text-stone-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#365DC4] disabled:opacity-50"
           >
-            <ArrowLeft className="size-4" aria-hidden="true" />
+            <ArrowLeftIcon className="size-4" aria-hidden="true" />
             {t.backBtn}
           </button>
         )}

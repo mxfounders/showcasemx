@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRightIcon, CheckIcon } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import {
   cfdiUses,
@@ -236,11 +236,11 @@ export function BillingProfileForm({
           className="action-button inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-medium disabled:opacity-60"
         >
           {pending ? t.saving : t.save}
-          <ArrowRight aria-hidden="true" className="size-4" />
+          <ArrowRightIcon aria-hidden="true" className="size-4 button-arrow" />
         </button>
         {saved && (
           <p role="status" className="inline-flex items-center gap-2 text-sm text-stone-600">
-            <Check aria-hidden="true" className="size-4" />
+            <CheckIcon aria-hidden="true" className="size-4" />
             {t.saved}
           </p>
         )}

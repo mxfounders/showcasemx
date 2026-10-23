@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
-import { ChevronDown, PencilLine, X } from 'lucide-react';
+import { ChevronDownIcon, CloseIcon, EditIcon } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import type { BuyerList } from '@/lib/library/model';
 import { ListForm } from './list-form';
@@ -57,9 +57,9 @@ export function EditListPopover({
         style={actionButtonStyle}
         className={libraryButton}
       >
-        <PencilLine className="size-4" aria-hidden="true" />
+        <EditIcon className="size-4" aria-hidden="true" />
         {t.trigger}
-        <ChevronDown
+        <ChevronDownIcon
           className={`size-4 transition-transform duration-200 motion-reduce:transition-none ${open ? 'rotate-180' : ''}`}
           aria-hidden="true"
         />
@@ -80,7 +80,7 @@ export function EditListPopover({
               aria-label={t.close}
               className="flex size-10 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#365DC4]"
             >
-              <X className="size-4" aria-hidden="true" />
+              <CloseIcon className="size-4" aria-hidden="true" />
             </button>
           </div>
           <ListForm key={list.version} list={list} dict={dict} locale={locale} />

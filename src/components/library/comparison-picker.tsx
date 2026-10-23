@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
-import { Columns3 } from 'lucide-react';
+import { ViewColumnsIcon } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import { libraryButton } from './client';
 import type { Dictionary } from '@/i18n/dictionary';
@@ -63,7 +63,7 @@ export function ComparisonPicker({
             ))}
           </div>
           <button style={actionButtonStyle} className={`${libraryButton} mt-5`}>
-            <Columns3 className="size-4" aria-hidden="true" />
+            <ViewColumnsIcon className="size-4" aria-hidden="true" />
             {t.submit.replace('{count}', String(selected.length))}
           </button>
           {error && (

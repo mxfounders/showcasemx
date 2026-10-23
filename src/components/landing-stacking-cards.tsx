@@ -10,6 +10,7 @@ import { brandColors } from '@/lib/brand-colors';
 import type { PublishedProduct } from '@/lib/solutions/public';
 import type { Dictionary } from '@/i18n/dictionary';
 import { ProjectMark } from '@/components/project-mark';
+import { ArrowRightIcon, HeartIcon } from '@/components/icons/gota';
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
@@ -146,19 +147,10 @@ export function LandingStackingCards({
                   style={{ backgroundColor: item.color.solid }}
                 >
                   {copy.cards[item.id].button}
-                  <svg
+                  <ArrowRightIcon
+                    aria-hidden="true"
                     className="w-4 h-4 transition-transform group-hover:translate-x-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M14 5l7 7m0 0l-7 7m7-7H3"
-                    />
-                  </svg>
+                  />
                 </a>
                 <Link
                   href="/criterios"
@@ -261,13 +253,7 @@ const ProductMockupCard = ({ product, color }: { product: PublishedProduct; colo
         {product.category || 'Software'}
       </span>
       <div className="flex items-center gap-1 bg-stone-100 px-2 py-0.5 rounded-full text-[10px] font-bold text-stone-600">
-        <svg className="w-2.5 h-2.5" style={{ color }} fill="currentColor" viewBox="0 0 20 20">
-          <path
-            fillRule="evenodd"
-            d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-            clipRule="evenodd"
-          />
-        </svg>
+        <HeartIcon variant="fill" aria-hidden="true" className="w-2.5 h-2.5" style={{ color }} />
         {product.likes ?? 0}
       </div>
     </div>

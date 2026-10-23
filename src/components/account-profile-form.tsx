@@ -1,7 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
-import { Check, ArrowRight } from 'lucide-react';
+import { ArrowRightIcon, CheckIcon } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import { newsletterProfiles, newsletterRoles } from '@/lib/newsletter';
 import { validateAccount, type AccountProfile } from '@/lib/account';
@@ -136,11 +136,11 @@ export function AccountProfileForm({
           className="action-button inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-medium disabled:opacity-60"
         >
           {pending ? dict.saving : dict.submit}
-          <ArrowRight aria-hidden="true" className="size-4" />
+          <ArrowRightIcon aria-hidden="true" className="size-4 button-arrow" />
         </button>
         {message && (
           <p role="status" className="inline-flex items-center gap-2 text-sm text-stone-600">
-            <Check aria-hidden="true" className="size-4" />
+            <CheckIcon aria-hidden="true" className="size-4" />
             {message}
           </p>
         )}

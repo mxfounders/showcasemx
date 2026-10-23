@@ -1,5 +1,5 @@
 import Link from '@/i18n/navigation';
-import { Bookmark, LockKeyhole } from 'lucide-react';
+import { BookmarkIcon, LockIcon } from '@/components/icons/gota';
 import {
   requireBuyer,
   getSaved,
@@ -54,7 +54,7 @@ export default async function SavedPage(props: {
       <header className="mb-9">
         <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">{t.title}</h1>
         <p className="mt-4 flex items-center gap-2 text-xs text-stone-400">
-          <LockKeyhole className="size-3.5" aria-hidden="true" />
+          <LockIcon className="size-3.5" aria-hidden="true" />
           {t.onlyYou}
         </p>
       </header>
@@ -103,7 +103,7 @@ export default async function SavedPage(props: {
       ) : (
         !resume && (
           <div className="border-y border-stone-200 py-14">
-            <Bookmark className="mb-5 size-8 text-stone-300" aria-hidden="true" />
+            <BookmarkIcon className="mb-5 size-8 text-stone-300" aria-hidden="true" />
             <h2 className="text-2xl font-medium">{t.emptyTitle}</h2>
             <Link
               href="/#catalogo"

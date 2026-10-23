@@ -2,7 +2,7 @@
 import { ExpandingSearch } from '@/components/search/expanding-search';
 import { useRef, useState } from 'react';
 import Link, { useRouter } from '@/i18n/navigation';
-import { Plus, Check, FolderOpen } from 'lucide-react';
+import { CheckIcon, FolderOpenIcon, PlusIcon } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import type { BuyerList, BuyerProject, ListItem } from '@/lib/library/model';
 import { changeLibrary, libraryButton, libraryField, libraryError } from './client';
@@ -25,7 +25,7 @@ export function ListMembership(props: {
       triggerClass="action-button inline-flex items-center gap-2 rounded-full border border-stone-200 px-4 py-3 text-sm text-stone-600"
       trigger={
         <>
-          <FolderOpen className="size-4" />
+          <FolderOpenIcon className="size-4" />
           {props.dict.membership.trigger}
           {props.memberships.length ? ` · ${props.memberships.length}` : ''}
         </>
@@ -124,7 +124,7 @@ function BoardPicker({
               className="group flex w-full items-center gap-4 rounded-2xl p-3 text-left transition-colors hover:bg-stone-200/50 disabled:cursor-default"
             >
               <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#EEE5F5] text-[#7E54B1]">
-                <FolderOpen className="size-5" />
+                <FolderOpenIcon className="size-5" />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-medium">{list.name}</span>
@@ -137,7 +137,7 @@ function BoardPicker({
               </span>
               {included ? (
                 <>
-                  <Check className="size-4 text-[#416B50]" />
+                  <CheckIcon className="size-4 text-[#416B50]" />
                   <span className="sr-only">{t.alreadySaved}</span>
                 </>
               ) : (
@@ -161,7 +161,7 @@ function BoardPicker({
         style={actionButtonStyle}
         className={`${libraryButton} mt-6 w-full`}
       >
-        <Plus className="size-4" />
+        <PlusIcon className="size-4" />
         {t.createList}
       </button>
       {error && (
@@ -191,7 +191,7 @@ export function AddSavedToList({
       triggerStyle={actionButtonStyle}
       trigger={
         <>
-          <Plus className="size-4" />
+          <PlusIcon className="size-4" />
           {dict.addSaved.trigger}
         </>
       }
@@ -266,7 +266,7 @@ function SavedPicker({
             <span className="mt-1 flex items-center gap-1 text-xs text-[#365DC4]">
               {added.includes(project.key) ? (
                 <>
-                  <Check className="size-3" />
+                  <CheckIcon className="size-3" />
                   {t.added}
                 </>
               ) : pending === project.key ? (

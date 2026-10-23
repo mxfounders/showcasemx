@@ -2,33 +2,33 @@
 
 import Link from '@/i18n/navigation';
 import {
-  ArrowRight,
-  TextSelect,
-  Cpu,
-  LayoutTemplate,
-  CircleDollarSign,
-  Fingerprint,
-  LineChart,
-  ShieldCheck,
-  Scale,
-  MessageCircle,
-  Bookmark,
-  Heart,
-  Eye,
-  Star,
-  type LucideIcon,
-} from 'lucide-react';
+  ArrowRightIcon,
+  BalanceScaleIcon,
+  BookmarkIcon,
+  ChartLineIcon,
+  CommentIcon,
+  CpuIcon,
+  CurrencyDollarIcon,
+  EyeIcon,
+  FingerprintIcon,
+  HeartIcon,
+  LayoutIcon,
+  ShieldIcon,
+  StarIcon,
+  TextIcon,
+  type GotaIcon,
+} from '@/components/icons/gota';
 import type { Dictionary } from '@/i18n/dictionary';
 
 type WeightId = keyof Dictionary['criteria']['weights'];
 type CriterionId = keyof Dictionary['criteria']['items'];
 
-const rankingWeights: readonly { id: WeightId; Icon: LucideIcon; weight: string }[] = [
-  { id: 'review', Icon: Star, weight: '★ × 1–1.5' },
-  { id: 'comment', Icon: MessageCircle, weight: '× 3' },
-  { id: 'save', Icon: Bookmark, weight: '× 2' },
-  { id: 'like', Icon: Heart, weight: '× 1' },
-  { id: 'view', Icon: Eye, weight: '× 0.1' },
+const rankingWeights: readonly { id: WeightId; Icon: GotaIcon; weight: string }[] = [
+  { id: 'review', Icon: StarIcon, weight: '★ × 1–1.5' },
+  { id: 'comment', Icon: CommentIcon, weight: '× 3' },
+  { id: 'save', Icon: BookmarkIcon, weight: '× 2' },
+  { id: 'like', Icon: HeartIcon, weight: '× 1' },
+  { id: 'view', Icon: EyeIcon, weight: '× 0.1' },
 ];
 
 const criterios: readonly {
@@ -36,7 +36,7 @@ const criterios: readonly {
   number: string;
   color: string;
   text: string;
-  icon: LucideIcon;
+  icon: GotaIcon;
   span: string;
   titleSize: string;
 }[] = [
@@ -45,7 +45,7 @@ const criterios: readonly {
     number: '01',
     color: '#E4EBFC',
     text: '#264DAE',
-    icon: TextSelect,
+    icon: TextIcon,
     span: 'md:col-span-8',
     titleSize: 'sm:text-4xl',
   },
@@ -54,7 +54,7 @@ const criterios: readonly {
     number: '02',
     color: '#E4EDE2',
     text: '#416B50',
-    icon: Cpu,
+    icon: CpuIcon,
     span: 'md:col-span-4 md:row-span-2',
     titleSize: 'sm:text-3xl',
   },
@@ -63,7 +63,7 @@ const criterios: readonly {
     number: '03',
     color: '#EEE5F5',
     text: '#5E3A8A',
-    icon: LayoutTemplate,
+    icon: LayoutIcon,
     span: 'md:col-span-4',
     titleSize: 'sm:text-3xl',
   },
@@ -72,7 +72,7 @@ const criterios: readonly {
     number: '04',
     color: '#F4ECD5',
     text: '#88631B',
-    icon: CircleDollarSign,
+    icon: CurrencyDollarIcon,
     span: 'md:col-span-4',
     titleSize: 'sm:text-3xl',
   },
@@ -81,7 +81,7 @@ const criterios: readonly {
     number: '05',
     color: '#F4E4DA',
     text: '#A94E35',
-    icon: Fingerprint,
+    icon: FingerprintIcon,
     span: 'md:col-span-4',
     titleSize: 'sm:text-3xl',
   },
@@ -90,7 +90,7 @@ const criterios: readonly {
     number: '06',
     color: '#E4EBFC',
     text: '#264DAE',
-    icon: LineChart,
+    icon: ChartLineIcon,
     span: 'md:col-span-8',
     titleSize: 'sm:text-4xl',
   },
@@ -99,7 +99,7 @@ const criterios: readonly {
     number: '07',
     color: '#E4EDE2',
     text: '#416B50',
-    icon: ShieldCheck,
+    icon: ShieldIcon,
     span: 'md:col-span-6',
     titleSize: 'sm:text-3xl',
   },
@@ -108,7 +108,7 @@ const criterios: readonly {
     number: '08',
     color: '#EEE5F5',
     text: '#5E3A8A',
-    icon: Scale,
+    icon: BalanceScaleIcon,
     span: 'md:col-span-6',
     titleSize: 'sm:text-3xl',
   },
@@ -132,7 +132,7 @@ export function CriteriosStory({ dict }: { dict: Dictionary['criteria'] }) {
               className="group inline-flex items-center gap-2 text-sm font-medium text-[#A94E35]"
             >
               {dict.link}
-              <ArrowRight
+              <ArrowRightIcon
                 className="size-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none"
                 aria-hidden="true"
               />

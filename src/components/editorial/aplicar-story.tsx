@@ -1,15 +1,21 @@
 'use client';
 
 import Link from '@/i18n/navigation';
-import { ArrowRight, CheckCircle2, ShieldCheck, PenTool, type LucideIcon } from 'lucide-react';
+import {
+  ArrowRightIcon,
+  CheckCircleIcon,
+  PenToolIcon,
+  ShieldIcon,
+  type GotaIcon,
+} from '@/components/icons/gota';
 import type { Dictionary } from '@/i18n/dictionary';
 
 type StepId = keyof Dictionary['apply']['steps'];
 
-const steps: readonly { id: StepId; icon: LucideIcon; color: string; text: string }[] = [
-  { id: 'draft', icon: PenTool, color: '#E4EBFC', text: '#264DAE' },
-  { id: 'domain', icon: ShieldCheck, color: '#E4EDE2', text: '#416B50' },
-  { id: 'review', icon: CheckCircle2, color: '#F4E4DA', text: '#A94E35' },
+const steps: readonly { id: StepId; icon: GotaIcon; color: string; text: string }[] = [
+  { id: 'draft', icon: PenToolIcon, color: '#E4EBFC', text: '#264DAE' },
+  { id: 'domain', icon: ShieldIcon, color: '#E4EDE2', text: '#416B50' },
+  { id: 'review', icon: CheckCircleIcon, color: '#F4E4DA', text: '#A94E35' },
 ];
 
 export function AplicarStory({ dict }: { dict: Dictionary['apply'] }) {
@@ -28,7 +34,7 @@ export function AplicarStory({ dict }: { dict: Dictionary['apply'] }) {
               className="group inline-flex items-center gap-2 text-sm font-medium text-[#A94E35]"
             >
               {dict.link}
-              <ArrowRight
+              <ArrowRightIcon
                 className="size-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none"
                 aria-hidden="true"
               />

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from '@/i18n/navigation';
-import { ArrowUpRight, Check, Mail } from 'lucide-react';
+import { ArrowUpRightIcon, CheckIcon, MailIcon } from '@/components/icons/gota';
 import { ContactForm } from '@/components/contact/contact-form';
 import { getDictionary } from '@/i18n/get-dictionary';
 
@@ -47,7 +47,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
               {t.bullets.map(item => (
                 <li key={item} className="flex items-center gap-3">
                   <span className="flex size-6 items-center justify-center rounded-full bg-white/10">
-                    <Check className="size-3.5" aria-hidden="true" />
+                    <CheckIcon className="size-3.5" aria-hidden="true" />
                   </span>
                   {item}
                 </li>
@@ -58,9 +58,9 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
             href="mailto:contacto@shwcs.site"
             className="group hidden w-fit items-center gap-3 text-sm text-white/70 transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white lg:flex"
           >
-            <Mail className="size-4" aria-hidden="true" />
+            <MailIcon className="size-4" aria-hidden="true" />
             contacto@shwcs.site
-            <ArrowUpRight
+            <ArrowUpRightIcon
               className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transform-none"
               aria-hidden="true"
             />

@@ -73,19 +73,17 @@
 .action-button:not(:disabled):active {
   transform: translateY(1px);
 }
-.action-button .lucide-arrow-up-right,
-.action-button .lucide-arrow-right,
-.action-button .button-arrow {
+.action-button .button-arrow,
+.action-button .button-arrow-diagonal {
   transition: transform 180ms ease;
 }
 @media (hover: hover) {
   .action-button:not(:disabled):hover {
     box-shadow: 0 3px 10px -6px currentColor;
   }
-  .action-button:hover .lucide-arrow-up-right {
+  .action-button:hover .button-arrow-diagonal {
     transform: translate(2px, -2px);
   }
-  .action-button:hover .lucide-arrow-right,
   .action-button:hover .button-arrow {
     transform: translateX(3px);
   }
@@ -221,8 +219,9 @@ summary:not(.selector-dropdown-trigger)::after {
   height: 1.75rem;
   flex: 0 0 auto;
   border-radius: 999px;
+  /* Gota's chevron-down, bold weight, in the brand blue */
   background: #e4ebfc
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23365DC4' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='%23365DC4' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18.75 9.25L12 16L5.25 9.25'/%3E%3C/g%3E%3C/svg%3E")
     center / 14px no-repeat;
   transition:
     transform 180ms ease,
@@ -271,7 +270,8 @@ input[type='checkbox']:not(.sr-only) {
 input[type='checkbox']:not(.sr-only):checked {
   border-color: #365dc4;
   background-color: #365dc4;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 4 4L19 6'/%3E%3C/svg%3E");
+  /* Gota's check, bold weight */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='none' stroke='white' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.75 12.6l4.6 4.65L19.25 6.9'/%3E%3C/g%3E%3C/svg%3E");
 }
 input[type='checkbox']:not(.sr-only):focus-visible {
   outline: 2px solid #365dc4;
@@ -305,8 +305,9 @@ input[type='checkbox']:not(.sr-only):active {
 .search-icon {
   overflow: visible;
 }
-.search-icon__drawing {
-  transform-origin: 11px 11px;
+/* The drawing's group, turned around the lens (Gota's magnifier is centred on 10.6, 10.6). */
+.search-icon > g {
+  transform-origin: 10.6px 10.6px;
 }
 @keyframes search-glance {
   0%,
@@ -333,7 +334,7 @@ input[type='checkbox']:not(.sr-only):active {
   }
 }
 @media (prefers-reduced-motion: no-preference) {
-  :where(button, a, label, form[role='search']):focus-within .search-icon__drawing {
+  :where(button, a, label, form[role='search']):focus-within .search-icon > g {
     animation: search-glance 460ms ease-in-out;
   }
   :where(a, button):focus-visible .community-icon {
@@ -341,7 +342,7 @@ input[type='checkbox']:not(.sr-only):active {
   }
 }
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  :where(button, a, label, form[role='search']):hover .search-icon__drawing {
+  :where(button, a, label, form[role='search']):hover .search-icon > g {
     animation: search-glance 460ms ease-in-out;
   }
   :where(a, button):hover .community-icon {

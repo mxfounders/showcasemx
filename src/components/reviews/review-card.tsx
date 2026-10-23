@@ -1,6 +1,12 @@
 'use client';
 import { useId, useRef, useState } from 'react';
-import { BadgeCheck, CornerDownRight, Flag, MailCheck, ReceiptText } from 'lucide-react';
+import {
+  ArrowTurnDownRightIcon,
+  FlagIcon,
+  MailCheckIcon,
+  ReceiptIcon,
+  VerifiedIcon,
+} from '@/components/icons/gota';
 import { useRouter } from '@/i18n/navigation';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import { reviewLimits, reviewReportReasons } from '@/lib/reviews/model';
@@ -93,17 +99,17 @@ export function ReviewCard({
         <span className="font-medium text-stone-700">{review.name}</span>
         {review.level === 'customer' ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-[#416B50] px-2 py-0.5 text-white">
-            <ReceiptText className="size-3.5" aria-hidden="true" />
+            <ReceiptIcon className="size-3.5" aria-hidden="true" />
             {dict.levels.customer}
           </span>
         ) : review.level === 'work' ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-[#E4EDE2] px-2 py-0.5 text-[#416B50]">
-            <BadgeCheck className="size-3.5" aria-hidden="true" />
+            <VerifiedIcon className="size-3.5" aria-hidden="true" />
             {dict.levels.work}
           </span>
         ) : review.level === 'email' ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-stone-100 px-2 py-0.5 text-stone-600">
-            <MailCheck className="size-3.5" aria-hidden="true" />
+            <MailCheckIcon className="size-3.5" aria-hidden="true" />
             {dict.levels.email}
           </span>
         ) : (
@@ -140,7 +146,7 @@ export function ReviewCard({
       {review.reply && mode !== 'reply' && (
         <div className="mt-5 rounded-2xl border border-stone-200 bg-white p-4">
           <p className="flex items-center gap-2 text-xs font-medium text-stone-600">
-            <CornerDownRight className="size-3.5" aria-hidden="true" />
+            <ArrowTurnDownRightIcon className="size-3.5" aria-hidden="true" />
             {dict.replyFrom.replace('{name}', solutionName)}
             <time className="font-normal text-stone-400" dateTime={review.reply.at}>
               · {date(review.reply.at)}
@@ -169,7 +175,7 @@ export function ReviewCard({
               onClick={() => setMode('report')}
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs text-stone-400 hover:bg-stone-100 hover:text-stone-600"
             >
-              <Flag className="size-3.5" aria-hidden="true" />
+              <FlagIcon className="size-3.5" aria-hidden="true" />
               {dict.report.action}
             </button>
           )}

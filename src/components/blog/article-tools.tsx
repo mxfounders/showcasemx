@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Check, Link as LinkIcon } from 'lucide-react';
+import { CheckIcon, LinkIcon } from '@/components/icons/gota';
 import type { Dictionary } from '@/i18n/dictionary';
 
 export function ArticleProgress({ color }: { color: string }) {
@@ -45,7 +45,7 @@ export function CopyArticleLink({ dict }: { dict: Dictionary['blog']['article'] 
         }
       }}
     >
-      {copied ? <Check className="h-4 w-4 text-[#47785B]" /> : <LinkIcon className="h-4 w-4" />}
+      {copied ? <CheckIcon className="h-4 w-4 text-[#47785B]" /> : <LinkIcon className="h-4 w-4" />}
       {copied ? dict.linkCopied : dict.copyLink}
     </button>
   );

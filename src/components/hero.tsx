@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
-import { Search, CreditCard, Users, LayoutDashboard } from 'lucide-react';
+import { CardIcon, ClientsIcon, DashboardIcon, SearchIcon } from '@/components/icons/gota';
 
 import { actionButtonStyle, getAccentStyle } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
@@ -96,7 +96,7 @@ export function Hero({
                 {dict.heroSearchPlaceholder}
               </label>
               <div className="shrink-0 pl-3 md:pl-5">
-                <Search aria-hidden="true" className="size-4 text-stone-400 md:size-[20px]" />
+                <SearchIcon aria-hidden="true" className="size-4 text-stone-400 md:size-[20px]" />
               </div>
               <input
                 id="solution-search"
@@ -136,7 +136,7 @@ export function Hero({
               style={getAccentStyle('/explorar/finanzas')}
               className="action-button flex items-center gap-1.5 hover:brightness-95 px-3.5 py-1.5 rounded-full text-stone-600 transition-colors"
             >
-              <CreditCard className="size-3.5" /> {dict.heroExploreFinance}
+              <CardIcon className="size-3.5" /> {dict.heroExploreFinance}
             </button>
             <button
               type="button"
@@ -144,7 +144,7 @@ export function Hero({
               style={getAccentStyle('/explorar/nomina')}
               className="action-button flex items-center gap-1.5 hover:brightness-95 px-3.5 py-1.5 rounded-full text-stone-600 transition-colors"
             >
-              <Users className="size-3.5" /> {dict.heroExplorePayroll}
+              <ClientsIcon className="size-3.5" /> {dict.heroExplorePayroll}
             </button>
             <button
               type="button"
@@ -152,7 +152,7 @@ export function Hero({
               style={getAccentStyle('/explorar/ventas')}
               className="action-button flex items-center gap-1.5 hover:brightness-95 px-3.5 py-1.5 rounded-full text-stone-600 transition-colors"
             >
-              <LayoutDashboard className="size-3.5" /> {dict.heroExploreSales}
+              <DashboardIcon className="size-3.5" /> {dict.heroExploreSales}
             </button>
           </div>
         </div>

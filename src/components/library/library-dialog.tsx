@@ -1,6 +1,6 @@
 'use client';
 import { useId, useRef, useState, type ReactNode } from 'react';
-import { X } from 'lucide-react';
+import { CloseIcon } from '@/components/icons/gota';
 export function LibraryDialog({
   title,
   trigger,
@@ -64,7 +64,7 @@ export function LibraryDialog({
               className="rounded-full p-2 text-stone-500 transition-colors hover:bg-stone-200"
               onClick={() => dialog.current?.close()}
             >
-              <X className="size-5" />
+              <CloseIcon className="size-5" />
             </button>
           </div>
           {open && children(() => dialog.current?.close())}

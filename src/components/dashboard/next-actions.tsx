@@ -1,19 +1,19 @@
 import Link from '@/i18n/navigation';
 import {
-  ArrowRight,
-  Camera,
-  ClipboardCheck,
-  Columns3,
-  FolderPlus,
-  Inbox,
-  Send,
-  UserRound,
-  Wallet,
-  Users,
-  Briefcase,
-  Workflow,
-  Scale,
-} from 'lucide-react';
+  ArrowRightIcon,
+  BalanceScaleIcon,
+  BriefcaseIcon,
+  CameraIcon,
+  ClientsIcon,
+  ClipboardCheckIcon,
+  FolderPlusIcon,
+  InboxIcon,
+  PersonIcon,
+  SendIcon,
+  ViewColumnsIcon,
+  WalletIcon,
+  WorkflowIcon,
+} from '@/components/icons/gota';
 import type { FounderSolution } from '@/lib/solutions/model';
 import type { BuyerBoard } from '@/lib/library/model';
 import { solutionChecklist } from '@/lib/solutions/completeness';
@@ -53,7 +53,11 @@ export function NextActions({
                 ? text.addScreenshots
                 : `${text.complete} ${missing?.label.toLowerCase()}`,
             detail: solution.data.name || text.yourProject,
-            Icon: review ? ClipboardCheck : missing?.key === 'visual' ? Camera : ClipboardCheck,
+            Icon: review
+              ? ClipboardCheckIcon
+              : missing?.key === 'visual'
+                ? CameraIcon
+                : ClipboardCheckIcon,
             tone: brandColors.sage,
             priority: review ? 0 : 1,
           };
@@ -69,7 +73,7 @@ export function NextActions({
           {
             href: '/account/opportunities',
             label: text.opportunities,
-            Icon: Inbox,
+            Icon: InboxIcon,
             tone: brandColors.terracotta,
           },
         ]
@@ -79,7 +83,7 @@ export function NextActions({
           {
             href: '/account/contacts',
             label: text.myContacts,
-            Icon: Send,
+            Icon: SendIcon,
             tone: brandColors.blue,
           },
         ]
@@ -87,7 +91,7 @@ export function NextActions({
     {
       href: '/account/settings/profile',
       label: text.myProfile,
-      Icon: UserRound,
+      Icon: PersonIcon,
       tone: brandColors.lavender,
     },
   ];
@@ -112,7 +116,7 @@ export function NextActions({
                 href="/account/saved?list=none"
                 title={text.organizeSaved}
                 detail={`${unorganized} ${unorganized === 1 ? text.unorganizedSingular : text.unorganizedPlural}`}
-                Icon={FolderPlus}
+                Icon={FolderPlusIcon}
                 tone={brandColors.amber}
               />
             )}{' '}
@@ -122,7 +126,7 @@ export function NextActions({
                 href={`/account/lists/${board.id}`}
                 title={text.compareOptions}
                 detail={board.name}
-                Icon={Columns3}
+                Icon={ViewColumnsIcon}
                 tone={brandColors.lavender}
               />
             ))}
@@ -145,7 +149,7 @@ export function NextActions({
                 <Icon className="size-4" aria-hidden="true" />
               </span>
               {label}
-              <ArrowRight
+              <ArrowRightIcon
                 className="ml-3 size-4 text-stone-400 transition-transform group-hover:translate-x-1 motion-reduce:transform-none"
                 aria-hidden="true"
               />
@@ -166,7 +170,7 @@ function ActionRow({
   href: string;
   title: string;
   detail: string;
-  Icon: typeof Camera;
+  Icon: typeof CameraIcon;
   tone: { soft: string; solid: string };
 }) {
   return (
@@ -184,7 +188,7 @@ function ActionRow({
         <span className="block truncate text-sm font-medium">{title}</span>
         <span className="mt-1 block truncate text-xs text-stone-500">{detail}</span>
       </span>
-      <ArrowRight
+      <ArrowRightIcon
         className="size-4 shrink-0 text-stone-400 transition-transform group-hover:translate-x-1 motion-reduce:transform-none"
         aria-hidden="true"
       />
@@ -192,11 +196,11 @@ function ActionRow({
   );
 }
 const discovery = [
-  { label: 'Finanzas', Icon: Wallet },
-  { label: 'Nómina', Icon: Users },
-  { label: 'Agencias', Icon: Briefcase },
-  { label: 'Operación', Icon: Workflow },
-  { label: 'Legal', Icon: Scale },
+  { label: 'Finanzas', Icon: WalletIcon },
+  { label: 'Nómina', Icon: ClientsIcon },
+  { label: 'Agencias', Icon: BriefcaseIcon },
+  { label: 'Operación', Icon: WorkflowIcon },
+  { label: 'Legal', Icon: BalanceScaleIcon },
 ];
 export function ExploreNeeds({ dict, locale }: { dict: Dictionary['dashboard']; locale: string }) {
   const text = dict.exploreNeeds;
