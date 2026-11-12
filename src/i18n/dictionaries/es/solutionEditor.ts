@@ -347,6 +347,64 @@ export const solutionEditor = {
     creating: 'Creando borrador…',
     cta: 'Postular mi solución',
   },
+  /** /account/solutions/new: draft prepared with AI from the project's website */
+  siteDraft: {
+    title: 'Prepárala con IA desde tu sitio',
+    description:
+      'Pega la dirección de tu sitio. Leemos tu página principal y hasta cuatro páginas más, y la IA redacta un borrador que revisas pregunta por pregunta. Nada se envía a revisión sin ti.',
+    urlLabel: 'Sitio de tu proyecto',
+    placeholder: 'tuproyecto.com',
+    cta: 'Preparar mi ficha',
+    working: 'Preparando…',
+    hint: 'Suele tardar menos de un minuto.',
+    privacy:
+      'Solo usamos el contenido público de tu sitio. Lo procesa Anthropic (Claude) para redactar el borrador; ningún dato de tu cuenta sale de shwcs.',
+    privacyLink: 'Privacidad',
+    progressAria: 'Avance de tu borrador',
+    stages: {
+      creating: 'Creando tu borrador',
+      reading: 'Leyendo tu sitio',
+      readOne: 'Leímos la página principal de tu sitio',
+      readMany: 'Leímos {count} páginas de tu sitio',
+      drafting: 'Redactando tu ficha con IA',
+      done: 'Listo, abriendo tu borrador',
+    },
+    partialNotice:
+      'No pudimos redactar con IA. Llenamos lo que se lee directo de tu sitio; el resto lo completas tú.',
+    retry: 'Intentar otra vez',
+    continueManual: 'Seguir a mano con este borrador',
+    manualTitle: 'Prefiero llenarla a mano',
+    manualCta: 'Empezar a mano',
+    errors: {
+      invalidUrl: 'Escribe la dirección de tu sitio, por ejemplo tuproyecto.com.',
+      unavailable:
+        'El llenado con IA no está disponible en este momento. Puedes llenar tu ficha a mano.',
+      tooFast: 'Hiciste varios intentos seguidos. Espera unos minutos.',
+      limit: 'Ya preparaste 5 borradores con IA hoy. Vuelve mañana o llena tu ficha a mano.',
+      notEditable: 'Este borrador ya no se puede editar: está en revisión.',
+      unreachable:
+        'No pudimos abrir tu sitio. Revisa la dirección o inténtalo de nuevo en unos minutos.',
+      notHtml: 'Esa dirección no lleva a una página web.',
+      tooLittleText:
+        'Tu sitio carga su contenido con JavaScript y no pudimos leer su texto. Llena tu ficha a mano; tarda unos minutos más.',
+      failed: 'Algo falló al preparar tu borrador. Inténtalo de nuevo o llénalo a mano.',
+      session: 'Tu sesión terminó. Entra de nuevo.',
+      notFound: 'No encontramos este borrador.',
+      useForm: 'Usa el formulario de shwcs.',
+    },
+    /** Marks in the editor on answers that still match what was taken from the site */
+    marks: {
+      banner:
+        'Preparamos este borrador con IA a partir de {host}. Revisa cada respuesta antes de enviarla: lo marcado con ✦ salió de tu sitio y puede tener errores.',
+      partialBanner:
+        'No pudimos redactar con IA, así que de {host} tomamos solo lo que se lee directo. Completa el resto a mano.',
+      suggested: 'Sugerido por IA a partir de tu sitio',
+      taken: 'Tomado de tu sitio',
+      source: 'Fuente',
+      home: 'página principal',
+      reviewTag: 'de tu sitio',
+    },
+  },
   domain: {
     error: 'No pudimos completar la operación.',
     verified: 'Control del dominio comprobado. No certifica identidad legal ni resultados.',

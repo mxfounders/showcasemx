@@ -5,6 +5,7 @@ import type { Metadata } from 'next';
 import { getSession, sessionCookie } from '@/lib/auth/session';
 import { authSql } from '@/lib/auth/security';
 import { OnboardingForm } from '@/components/onboarding/onboarding-form';
+import { siteDraftAvailable } from '@/lib/solutions/site-draft';
 export async function generateMetadata({
   params,
 }: {
@@ -18,7 +19,8 @@ export async function generateMetadata({
 }
 export default async function OnboardingPage(props: { params: Promise<{ locale: string }> }) {
   const { locale } = await props.params;
-  const dict = (await getDictionary(locale)).onboarding;
+  const dictionary = await getDictionary(locale);
+  const dict = dictionary.onboarding;
   const account = await getSession((await cookies()).get(sessionCookie)?.value);
   if (!account) return localeRedirect('/sign-in?next=/onboarding');
   // If storage is briefly unavailable, show the form rather than crash the page —
@@ -34,7 +36,11 @@ export default async function OnboardingPage(props: { params: Promise<{ locale: 
   if (alreadyNamed) return localeRedirect('/account');
   return (
     <section className="mx-auto max-w-[640px] px-6 pb-20 pt-8 sm:pt-14">
-      <OnboardingForm dict={dict} />
+      <OnboardingForm
+        dict={dict}
+        siteDraft={dictionary.solutionEditor.siteDraft}
+        ai={siteDraftAvailable()}
+      />
     </section>
   );
 }

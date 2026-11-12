@@ -40,6 +40,11 @@ import {
 } from '@/lib/taxonomy';
 import { suggestCapabilities } from '@/lib/search/facets';
 import type { Dictionary } from '@/i18n/dictionary';
+import type { SiteDraftMarks } from '@/lib/solutions/site-draft-server';
+/** A field keeps its "from your site" mark only while it still holds that value. */
+function sameValue(a: unknown, b: unknown) {
+  return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+}
 const labelsOf = (options: readonly { value: string; label: string }[]) =>
   Object.fromEntries(options.map(item => [item.value, item.label]));
 function marketSummary(
@@ -105,13 +110,16 @@ export function SolutionEditor({
   solution,
   locale,
   dict,
+  siteDraft = null,
 }: {
   solution: FounderSolution;
   locale: string;
   dict: Dictionary['solutionEditor'];
+  siteDraft?: SiteDraftMarks | null;
 }) {
   const text = dict.editor,
-    review = text.review;
+    review = text.review,
+    marks = dict.siteDraft.marks;
   const industryOptions = localizedIndustries(locale),
     companySizeOptions = localizedCompanySizes(locale),
     offeringOptions = localizedOfferingOptions(locale),
@@ -145,6 +153,55 @@ export function SolutionEditor({
   const question = solutionQuestions[step],
     questionText = dict.questions[question.id],
     blocked = pending || mediaBusy;
+  // Marks for answers taken from the founder's website (src/lib/solutions/site-draft.ts).
+  const fromSite = (field: string) => {
+    const key = (field === 'category' ? 'categories' : field) as keyof SolutionData;
+    return (
+      Boolean(siteDraft && key in siteDraft.suggested) &&
+      sameValue(data[key], siteDraft?.suggested[key])
+    );
+  };
+  const markedFields = siteDraft ? Object.keys(siteDraft.suggested).filter(fromSite) : [];
+  const siteHost = siteDraft ? new URL(siteDraft.website).hostname.replace(/^www\./, '') : '';
+  function siteMark(fields: readonly string[]) {
+    const marked = fields.filter(fromSite);
+    if (!siteDraft || !marked.length) return null;
+    const sources = Array.from(
+      new Set(
+        marked
+          .map(field => siteDraft.sources[field === 'category' ? 'categories' : field])
+          .filter((url): url is string => Boolean(url)),
+      ),
+    );
+    const direct = siteDraft.partial || marked.every(field => field === 'projectLinks');
+    return (
+      <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#365DC4]">
+        <SparklesIcon className="size-3.5" aria-hidden="true" />
+        {direct ? marks.taken : marks.suggested}
+        {!!sources.length && (
+          <span className="text-stone-500">
+            · {marks.source}:{' '}
+            {sources.map((url, index) => {
+              const path = new URL(url).pathname;
+              return (
+                <span key={url}>
+                  {index > 0 && ', '}
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2 hover:text-stone-700"
+                  >
+                    {path === '/' ? marks.home : path}
+                  </a>
+                </span>
+              );
+            })}
+          </span>
+        )}
+      </p>
+    );
+  }
   const guideQuestion = (phase: number, key?: string) =>
     questionIndex(
       (
@@ -369,6 +426,12 @@ export function SolutionEditor({
         }
       }}
     >
+      {!!markedFields.length && (
+        <p className="mb-8 flex gap-3 rounded-2xl border border-[#365DC4]/25 bg-[#E4EBFC]/50 px-5 py-4 text-sm leading-relaxed text-stone-700">
+          <SparklesIcon className="mt-0.5 size-4 shrink-0 text-[#365DC4]" aria-hidden="true" />
+          {(siteDraft?.partial ? marks.partialBanner : marks.banner).replace('{host}', siteHost)}
+        </p>
+      )}
       <div className="mb-9 flex flex-wrap items-center justify-between gap-4 border-b border-stone-200 pb-5">
         <div className="flex items-center gap-4">
           <span className="text-xs text-stone-500" aria-live="polite">
@@ -423,6 +486,7 @@ export function SolutionEditor({
             </h2>
             <p className="mt-4 text-sm leading-relaxed text-stone-500">{questionText.hint}</p>
             {question.optional && <p className="mt-3 text-xs text-stone-400">{text.optional}</p>}
+            {siteMark(question.fields)}
           </div>
           <fieldset disabled={blocked} className="min-h-[180px] space-y-6">
             {question.id === 'identity' &&
@@ -796,72 +860,107 @@ export function SolutionEditor({
             {question.id === 'review' && (
               <>
                 <dl className="grid gap-x-8 gap-y-6 sm:grid-cols-2">
-                  {[
-                    [review.project, data.name],
+                  {(
                     [
-                      review.kindAndCategories,
-                      `${offeringLabels[data.kind] ?? data.kind} · ${getSolutionCategories(data)
-                        .map(categoryLabel)
-                        .join(' · ')}`,
-                    ],
-                    [review.problem, data.problem],
-                    [
-                      review.capabilities,
-                      data.capabilities?.map(capabilityLabel).join(' · ') ?? '',
-                    ],
-                    [review.audience, data.audience],
-                    [review.industries, marketSummary(data.industries, industryLabels, text.any)],
-                    [
-                      review.companySizes,
-                      marketSummary(data.companySizes, companySizeLabels, text.any),
-                    ],
-                    [review.notFor, data.notFor],
-                    [review.demo, data.demoUrl],
-                    [review.screenshots, data.screenshots?.map(image => image.caption).join(' · ')],
-                    [
-                      review.pricingModel,
-                      listSummary(data.pricingModel, labelsOf(pricingModelOptions)),
-                    ],
-                    [
-                      review.priceBand,
-                      data.priceBand
-                        ? priceBandOptions.find(o => o.value === data.priceBand)?.label
-                        : '',
-                    ],
-                    ...solutionEvaluationRows(data, {
-                      fields: dict.evaluationFields,
-                      missing: dict.toComplete,
-                    }),
-                    [
-                      review.setupTime,
-                      data.setupTime
-                        ? setupTimeOptions.find(o => o.value === data.setupTime)?.label
-                        : '',
-                    ],
-                    [
-                      review.integrations,
-                      data.integrationKeys?.length === 0
-                        ? review.noIntegrations
-                        : listSummary(data.integrationKeys, labelsOf(integrationOptions)),
-                    ],
-                    [review.compliance, listSummary(data.compliance, labelsOf(complianceOptions))],
-                    [review.website, data.website],
-                    [review.contactEmail, data.contactEmail],
-                    [review.evidenceUrl, data.evidenceUrl],
-                    [
-                      review.founders,
-                      data.founders
-                        ?.map(person =>
-                          [person.name, person.role, person.bio, ...person.links.map(linkLine)]
-                            .filter(Boolean)
-                            .join('\n'),
-                        )
-                        .join('\n\n'),
-                    ],
-                    [review.projectLinks, data.projectLinks?.map(linkLine).join('\n')],
-                  ].map(([label, value]) => (
+                      [review.project, data.name, ['name']],
+                      [
+                        review.kindAndCategories,
+                        `${offeringLabels[data.kind] ?? data.kind} · ${getSolutionCategories(data)
+                          .map(categoryLabel)
+                          .join(' · ')}`,
+                        ['kind', 'categories'],
+                      ],
+                      [review.problem, data.problem, ['problem']],
+                      [
+                        review.capabilities,
+                        data.capabilities?.map(capabilityLabel).join(' · ') ?? '',
+                        ['capabilities'],
+                      ],
+                      [review.audience, data.audience, ['audience']],
+                      [
+                        review.industries,
+                        marketSummary(data.industries, industryLabels, text.any),
+                        ['industries'],
+                      ],
+                      [
+                        review.companySizes,
+                        marketSummary(data.companySizes, companySizeLabels, text.any),
+                        ['companySizes'],
+                      ],
+                      [review.notFor, data.notFor, ['notFor']],
+                      [review.demo, data.demoUrl, ['demoUrl']],
+                      [
+                        review.screenshots,
+                        data.screenshots?.map(image => image.caption).join(' · '),
+                        [],
+                      ],
+                      [
+                        review.pricingModel,
+                        listSummary(data.pricingModel, labelsOf(pricingModelOptions)),
+                        ['pricingModel'],
+                      ],
+                      [
+                        review.priceBand,
+                        data.priceBand
+                          ? priceBandOptions.find(o => o.value === data.priceBand)?.label
+                          : '',
+                        ['priceBand'],
+                      ],
+                      ...solutionEvaluationRows(data, {
+                        fields: dict.evaluationFields,
+                        missing: dict.toComplete,
+                      }).map(([label, value], index) => [
+                        label,
+                        value,
+                        [solutionEvaluationFields[index].key],
+                      ]),
+                      [
+                        review.setupTime,
+                        data.setupTime
+                          ? setupTimeOptions.find(o => o.value === data.setupTime)?.label
+                          : '',
+                        ['setupTime'],
+                      ],
+                      [
+                        review.integrations,
+                        data.integrationKeys?.length === 0
+                          ? review.noIntegrations
+                          : listSummary(data.integrationKeys, labelsOf(integrationOptions)),
+                        ['integrationKeys'],
+                      ],
+                      [
+                        review.compliance,
+                        listSummary(data.compliance, labelsOf(complianceOptions)),
+                        ['compliance'],
+                      ],
+                      [review.website, data.website, []],
+                      [review.contactEmail, data.contactEmail, []],
+                      [review.evidenceUrl, data.evidenceUrl, []],
+                      [
+                        review.founders,
+                        data.founders
+                          ?.map(person =>
+                            [person.name, person.role, person.bio, ...person.links.map(linkLine)]
+                              .filter(Boolean)
+                              .join('\n'),
+                          )
+                          .join('\n\n'),
+                        [],
+                      ],
+                      [
+                        review.projectLinks,
+                        data.projectLinks?.map(linkLine).join('\n'),
+                        ['projectLinks'],
+                      ],
+                    ] as [string, string | undefined, readonly string[]][]
+                  ).map(([label, value, fields]) => (
                     <div key={label}>
-                      <dt className="text-xs text-stone-400">{label}</dt>
+                      <dt className="text-xs text-stone-400">
+                        {label}
+                        {fields.some(fromSite) && (
+                          <span className="ml-2 text-[#365DC4]">✦ {marks.reviewTag}</span>
+                        )}
+                      </dt>
                       <dd className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed">
                         {value || dict.toComplete}
                       </dd>

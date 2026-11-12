@@ -72,6 +72,7 @@ migración a object storage:
 31. db/billing.sql — datos fiscales y CFDI de los pagos (docs/billing.md)
 32. db/solution-reviews.sql — reseñas verificadas y sus reportes (docs/reviews.md); el catálogo la consulta, así que va antes del despliegue
 33. db/compliance.sql — identidad fiscal privada, espejo de la lista 69-B del SAT y comprobantes de compra de reseñas (docs/compliance.md)
+34. db/solution-site-drafts.sql — intentos de ficha preparada con IA desde el sitio: cuota diaria, marcas del editor y costo (docs/site-draft.md)
 
 db/solution-applications.sql es el intake anónimo retirado: no aplicarlo.
 Newsletter es independiente; segments depende de subscribers.

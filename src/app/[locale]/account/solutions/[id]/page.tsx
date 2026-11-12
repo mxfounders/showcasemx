@@ -19,6 +19,7 @@ import { OwnerReviewDigest } from '@/components/reviews/owner-review-digest';
 import { complianceResult, getTaxIdentity } from '@/lib/compliance/server';
 import { TaxIdentityCard } from '@/components/compliance/tax-identity-card';
 import { countryOptions } from '@/lib/countries';
+import { getSiteDraftMarks } from '@/lib/solutions/site-draft-server';
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const dictionary = await getDictionary((await params).locale);
   return {
@@ -38,12 +39,13 @@ export default async function SolutionPage(props: {
   if (!isSolutionId(params.id)) notFound();
   const solution = await getSolution(params.id, account.id);
   if (!solution) notFound();
-  const [events, reviewDigest, taxIdentity, compliance] = await Promise.all([
+  const [events, reviewDigest, taxIdentity, compliance, siteDraft] = await Promise.all([
     getEvents(solution.id),
     // Optional: an outage in any of these hides its card, never the listing page.
     solution.published_data ? getOwnerReviewDigest(solution.id).catch(() => null) : null,
     getTaxIdentity(solution.id).catch(() => undefined),
     complianceResult(solution.id).catch(() => null),
+    getSiteDraftMarks(solution.id, account.id).catch(() => null),
   ]);
   const kindLabel =
       localizedOfferingOptions(locale).find(item => item.value === solution.data.kind)?.label ??
@@ -194,6 +196,7 @@ export default async function SolutionPage(props: {
             solution={solution}
             locale={locale}
             dict={dict}
+            siteDraft={siteDraft}
           />
         </div>
         <aside className="border-t border-stone-200 pt-6 lg:border-t-0 lg:pt-0">

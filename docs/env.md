@@ -28,6 +28,7 @@ variables. Separar bases de desarrollo, preview y producción.
 | STRIPE_WEBHOOK_SECRET | Secreto de firma del endpoint `/api/webhooks/stripe` (dashboard) o el que imprime `stripe listen` en local. Sin él el webhook responde 503 y los pagos solo se concilian al volver de Checkout. |
 | STRIPE_AUTOMATIC_TAX | Solo `off` para pruebas locales contra una cuenta sin Stripe Tax configurado. Ausente = impuestos obligatorios; nunca ponerlo en Vercel. |
 | CORD_API_KEY | Llave secreta de Cord (`sk_test_` sandbox, `sk_live_` producción) de la cuenta emisora de shwcs, con CSD cargado. Emite CFDI y notas de crédito ([billing.md](billing.md)). Sin ella los documentos esperan en `pending` y no se emite nada. |
+| ANTHROPIC_API_KEY | Clave de la API de Anthropic para preparar fichas con IA desde el sitio del proyecto ([site-draft.md](site-draft.md)). Solo servidor. Sin ella la opción no aparece en «Nueva solución» y la API responde 503. Cada intento cuesta del orden de 0.10–0.20 USD; el tope está en el código (5 por cuenta y 300 en total al día). |
 | CORD_API_URL | Solo pruebas o un entorno de staging de Cord. Ausente = `https://cordhq.app/api/v1`. |
 
 La conexión local de Neon tiene aplicadas las migraciones operativas, incluida

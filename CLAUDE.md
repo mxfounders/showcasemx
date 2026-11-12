@@ -117,7 +117,7 @@ No asignar otros proyectos por nombre, dominio o coincidencia de correo.
 
 Next.js 15.5.24 App Router, React 19.2.8, TypeScript estricto, Tailwind 3, GSAP,
 Gota (los íconos de Flouvia, §72). Neon HTTP mediante @neondatabase/serverless. Sharp para avatares y capturas.
-No Clerk, sin ORM y sin SDK de IA (retirados en la limpieza de §62). Stripe (`stripe@23.0.0`) para anuncios (§64).
+No Clerk ni ORM. `@anthropic-ai/sdk@1.3.0` solo para la ficha preparada con IA (§74); los SDK de IA anteriores se retiraron en §62. Stripe (`stripe@23.0.0`) para anuncios (§64).
 jose valida JWT de Google. PostCSS 8.5.26 mediante override para Next; APIs dinámicas async.
 
 src/app:
@@ -393,7 +393,7 @@ Un timeout no confirma fracaso de la escritura: revisar bandeja antes de repetir
 getDatabaseUrl usa, en orden: NEON_DATABASE_URL, DATABASE_URL, POSTGRES_URL.
 Son secretos solo de servidor; no imprimir valores, hosts con credenciales ni tokens.
 
-Orden de esquema operativo para base nueva: la lista completa (33 archivos, verificada
+Orden de esquema operativo para base nueva: la lista completa (34 archivos; los 33 primeros verificados
 sobre una base vacía el 10 de octubre de 2026) vive en docs/database.md. Aplicar con
 `npm run db:migrate -- <archivo> [<archivo> …]`, una transacción por archivo.
 
@@ -472,7 +472,7 @@ respuestas, cierre/reapertura, conflictos de versión, retiro e historial atómi
 finally elimina solo cuentas del test, datos en cascada y sus contadores.
 No usar cuentas reales del usuario ni enviar emails.
 
-Pruebas unitarias: 187 pasando al 11 de noviembre de 2026 (ver §72 y §73). Lint y TypeScript correctos.
+Pruebas unitarias: 198 pasando al 11 de noviembre de 2026 (ver §72 a §74). Lint y TypeScript correctos.
 Integraciones nuevas: `RUN_REVIEWS_INTEGRATION=1 node tests/integration/reviews.cjs` y
 `RUN_COMPLIANCE_INTEGRATION=1 node tests/integration/compliance.cjs` (esta con un SAT
 simulado; ver su encabezado). Ambas aceptan `APP_ORIGIN` para apuntar a un build aislado.
@@ -3326,3 +3326,40 @@ build y la misma prueba en vivo en verde.
 - Firewall de Vercel (acción del propietario en el panel): rulesets administrados Bot
   Protection y AI Bots, y una regla que bloquee `.php`, `/.env`, `/.git` y `/wp-`.
   Vercel no cobra el tráfico que el firewall bloquea.
+
+## 74. Ficha preparada con IA desde el sitio — 11 noviembre 2026
+
+Petición del propietario (SHCWS-151): que publicar sea rápido y que la IA llene la ficha
+a partir del sitio del proyecto. Contrato completo en `docs/site-draft.md`.
+
+- `/account/solutions/new` ofrece primero «Prepárala con IA desde tu sitio» (una dirección)
+  y debajo el camino manual de siempre. Sin `ANTHROPIC_API_KEY` la opción no aparece.
+- El servidor lee la página principal y hasta cuatro internas con las mismas reglas SSRF
+  de la portada (movidas a `src/lib/net/guarded-fetch.ts`), y Claude (`claude-opus-5-5`,
+  SDK oficial, salida estructurada con las listas cerradas del catálogo como enums,
+  `fallbacks: "default"`) redacta el borrador. El servidor vuelve a validar todo: nada
+  fuera del catálogo, ninguna capacidad huérfana, ningún enlace que no esté en el sitio.
+- Regla dura: si el sitio no lo dice, queda vacío. Solo se llenan campos vacíos; `[]` en
+  industrias, tamaños e integraciones es respuesta del fundador y la IA nunca lo escribe.
+  Nunca envía a revisión: el fundador recorre el editor y confirma.
+- El editor marca con ✦ y la página fuente cada respuesta que sigue igual a lo tomado del
+  sitio; la marca desaparece al editarla. Si el modelo falla, se guarda lo que se lee
+  directo (nombre y enlaces) como parcial y el aviso lo dice.
+- Avance real por NDJSON (leyendo → N páginas → redactando → listo), no un spinner.
+- `db/solution-site-drafts.sql` (orden 34): un registro por intento con valores escritos,
+  fuentes, modelo y tokens, sin el texto del sitio. Cuota de 5 por cuenta y 300 globales
+  por 24 h, más `securityLimit` por hora. Aplicada solo a `neondb`.
+- Privacidad (es/en) nombra a Anthropic como subprocesador solo para esta función.
+- Verificación: 11 unitarias nuevas (198 en total), lint, tipos y formato limpios;
+  integración `tests/integration/site-draft.ts` contra `neondb` con el sitio real de Cord y
+  un modelo simulado. No probado: una llamada real a Claude (falta la clave).
+- **Onboarding (SHCWS-28)**: «Soy fundador» y «Un poco de ambos» ganan un cuarto paso,
+  «¿Agregamos tu producto ahora?»: con IA (el sitio se pega ahí mismo y el avance se ve en
+  el paso), a mano (crea el borrador y abre el editor) o más tarde (Inicio). Comprador y
+  explorador siguen con tres pasos. El perfil se guarda antes de crear el borrador. El
+  cliente del flujo vive en `src/components/solutions/use-site-draft.tsx`, compartido con
+  «Nueva solución». Esto amplía §47 (el onboarding ya no es siempre de tres pasos).
+- Pendiente: `ANTHROPIC_API_KEY` en Vercel; migración en `shwcs_production` antes de
+  desplegar (sin ella la ruta responde 503 al reservar y las marcas no aparecen); revisión
+  legal del texto de Privacidad.
+

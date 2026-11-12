@@ -337,6 +337,63 @@ export const solutionEditor = {
     creating: 'Creating draft…',
     cta: 'Submit my solution',
   },
+  /** /account/solutions/new: draft prepared with AI from the project's website */
+  siteDraft: {
+    title: 'Let AI draft it from your website',
+    description:
+      'Paste your website address. We read your home page and up to four more pages, and AI writes a draft you review question by question. Nothing is sent for review without you.',
+    urlLabel: 'Your project website',
+    placeholder: 'yourproject.com',
+    cta: 'Draft my listing',
+    working: 'Drafting…',
+    hint: 'It usually takes under a minute.',
+    privacy:
+      "We only use your website's public content. Anthropic (Claude) processes it to write the draft; no data from your account leaves shwcs.",
+    privacyLink: 'Privacy',
+    progressAria: 'Draft progress',
+    stages: {
+      creating: 'Creating your draft',
+      reading: 'Reading your website',
+      readOne: 'We read your home page',
+      readMany: 'We read {count} pages of your website',
+      drafting: 'Writing your listing with AI',
+      done: 'Done, opening your draft',
+    },
+    partialNotice:
+      "We couldn't write it with AI. We filled in what can be read directly from your site; you complete the rest.",
+    retry: 'Try again',
+    continueManual: 'Continue this draft by hand',
+    manualTitle: "I'd rather fill it in myself",
+    manualCta: 'Start by hand',
+    errors: {
+      invalidUrl: 'Enter your website address, for example yourproject.com.',
+      unavailable: "AI drafting isn't available right now. You can fill in your listing by hand.",
+      tooFast: 'Too many attempts in a row. Wait a few minutes.',
+      limit: "You've drafted 5 listings with AI today. Come back tomorrow or fill it in by hand.",
+      notEditable: "This draft can't be edited anymore: it's under review.",
+      unreachable:
+        "We couldn't open your website. Check the address or try again in a few minutes.",
+      notHtml: "That address doesn't lead to a web page.",
+      tooLittleText:
+        "Your website loads its content with JavaScript and we couldn't read its text. Fill in your listing by hand; it takes a few more minutes.",
+      failed: 'Something went wrong while drafting. Try again or fill it in by hand.',
+      session: 'Your session ended. Sign in again.',
+      notFound: "We couldn't find this draft.",
+      useForm: 'Use the shwcs form.',
+    },
+    /** Marks in the editor on answers that still match what was taken from the site */
+    marks: {
+      banner:
+        'We drafted this with AI from {host}. Review every answer before sending it: anything marked ✦ came from your site and may contain mistakes.',
+      partialBanner:
+        "We couldn't write it with AI, so from {host} we only took what can be read directly. Complete the rest by hand.",
+      suggested: 'Suggested by AI from your website',
+      taken: 'Taken from your website',
+      source: 'Source',
+      home: 'home page',
+      reviewTag: 'from your site',
+    },
+  },
   domain: {
     error: "We couldn't complete the operation.",
     verified: "Domain control verified. It doesn't certify legal identity or results.",

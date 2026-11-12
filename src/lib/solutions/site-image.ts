@@ -1,6 +1,6 @@
-import { lookup } from 'node:dns/promises';
-import { isIP } from 'node:net';
 import sharp from 'sharp';
+import { guardedFetch, readCapped } from '@/lib/net/guarded-fetch';
+export { isPrivateAddress } from '@/lib/net/guarded-fetch';
 
 /**
  * Reads the og:image of a project's own website so a ficha has a cover from the
@@ -9,21 +9,13 @@ import sharp from 'sharp';
  * The bytes are downloaded and re-encoded here on purpose. Pointing the catalogue
  * at a remote `<img>` would make every visitor request a file from a third-party
  * server, which is exactly the kind of external pixel the privacy notice says the
- * site does not embed.
- *
- * Fetching a URL a person supplied is server-side request forgery territory, so
- * every hop is checked: only http(s), no credentials, no private or loopback
- * address, a hard redirect limit, short timeouts and byte caps. The DNS check
- * happens before the request and a name could in theory change between the check
- * and the connection; that residual race is documented in docs/listings.md rather
- * than papered over.
+ * site does not embed. Every request goes through guardedFetch (SSRF checks).
  */
 
 const HTML_LIMIT = 512 * 1024; // enough for any reasonable <head>
 const IMAGE_LIMIT = 5 * 1024 * 1024;
 const HTML_TIMEOUT = 6000;
 const IMAGE_TIMEOUT = 8000;
-const MAX_REDIRECTS = 3;
 const AGENT = 'shwcs/1.0 (+https://shwcs.site; lee og:image del sitio declarado)';
 
 export type SiteImage = { imageUrl: string; buffer: Buffer; width: number; height: number };
@@ -45,107 +37,6 @@ export type SiteImageFailure =
   | 'processingFailed';
 export type SiteImageResult =
   { ok: true; image: SiteImage } | { ok: false; failure: SiteImageFailure };
-
-/** Blocks loopback, private, link-local, carrier-grade NAT and unique-local ranges. */
-export function isPrivateAddress(address: string): boolean {
-  const family = isIP(address);
-  if (family === 4) {
-    const [a, b] = address.split('.').map(Number);
-    if (a === 10 || a === 127 || a === 0) return true;
-    if (a === 169 && b === 254) return true; // link-local, covers cloud metadata
-    if (a === 172 && b >= 16 && b <= 31) return true;
-    if (a === 192 && b === 168) return true;
-    if (a === 100 && b >= 64 && b <= 127) return true;
-    return false;
-  }
-  if (family === 6) {
-    const value = address.toLowerCase();
-    if (value === '::1' || value === '::') return true;
-    if (value.startsWith('fe80') || value.startsWith('fc') || value.startsWith('fd')) return true;
-    // IPv4-mapped addresses reach the same networks through a different notation.
-    const mapped = value.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
-    if (mapped) return isPrivateAddress(mapped[1]);
-    return false;
-  }
-  return true;
-}
-
-async function safeUrl(raw: string): Promise<URL | null> {
-  let url: URL;
-  try {
-    url = new URL(raw);
-  } catch {
-    return null;
-  }
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
-  if (url.username || url.password) return null;
-  const host = url.hostname.replace(/^\[|\]$/g, '');
-  try {
-    const addresses = isIP(host)
-      ? [{ address: host }]
-      : await lookup(host, { all: true, verbatim: true });
-    if (!addresses.length) return null;
-    if (addresses.some(entry => isPrivateAddress(entry.address))) return null;
-  } catch {
-    return null;
-  }
-  return url;
-}
-
-/** Follows redirects by hand so every intermediate host is validated too. */
-async function guardedFetch(
-  raw: string,
-  accept: string,
-  timeout: number,
-): Promise<Response | null> {
-  let target = raw;
-  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-    const url = await safeUrl(target);
-    if (!url) return null;
-    let response: Response;
-    try {
-      response = await fetch(url, {
-        redirect: 'manual',
-        signal: AbortSignal.timeout(timeout),
-        headers: { accept, 'user-agent': AGENT },
-      });
-    } catch {
-      return null;
-    }
-    if (response.status >= 300 && response.status < 400) {
-      const location = response.headers.get('location');
-      if (!location) return null;
-      try {
-        target = new URL(location, url).toString();
-      } catch {
-        return null;
-      }
-      continue;
-    }
-    return response.ok ? response : null;
-  }
-  return null;
-}
-
-async function readCapped(response: Response, limit: number): Promise<Buffer | null> {
-  const declared = Number(response.headers.get('content-length') ?? 0);
-  if (declared > limit) return null;
-  const reader = response.body?.getReader();
-  if (!reader) return null;
-  const chunks: Uint8Array[] = [];
-  let size = 0;
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    size += value.byteLength;
-    if (size > limit) {
-      await reader.cancel();
-      return null;
-    }
-    chunks.push(value);
-  }
-  return Buffer.concat(chunks);
-}
 
 /** og:image first, then Twitter's equivalent; both are what sites already publish. */
 export function readImageMeta(html: string, pageUrl: string): string | null {
@@ -175,20 +66,20 @@ export function readImageMeta(html: string, pageUrl: string): string | null {
 }
 
 export async function fetchSiteImage(website: string): Promise<SiteImageResult> {
-  const page = await guardedFetch(website, 'text/html,application/xhtml+xml', HTML_TIMEOUT);
+  const page = await guardedFetch(website, 'text/html,application/xhtml+xml', HTML_TIMEOUT, AGENT);
   if (!page) return { ok: false, failure: 'unreachable' };
-  if (!(page.headers.get('content-type') ?? '').includes('html'))
+  if (!(page.response.headers.get('content-type') ?? '').includes('html'))
     return { ok: false, failure: 'notHtml' };
-  const html = await readCapped(page, HTML_LIMIT);
+  const html = await readCapped(page.response, HTML_LIMIT);
   if (!html) return { ok: false, failure: 'pageTooLarge' };
 
-  const imageUrl = readImageMeta(html.toString('utf8'), page.url || website);
+  const imageUrl = readImageMeta(html.toString('utf8'), page.url);
   if (!imageUrl) return { ok: false, failure: 'noImageMeta' };
   if (imageUrl.length > 1000) return { ok: false, failure: 'imageUrlTooLong' };
 
-  const file = await guardedFetch(imageUrl, 'image/*', IMAGE_TIMEOUT);
+  const file = await guardedFetch(imageUrl, 'image/*', IMAGE_TIMEOUT, AGENT);
   if (!file) return { ok: false, failure: 'imageUnreachable' };
-  const bytes = await readCapped(file, IMAGE_LIMIT);
+  const bytes = await readCapped(file.response, IMAGE_LIMIT);
   if (!bytes) return { ok: false, failure: 'imageTooLarge' };
 
   try {
