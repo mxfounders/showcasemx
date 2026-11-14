@@ -3723,3 +3723,19 @@ tres listas públicas, las más populares, con la misma tarjeta que /comunidad y
 las listas». Solo listas reales que ya cumplen el mínimo de tres fichas (SHCWS-116); sin
 listas públicas no se dibuja nada. Si la consulta falla, el inicio carga igual. Las listas
 editoriales firmadas por shwcs siguen en SHCWS-113.
+
+## 84. Correos con la marca y baja en un clic — 14 noviembre 2026
+
+SHCWS-161. Detalle en docs/launch.md («Presentación y baja en un clic»).
+
+- La cabecera de todos los correos es el wordmark oficial en PNG, con «shwcs» como texto
+  alternativo. El pie lleva `hola@shwcs.site` y el enlace a Preferencias de avisos.
+- Los avisos de contacto, fichas, comunidad y alertas llevan `List-Unsubscribe` en un clic
+  (RFC 8058). Cada token, firmado, apaga solo ese tipo de aviso para esa cuenta. Seguridad
+  y bienvenida no llevan baja. Un GET a la dirección de baja solo lleva a Preferencias.
+- `compose.ts` (avisos) y `account-emails.ts` (verificación y recuperación) arman el mensaje
+  final, de modo que el envío, la vista previa (`/api/dev/email-preview`, solo en
+  desarrollo) y las instantáneas de `tests/snapshots/` producen lo mismo.
+- El contenido de cada aviso (quién escribe, comentario editorial, reseña, anuncio) ya
+  existía desde §78. Falta revisarlos a mano en Gmail, Outlook y Apple Mail, y los
+  correos en inglés (SHCWS-25).

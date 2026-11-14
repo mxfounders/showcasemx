@@ -106,6 +106,34 @@ El worker también limpia enlaces de recuperación/verificación/OAuth caducados
 contadores antiguos. No hay envíos automáticos sin proveedor y scheduler activos.
 La entrega externa, rebotes y reputación del remitente siguen sin probarse.
 
+### Presentación y baja en un clic (SHCWS-161, 14 noviembre 2026)
+
+- Todos los correos usan la plantilla de `src/lib/notifications/email-template.ts`. La
+  cabecera es el wordmark oficial en PNG (`/brand/shwcs-logo-1.png`, 84×26), con texto
+  alternativo «shwcs» en azul para los clientes que bloquean imágenes. El pie lleva
+  `hola@shwcs.site` y, en todo aviso que se puede apagar, «Preferencias de avisos».
+- Los avisos de contacto, de fichas, de comunidad y de alertas llevan `List-Unsubscribe`
+  y `List-Unsubscribe-Post: List-Unsubscribe=One-Click` (RFC 8058). El token está firmado
+  con `NEWSLETTER_UNSUBSCRIBE_SECRET` y el prefijo `notice:`
+  (`src/lib/notifications/unsubscribe-token.ts`), y vale para una cuenta y un tipo de
+  aviso. `POST /api/notifications/unsubscribe` apaga solo ese tipo. Un GET a la misma
+  dirección solo redirige a Preferencias de avisos: nunca cambia nada (§5).
+- Los avisos de seguridad y la bienvenida no llevan baja: no se pueden apagar. Sin el
+  secreto no se añade la cabecera, en lugar de mandar un enlace que no funcionaría.
+- `src/lib/notifications/compose.ts` arma el mensaje final de cada aviso; verificación y
+  recuperación salen de `account-emails.ts`. Así los envíos y la vista previa producen
+  exactamente lo mismo.
+- Vista previa: `GET /api/dev/email-preview` (índice) y `?t=<plantilla>&format=text`. Solo
+  con `next dev` o `EMAIL_PREVIEW=1`; en producción responde 404. Datos ficticios, no
+  envía nada.
+- `tests/email-notices.test.ts` compara el HTML de cada plantilla con
+  `tests/snapshots/email-*.html`. Para aceptar un cambio deliberado:
+  `UPDATE_SNAPSHOTS=1 npx tsx --test tests/email-notices.test.ts`.
+- Comprobado en Chrome (escritorio, móvil y sin imágenes) y con Resend, que aceptó el
+  correo de contacto con su cabecera de baja y el de seguridad sin ella. **Falta revisarlos
+  a mano en Gmail, Outlook y Apple Mail, en claro y en oscuro.** Los textos siguen en
+  español hasta que las cuentas guarden su idioma (SHCWS-25).
+
 ## 2. Confianza y revisión editorial
 
 - /criterios, /proceso, /faq y /el-proyecto explican el alcance del producto.
