@@ -263,3 +263,10 @@ comparador, `/soluciones/<id>.md` y el JSON-LD; nada se inventa ni se convierte.
 - **Pendiente**: mostrar al comprador una conversión a su moneda. Requiere una fuente de
   tipo de cambio que hoy no existe; hasta entonces la ficha dice que el precio está en la
   moneda del proyecto y que no se convierte.
+
+## «Qué falta por declarar» solo dentro de la app — 14 noviembre 2026
+
+Decisión del propietario: la lista de lo que le falta a una ficha es tarea del fundador y
+ya no aparece en la ficha pública (antes se mostraba a cualquiera, §53). Se ve en la vista
+previa privada (`/account/solutions/<id>/preview`), en la guía del editor y en Inicio.
+`SolutionPresentation` solo la calcula con `preview`.

@@ -159,11 +159,10 @@ export function SolutionPresentation({
   const offeringLabels = Object.fromEntries(
     localizedOfferingOptions(locale).map(item => [item.value, item.label]),
   );
-  // Shown to whoever reads the ficha, not just its owner: solutionChecklist
-  // already exists to guide the founder, and being honest about a gap here is
-  // exactly the information a buyer needs before deciding whether to reach out.
-  // completeness is never equated with quality — see the copy below.
-  const missing = solutionChecklist(data, locale).filter(item => !item.done);
+  // What the listing still lacks is the founder's to-do, so it lives only in the app:
+  // the private preview here, and the account's guide (decided by the owner on
+  // 14 Nov 2026; it used to show on the public listing). The public page never lists it.
+  const missing = preview ? solutionChecklist(data, locale).filter(item => !item.done) : [];
   return (
     <article
       className={
