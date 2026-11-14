@@ -240,6 +240,16 @@ export const AUDIT_ACTIONS: Record<string, ActionLabel> = {
   },
   question_restore: { label: 'Restauró una pregunta', tone: 'sage', group: 'community' },
   review_hide: { label: 'Ocultó una reseña sin reporte', tone: 'terracotta', group: 'community' },
+  solution_update_hide: {
+    label: 'Ocultó una novedad de una ficha',
+    tone: 'terracotta',
+    group: 'community',
+  },
+  solution_update_restore: {
+    label: 'Restauró una novedad de una ficha',
+    tone: 'sage',
+    group: 'community',
+  },
   review_restore: { label: 'Restauró una reseña', tone: 'sage', group: 'community' },
   community_unpublish_list: { label: 'Despublicó una lista', tone: 'amber', group: 'community' },
   community_rename_curator: {

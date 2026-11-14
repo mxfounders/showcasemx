@@ -11,7 +11,7 @@ const ok = (data: Record<string, unknown> = {}) =>
   NextResponse.json({ ok: true, ...data }, { headers: { 'Cache-Control': 'no-store' } });
 
 /**
- * Following public lists and curators (SHCWS-121, db/community-follows.sql).
+ * Following public lists and curators (SHCWS-121, db/community-follows.sql) and listings.
  *
  * - `list` / `curator` toggle a follow from a public list the viewer doesn't own. A
  *   curator is followed through one of their lists: the server resolves the account and
@@ -19,10 +19,14 @@ const ok = (data: Record<string, unknown> = {}) =>
  * - `unfollow-list` (by list) and `unfollow-curator` (by the follower's own follow id)
  *   work from the account page even after a list went private.
  *
+ * - `solution` toggles following a published listing, `unfollow-solution` stops it from
+ *   the account page (SHCWS-24, db/solution-updates.sql).
+ *
  * Nothing here tells anyone who follows them; the response carries only the viewer's state.
  */
 export async function POST(request: NextRequest) {
-  const t = (await getDictionary(requestLocale(request))).follows.errors;
+  const dictionary = (await getDictionary(requestLocale(request))).follows;
+  const t = dictionary.errors;
   if (request.headers.get('origin') !== request.nextUrl.origin)
     return failure(t.foreignOrigin, 403);
   try {
@@ -66,6 +70,30 @@ export async function POST(request: NextRequest) {
       if (rows.length) return ok({ active: !!rows[0].active });
       const [list] = await sql`SELECT owner_id = ${me} AS own FROM buyer_lists WHERE id = ${id}`;
       return list?.own ? failure(t.own, 409) : failure(t.notPublic, 404);
+    }
+    if (body.action === 'solution') {
+      // A published listing the viewer doesn't own (SHCWS-24). Toggles, like lists.
+      const rows = await sql`WITH deleted AS (
+          DELETE FROM solution_follows WHERE solution_id = ${id} AND follower_id = ${me}
+          RETURNING false AS active),
+        inserted AS (
+          INSERT INTO solution_follows (solution_id, follower_id)
+          SELECT s.id, ${me} FROM founder_solutions s
+           WHERE s.id = ${id} AND s.owner_id <> ${me} AND s.published_data IS NOT NULL
+             AND NOT EXISTS (SELECT 1 FROM deleted)
+          ON CONFLICT DO NOTHING RETURNING true AS active)
+        SELECT active FROM inserted UNION ALL SELECT active FROM deleted`;
+      if (rows.length) return ok({ active: !!rows[0].active });
+      const [listing] =
+        await sql`SELECT owner_id = ${me} AS own FROM founder_solutions WHERE id = ${id}`;
+      return listing?.own
+        ? failure(dictionary.solution.errors.own, 409)
+        : failure(dictionary.solution.errors.notPublished, 404);
+    }
+    if (body.action === 'unfollow-solution') {
+      // From the account page, even after the listing was withdrawn.
+      await sql`DELETE FROM solution_follows WHERE solution_id = ${id} AND follower_id = ${me}`;
+      return ok({ active: false });
     }
     if (body.action === 'unfollow-list') {
       await sql`DELETE FROM community_list_follows WHERE list_id = ${id} AND follower_id = ${me}`;

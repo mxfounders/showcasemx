@@ -12,7 +12,7 @@ export function UnfollowButton({
   id,
   dict,
 }: {
-  action: 'unfollow-list' | 'unfollow-curator';
+  action: 'unfollow-list' | 'unfollow-curator' | 'unfollow-solution';
   id: string;
   dict: Dictionary['follows'];
 }) {

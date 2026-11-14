@@ -27,6 +27,8 @@ import {
 import { getDictionary } from '@/i18n/get-dictionary';
 import { getOwnerReviewDigest } from '@/lib/reviews/server';
 import { OwnerReviewDigest } from '@/components/reviews/owner-review-digest';
+import { UpdatesManager } from '@/components/solutions/updates-manager';
+import { getOwnerUpdates, updatesPerWeek } from '@/lib/solutions/updates';
 import { getRecognition } from '@/lib/recognition/server';
 import { RecognitionCard } from '@/components/recognition/recognition-card';
 import { currencyOptions } from '@/lib/currencies';
@@ -171,13 +173,15 @@ export default async function SolutionPage(props: {
   const solution = await getSolution(params.id, account.id);
   if (!solution) notFound();
   const published = solution.published_data;
-  const [events, reviewDigest, recognition, bookings] = await Promise.all([
+  const [events, reviewDigest, recognition, bookings, updates] = await Promise.all([
     getEvents(solution.id),
     // Optional: an outage in either hides its card, never the listing page.
     published ? getOwnerReviewDigest(solution.id).catch(() => null) : null,
     published ? getRecognition(solution.id, published.website).catch(() => null) : null,
     // What unpublishing would cancel (SHCWS-32); a failure reads as none.
     published ? activeListingBookings(account.id, solution.id).catch(() => 0) : 0,
+    // Dated updates and the follower count (SHCWS-24); an outage hides only that card.
+    getOwnerUpdates(solution.id, account.id).catch(() => null),
   ]);
   // jsonb returns keys in a canonical order, so the two serialise identically when equal.
   const hasUnpublishedChanges =
@@ -256,6 +260,18 @@ export default async function SolutionPage(props: {
             origin={origin}
             locale={locale}
             dict={dictionary.recognition}
+          />
+        )}
+        {updates && (published || updates.updates.length > 0) && (
+          <UpdatesManager
+            solutionId={solution.id}
+            published={!!published}
+            updates={updates.updates}
+            followers={updates.followers}
+            remaining={updates.remaining}
+            limit={updatesPerWeek}
+            locale={locale}
+            dict={dictionary.follows.updates}
           />
         )}
         {reviewDigest && (

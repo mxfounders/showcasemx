@@ -24,7 +24,7 @@ import {
 } from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
 import { isUuid } from '@/lib/http';
-import { solutionDetail, type SolutionDetail } from '@/lib/data/solutions';
+import { solutionDetail, solutionUpdatesForOps, type SolutionDetail } from '@/lib/data/solutions';
 import { verificationState } from '@/lib/data/recognition';
 import {
   countryOptions,
@@ -78,7 +78,17 @@ const TABS = [
   'actividad',
   'reportes',
   'comentarios',
+  'novedades',
 ] as const;
+
+/** Kinds of a listing's dated updates (SHCWS-24), as the product names them. */
+const UPDATE_KIND: Record<string, string> = {
+  feature: 'Nueva función',
+  pricing: 'Precio',
+  integration: 'Integración',
+  case: 'Caso',
+  other: 'Novedad',
+};
 type Tab = (typeof TABS)[number];
 
 function Chips({
@@ -435,9 +445,11 @@ export default async function SolutionPage({
   if (!isUuid(id)) notFound();
   const query = await searchParams;
   // Verification reads separately: without db/solution-recognition.sql only its card fails.
-  const [detail, recognition] = await Promise.all([
+  const [detail, recognition, updates] = await Promise.all([
     solutionDetail(id),
     verificationState(id).catch(() => null),
+    // Without db/solution-updates.sql only the «Novedades» tab is empty.
+    solutionUpdatesForOps(id).catch(() => []),
   ]);
   if (!detail) notFound();
 
@@ -612,6 +624,12 @@ export default async function SolutionPage({
                 href: `${base}tab=comentarios`,
                 active: tab === 'comentarios',
                 count: detail.comments.length,
+              },
+              {
+                label: 'Novedades',
+                href: `${base}tab=novedades`,
+                active: tab === 'novedades',
+                count: updates.filter(update => !update.deletedAt).length,
               },
             ]}
           />
@@ -832,6 +850,75 @@ export default async function SolutionPage({
                             confirmLabel: 'Borrar comentario',
                           }}
                         />
+                      </li>
+                    ))}
+                  </ul>
+                ))}
+
+              {tab === 'novedades' &&
+                (updates.length === 0 ? (
+                  <EmptyState
+                    compact
+                    icon={HistoryIcon}
+                    title="Sin novedades"
+                    description="El fundador publica novedades fechadas desde su cuenta, sin revisión completa. Aquí se moderan después."
+                  />
+                ) : (
+                  <ul className="divide-y divide-line">
+                    {updates.map(update => (
+                      <li key={update.id} className="flex gap-3 py-3.5 first:pt-0">
+                        <div className="min-w-0 flex-1">
+                          <p className="flex flex-wrap items-center gap-2 text-[13px]">
+                            <Badge tone="blue">{UPDATE_KIND[update.kind] ?? update.kind}</Badge>
+                            <span className="text-muted">
+                              <RelativeTime value={update.createdAt} />
+                            </span>
+                            {update.deletedAt && (
+                              <Badge tone="neutral">Quitada por el fundador</Badge>
+                            )}
+                            {update.hiddenAt && <Badge tone="terracotta">Oculta</Badge>}
+                          </p>
+                          <p className="mt-1 whitespace-pre-line text-[13.5px] leading-relaxed text-fg-2">
+                            {update.body}
+                          </p>
+                          {update.link && (
+                            <p className="mt-1 break-all text-[12.5px] text-muted">{update.link}</p>
+                          )}
+                          {update.hiddenReason && (
+                            <p className="mt-1 text-[12.5px] text-muted">
+                              Motivo que ve el fundador: {update.hiddenReason}
+                            </p>
+                          )}
+                        </div>
+                        {!update.deletedAt && (
+                          <ActionButton
+                            label={update.hiddenAt ? 'Restaurar' : 'Ocultar'}
+                            tone="ghost"
+                            size="xs"
+                            endpoint="/api/solution-updates"
+                            payload={{
+                              action: update.hiddenAt ? 'restore' : 'hide',
+                              updateId: update.id,
+                            }}
+                            success={update.hiddenAt ? 'Novedad restaurada' : 'Novedad oculta'}
+                            confirm={{
+                              title: update.hiddenAt
+                                ? 'Restaurar esta novedad'
+                                : 'Ocultar esta novedad',
+                              description: update.hiddenAt
+                                ? 'Vuelve a la ficha pública. Los seguidores no reciben otro aviso.'
+                                : 'Sale de la ficha pública y del resumen de los seguidores. El fundador ve el motivo en su cuenta.',
+                              destructive: !update.hiddenAt,
+                              field: 'message',
+                              fieldLabel: update.hiddenAt
+                                ? 'Motivo (queda en la bitácora)'
+                                : 'Motivo que verá el fundador',
+                              minLength: 10,
+                              maxLength: 500,
+                              confirmLabel: update.hiddenAt ? 'Restaurar' : 'Ocultar',
+                            }}
+                          />
+                        )}
                       </li>
                     ))}
                   </ul>

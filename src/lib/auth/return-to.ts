@@ -34,6 +34,10 @@ export function authReturnTo(value: unknown): string {
     isSolutionId(value.slice('/account/contacts/'.length))
   )
     return value;
+  // A public listing, to follow it after signing in (SHCWS-24). By UUID: it redirects to
+  // the listing's current address, and nothing else is accepted.
+  if (/^\/soluciones\/[a-f0-9-]+$/i.test(value) && isSolutionId(value.slice('/soluciones/'.length)))
+    return value;
   // Review invitations (SHCWS-132, SHCWS-135): the founder's link and shwcs's own.
   if (/^\/resenar\/[a-f0-9]{32}$/.test(value)) return value;
   if (

@@ -1,25 +1,36 @@
 import { authSql } from '@/lib/auth/security';
+import { follows } from '@/i18n/dictionaries/es/follows';
+import type { SolutionUpdateKind } from '@/lib/solutions/updates-model';
 import { escapeHtml } from './email-template';
 
 /**
  * The weekly summary of what someone follows (SHCWS-121): new projects in the lists they
- * follow and new lists from the curators they follow, for the week named in the notice
+ * follow, new lists from the curators they follow and updates of the listings they
+ * follow (SHCWS-24), for the week named in the notice
  * (`follow:<account>:<monday>`, db/community-follows.sql). Sent the Monday after, only
  * with community emails on. Public lists and public signatures only; nothing about who
  * else follows them. Spanish until accounts store a language (SHCWS-25).
  */
 export type FollowedListNews = { id: string; name: string; projects: string[] };
 export type CuratorListNews = { id: string; name: string; curator: string };
+/** Updates of a followed listing in the week (SHCWS-24), newest first. */
+export type FollowedUpdateNews = {
+  id: string;
+  name: string;
+  updates: Array<{ kind: SolutionUpdateKind; body: string }>;
+};
 
 export function followDigestEmail({
   title,
   lists,
   curatorLists,
+  projects = [],
   origin,
 }: {
   title: string;
   lists: FollowedListNews[];
   curatorLists: CuratorListNews[];
+  projects?: FollowedUpdateNews[];
   origin: string;
 }) {
   const url = (id: string) => `${origin}/es/comunidad/${id}`;
@@ -55,9 +66,34 @@ export function followDigestEmail({
       '',
     );
   }
+  if (projects.length) {
+    const solutionUrl = (id: string) => `${origin}/es/soluciones/${id}`;
+    const line = (update: { kind: SolutionUpdateKind; body: string }) =>
+      `${follows.updates.kinds[update.kind]}: ${
+        update.body.length > 200 ? `${update.body.slice(0, 199)}…` : update.body
+      }`;
+    paragraphs.push(
+      `<strong>Novedades de proyectos que sigues</strong><br>${projects
+        .map(
+          project =>
+            `<a href="${escapeHtml(solutionUrl(project.id))}" style="color:#365DC4;">${escapeHtml(project.name)}</a><br>${project.updates
+              .map(update => escapeHtml(line(update)))
+              .join('<br>')}`,
+        )
+        .join('<br><br>')}`,
+    );
+    text.push(
+      'Novedades de proyectos que sigues:',
+      ...projects.flatMap(project => [
+        `- ${project.name} (${solutionUrl(project.id)})`,
+        ...project.updates.map(update => `  ${line(update)}`),
+      ]),
+      '',
+    );
+  }
   if (!paragraphs.length) {
-    paragraphs.push('Hubo novedades en las listas y curadores que sigues.');
-    text.push('Hubo novedades en las listas y curadores que sigues.');
+    paragraphs.push('Hubo novedades en lo que sigues.');
+    text.push('Hubo novedades en lo que sigues.');
   }
   return {
     subject: 'Tu semana en lo que sigues en shwcs',
@@ -84,7 +120,7 @@ export async function loadFollowDigestEmail({
 }) {
   const week = /^follow:[0-9a-f-]{36}:(\d{4}-\d{2}-\d{2})$/.exec(sourceKey)?.[1] ?? null;
   const sql = authSql();
-  const [lists, curatorLists] = week
+  const [lists, curatorLists, projects] = week
     ? await Promise.all([
         sql`SELECT l.id::text, l.name, jsonb_agg(DISTINCT s.published_data->>'name') AS projects
           FROM community_list_follows f
@@ -109,8 +145,20 @@ export async function loadFollowDigestEmail({
           JOIN buyer_lists l ON l.id = a.list_id AND l.visibility = 'public'
           WHERE c.follower_id = ${owner}
           ORDER BY a.announced_at DESC LIMIT 10`,
+        // Updates of followed listings that week (SHCWS-24), never hidden or deleted ones.
+        sql`SELECT s.id::text, s.published_data->>'name' AS name,
+            jsonb_agg(jsonb_build_object('kind', u.kind, 'body', u.body) ORDER BY u.created_at DESC) AS updates
+          FROM solution_follows f
+          JOIN founder_solutions s ON s.id = f.solution_id AND s.published_data IS NOT NULL
+           AND s.owner_id <> f.follower_id
+          JOIN solution_updates u ON u.solution_id = s.id AND u.hidden_at IS NULL AND u.deleted_at IS NULL
+           AND u.created_at >= ${week}::date::timestamp AT TIME ZONE 'UTC'
+           AND u.created_at < (${week}::date + 7)::timestamp AT TIME ZONE 'UTC'
+           AND u.created_at >= f.created_at
+          WHERE f.follower_id = ${owner}
+          GROUP BY s.id, name ORDER BY max(u.created_at) DESC LIMIT 10`.catch(() => []),
       ])
-    : [[], []];
+    : [[], [], []];
   return followDigestEmail({
     title,
     lists: lists.map(row => ({
@@ -122,6 +170,11 @@ export async function loadFollowDigestEmail({
       id: String(row.id),
       name: String(row.name),
       curator: String(row.curator_name),
+    })),
+    projects: projects.map(row => ({
+      id: String(row.id),
+      name: String(row.name ?? ''),
+      updates: (row.updates as Array<{ kind: SolutionUpdateKind; body: string }>).slice(0, 3),
     })),
     origin,
   });

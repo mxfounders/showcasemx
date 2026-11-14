@@ -119,3 +119,32 @@ dueño, 10 por hora), `delete` (solo el autor), `answer` (solo el dueño; `''` l
 `question:<id>` con `listing_notice()` y se envía en el momento. Las respuestas visibles
 alimentan el JSON-LD `FAQPage` de la ficha (`solutionQuestionsJsonLd`). Ocultar y
 restaurar son de ops; la pestaña en ops está pendiente.
+
+## Seguir una ficha y novedades fechadas (SHCWS-24) — 14 noviembre 2026
+
+- **Novedades**: el dueño de una ficha publicada escribe actualizaciones cortas y fechadas
+  desde `/account/solutions/<id>` (tipo: nueva función, precio, integración, caso u otra;
+  10–500 caracteres; enlace http(s) opcional). Salen al momento, sin revisión completa.
+  Máximo 4 en cualquier periodo de siete días por ficha (`updatesPerWeek`); quitar una es
+  borrado suave (`deleted_at`) y sigue contando, para que borrar y volver a publicar no
+  inunde a los seguidores. El id lo genera el navegador: reintentar no duplica.
+  `POST /api/solutions/<id>/updates` (`post`, `delete`): mismo origen, sesión, solo el
+  dueño, fila de la ficha bloqueada para que dos envíos no tomen el último lugar.
+- **Moderación posterior**: ops oculta o restaura una novedad desde la pestaña
+  «Novedades» de la ficha (`POST /api/solution-updates`, modo seguro, motivo de 10–500
+  caracteres que el fundador lee junto a la novedad, bitácora en la misma sentencia).
+  Una novedad oculta sale de la ficha y del resumen de los seguidores.
+- **Seguir**: «Seguir» en la sección «Novedades» de la ficha (`/api/follows`, acción
+  `solution`; `unfollow-solution` desde la cuenta, también si la ficha se retiró). El dueño
+  no puede seguir la suya. Sin sesión, «Inicia sesión» vuelve a la ficha
+  (`authReturnTo` acepta `/soluciones/<uuid>`).
+- **Avisos**: cada novedad actualiza el aviso semanal de quien sigue la ficha, el mismo de
+  listas y curadores (`follow:<cuenta>:<lunes>`, categoría `community`,
+  `follow_notice()` redefinida en `db/solution-updates.sql`). En la cuenta, al momento; por
+  correo, solo el resumen del lunes y solo con los correos de comunidad activados. El
+  resumen lista hasta tres novedades por ficha (`follow-email.ts`).
+- **Privacidad**: el fundador ve cuántas personas siguen su ficha, nunca quién; nadie más
+  ve el número. `/account/community` muestra «Proyectos que sigues» con su última novedad.
+- Migración `db/solution-updates.sql` (`solution_follows`, `solution_updates` y su
+  trigger). Sin ella, la ficha, la cuenta y el correo ocultan la sección en lugar de
+  fallar. Pruebas: `tests/solution-updates.test.ts`.

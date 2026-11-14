@@ -355,3 +355,34 @@ export async function solutionDetail(id: string) {
 }
 
 export type SolutionDetail = NonNullable<Awaited<ReturnType<typeof solutionDetail>>>;
+
+/** A listing's dated updates (SHCWS-24), hidden and deleted ones included, for moderation. */
+export interface OpsSolutionUpdate {
+  id: string;
+  kind: string;
+  body: string;
+  link: string | null;
+  createdAt: string;
+  hiddenAt: string | null;
+  hiddenReason: string | null;
+  deletedAt: string | null;
+}
+
+export async function solutionUpdatesForOps(id: string): Promise<OpsSolutionUpdate[]> {
+  const sql = getDb();
+  const rows = await sql`
+    SELECT id, kind, body, link, created_at, hidden_at, hidden_reason, deleted_at
+    FROM solution_updates WHERE solution_id = ${id}
+    ORDER BY created_at DESC, id LIMIT 50
+  `;
+  return rows.map(row => ({
+    id: String(row.id),
+    kind: String(row.kind),
+    body: String(row.body),
+    link: row.link ? String(row.link) : null,
+    createdAt: iso(row.created_at) ?? '',
+    hiddenAt: iso(row.hidden_at),
+    hiddenReason: row.hidden_reason ? String(row.hidden_reason) : null,
+    deletedAt: iso(row.deleted_at),
+  }));
+}

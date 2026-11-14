@@ -3,6 +3,7 @@ import { ArrowLeftIcon, ArrowRightIcon, BookshelfIcon } from '@/components/icons
 import { requireBuyer } from '@/lib/library/server';
 import { getPublicCollections } from '@/lib/library/community';
 import { followedCurators, followerCounts } from '@/lib/library/follows';
+import { followedSolutions } from '@/lib/solutions/updates';
 import { UnfollowButton } from '@/components/library/follow-controls';
 import { BoardCard } from '@/components/library/board-card';
 import { actionButtonStyle } from '@/lib/brand-colors';
@@ -30,13 +31,15 @@ export default async function SavedCommunityListsPage({
   const t = dictionary.library.communitySaved;
   const f = dictionary.follows.page;
   // Saved lists page through; what the account follows (SHCWS-121) shows on page 1 only.
-  const [{ collections, hasMore }, followed, curators, followers] = await Promise.all([
+  const [{ collections, hasMore }, followed, curators, followers, projects] = await Promise.all([
     getPublicCollections({ savedBy: account.id, viewer: account.id, page }),
     page === 1
       ? getPublicCollections({ followedBy: account.id, viewer: account.id })
       : Promise.resolve(null),
     page === 1 ? followedCurators(account.id) : Promise.resolve(null),
     page === 1 ? followerCounts(account.id) : Promise.resolve(null),
+    // Listings the account follows (SHCWS-24); an outage hides only that section.
+    page === 1 ? followedSolutions(account.id).catch(() => null) : Promise.resolve(null),
   ]);
   const count = (template: string, value: number, name = '') =>
     template.replace('{count}', String(value)).replace('{name}', name);
@@ -162,6 +165,50 @@ export default async function SavedCommunityListsPage({
             </div>
           ) : (
             <p className="mt-4 text-sm text-stone-500">{f.listsEmpty}</p>
+          )}
+        </section>
+      )}
+      {projects && (
+        <section className="mt-14" aria-labelledby="followed-projects">
+          <h2 id="followed-projects" className="text-2xl font-semibold tracking-tight">
+            {f.projectsTitle}
+          </h2>
+          {projects.length ? (
+            <ul className="mt-5 divide-y divide-stone-200 border-y border-stone-200">
+              {projects.map(project => (
+                <li
+                  key={project.id}
+                  className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    {project.published ? (
+                      <Link
+                        href={`/soluciones/${project.id}`}
+                        className="font-medium text-stone-900 underline-offset-4 hover:underline"
+                      >
+                        {project.name}
+                      </Link>
+                    ) : (
+                      <p className="font-medium text-stone-500">{project.name}</p>
+                    )}
+                    <p className="mt-1 text-sm text-stone-500">
+                      {!project.published
+                        ? f.projectWithdrawn
+                        : project.latest
+                          ? `${dictionary.follows.updates.kinds[project.latest.kind]} · ${project.latest.body.length > 140 ? `${project.latest.body.slice(0, 139)}…` : project.latest.body}`
+                          : f.projectNoUpdates}
+                    </p>
+                  </div>
+                  <UnfollowButton
+                    action="unfollow-solution"
+                    id={project.id}
+                    dict={dictionary.follows}
+                  />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-4 text-sm text-stone-500">{f.projectsEmpty}</p>
           )}
         </section>
       )}

@@ -15,6 +15,8 @@ import type { Metadata } from 'next';
 import { SolutionPresentation } from '@/components/solutions/solution-presentation';
 import { getSolutionReviews } from '@/lib/reviews/server';
 import { ReviewSection } from '@/components/reviews/review-section';
+import { SolutionUpdates } from '@/components/solutions/solution-updates';
+import { getSolutionUpdates } from '@/lib/solutions/updates';
 import { ReviewBadge } from '@/components/reviews/review-badge';
 import { localizedCompanySizes } from '@/lib/taxonomy';
 import { complianceResult } from '@/lib/compliance/server';
@@ -136,20 +138,30 @@ export default async function PublicSolution(props: {
   }
   // Reviews and registry results are optional and independent: an outage in either
   // hides only its own section, never the ficha.
-  const [reviewsLoad, complianceLoad, recognitionLoad, responseLoad, questionsLoad, contactedLoad] =
-    await Promise.allSettled([
-      getSolutionReviews(params.id, viewer),
-      complianceResult(params.id),
-      getRecognition(params.id, data.website),
-      // How the founder answers contact requests (SHCWS-52); null below 3 requests.
-      solutionResponseSignal(params.id),
-      // Public questions and the founder's answers (SHCWS-57).
-      getSolutionQuestions(params.id, viewer),
-      // Whether the viewer's review will show «Contactó vía shwcs» (SHCWS-135).
-      viewer && viewer !== String(row.owner_id)
-        ? contactBacked(viewer, params.id)
-        : Promise.resolve(false),
-    ]);
+  const [
+    reviewsLoad,
+    complianceLoad,
+    recognitionLoad,
+    responseLoad,
+    questionsLoad,
+    contactedLoad,
+    updatesLoad,
+  ] = await Promise.allSettled([
+    getSolutionReviews(params.id, viewer),
+    complianceResult(params.id),
+    getRecognition(params.id, data.website),
+    // How the founder answers contact requests (SHCWS-52); null below 3 requests.
+    solutionResponseSignal(params.id),
+    // Public questions and the founder's answers (SHCWS-57).
+    getSolutionQuestions(params.id, viewer),
+    // Whether the viewer's review will show «Contactó vía shwcs» (SHCWS-135).
+    viewer && viewer !== String(row.owner_id)
+      ? contactBacked(viewer, params.id)
+      : Promise.resolve(false),
+    // Dated updates and whether the viewer follows the listing (SHCWS-24).
+    getSolutionUpdates(params.id, viewer),
+  ]);
+  const updates = updatesLoad.status === 'fulfilled' ? updatesLoad.value : null;
   if (reviewsLoad.status === 'fulfilled') reviews = reviewsLoad.value;
   const compliance = complianceLoad.status === 'fulfilled' ? complianceLoad.value : null;
   const recognition = recognitionLoad.status === 'fulfilled' ? recognitionLoad.value : null;
@@ -248,6 +260,17 @@ export default async function PublicSolution(props: {
         }
         reviews={
           <>
+            {updates && (
+              <SolutionUpdates
+                solutionId={params.id}
+                updates={updates.updates}
+                following={updates.following}
+                signedIn={!!viewer}
+                own={!!viewer && viewer === String(row.owner_id)}
+                locale={params.locale}
+                dict={dict.follows}
+              />
+            )}
             {reviews && (
               <ReviewSection
                 solutionId={params.id}
