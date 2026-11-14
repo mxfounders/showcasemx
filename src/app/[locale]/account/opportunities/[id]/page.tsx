@@ -12,5 +12,13 @@ export default async function OpportunityPage(props: {
 }) {
   const params = await props.params;
   const dictionary = await getDictionary(params.locale);
-  return <ContactDetail id={params.id} incoming dict={dictionary.contacts} />;
+  return (
+    <ContactDetail
+      id={params.id}
+      incoming
+      locale={params.locale}
+      dict={dictionary.contacts}
+      threadDict={dictionary.contactThread}
+    />
+  );
 }

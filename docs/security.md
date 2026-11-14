@@ -22,7 +22,10 @@ Google, Resend o Neon ni sustituye una prueba de penetración independiente.
   al estado actual de la cuenta, con caducidad y consumo único.
 - Google usa Authorization Code, PKCE S256, state, nonce, cookie temporal y JWT
   RS256 con issuer, audience, azp, tiempo y `email_verified`. No se guardan tokens
-  de acceso. Un correo coincidente no vincula cuentas automáticamente.
+  de acceso. Un correo coincidente no vincula cuentas automáticamente. Vincular
+  Google exige correo confirmado, al iniciarlo y otra vez en el callback (SHCWS-159):
+  si no, quien registrara primero el correo de otra persona podría vincular su
+  propio Google y seguir entrando después de que el dueño recuperara la cuenta.
 
 ## API, navegador y archivos
 
@@ -30,6 +33,11 @@ Google, Resend o Neon ni sustituye una prueba de penetración independiente.
   acotados, validación positiva y respuestas `no-store` para datos privados.
 - Cabeceras globales bloquean framing, objetos, cambio de base/form origin,
   detección MIME, cámara, micrófono y geolocalización. Producción activa HSTS.
+- CSP (`src/lib/content-security-policy.mjs`, SHCWS-159): scripts, conexiones,
+  imágenes, fuentes y marcos solo de shwcs; sin `unsafe-eval` en producción;
+  `upgrade-insecure-requests`. Las previews añaden solo `vercel.live`. `script-src`
+  conserva `'unsafe-inline'` porque el App Router escribe sus datos en scripts en
+  línea; quitarlo exige nonce y renderizar cada página en la petición (SHCWS-170).
 - Avatares admiten JPG/PNG/WebP estático de hasta 2 MB y 16 MP; `sharp` decodifica,
   rota, redimensiona y vuelve a codificar WebP antes de almacenarlo.
 - Los redirects de auth y enlaces de avisos se restringen a rutas internas
@@ -72,10 +80,12 @@ controles, con el detalle en [ops.md](ops.md):
 
 ## Límites de esta revisión
 
-- No hay MFA/TOTP en el producto todavía. Google puede reducir dependencia de
-  contraseña, pero no equivale a MFA obligatorio. El backoffice de operaciones sí
-  exige TOTP (ver arriba).
-- No hay WAF/captcha adaptativo ni detección central de credenciales filtradas.
+- La verificación en dos pasos del producto es opcional (docs/account-settings.md).
+  Entrar con Google no la pide (SHCWS-172) y activarla aún no exige correo
+  confirmado (SHCWS-173). El backoffice de operaciones sí exige TOTP (ver arriba).
+- No hay WAF/captcha adaptativo. Los topes globales de acceso los puede agotar
+  cualquiera y los límites por red tratan cada dirección IPv6 por separado
+  (SHCWS-171). Las contraseñas filtradas se rechazan al registrarse (SHCWS-156).
 - Falta probar producción después del primer deploy: cookies Secure, OAuth real,
   entrega/recuperación, cron, cabeceras, separación de bases y restauración.
 - Aviso de privacidad, retención, eliminación de cuenta y términos requieren

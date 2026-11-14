@@ -1,9 +1,16 @@
 import { randomBytes, randomUUID } from 'node:crypto';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { googleCookie, googleConfig, googleIdentity } from '@/lib/auth/google';
 import { authSql } from '@/lib/auth/security';
 import { hashPassword, hashToken } from '@/lib/auth/password';
-import { getSession, sessionCookie, cookieOptions, sessionSeconds } from '@/lib/auth/session';
+import {
+  getSession,
+  sessionCookie,
+  cookieOptions,
+  sessionSeconds,
+  readUserAgent,
+} from '@/lib/auth/session';
+import { securityNotice, signInNotice } from '@/lib/auth/security-notices';
 import { authReturnTo } from '@/lib/auth/return-to';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { requestLocale } from '@/i18n/negotiate';
@@ -64,7 +71,7 @@ export async function GET(request: NextRequest) {
         return fail(true);
       const result = await sql.transaction([
         sql`SELECT id FROM auth_accounts WHERE id=${account.id} FOR UPDATE`,
-        sql`INSERT INTO auth_google_identities(subject,account_id,email) SELECT ${identity.subject},id,${identity.email} FROM auth_accounts WHERE id=${account.id} AND password_hash=${flow.password_hash_at_issue} ON CONFLICT DO NOTHING RETURNING account_id`,
+        sql`INSERT INTO auth_google_identities(subject,account_id,email) SELECT ${identity.subject},id,${identity.email} FROM auth_accounts WHERE id=${account.id} AND password_hash=${flow.password_hash_at_issue} AND email_verified_at IS NOT NULL ON CONFLICT DO NOTHING RETURNING account_id`,
         sql`SELECT g.account_id FROM auth_google_identities g JOIN auth_accounts a ON a.id=g.account_id WHERE g.subject=${identity.subject} AND g.account_id=${account.id} AND a.password_hash=${flow.password_hash_at_issue} AND EXISTS(SELECT 1 FROM auth_sessions WHERE token_hash=${flow.session_hash} AND account_id=a.id AND expires_at>now())`,
       ]);
       if (!result[2].length) return fail(true);
@@ -87,7 +94,10 @@ export async function GET(request: NextRequest) {
         accountId = String(result[2][0].account_id);
       }
     }
+    const userAgent = readUserAgent(request.headers);
     if (linking) {
+      const linked = accountId;
+      after(() => securityNotice(linked, 'google-linked', userAgent).catch(() => undefined));
       const response = NextResponse.redirect(config.origin + '/account/settings/connections');
       response.cookies.set(googleCookie, '', { path: '/', maxAge: 0 });
       response.headers.set('Cache-Control', 'no-store');
@@ -99,6 +109,8 @@ export async function GET(request: NextRequest) {
       sql`INSERT INTO auth_sessions(token_hash,account_id,expires_at) SELECT ${hashToken(session)},account_id,now()+${sessionSeconds}*interval '1 second' FROM auth_google_identities WHERE subject=${identity.subject} AND account_id=${accountId} RETURNING account_id`,
     ]);
     if (!result[1].length) return fail();
+    const signedIn = accountId;
+    after(() => signInNotice(signedIn, userAgent).catch(() => undefined));
     const response = NextResponse.redirect(config.origin + authReturnTo(String(flow.return_to)));
     response.cookies.set(sessionCookie, session, cookieOptions);
     response.cookies.set(googleCookie, '', { path: '/', maxAge: 0 });

@@ -7,9 +7,10 @@ import { CategoryPageSkeleton } from '@/components/catalog/category-page-skeleto
 import { i18n } from '@/i18n/config';
 import { categories, localizedCategories } from '@/lib/taxonomy';
 import { getDictionary } from '@/i18n/get-dictionary';
-import { localeAlternates } from '@/lib/seo';
+import { localeAlternates, pageOpenGraph } from '@/lib/seo';
 import { sponsoredProducts } from '@/lib/ads/sponsored';
 import { SponsoredSlots } from '@/components/ads/sponsored-slots';
+import { PlacementBeacon } from '@/components/ads/beacons';
 
 // Must enumerate {locale, slug} pairs, not just slug: this is the innermost
 // dynamic segment, so Next needs the full combination to prerender each
@@ -35,10 +36,18 @@ export async function generateMetadata(props: {
   const { slug, locale } = await props.params;
   const info = localizedCategories(locale).find(item => item.slug === slug);
   if (!info) return {};
+  const { meta } = await getDictionary(locale);
   return {
     title: `${info.title} | shwcs`,
     description: info.description,
     alternates: localeAlternates(locale, `/explorar/${slug}`),
+    openGraph: pageOpenGraph({
+      locale,
+      path: `/explorar/${slug}`,
+      title: `${info.title} | shwcs`,
+      description: info.description,
+      ogLocale: meta.site.ogLocale,
+    }),
   };
 }
 
@@ -68,6 +77,8 @@ export default async function ExplorarCategoryPage(props: {
     // required — it's also what lets the page stay static instead of forcing
     // dynamic rendering just because a query string might exist.
     <Suspense fallback={<CategoryPageSkeleton />}>
+      {/* Page views for this category's sponsored slot reach estimate (SHCWS-72). */}
+      <PlacementBeacon placement="category" scope={params.slug} />
       <CategoryPageLayout
         title={localizedInfo.title}
         description={localizedInfo.description}
@@ -76,6 +87,7 @@ export default async function ExplorarCategoryPage(props: {
         products={categoryProducts}
         locale={params.locale}
         dict={dict.catalog}
+        alertDict={dict.alerts.button}
         sponsored={
           sponsored.length > 0 && (
             <SponsoredSlots items={sponsored} locale={params.locale} dict={dict.ads.slot} />

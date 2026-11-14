@@ -15,23 +15,29 @@
     "preflight": "node scripts/launch-readiness.cjs",
     "db:migrate": "node scripts/migrate.cjs",
     "ads:rates": "node scripts/ad-rates.cjs",
+    "stripe:listen": "node scripts/stripe-listen.cjs",
     "gota:sync": "node scripts/gota-sync.mjs",
     "setup:secrets": "node scripts/setup-local-secrets.cjs",
-    "verify:resend": "node scripts/verify-resend.cjs"
+    "verify:resend": "node scripts/verify-resend.cjs",
+    "verify:stripe": "node scripts/verify-stripe.cjs"
   },
   "dependencies": {
     "@formatjs/intl-localematcher": "^0.8.13",
     "@gsap/react": "^2.1.2",
     "@neondatabase/serverless": "^1.1.0",
+    "@stripe/react-stripe-js": "7.0.1",
+    "@stripe/stripe-js": "10.2.1",
     "@vercel/analytics": "^2.0.1",
-    "@vercel/blob": "^2.8.0",
+    "@vercel/blob": "^2.9.0",
     "@vercel/speed-insights": "^2.0.0",
     "clsx": "^2.1.1",
     "framer-motion": "^13.1.1",
     "gsap": "^3.15.0",
     "jose": "^6.2.10",
     "negotiator": "^1.1.0",
-    "next": "^15.5.27",
+    "next": "^15.5.29",
+    "posthog-js": "^1.444.4",
+    "posthog-node": "^5.61.2",
     "qrcode": "^1.5.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
@@ -58,6 +64,10 @@
   "overrides": {
     "next": {
       "postcss": "^8.5.26"
+    },
+    "undici": "^6.29.1",
+    "@vercel/cli-config": {
+      "zod": "^4.6.6"
     }
   }
 }

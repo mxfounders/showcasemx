@@ -34,8 +34,18 @@ export const legal = {
           id: 'subprocesadores',
           title: 'Infrastructure and subprocessors',
           paragraphs: [
-            'All information is processed on enterprise-grade infrastructure. We use hosting and file storage from Vercel (vercel.com), cloud databases (Neon, hosted on AWS us-east-1), the transactional email provider Resend and, for sponsored-slot payments, Stripe (stripe.com). These subprocessors meet encryption standards in transit (TLS 1.2+) and at rest (AES-256).',
+            'All information is processed on enterprise-grade infrastructure. We use hosting and file storage from Vercel (vercel.com), cloud databases (Neon, hosted on AWS us-east-1), the transactional email provider Resend, Stripe (stripe.com) for sponsored-slot payments and, for the analytics and error reporting described in the next section, PostHog (posthog.com). These subprocessors meet encryption standards in transit (TLS 1.2+) and at rest (AES-256).',
             'By using shwcs, you acknowledge that information may be routed, processed or stored on servers that our subprocessors distribute geographically. We require confidentiality agreements and strict security measures from our technology supply chain, but shwcs is not liable for force majeure events or breaches originating in the underlying infrastructure.',
+          ],
+        },
+        {
+          id: 'analitica',
+          title: 'Product analytics and errors',
+          paragraphs: [
+            "If you accept it in the cookie notice, we use PostHog (posthog.com) to understand how shwcs is used: the pages you visit, clicks (without the text of what you click) and actions such as signing up, signing in, saving a project, creating a list, sending a contact request or a listing for review, publishing a review or starting a sponsored-slot payment. When you are signed in, those events are linked to your account's internal identifier. We never send your email, your name, your notes, the content of your messages or your tax details. Legal basis: your consent.",
+            'If you decline, PostHog never loads in your browser and no event about you is sent. You can change your decision at any time from “Cookie preferences”, at the bottom of every page or in Settings, under Data. When you withdraw consent we erase what PostHog had stored in your browser. To have us delete events already sent and linked to your account, write to hola@shwcs.site.',
+            'We also send unhandled server errors to PostHog so we can fix them. Those reports contain the route and the technical details of the failure, with no data about your account or your browser, so they do not depend on your consent. Legal basis: legitimate interest in keeping the service running.',
+            'PostHog, Inc. (United States) acts as a processor and hosts this data in its United States region. Requests go through our own domain, so your browser never connects to PostHog directly.',
           ],
         },
         {
@@ -43,20 +53,21 @@ export const legal = {
           title: 'Transactional privacy and third parties',
           paragraphs: [
             'The shwcs architecture strictly separates public information from private information. Drafts, content under review, your analytical notes and your lists (unless you state otherwise) reside in silos accessible exclusively to your account.',
+            'If you write to us through the contact form, we keep your name, email, organization, role, site and message to reply, and we delete them 24 months after receiving them. We do not use them for the newsletter or for advertising. Expired sign-in sessions and screenshots you upload to a listing and do not use within 30 days are also deleted automatically.',
             "The contact component is a passive conduit. When you start a connection request with a listed project, you give your explicit consent to transmit your profile information, email and the context of your message to the recipient. From delivery onward, processing is subject to the recipient's policies. shwcs has no authority to audit or revoke that subsequent use.",
-            'The reviews and comments you publish are public: they show the name you enter and, if you add them, your country and company size. To show a review\'s verification level ("Verified email" or "Company email") we use whether you confirmed your email and its domain; we never publish your email or its domain. You can edit or delete your reviews at any time, and they are included in your data export.',
-            "If you publish a solution you can declare its tax ID (in Mexico, the RFC). It stays private: we only use it to check public registries — in Mexico, the SAT's article 69-B list — and to show the result on your listing, never the ID itself. If you prove a purchase in a review, we send the SAT the fiscal folio, the RFCs and the total of the CFDI to check its status; we keep only the result, the date and an irreversible fingerprint of the folio that prevents the same receipt from being used twice.",
+            'The reviews and comments you publish are public: they show the name you enter and, if you add them, your country and company size. To show a review\'s verification level ("Verified email" or "Company email") we use whether you confirmed your email and its domain; we never publish your email or its domain. You can edit or delete your reviews at any time, and they are included in your data export. If you write a review from a project\'s invitation link, we label it "Invited by the vendor". If you contacted the project through shwcs and the conversation moved forward, your review shows "Contacted via shwcs": it reveals that a conversation took place, never its content, and we tell you before you write it. Public questions show the name you enter and their text. If you ask for a sign-in link from an invitation, we keep your email and a fingerprint of the link for 30 minutes to send it; if you had no account, we create one when you open it.',
+            "The team decides the “Verified by shwcs” check after reviewing the site, the product and that whoever registered the listing represents the project; we keep what we reviewed, the date and an internal note, and publish only the check and its date. When verifying, the team may record the project's tax ID (in Mexico, the RFC); we never ask you for it in a form. It stays private: we only use it to check public registries — in Mexico, the SAT's article 69-B list — and to show the result on the listing, never the ID itself. The badges you put on your site are served by shwcs and don't record who sees them. If you prove a purchase in a review, we send the SAT the fiscal folio, the RFCs and the total of the CFDI to check its status; we keep only the result, the date and an irreversible fingerprint of the folio that prevents the same receipt from being used twice.",
           ],
         },
         {
           id: 'pagos',
           title: 'Payments and sponsored slots',
           paragraphs: [
-            'When you book a sponsored slot, you pay on Stripe’s secure page (stripe.com). Stripe receives your card or other payment details directly; shwcs never receives or stores them. During payment Stripe also collects your billing address and, if you provide it, your tax ID, to calculate taxes and issue the receipt.',
+            'When you book a sponsored slot, you pay on shwcs through a secure Stripe (stripe.com) form embedded in the page: the fields for your card or other payment method belong to Stripe, which receives those details directly; shwcs never receives or stores them. During payment Stripe also collects your billing address and, if you provide it, your tax ID, to calculate taxes and issue the receipt.',
             'shwcs keeps a record of each booking: the listing and slot booked, the dates, the amounts, taxes and refunds, the account email, the version of the conditions accepted and the transaction identifiers at Stripe. Purpose: to perform the contract, issue receipts, handle cancellations, refunds and disputes, and meet tax and accounting obligations. Legal bases: performance of a contract and compliance with legal obligations.',
             'Stripe acts as a processor to handle the payment and, for fraud prevention and the regulatory compliance of financial services, as an independent controller under its own privacy policy (stripe.com/privacy). Its servers may be located outside your country, including in the United States.',
             'Retention: booking and payment records are kept for as long as applicable tax and accounting law requires, even if you delete your listing or your account. In that case they are unlinked from your account and only what that obligation needs is kept.',
-            'Measuring sponsored slots: we count impressions and clicks as daily totals, without cookies or visitor identifiers, and we honor DNT and GPC signals. Advertisers see only those totals—never who saw or opened their ad, who saved their listing, or any data from your account.',
+            'Measuring sponsored slots: we count impressions, clicks, listing visits from the slot, clicks to the listing’s site and views of the pages where slots appear as daily totals, without cookies or visitor identifiers, and we honor DNT and GPC signals. If you are signed in and open a listing’s contact form from its sponsored slot, we keep that fact with your account for up to 7 days so that your request, if you send it, counts in that slot’s results; we delete it when you send the request or when it expires. Advertisers see only totals—never who saw or opened their ad, who saved their listing, or any data from your account.',
           ],
         },
         {
@@ -73,8 +84,8 @@ export const legal = {
           id: 'telemetria',
           title: 'Auditing, telemetry and changes to this policy',
           paragraphs: [
-            'We deploy telemetry instrumentation to ensure performance, prevent abuse (rate limiting) and generate visibility metrics for founders. This processing uses ephemeral counters and irreversible hash functions. We do not build individual profiles or use cross-site tracking cookies.',
-            'This policy may be updated. When changes are material, we will notify active newsletter subscribers at least 15 days in advance. The current version will always be available at shwcs.site/privacidad with its last-updated date. Last reviewed: October 2026.',
+            'We deploy telemetry instrumentation to ensure performance, prevent abuse (rate limiting) and generate visibility metrics for founders. This processing uses ephemeral counters and irreversible hash functions. Apart from the optional analytics described in “Product analytics and errors”, we do not build individual profiles or use cross-site tracking cookies.',
+            'This policy may be updated. When changes are material, we will notify active newsletter subscribers at least 15 days in advance. The current version will always be available at shwcs.site/privacidad with its last-updated date. Last reviewed: November 2026.',
           ],
         },
       ],
@@ -132,6 +143,8 @@ export const legal = {
             "A review must describe your own experience with the solution. You may not review your own solution, your employer's or a direct competitor's, or publish reviews in exchange for payments, discounts or other benefits that depend on what you say.",
             'The publisher of the solution can reply publicly but cannot edit or delete reviews. shwcs may hide a review that breaks these rules, contains third-party personal data or is offensive; its author will see the reason and can correct it.',
             'Reviews influence catalog order under the rules published at /criterios. No payment changes a review, its visibility or its weight.',
+            'The publisher of a solution can invite its customers with the invitation link on its listing. It must invite without filtering by the opinion it expects (not only happy customers) and may not offer anything that depends on what the review says; any benefit for reviewing must be the same whether the review is good or bad. Reviews that come through that link are labelled "Invited by the vendor" and weigh half in the order. shwcs also invites people who contacted a project through shwcs to review it; those reviews show "Contacted via shwcs", without revealing anything about the conversation.',
+            'Public questions on a listing follow the same rules as comments: they are published with the name you enter, only the publisher of the solution answers them, and only shwcs can hide them, with a reason the person who asked will see.',
           ],
         },
         {
@@ -172,7 +185,7 @@ export const legal = {
     cookies: {
       title: 'Cookies and measurement',
       intro:
-        'shwcs uses only the technical cookies required for the session to work securely. We do not use third-party analytics cookies or advertising tracking.',
+        'shwcs uses the technical cookies required for the session to work securely and, only if you accept them, PostHog analytics cookies. We do not use advertising cookies or cross-site tracking.',
       sections: [
         {
           id: 'sesion',
@@ -182,10 +195,19 @@ export const legal = {
           ],
         },
         {
+          id: 'analitica',
+          title: 'Optional analytics (PostHog)',
+          paragraphs: [
+            'If you accept in the cookie notice, PostHog stores a cookie and a local storage entry in your browser, with names starting with “ph_”, holding a random identifier and the data of the current visit. They make sure a visit and its steps are counted once. They only apply to shwcs.site and are not shared with other sites. What is measured, and on what legal basis, is explained in the privacy policy under “Product analytics and errors”.',
+            "Your decision is stored for six months in the technical cookie “shwcs-analytics”; after that we ask again. If you decline, PostHog never loads and none of its cookies are created. You can change your mind from “Cookie preferences”, at the bottom of every page. When you withdraw consent we erase PostHog's cookies and storage from your browser.",
+          ],
+        },
+        {
           id: 'metricas',
           title: 'Aggregated metrics without identification',
           paragraphs: [
-            'The listing view and click counter works through irreversible server-side hashes. It does not create analytics cookies, does not generate a permanent visitor identifier and does not build a behavioral profile. The counters respect DNT and GPC signals. They may miss events because of content blockers or technical limitations.',
+            'The listing view and click counter works through irreversible server-side hashes. It does not create analytics cookies, does not generate a permanent visitor identifier and does not build a behavioral profile. The counters respect DNT and GPC signals. They may miss events because of content blockers or technical limitations. It is separate from PostHog and works the same whether or not you accept the optional analytics.',
+            'Catalog searches are counted the same way: per day we keep the words searched, how many times, whether they found anything and whether they ended on a listing, with no account, address or identifier. We never keep a search that looks like an email, a phone number or a web address, and we delete the counts after 400 days. With DNT or GPC nothing is counted. They tell us what companies look for and which projects to invite.',
           ],
         },
         {
@@ -193,7 +215,8 @@ export const legal = {
           title: 'External services',
           paragraphs: [
             "The websites, demos and social networks you open from shwcs have their own cookie policies and are responsible for how they process data. shwcs does not control, share data with, or take responsibility for those third parties' cookies.",
-            'When you pay for a sponsored slot, payment takes place on Stripe’s page, which may use its own cookies needed for payment and fraud prevention under its policy.',
+            'So each project knows a visit came from shwcs, a listing’s links to its website, demo and social profiles add “utm_source=shwcs”, and your browser sends only the shwcs address (https://shwcs.site) as the origin, never the exact page. They carry nothing about your account, your email or any identifier of yours.',
+            'When you pay for a sponsored slot, the Stripe payment form embedded in that page may use its own cookies needed for payment and fraud prevention under its policy. Only that page loads Stripe code.',
           ],
         },
         {

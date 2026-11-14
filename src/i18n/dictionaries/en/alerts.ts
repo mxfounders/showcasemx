@@ -1,0 +1,57 @@
+import type { Dictionary } from '../../dictionary';
+
+export const alerts = {
+  button: {
+    create: 'Tell me when there’s something new',
+    creating: 'Creating alert…',
+    created: 'Done. We’ll let you know when something that matches is published.',
+    exists: 'You already had this alert.',
+    error: 'We couldn’t create the alert. Please try again.',
+    manage: 'See my alerts',
+    hint: 'We tell you in your account and, by email, at most once a week.',
+    signIn: 'Sign in',
+    signInSuffix: 'to create the alert. We keep it for you to confirm in My alerts.',
+  },
+  page: {
+    metaTitle: 'My alerts',
+    title: 'My alerts',
+    subtitle:
+      'We let you know when something that matches a search you saved is published. By email, at most once a week per alert.',
+    count: '{count} of {max} alerts',
+    emptyTitle: 'You have no alerts yet',
+    emptyBody:
+      'Search for something or open a category with your filters and choose «Tell me when there’s something new».',
+    explore: 'Search solutions',
+    created: 'Created on {date}',
+    matchesTitle: 'What’s new for it',
+    noMatches: 'Nothing new has been published for this alert yet.',
+    open: 'See results',
+    delete: 'Delete alert',
+    deleting: 'Deleting…',
+    confirmDelete: 'Delete this alert? You’ll stop getting its notices.',
+    cancel: 'Cancel',
+    deleteError: 'We couldn’t delete the alert. Please try again.',
+    emailOff: 'Alert emails are off. You can turn them on in {link}.',
+    emailUnverified: 'To get them by email, verify your address in {link}.',
+    preferences: 'Notification preferences',
+    security: 'Security',
+    pendingTitle: 'The alert you started',
+    pendingCreate: 'Create this alert',
+    pendingDismiss: 'Dismiss',
+  },
+  scope: {
+    search: 'Search',
+    explorar: 'Category',
+    industria: 'Industry',
+    colecciones: 'Collection',
+  },
+  errors: {
+    foreignOrigin: 'Use shwcs to change your alerts.',
+    signIn: 'Sign in to create the alert.',
+    invalid: 'We couldn’t understand this search.',
+    limit: 'You have the maximum number of alerts. Delete one to create another.',
+    notFound: 'That alert no longer exists.',
+    rateLimited: 'Too many changes. Please try again later.',
+    unavailable: 'We couldn’t save the change. Please try again.',
+  },
+} as const satisfies Dictionary['alerts'];

@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getSession, sessionCookie } from '@/lib/auth/session';
+import { NextRequest, NextResponse, after } from 'next/server';
+import { getSession, readUserAgent, sessionCookie } from '@/lib/auth/session';
+import { securityNotice } from '@/lib/auth/security-notices';
 import { authSql, securityLimit } from '@/lib/auth/security';
 import { verifyPassword, hashToken } from '@/lib/auth/password';
 import { googleCookie, googleConfig, beginGoogle } from '@/lib/auth/google';
@@ -23,7 +24,8 @@ export async function POST(request: NextRequest) {
     if (!(await securityLimit('google-account', account.id, 5)))
       return failure(t.tooManyAttemptsShort, 429);
     const sql = authSql();
-    const [row] = await sql`SELECT password_hash FROM auth_accounts WHERE id=${account.id}`;
+    const [row] =
+      await sql`SELECT password_hash, email_verified_at FROM auth_accounts WHERE id=${account.id}`;
     if (!(await verifyPassword(body.password, String(row.password_hash))))
       return failure(t.googlePasswordWrong, 400);
     if (body.action === 'unlink') {
@@ -32,11 +34,20 @@ export async function POST(request: NextRequest) {
         sql`WITH changed AS (DELETE FROM auth_google_identities g USING auth_accounts a WHERE g.account_id=a.id AND a.id=${account.id} AND a.password_hash=${row.password_hash} RETURNING g.account_id), sessions AS (DELETE FROM auth_sessions WHERE account_id IN(SELECT account_id FROM changed)) SELECT * FROM changed`,
       ]);
       if (!result[1].length) return failure(t.googleChanged, 409);
+      after(() =>
+        securityNotice(account.id, 'google-unlinked', readUserAgent(request.headers)).catch(
+          () => undefined,
+        ),
+      );
       return NextResponse.json(
         { ok: true, logout: true },
         { headers: { 'Cache-Control': 'no-store' } },
       );
     }
+    // Only an owner who proved the inbox may attach a Google identity (SHCWS-159). Otherwise
+    // whoever registered someone else's address first could link their own Google and keep
+    // signing in after the real owner recovers the account by email.
+    if (!row.email_verified_at) return failure(t.googleVerifyFirst, 409);
     const config = googleConfig();
     if (!config) return failure(t.googleNotConfigured, 503);
     if (config.origin !== request.nextUrl.origin) return failure(t.googleUseMainDomain, 403);

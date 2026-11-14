@@ -26,6 +26,8 @@ export type ReviewViewer = {
   /** Owns the solution: may reply, may not review. */
   owner: boolean;
   name: string;
+  /** Their contact request to this listing reached a conversation (SHCWS-135). */
+  contacted?: boolean;
 };
 
 /** The ficha's reviews: summary, the viewer's own review or the way to write one, and the list. */
@@ -98,18 +100,33 @@ export function ReviewSection({
               {dict.signInSuffix}
             </p>
           ) : viewer.owner ? (
-            <p className="text-sm text-stone-500">{dict.ownNote}</p>
+            <p className="text-sm text-stone-500">
+              {dict.ownNote}{' '}
+              <Link
+                href={`/account/solutions/${solutionId}#invitar-resenas`}
+                className="text-[#365DC4] underline underline-offset-4"
+              >
+                {dict.ownInvite}
+              </Link>
+            </p>
           ) : writing ? (
-            <ReviewForm
-              solutionId={solutionId}
-              solutionName={solutionName}
-              existing={mine}
-              defaultName={viewer.name}
-              companySizes={companySizes}
-              countries={countries}
-              dict={dict}
-              onClose={() => setWriting(false)}
-            />
+            <>
+              {viewer.contacted && (
+                <p className="mb-4 max-w-2xl text-sm leading-relaxed text-stone-500">
+                  {dict.composer.contactNote.replace('{name}', solutionName)}
+                </p>
+              )}
+              <ReviewForm
+                solutionId={solutionId}
+                solutionName={solutionName}
+                existing={mine}
+                defaultName={viewer.name}
+                companySizes={companySizes}
+                countries={countries}
+                dict={dict}
+                onClose={() => setWriting(false)}
+              />
+            </>
           ) : (
             <button
               type="button"
@@ -144,7 +161,7 @@ export function ReviewSection({
         {mine &&
           !writing &&
           proofMethod === 'cfdi' &&
-          (mine.level === 'email' || mine.level === 'work') && (
+          (mine.level === 'email' || mine.level === 'work' || mine.level === 'contact') && (
             <div className="mt-6">
               <ProofForm solutionId={solutionId} reviewId={mine.id} dict={dict} />
             </div>

@@ -44,7 +44,7 @@ export const contacts = {
   refresh: 'Refresh',
   newPage: {
     back: '← Back to the listing',
-    title: 'Connect with {project}.',
+    title: 'Connect with {project}',
     intro:
       "Tell the project what you need. Before sending, you'll be able to review the details you're sharing.",
     ownSolution: 'This is your solution. You can manage requests from other companies in',
@@ -59,7 +59,13 @@ export const contacts = {
     consentRequired: 'Authorize sharing these details to send the request.',
     yourName: 'Your name',
     company: 'Company',
-    teamSize: 'Team size',
+    teamSize: 'Your company size',
+    sizeFit: {
+      declared: 'This listing says it serves companies your size.',
+      any: 'This listing says it serves companies of any size.',
+      other: 'This listing says it serves: {sizes}. You can still reach out.',
+      unknown: "This listing didn't say which company sizes it's for.",
+    },
     selectOption: 'Select an option',
     start: 'When do you want to start?',
     need: 'What do you need to solve?',
@@ -71,7 +77,7 @@ export const contacts = {
     review: 'Review request',
     reviewTitle: 'This is what the account that owns {project} will receive',
     deliveryNote:
-      "It will be delivered to their shwcs inbox. We don't send automatic emails or guarantee a reply. Don't include sensitive client data.",
+      "It will be delivered to their shwcs inbox, and we email them if their email is verified and alerts are on. We don't guarantee a reply. Don't include sensitive client data.",
     sending: 'Sending…',
     send: 'Send request',
     edit: 'Edit details',
@@ -81,12 +87,11 @@ export const contacts = {
     withdrawnNotice: 'The buyer withdrew this request. New replies are not accepted.',
     noActions: 'No actions are available in this status.',
     replyTooShort: 'Write at least 10 characters to explain the next step.',
-    updateStatus: 'Update status',
-    replyLabel: 'Reply to the buyer',
-    replyPlaceholder:
-      'Explain the next step or the reason for closing. The buyer will see this reply.',
-    emailNote:
-      "The status doesn't mean an email was sent. You coordinate any conversation outside shwcs yourselves.",
+    updateStatus: 'Change the status',
+    chooseChange: 'Choose a change',
+    replyLabel: 'Reason, visible to the buyer',
+    replyPlaceholder: 'Tell them why you are closing or reopening the conversation.',
+    emailNote: 'To write to them without changing the status, use the conversation.',
     withdrawHint:
       "You can withdraw the request if you no longer need contact. This doesn't delete the information the recipient already received.",
     confirmWithdraw:
@@ -98,22 +103,55 @@ export const contacts = {
     withdraw: 'Withdraw request',
     reviewReply: 'Review reply',
     cancel: 'Cancel',
+    outcomeLegend: 'How did it end?',
+    outcomeHint:
+      "Only you see this. The buyer doesn't receive it, and shwcs only uses totals that identify no one.",
+    outcomeRequired: 'Choose how it ended to close the opportunity.',
+    outcomes: {
+      won: 'Won: they became a customer',
+      lost: 'Lost',
+      not_fit: "Wasn't for us",
+    },
+    valueLabel: 'Approximate deal value, in US dollars',
+    valueNone: "I'd rather not say",
+    values: {
+      under_1k: 'Under USD 1,000',
+      '1k_5k': 'USD 1,000–5,000',
+      '5k_25k': 'USD 5,000–25,000',
+      '25k_100k': 'USD 25,000–100,000',
+      over_100k: 'Over USD 100,000',
+    },
+    outcomeTitle: 'Private outcome',
+    outcomeEmpty: "You haven't recorded how this opportunity ended yet.",
+    outcomeSave: 'Save outcome',
+    outcomeChange: 'Change outcome',
+    outcomeReopenNote:
+      'If you reopen the conversation, the outcome is cleared until you close it again.',
   },
   clientErrors: {
     fallback: "We couldn't confirm the change.",
     network: "We couldn't confirm the change. Reload to check before trying again.",
   },
   inbox: {
-    titleIncoming: 'Opportunities.',
-    titleOutgoing: 'My contacts.',
+    titleIncoming: 'Opportunities',
+    titleOutgoing: 'My contacts',
     introIncoming:
       'Companies that want to learn about what you build. Read their context and reply with a concrete next step.',
     introOutgoing: 'The requests you sent and the projects’ replies, all in one place.',
     noteIncoming:
       "Saving or comparing a solution doesn't create an opportunity. Only requests sent with consent appear here.",
-    noteOutgoing: "Replies show up here. For now we don't send email notifications.",
+    noteOutgoing:
+      'Replies show up here, and we email you if your email is verified and alerts are on.',
     filterAria: 'Filter requests',
     all: 'All',
+    unread: 'Unread',
+    unreadDot: 'Unread',
+    received: 'Received',
+    signals: {
+      unverified: 'Email not verified',
+      email: 'Verified email',
+      work: 'Verified company email',
+    },
     updated: 'Updated',
     emptyStatus: 'There are no requests in this status.',
     emptyIncomingTitle: 'Your next conversation starts here.',
@@ -135,13 +173,22 @@ export const contacts = {
     deliveredRecipient: 'Request sent explicitly by the buyer.',
     onlyParticipants: 'Only the two of you can see this follow-up.',
     sharedContext: 'Shared context',
-    disclaimer:
-      "Details declared by the buyer. Ownership of the account email hasn't been verified yet. Saved projects, lists and private notes aren't shared.",
+    disclaimerVerified:
+      "Details declared by the buyer. The account email is verified: whoever sent the request controls that address. Saved projects, lists and private notes aren't shared.",
+    disclaimerUnverified:
+      "Details declared by the buyer. The account email isn't verified yet: there's no proof that whoever sent the request controls that address. Saved projects, lists and private notes aren't shared.",
+    emailVerified: 'Verified',
+    emailWork: 'Verified · company email',
+    emailUnverified: 'Not verified',
+    writeEmail: 'Write an email',
+    emailSubject: 'Your request to {project} on shwcs',
+    writeEmailNote:
+      "This opens your email app. Whatever you write outside shwcs isn't kept in this follow-up.",
     history: 'Follow-up',
     buyer: 'Buyer',
     project: 'Project',
     yourRequest: 'Your request',
-    replyTitle: 'Reply to the buyer',
+    replyTitle: 'More actions',
     systemMessages: {
       created: 'Request sent with consent.',
       withdrawn: 'The buyer withdrew the request.',
@@ -165,6 +212,9 @@ export const contacts = {
     requestUnavailable: 'Request unavailable.',
     transitionUnavailable: "That change isn't available for this request.",
     replyTooShort: 'Write at least 10 characters to explain the next step to the buyer.',
+    outcomeInvalid:
+      'Choose a valid outcome. The approximate value only applies to a won opportunity.',
+    outcomeUnavailable: 'You can only record the outcome of a closed opportunity.',
     stale: 'The request changed. Reload before continuing.',
   },
 } as const satisfies Dictionary['contacts'];

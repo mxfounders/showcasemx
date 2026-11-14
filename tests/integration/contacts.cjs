@@ -138,7 +138,7 @@ async function action(data, status = 200, who = 0) {
       recipientId: accounts[1],
       name: 'Buyer Test',
       company: 'Buyer Company',
-      size: '2–10 personas',
+      size: 'micro',
       timeline: 'Este mes',
       need: 'PRIVATE CONTACT NEED for testing scoped access',
       budget: '1000 MXN al mes',

@@ -2,9 +2,11 @@
 import { useId, useRef, useState } from 'react';
 import {
   ArrowTurnDownRightIcon,
+  CommentIcon,
   FlagIcon,
   MailCheckIcon,
   ReceiptIcon,
+  SendIcon,
   VerifiedIcon,
 } from '@/components/icons/gota';
 import { useRouter } from '@/i18n/navigation';
@@ -102,6 +104,11 @@ export function ReviewCard({
             <ReceiptIcon className="size-3.5" aria-hidden="true" />
             {dict.levels.customer}
           </span>
+        ) : review.level === 'contact' ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-[#E4EDE2] px-2 py-0.5 font-medium text-[#416B50]">
+            <CommentIcon className="size-3.5" aria-hidden="true" />
+            {dict.levels.contact}
+          </span>
         ) : review.level === 'work' ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-[#E4EDE2] px-2 py-0.5 text-[#416B50]">
             <VerifiedIcon className="size-3.5" aria-hidden="true" />
@@ -115,6 +122,17 @@ export function ReviewCard({
         ) : (
           <span className="rounded-full bg-[#F4ECD5] px-2 py-0.5 text-[#88631B]">
             {dict.levels.unverified}
+          </span>
+        )}
+        {review.invited && (
+          // Visible on every invited review, at its level: the reader always knows the
+          // vendor asked for it (SHCWS-132).
+          <span
+            title={dict.invitedTitle}
+            className="inline-flex items-center gap-1 rounded-full bg-[#EEE5F5] px-2 py-0.5 text-[#7753A5]"
+          >
+            <SendIcon className="size-3.5" aria-hidden="true" />
+            {dict.invited}
           </span>
         )}
         <time dateTime={review.createdAt}>{date(review.createdAt)}</time>

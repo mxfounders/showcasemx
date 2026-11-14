@@ -35,6 +35,12 @@ import { common } from './common';
 import { billing } from './billing';
 import { reviews } from './reviews';
 import { compliance } from './compliance';
+import { consent } from './consent';
+import { recognition } from './recognition';
+import { questions } from './questions';
+import { contactThread } from './contactThread';
+import { alerts } from './alerts';
+import { follows } from './follows';
 
 /** Spanish is the source locale: its shape defines `Dictionary`, which every other locale must satisfy. */
 export const es = {
@@ -75,4 +81,10 @@ export const es = {
   billing,
   reviews,
   compliance,
+  consent,
+  recognition,
+  questions,
+  contactThread,
+  alerts,
+  follows,
 } as const;

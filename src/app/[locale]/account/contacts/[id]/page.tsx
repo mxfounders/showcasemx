@@ -12,5 +12,12 @@ export default async function ContactPage(props: {
 }) {
   const params = await props.params;
   const dictionary = await getDictionary(params.locale);
-  return <ContactDetail id={params.id} dict={dictionary.contacts} />;
+  return (
+    <ContactDetail
+      id={params.id}
+      locale={params.locale}
+      dict={dictionary.contacts}
+      threadDict={dictionary.contactThread}
+    />
+  );
 }

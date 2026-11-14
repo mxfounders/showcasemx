@@ -6,6 +6,7 @@ import '../globals.css';
 import { cn } from '@/lib/utils';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { commonText } from '@/i18n/common';
+import { ConsentBanner } from '@/components/analytics/consent';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -66,6 +67,8 @@ export default async function RootLayout(
 
   const { children } = props;
 
+  const { consent } = await getDictionary(locale);
+
   return (
     <html lang={locale}>
       <body className={cn('min-h-screen bg-[#f5f5f4] font-sans antialiased', inter.variable)}>
@@ -76,6 +79,7 @@ export default async function RootLayout(
           {commonText(locale).skipToContent}
         </a>
         {children}
+        <ConsentBanner dict={consent} />
         <Analytics />
         <SpeedInsights />
       </body>

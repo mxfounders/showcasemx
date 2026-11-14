@@ -4,7 +4,13 @@ import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { ArrowLeftIcon } from '@/components/icons/gota';
 import { isSolutionId } from '@/lib/solutions/model';
-import { getPublicCollections, getPublicComments } from '@/lib/library/community';
+import {
+  getPublicCollections,
+  getPublicComments,
+  indexableCollections,
+} from '@/lib/library/community';
+import { JsonLd } from '@/components/json-ld';
+import { localeAlternates, siteOrigin } from '@/lib/seo';
 import { getSession, sessionCookie } from '@/lib/auth/session';
 import { ProjectPin } from '@/components/library/project-pin';
 import { SaveProjectButton } from '@/components/library/save-project-button';
@@ -15,13 +21,46 @@ import { localizedCategoryDisplayLabel } from '@/lib/taxonomy';
 import { getDictionary } from '@/i18n/get-dictionary';
 export const dynamic = 'force-dynamic';
 // Public does not mean permanent: never cache a list or embed private data in metadata.
+// Only the list's public copy goes here (name and public description), never its purpose.
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ locale: string }>;
+  params: Promise<{ id: string; locale: string }>;
 }): Promise<Metadata> {
-  const { meta } = await getDictionary((await params).locale);
-  return { title: meta.communityList.title, robots: { index: false, follow: true } };
+  const { id, locale } = await params;
+  const { meta } = await getDictionary(locale);
+  const fallback: Metadata = {
+    title: meta.communityList.title,
+    robots: { index: false, follow: true },
+  };
+  if (!isSolutionId(id)) return fallback;
+  try {
+    const [{ collections }, indexable] = await Promise.all([
+      getPublicCollections({ id }),
+      indexableCollections(id),
+    ]);
+    const collection = collections[0];
+    if (!collection) return fallback;
+    const title = `${collection.name} | shwcs`;
+    const description = collection.description ? collection.description.slice(0, 160) : undefined;
+    return {
+      title,
+      description,
+      // Indexed only when it meets the minimum (SHCWS-119); the rest stay findable by link.
+      robots: indexable.length ? undefined : { index: false, follow: true },
+      alternates: localeAlternates(locale, `/comunidad/${id}`),
+      openGraph: {
+        title,
+        description,
+        url: `${siteOrigin}/${locale}/comunidad/${id}`,
+        siteName: 'shwcs',
+        locale: meta.site.ogLocale,
+        type: 'website',
+      },
+    };
+  } catch {
+    return fallback;
+  }
 }
 export default async function PublicCollectionPage({
   params,
@@ -46,6 +85,21 @@ export default async function PublicCollectionPage({
   if (!collection) notFound();
   return (
     <section className="mx-auto w-full max-w-[1500px] px-5 pb-24 pt-14 sm:px-10 sm:pt-20 lg:px-16">
+      <JsonLd
+        data={{
+          '@type': 'ItemList',
+          name: collection.name,
+          ...(collection.description ? { description: collection.description } : {}),
+          url: `${siteOrigin}/${locale}/comunidad/${id}`,
+          numberOfItems: collection.projects.length,
+          itemListElement: collection.projects.map((project, index) => ({
+            '@type': 'ListItem',
+            position: index + 1,
+            name: project.name,
+            url: project.external ? project.href : `${siteOrigin}/${locale}${project.href}`,
+          })),
+        }}
+      />
       <Link
         href="/comunidad"
         className="mb-9 inline-flex items-center gap-2 text-sm text-stone-500"
@@ -112,9 +166,13 @@ export default async function PublicCollectionPage({
         initialCommentsCount={collection.comments}
         liked={collection.liked}
         saved={collection.saved}
+        following={collection.following}
+        followingCurator={collection.followingCurator}
+        curator={collection.curator}
         own={collection.own}
         comments={comments}
         dict={dict}
+        followDict={fullDict.follows.actions}
         locale={locale}
       />
       <p className="mt-14 border-t border-stone-200 pt-5 text-xs text-stone-400">

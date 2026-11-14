@@ -1,14 +1,12 @@
 'use client';
 
 import { useMemo, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { SearchDemandBeacon } from '@/components/search/search-demand-beacon';
 import { useSearchParams } from 'next/navigation';
 import Link from '@/i18n/navigation';
-import Image from 'next/image';
-import { ArrowUpRightIcon, StarIcon } from '@/components/icons/gota';
 import type { Dictionary } from '@/i18n/dictionary';
 import { CatalogFilterBar } from './catalog-filter-bar';
-import { ProductVisual } from '@/components/product-visual';
-import { getAccentStyle } from '@/lib/brand-colors';
+import { actionButtonStyle, getAccentStyle } from '@/lib/brand-colors';
 import {
   categories,
   offerings,
@@ -25,7 +23,14 @@ import {
 } from '@/lib/taxonomy';
 import { matchIndustry, matchCapability, matchCompanySize, isRealMatch } from '@/lib/search/facets';
 import type { PublishedProduct } from '@/lib/solutions/public';
-import { ProjectMark } from '@/components/project-mark';
+import { contactBriefHref } from '@/lib/contact-inquiry';
+import { makeQueryScorer } from '@/lib/search/score';
+import { commonText } from '@/i18n/common';
+import { isFastResponder } from '@/lib/solutions/response-model';
+import { CatalogCard } from './catalog-card';
+import { SearchAlertButton } from '@/components/alerts/search-alert-button';
+import { alertScopes, readAlertCriteria } from '@/lib/alerts/model';
+import { filterAxes } from '@/lib/search/catalog-filter';
 
 type Product = PublishedProduct;
 
@@ -101,6 +106,7 @@ export function CategoryPageLayout({
   products,
   locale,
   dict,
+  alertDict,
   sponsored,
 }: {
   title: string;
@@ -110,6 +116,8 @@ export function CategoryPageLayout({
   products: Product[];
   locale?: string;
   dict: Dictionary['catalog'];
+  /** «Avísame cuando haya algo nuevo» with this page's filters (SHCWS-47). */
+  alertDict: Dictionary['alerts']['button'];
   /** Labelled paid placements, shown apart from (and unaffected by) the filtered results. */
   sponsored?: ReactNode;
 }) {
@@ -119,9 +127,13 @@ export function CategoryPageLayout({
   const initial = useSearchParams();
   const [selections, setSelections] = useState<{ [key: string]: string[] }>(() => {
     const entries: [string, string[]][] = [];
-    for (const [key, value] of initial.entries()) entries.push([key, readValues(value)]);
+    for (const [key, value] of initial.entries())
+      if (key !== 'q') entries.push([key, readValues(value)]);
     return Object.fromEntries(entries);
   });
+  // Free text within the page (SHCWS-45): kept apart from the comma-joined facet values
+  // because a query may itself contain commas.
+  const [query, setQuery] = useState(() => (initial.get('q') ?? '').slice(0, 200));
 
   const setFilter = useCallback((id: string, value: string) => {
     setSelections(current => {
@@ -141,18 +153,23 @@ export function CategoryPageLayout({
     });
   }, []);
   const clearFilters = useCallback(() => setSelections({}), []);
+  // Sorting isn't filtering: an empty page with only a sort chosen has nothing to remove.
+  const filtering =
+    Boolean(query.trim()) ||
+    Object.entries(selections).some(([key, value]) => key !== 'sort' && value.length > 0);
 
   useEffect(() => {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(selections))
       if (value.length) params.set(key, value.join(','));
-    const query = params.toString();
+    if (query.trim()) params.set('q', query.trim());
+    const search = params.toString();
     window.history.replaceState(
       null,
       '',
-      query ? `${window.location.pathname}?${query}` : window.location.pathname,
+      search ? `${window.location.pathname}?${search}` : window.location.pathname,
     );
-  }, [selections]);
+  }, [selections, query]);
 
   // On /explorar/[slug] the capability filter is scoped to the one category
   // being browsed (a Ventas category page has no business offering Nómina
@@ -246,12 +263,31 @@ export function CategoryPageLayout({
       ),
     };
 
+    // «Responde rápido» (SHCWS-52): offered only once some listing earns it.
+    const respuesta = {
+      id: 'respuesta',
+      label: dict.filters.response,
+      options: deriveOptions([{ value: 'rapido', label: dict.filters.fastResponse }], products, p =>
+        isFastResponder(p.response),
+      ),
+    };
+
     const byRoute =
       basePath === '/explorar'
-        ? [industria, capacidad, tamano, integracion, precio, arranque, cumplimiento, modelo]
+        ? [
+            industria,
+            capacidad,
+            respuesta,
+            tamano,
+            integracion,
+            precio,
+            arranque,
+            cumplimiento,
+            modelo,
+          ]
         : basePath === '/industria'
-          ? [problema, capacidad, tamano, integracion, precio, arranque, modelo]
-          : [problema, capacidad, tamano, modelo];
+          ? [problema, capacidad, respuesta, tamano, integracion, precio, arranque, modelo]
+          : [problema, capacidad, respuesta, tamano, modelo];
 
     return byRoute.filter(filter => filter.options.length > 0);
   }, [basePath, products, capabilityOptions, locale, dict]);
@@ -296,6 +332,7 @@ export function CategoryPageLayout({
     const precio = selections.precio?.[0];
     const arranque = selections.arranque?.[0];
     const modelo = selections.modelo?.[0];
+    const respuesta = selections.respuesta?.[0];
 
     const passesHard = (product: Product) => {
       if (
@@ -313,6 +350,7 @@ export function CategoryPageLayout({
       if (precio && product.priceBand !== precio) return false;
       if (arranque && product.setupTime !== arranque) return false;
       if (modelo && product.offering !== modelo) return false;
+      if (respuesta === 'rapido' && !isFastResponder(product.response)) return false;
       return true;
     };
 
@@ -340,9 +378,15 @@ export function CategoryPageLayout({
       return product.companySizes === undefined ? 'soft' : 'fail';
     };
 
+    // Same scorer as the catalog search (synonyms, plurals, vocabulary of the declared
+    // categories); with words typed, relevance leads and the chosen sort breaks ties.
+    const scorer = makeQueryScorer(query, { requireLiteral: true });
+    const relevance = (list: Product[]) =>
+      scorer ? [...list].sort((a, b) => scorer(b) - scorer(a)) : list;
     const primaryList: Product[] = [];
     const inferredList: { product: Product; reasons: string[] }[] = [];
     for (const product of products) {
+      if (scorer && scorer(product) <= 0) continue;
       if (!passesHard(product)) continue;
       const iLevel = industriaLevel(product),
         cLevel = capacidadLevel(product),
@@ -359,99 +403,44 @@ export function CategoryPageLayout({
       inferredList.push({ product, reasons });
     }
     return {
-      primary: applySort(primaryList),
-      inferred: applySort(inferredList.map(item => item.product)).map(product =>
+      primary: relevance(applySort(primaryList)),
+      inferred: relevance(applySort(inferredList.map(item => item.product))).map(product =>
         inferredList.find(item => item.product === product)!,
       ),
     };
-  }, [products, selections, applySort, dict]);
+  }, [products, selections, query, applySort, dict]);
 
   const palette = getAccentStyle(basePath + '/' + categorySlug);
 
+  // The alert keeps exactly what this page shows: its topic, words and filters (not the
+  // sort, nor URL parameters that aren't filters). Invalid values hide the button.
+  const alertCriteria = useMemo(() => {
+    const scope = alertScopes.find(value => `/${value}` === basePath);
+    if (!scope || scope === 'search') return null;
+    const filters = Object.fromEntries(
+      Object.entries(selections).filter(([key]) => (filterAxes as readonly string[]).includes(key)),
+    );
+    return readAlertCriteria({ scope, topic: categorySlug, query, filters });
+  }, [basePath, categorySlug, query, selections]);
+
   const renderCard = (product: Product, index: number) => (
-    <Link
+    <CatalogCard
       key={product.catalogId || product.detailUrl || product.name}
-      href={product.detailUrl || '#'}
-      className="group flex flex-col justify-between rounded-[24px] border border-stone-200 bg-white p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:border-stone-300 hover:shadow-xl hover:shadow-stone-200/50"
-    >
-      <div>
-        {product.website ? (
-          <div
-            className="relative flex h-36 shrink-0 flex-col items-center justify-center gap-3 overflow-hidden rounded-[16px]"
-            style={{ backgroundColor: palette.backgroundColor, color: palette.color }}
-          >
-            {product.ogImage ? (
-              <Image
-                src={product.ogImage}
-                alt={product.name}
-                fill
-                sizes="(min-width: 640px) 30vw, 90vw"
-                className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-              />
-            ) : (
-              <>
-                <span className="text-[28px] font-semibold tracking-[-0.04em]">{product.name}</span>
-                <span className="text-[10px] opacity-80">{new URL(product.website).hostname}</span>
-              </>
-            )}
-            <span className="absolute right-3 top-3 rounded-full bg-white/90 px-2 py-1 text-[9px] font-medium uppercase tracking-widest text-stone-800 backdrop-blur-md">
-              {localizedOfferingOptions(locale).find(item => item.value === product.offering)
-                ?.label ?? product.offering}
-            </span>
-          </div>
-        ) : (
-          <ProductVisual variant={index % 4} color={palette.backgroundColor} />
-        )}
-
-        <div className="flex items-center gap-3 pt-5">
-          <ProjectMark
-            name={product.name}
-            favicon={product.favicon}
-            size={32}
-            className="size-8 shrink-0 rounded-[8px]"
-            fallbackClassName="flex items-center justify-center text-xs font-semibold text-white"
-            fallbackStyle={{ backgroundColor: palette.color }}
-          />
-          <span className="text-lg font-semibold tracking-tight text-stone-900">
-            {product.name}
-          </span>
-          <ArrowUpRightIcon
-            aria-hidden="true"
-            className="ml-auto size-4 text-stone-400 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-          />
-        </div>
-
-        <p className="line-clamp-2 pt-3 text-[13px] leading-relaxed text-stone-500">
-          {product.description}
-        </p>
-      </div>
-
-      <div className="mt-6 flex items-center justify-between border-t border-stone-100 pt-4 text-[11px] font-medium text-stone-400">
-        {product.rating != null && product.reviews ? (
-          <span
-            className="inline-flex items-center gap-1 pr-4 text-stone-600"
-            aria-label={dict.ratingLabel
-              .replace('{rating}', product.rating.toFixed(1))
-              .replace('{count}', String(product.reviews))}
-          >
-            <StarIcon variant="fill" className="size-3.5 text-[#88631B]" aria-hidden="true" />
-            <span aria-hidden="true">
-              {product.rating.toFixed(1)}
-              <span className="text-stone-400"> ({product.reviews})</span>
-            </span>
-          </span>
-        ) : (
-          <span className="truncate pr-4">{product.provider || product.name}</span>
-        )}
-        <span className="inline-flex shrink-0 items-center text-[#365DC4]">
-          {dict.viewSolution}
-        </span>
-      </div>
-    </Link>
+      product={product}
+      index={index}
+      palette={palette}
+      locale={locale ?? 'es'}
+      dict={dict}
+    />
   );
 
   return (
     <div className="mx-auto max-w-[1440px] px-5 pb-24 pt-10 sm:px-8 lg:px-12 lg:pt-16">
+      <SearchDemandBeacon
+        query={query}
+        results={primary.length + inferred.length}
+        surface="category"
+      />
       <div className="mb-10 flex flex-col gap-5 md:mb-14 md:flex-row md:items-start md:justify-between md:gap-12 lg:mb-16">
         <h1 className="text-3xl sm:text-4xl md:text-[42px] font-semibold tracking-tight leading-[1.05] md:max-w-md lg:max-w-lg shrink-0">
           {title}
@@ -467,6 +456,9 @@ export function CategoryPageLayout({
         values={selections}
         onChange={setFilter}
         onClear={clearFilters}
+        query={query}
+        onQueryChange={setQuery}
+        clearSearchLabel={commonText(locale ?? 'es').clearSearch}
         dict={dict}
       />
 
@@ -477,7 +469,20 @@ export function CategoryPageLayout({
       ) : (
         <div className="flex flex-col items-center justify-center rounded-[24px] border border-dashed border-stone-300 bg-stone-50 py-32 text-center">
           <p className="text-lg font-medium text-stone-900">{dict.noResultsTitle}</p>
-          <p className="mt-2 max-w-sm text-sm text-stone-500">{dict.noResultsDesc}</p>
+          {/* «Remove filters» only makes sense when some filter is on. */}
+          <p className="mt-2 max-w-sm text-sm text-stone-500">
+            {filtering ? dict.noResultsDesc : dict.emptyPageDesc}
+          </p>
+          <Link
+            href={contactBriefHref(query.trim() || title)}
+            style={actionButtonStyle}
+            className="action-button mt-6 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium"
+          >
+            {dict.briefCta}
+            <span className="button-arrow" aria-hidden="true">
+              →
+            </span>
+          </Link>
         </div>
       )}
 
@@ -500,6 +505,14 @@ export function CategoryPageLayout({
             ))}
           </div>
         </section>
+      )}
+
+      {alertCriteria && (
+        <SearchAlertButton
+          criteria={alertCriteria}
+          dict={alertDict}
+          className="mt-16 border-t border-stone-200 pt-8"
+        />
       )}
     </div>
   );

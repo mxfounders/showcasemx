@@ -36,6 +36,12 @@ import { common } from './common';
 import { billing } from './billing';
 import { reviews } from './reviews';
 import { compliance } from './compliance';
+import { consent } from './consent';
+import { recognition } from './recognition';
+import { questions } from './questions';
+import { contactThread } from './contactThread';
+import { alerts } from './alerts';
+import { follows } from './follows';
 
 export const en = {
   navbar,
@@ -75,4 +81,10 @@ export const en = {
   billing,
   reviews,
   compliance,
+  consent,
+  recognition,
+  questions,
+  contactThread,
+  alerts,
+  follows,
 } satisfies Dictionary;

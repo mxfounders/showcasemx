@@ -34,6 +34,99 @@ export const adTermsVersion = 'ads-2026-10';
 /** Cancelling refunds every booked day that starts at least this long afterwards. */
 const cancellationNoticeHours = 24;
 
+/** Duration shortcuts in the booking form (SHCWS-150). */
+export const presetDays = [7, 14, 30] as const;
+
+/** The reach estimate shown before buying counts this many past days (SHCWS-72). */
+export const reachDays = 30;
+
+/**
+ * Days after a booking's last served day during which a visit, a site click or a contact
+ * request that started on its slot still counts for it (SHCWS-70).
+ */
+export const attributionDays = 7;
+
+/**
+ * Query flag a sponsored slot adds to the listing URL, next to `from=sponsored`: the
+ * booking it came from. A booking id identifies the purchase, never the visitor.
+ */
+export const sponsoredBookingParam = 'ad';
+
+/** A promotion code as typed: Stripe's alphabet (letters, digits, dashes), up to 60. */
+export function readPromotionCode(value: unknown): string | null | 'invalid' {
+  if (value === undefined || value === null || value === '') return null;
+  if (typeof value !== 'string') return 'invalid';
+  const code = value.trim();
+  if (code === '') return null;
+  return /^[A-Za-z0-9-]{1,60}$/.test(code) ? code : 'invalid';
+}
+
+export type PromoDiscount = {
+  code: string;
+  /** Percentage off, or the fixed amount off in the booking's currency (minor units). */
+  percentOff: number | null;
+  amountOff: number | null;
+};
+
+/**
+ * What a promotion code takes off a pre-tax subtotal, the way Stripe applies a coupon:
+ * a percentage rounded to the minor unit, or a fixed amount never above the subtotal.
+ * An estimate for the form; the amount kept is the one Stripe reports when it settles.
+ */
+export function discountAmount(
+  subtotal: number,
+  promo: Pick<PromoDiscount, 'percentOff' | 'amountOff'> | null,
+): number {
+  if (!promo || subtotal <= 0) return 0;
+  if (promo.percentOff !== null) {
+    return Math.min(subtotal, Math.round((subtotal * promo.percentOff) / 100));
+  }
+  return Math.min(subtotal, Math.max(0, promo.amountOff ?? 0));
+}
+
+/**
+ * The tax rate Stripe Tax adds for a billing country, with shwcs's head office in Mexico
+ * (docs/ads.md): IVA 16 % for Mexico and nothing elsewhere (export, reverse charge or no
+ * registration there). Null while the country is unknown. Stripe has the last word.
+ */
+export function estimatedTaxRate(country: string | null): number | null {
+  if (!country) return null;
+  return country === 'MX' ? 0.16 : 0;
+}
+
+/**
+ * The currency a booking form opens with: the billing country's (pesos for Mexico, dollars
+ * elsewhere) or, before there is one, the language's. The buyer can always change it.
+ */
+export function preferredCurrency(country: string | null, locale: string): AdCurrency {
+  if (country) return country === 'MX' ? 'mxn' : 'usd';
+  return locale === 'es' ? 'mxn' : 'usd';
+}
+
+/** Clicks per impression, or null before the first impression. */
+export function clickThroughRate(clicks: number, impressions: number): number | null {
+  return impressions > 0 ? clicks / impressions : null;
+}
+
+/**
+ * The last day a booking starting on `start` can cover without crossing a full day or the
+ * longest campaign. Null when `start` itself is full.
+ */
+export function lastBookableDay(
+  start: string,
+  full: readonly string[],
+  maxDays: number = maxCampaignDays,
+): string | null {
+  if (full.includes(start)) return null;
+  let last = start;
+  for (let day = 1; day < maxDays; day++) {
+    const next = addDays(start, day);
+    if (full.includes(next)) break;
+    last = next;
+  }
+  return last;
+}
+
 export type CampaignRequest = {
   solutionId: string;
   placement: AdPlacement;

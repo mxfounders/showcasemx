@@ -11,7 +11,11 @@ export const account = {
     savedLists: 'Listas guardadas',
     myContacts: 'Mis contactos',
     opportunities: 'Oportunidades',
+    opportunitiesUnread: '{count} sin leer',
     metrics: 'Métricas',
+    /** Group headings, shown only when both groups are visible. */
+    buyerGroup: 'Comprar',
+    founderGroup: 'Publicar',
     community: 'Comunidad',
     exploreCatalog: 'Explorar catálogo',
     accountOptionsAria: 'Opciones de tu cuenta',

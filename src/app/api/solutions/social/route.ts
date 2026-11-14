@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
+import { deliverNotifications } from '@/lib/notifications/server';
 import { revalidateTag } from 'next/cache';
 import { getSession, sessionCookie } from '@/lib/auth/session';
 import { securityLimit } from '@/lib/auth/security';
@@ -7,7 +8,7 @@ import { solutionBody, failure } from '@/lib/solutions/http';
 import { isSolutionId } from '@/lib/solutions/model';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { requestLocale } from '@/i18n/negotiate';
-import { communityComment } from '@/lib/library/community-model';
+import { communityComment, communityReport } from '@/lib/library/community-model';
 const ok = (data: Record<string, unknown> = {}) =>
   NextResponse.json({ ok: true, ...data }, { headers: { 'Cache-Control': 'no-store' } });
 export async function POST(request: NextRequest) {
@@ -52,8 +53,26 @@ export async function POST(request: NextRequest) {
       const rows =
         await sql`WITH target AS (SELECT id FROM founder_solutions WHERE id=${id} AND published_data IS NOT NULL AND owner_id<>${account.id}),inserted AS (INSERT INTO solution_comments(id,solution_id,author_id,author_name,body) SELECT ${body.commentId},id,${account.id},${details.name},${details.comment} FROM target ON CONFLICT(id) DO NOTHING RETURNING id,created_at) SELECT id,created_at,true created FROM inserted UNION ALL SELECT c.id,c.created_at,false created FROM solution_comments c JOIN target t ON t.id=c.solution_id WHERE c.id=${body.commentId} AND c.author_id=${account.id} LIMIT 1`;
       if (!rows.length) return failure(t.commentOwnOrUnpublished, 409);
-      if (rows[0].created) revalidateTag('catalog');
+      if (rows[0].created) {
+        revalidateTag('catalog');
+        // The founder hears about a new comment right away; the daily cron retries (SHCWS-20).
+        after(() => deliverNotifications({ categories: ['solution'] }).catch(() => undefined));
+      }
       return ok({ id: rows[0].id, createdAt: rows[0].created_at, created: !!rows[0].created });
+    }
+    // A visitor flags someone else's comment for ops (SHCWS-140). Same reasons, limits and
+    // one-open-report rule as community comments (§56). The listing's founder may report
+    // comments on their own listing — never delete or hide them (§46); only ops decides.
+    if (body.action === 'report-comment') {
+      const report = communityReport(body);
+      if (typeof body.commentId !== 'string' || !isSolutionId(body.commentId))
+        return failure(t.invalidComment, 400);
+      if (!report) return failure(t.reportDetails, 400);
+      if (!(await securityLimit('solution-comment-report', account.id, 5)))
+        return failure(t.reportRateLimited, 429);
+      const rows =
+        await sql`INSERT INTO solution_comment_reports(comment_id,solution_id,reporter_id,reason,details) SELECT c.id,c.solution_id,${account.id},${report.reason},${report.details} FROM solution_comments c JOIN founder_solutions s ON s.id=c.solution_id WHERE c.id=${body.commentId} AND c.solution_id=${id} AND s.published_data IS NOT NULL AND c.hidden_at IS NULL AND c.author_id<>${account.id} ON CONFLICT DO NOTHING RETURNING id`;
+      return rows.length ? ok() : failure(t.reportConflict, 409);
     }
     if (body.action === 'delete-comment') {
       if (typeof body.commentId !== 'string' || !isSolutionId(body.commentId))

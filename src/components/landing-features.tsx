@@ -10,6 +10,9 @@ import { conceptCategories } from '@/lib/search/vocabulary';
 import type { PublishedProduct } from '@/lib/solutions/public';
 import type { Dictionary } from '@/i18n/dictionary';
 import { ProjectMark } from '@/components/project-mark';
+import { VerifiedMark } from '@/components/recognition/verified-mark';
+import { useLocale } from '@/i18n/use-locale';
+import { contactBriefHref } from '@/lib/contact-inquiry';
 
 type FeatureTabId = keyof Dictionary['landing']['features']['tabs'];
 
@@ -42,6 +45,7 @@ export function LandingFeatures({
   dict: Dictionary['landing'];
   explorerDict: Dictionary['categoryExplorer'];
 }) {
+  const locale = useLocale();
   const [activeTab, setActiveTab] = useState(featureTabs[0]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -80,7 +84,7 @@ export function LandingFeatures({
   // number. See src/lib/solutions/ranking.ts and src/lib/solutions/public.ts.
   const rankedProducts = [...products].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 
-  // The 15 marketing tabs map to the 7 real categories via `conceptCategories`
+  // The 15 marketing tabs map to the real categories via `conceptCategories`
   // in src/lib/search/vocabulary.ts — the same mapping the catalog search now
   // uses to expand a query, instead of a copy that only lived here.
   const categoryProducts = rankedProducts
@@ -88,6 +92,10 @@ export function LandingFeatures({
       conceptCategories[activeTab.id]?.some(category => p.categories?.includes(category)),
     )
     .slice(0, 16);
+  // Only real projects (SHCWS-38). A tab with few of them ends with one card asking what
+  // the buyer needs; the grid keeps its fixed, fading height only when it is full.
+  const showBrief = categoryProducts.length < 4;
+  const full = categoryProducts.length > 8;
 
   return (
     <section className="py-24 sm:py-32 overflow-hidden bg-transparent">
@@ -151,11 +159,15 @@ export function LandingFeatures({
           />
 
           <div
-            className="relative z-10 h-[600px] sm:h-[750px] w-full pointer-events-auto"
-            style={{
-              maskImage: 'linear-gradient(to bottom, black 65%, transparent 100%)',
-              WebkitMaskImage: 'linear-gradient(to bottom, black 65%, transparent 100%)',
-            }}
+            className={`relative z-10 w-full pointer-events-auto ${full ? 'h-[600px] sm:h-[750px] overflow-hidden' : ''}`}
+            style={
+              full
+                ? {
+                    maskImage: 'linear-gradient(to bottom, black 65%, transparent 100%)',
+                    WebkitMaskImage: 'linear-gradient(to bottom, black 65%, transparent 100%)',
+                  }
+                : undefined
+            }
           >
             <AnimatePresence mode="wait">
               <motion.div
@@ -164,110 +176,115 @@ export function LandingFeatures({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute inset-0 px-4 sm:px-12 pb-24"
+                className={
+                  full ? 'absolute inset-0 px-4 sm:px-12 pb-24' : 'relative px-4 pb-16 sm:px-12'
+                }
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                  {Array.from({ length: 16 }).map((_, i) => {
-                    const product = categoryProducts[i];
-                    if (product) {
-                      return (
-                        <Link
-                          key={`prod-${i}`}
-                          href={product.detailUrl || '#'}
-                          className={`relative overflow-hidden rounded-3xl p-6 flex flex-col h-48 sm:h-52 ${product.ogImage ? 'border-none' : 'bg-white/95 border border-stone-200/60'} shadow-lg transition-all hover:shadow-xl group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800`}
+                  {categoryProducts.map((product, i) => (
+                    <Link
+                      key={`prod-${i}`}
+                      href={product.detailUrl || '#'}
+                      className={`relative overflow-hidden rounded-3xl p-6 flex flex-col h-48 sm:h-52 ${product.ogImage ? 'border-none' : 'bg-white/95 border border-stone-200/60'} shadow-lg transition-all hover:shadow-xl group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800`}
+                    >
+                      {product.ogImage && (
+                        <>
+                          <Image
+                            src={product.ogImage}
+                            alt=""
+                            fill
+                            sizes="(max-width: 640px) 90vw, 400px"
+                            className="object-cover transition-transform duration-700 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/20" />
+                        </>
+                      )}
+                      <div className="relative z-10 flex justify-between items-center mb-auto">
+                        <span
+                          className={`text-[10px] font-bold tracking-widest uppercase ${product.ogImage ? 'text-white/80' : 'text-stone-500'}`}
                         >
-                          {product.ogImage && (
-                            <>
-                              <Image
-                                src={product.ogImage}
-                                alt=""
-                                fill
-                                sizes="(max-width: 640px) 90vw, 400px"
-                                className="object-cover transition-transform duration-700 group-hover:scale-105"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/20" />
-                            </>
-                          )}
-                          <div className="relative z-10 flex justify-between items-center mb-auto">
-                            <span
-                              className={`text-[10px] font-bold tracking-widest uppercase ${product.ogImage ? 'text-white/80' : 'text-stone-500'}`}
-                            >
-                              {product.category || 'Software'}
-                            </span>
-                            <div
-                              className={`flex items-center gap-2 px-2 py-1 rounded-full text-[11px] font-semibold ${product.ogImage ? 'bg-black/30 backdrop-blur-md text-white/90 border border-white/10' : 'bg-stone-100 text-stone-700'}`}
-                            >
-                              <span className="inline-flex items-center gap-0.5">
-                                <HeartIcon className="size-3 text-red-500" aria-hidden="true" />
-                                {product.likes ?? 0}
-                              </span>
-                              <span className="inline-flex items-center gap-0.5">
-                                <BookmarkIcon
-                                  className={`size-3 ${product.ogImage ? 'text-white/70' : 'text-stone-500'}`}
-                                  aria-hidden="true"
-                                />
-                                {product.saves ?? 0}
-                              </span>
-                              <span className="inline-flex items-center gap-0.5">
-                                <CommentIcon
-                                  className={`size-3 ${product.ogImage ? 'text-white/70' : 'text-stone-500'}`}
-                                  aria-hidden="true"
-                                />
-                                {product.comments ?? 0}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="relative z-10">
-                            <div className="flex items-center gap-3 mb-2">
-                              <ProjectMark
-                                name={product.name}
-                                favicon={product.favicon}
-                                size={24}
-                                className="w-6 h-6 rounded-md"
-                                imageClassName="object-contain bg-white shadow-sm"
-                                fallbackClassName="bg-stone-900 text-white flex items-center justify-center text-[10px] font-bold"
-                              />
-                              <h4
-                                className={`text-lg font-bold truncate ${product.ogImage ? 'text-white' : 'text-stone-900'}`}
-                              >
-                                {product.name}
-                              </h4>
-                            </div>
-                            <p
-                              className={`text-[13px] line-clamp-2 leading-relaxed ${product.ogImage ? 'text-white/80' : 'text-stone-600'}`}
-                            >
-                              {product.description || product.feature}
-                            </p>
-                          </div>
-                        </Link>
-                      );
-                    }
-                    return (
-                      <Link
-                        key={`empty-${i}`}
-                        href="/account/solutions/new"
-                        className="rounded-3xl p-6 flex flex-col h-48 sm:h-52 bg-white/60 border border-dashed border-stone-300 backdrop-blur-md transition-all hover:bg-white hover:shadow-sm group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800"
-                      >
-                        <div className="flex justify-between text-[10px] font-bold text-stone-400 tracking-widest uppercase mb-auto">
-                          <span>{explorerDict.availableSpace}</span>
-                          <span>{(i + 1).toString().padStart(2, '0')}</span>
+                          {product.category || 'Software'}
+                        </span>
+                        <div
+                          className={`flex items-center gap-2 px-2 py-1 rounded-full text-[11px] font-semibold ${product.ogImage ? 'bg-black/30 backdrop-blur-md text-white/90 border border-white/10' : 'bg-stone-100 text-stone-700'}`}
+                        >
+                          <span className="inline-flex items-center gap-0.5">
+                            <HeartIcon className="size-3 text-red-500" aria-hidden="true" />
+                            {product.likes ?? 0}
+                          </span>
+                          <span className="inline-flex items-center gap-0.5">
+                            <BookmarkIcon
+                              className={`size-3 ${product.ogImage ? 'text-white/70' : 'text-stone-500'}`}
+                              aria-hidden="true"
+                            />
+                            {product.saves ?? 0}
+                          </span>
+                          <span className="inline-flex items-center gap-0.5">
+                            <CommentIcon
+                              className={`size-3 ${product.ogImage ? 'text-white/70' : 'text-stone-500'}`}
+                              aria-hidden="true"
+                            />
+                            {product.comments ?? 0}
+                          </span>
                         </div>
-                        <div>
-                          <h4 className="text-lg font-medium text-stone-600 mb-4 leading-tight group-hover:text-stone-900 transition-colors">
-                            {explorerDict.applySpaceTitle}
-                          </h4>
-                          <div
-                            className="text-[11px] font-bold flex items-center gap-1.5 transition-colors opacity-80 group-hover:opacity-100 uppercase tracking-wide"
-                            style={{ color: activeTab.color.solid }}
+                      </div>
+                      <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-2">
+                          <ProjectMark
+                            name={product.name}
+                            favicon={product.favicon}
+                            size={24}
+                            className="w-6 h-6 rounded-md"
+                            imageClassName="object-contain bg-white shadow-sm"
+                            fallbackClassName="bg-stone-900 text-white flex items-center justify-center text-[10px] font-bold"
+                          />
+                          <h4
+                            className={`text-lg font-bold truncate ${product.ogImage ? 'text-white' : 'text-stone-900'}`}
                           >
-                            {explorerDict.applySpaceBtn}{' '}
-                            {dict.features.tabs[activeTab.id].split(' ')[0]}{' '}
-                            <span className="text-base font-medium leading-none mb-0.5">+</span>
-                          </div>
+                            {product.name}
+                          </h4>
+                          {product.verified && (
+                            <VerifiedMark
+                              locale={locale}
+                              className={`size-4 ${product.ogImage ? '!text-white' : ''}`}
+                            />
+                          )}
                         </div>
-                      </Link>
-                    );
-                  })}
+                        <p
+                          className={`text-[13px] line-clamp-2 leading-relaxed ${product.ogImage ? 'text-white/80' : 'text-stone-600'}`}
+                        >
+                          {product.description || product.feature}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                  {showBrief && (
+                    <Link
+                      href={contactBriefHref(
+                        explorerDict.briefPrefill.replace(
+                          '{category}',
+                          dict.features.tabs[activeTab.id],
+                        ),
+                      )}
+                      className="group rounded-3xl p-6 flex flex-col h-48 sm:h-52 bg-white/80 shadow-sm transition-all hover:bg-white hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800"
+                    >
+                      <span
+                        className="text-[10px] font-bold tracking-widest uppercase mb-auto"
+                        style={{ color: activeTab.color.solid }}
+                      >
+                        {dict.features.tabs[activeTab.id]}
+                      </span>
+                      <span className="text-lg font-medium text-stone-900 leading-tight">
+                        {explorerDict.briefCardTitle}
+                      </span>
+                      <span className="mt-2 text-[13px] leading-relaxed text-stone-600 line-clamp-3">
+                        {(categoryProducts.length === 0
+                          ? explorerDict.briefCardEmpty
+                          : explorerDict.briefCardFew
+                        ).replace('{category}', dict.features.tabs[activeTab.id])}
+                      </span>
+                    </Link>
+                  )}
                 </div>
               </motion.div>
             </AnimatePresence>

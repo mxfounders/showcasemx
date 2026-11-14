@@ -90,3 +90,44 @@ export async function contactTimeline(id: string) {
     actorEmail: r.actor_email ? String(r.actor_email) : null,
   }));
 }
+
+export const OUTCOME_VALUES = ['under_1k', '1k_5k', '5k_25k', '25k_100k', 'over_100k'] as const;
+
+/**
+ * What founders recorded when closing opportunities (SHCWS-22), as totals only. The
+ * outcome of one request is the founder's private record: no query here returns it per
+ * request, and nothing is ever joined to a buyer or a project. Returns null when the
+ * columns don't exist yet (db/contact-outcomes.sql not applied), so the page still loads.
+ */
+export async function contactOutcomeTotals() {
+  const sql = getDb();
+  try {
+    const rows = await sql`
+      SELECT outcome, outcome_value, count(*)::int AS n FROM contact_requests
+      WHERE status = 'closed' GROUP BY outcome, outcome_value
+    `;
+    const totals = {
+      won: 0,
+      lost: 0,
+      notFit: 0,
+      unrecorded: 0,
+      values: Object.fromEntries(OUTCOME_VALUES.map(key => [key, 0])) as Record<
+        (typeof OUTCOME_VALUES)[number],
+        number
+      >,
+    };
+    for (const row of rows) {
+      const n = Number(row.n);
+      if (row.outcome === 'won') {
+        totals.won += n;
+        const value = String(row.outcome_value) as (typeof OUTCOME_VALUES)[number];
+        if (OUTCOME_VALUES.includes(value)) totals.values[value] += n;
+      } else if (row.outcome === 'lost') totals.lost += n;
+      else if (row.outcome === 'not_fit') totals.notFit += n;
+      else totals.unrecorded += n;
+    }
+    return totals;
+  } catch {
+    return null;
+  }
+}

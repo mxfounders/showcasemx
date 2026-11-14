@@ -4,10 +4,29 @@ export const notifications = {
     saving: 'Guardando…',
     saved: 'Preferencias guardadas.',
   },
+  weeklyUnsubscribe: {
+    metaTitle: 'Dejar el resumen semanal',
+    doneTitle: 'Listo, ya no te lo enviaremos',
+    doneDesc:
+      'Dejarás de recibir «Tu semana en shwcs». Tus métricas siguen en tu cuenta y los demás avisos no cambian. Puedes volver a activarlo en Preferencias de avisos.',
+    back: 'Volver a shwcs →',
+    title: 'Dejar de recibir «Tu semana en shwcs»',
+    desc: 'Confirma y no volveremos a enviarte el resumen de cada lunes. No cambia tu cuenta ni los demás avisos.',
+    pending: 'Guardando…',
+    submit: 'Dejar de recibirlo',
+    missingToken: 'Este enlace no es válido. Puedes apagar el resumen en Preferencias de avisos.',
+    error: 'No pudimos guardar el cambio.',
+    genericError: 'No pudimos guardar el cambio. Inténtalo de nuevo.',
+  },
   preferences: {
     intro: 'Los avisos de tu cuenta son independientes del newsletter.',
     contacts: 'Solicitudes y respuestas por correo',
-    solutions: 'Estado de mis postulaciones por correo',
+    solutions:
+      'Mis fichas por correo: revisión, comentarios, reseñas, reportes y espacios patrocinados',
+    community:
+      'Comunidad por correo: actividad en mis listas públicas (agrupada por día) y un resumen semanal de las listas y curadores que sigo',
+    alerts: 'Mis alertas de búsqueda por correo (como máximo uno por semana por alerta)',
+    weekly: 'Resumen semanal «Tu semana en shwcs» (lunes, si tienes una ficha publicada)',
     save: 'Guardar preferencias',
     verifyHint: 'Verifica tu correo desde {link} para activarlos.',
     verifyLink: 'Seguridad',
@@ -27,7 +46,7 @@ export const notifications = {
   },
   verifyPage: {
     metaTitle: 'Verifica tu correo',
-    title: 'Confirma tu correo.',
+    title: 'Confirma tu correo',
   },
   settingsPage: {
     title: 'Preferencias de avisos',

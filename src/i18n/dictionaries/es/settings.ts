@@ -278,6 +278,8 @@ export const settings = {
     profileUnavailable: 'No pudimos guardar los cambios. Tus datos siguen en el formulario.',
     passwordInvalid:
       'Revisa las contraseñas. La nueva debe tener al menos 6 caracteres y coincidir con la confirmación.',
+    passwordLeaked:
+      'Esta contraseña apareció en filtraciones de otros sitios; elige otra que no uses en ningún lado.',
     currentPasswordWrong: 'La contraseña actual no es correcta.',
     passwordUnchanged: 'Elige una contraseña diferente a la actual.',
     passwordUnavailable:
@@ -291,6 +293,7 @@ export const settings = {
     googlePasswordWrong:
       'Contraseña incorrecta. Si entraste solo con Google, establece primero una contraseña con Olvidé mi contraseña.',
     googleChanged: 'La conexión cambió. Recarga.',
+    googleVerifyFirst: 'Confirma tu correo antes de vincular Google. Pide el enlace en Seguridad.',
     googleNotConfigured: 'Google todavía no está configurado.',
     googleUseMainDomain: 'Usa el dominio principal.',
     googleUnavailable: 'No pudimos cambiar la conexión.',

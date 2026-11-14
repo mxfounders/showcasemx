@@ -58,7 +58,11 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
   }
 }
 
-/** The owner asks us to read (or re-read) the og:image of their declared site. */
+/**
+ * The owner asks us to read (or re-read) the og:image of their declared site. The same
+ * request returns what the page says about itself (name, description) so the editor can
+ * prefill an empty draft; nothing of that is saved here.
+ */
 export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const t = (await getDictionary(requestLocale(request))).solutionEditor.errors;
@@ -88,7 +92,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
         VALUES (${params.id}, ${website}, NULL, NULL, NULL, ${result.failure}, now())
         ON CONFLICT (solution_id) DO UPDATE SET source_url = EXCLUDED.source_url, failure = EXCLUDED.failure, fetched_at = now()`;
       return NextResponse.json(
-        { ok: false, failure: result.failure },
+        { ok: false, failure: result.failure, meta: result.meta ?? null },
         { status: 200, headers: { 'Cache-Control': 'no-store' } },
       );
     }
@@ -113,7 +117,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
       return failure(t.coverSaveFailed, 503);
     }
     return NextResponse.json(
-      { ok: true, imageUrl, width, height },
+      { ok: true, imageUrl, width, height, meta: result.meta },
       { headers: { 'Cache-Control': 'no-store' } },
     );
   } catch {

@@ -153,3 +153,23 @@ y una paleta validada para daltonismo en ambos temas.
   de reportes propios y la cadena de la bitácora. La guarda del último admin solo
   se ejercita si la base no tiene otros admins reales; si los hay, la prueba lo
   dice y la salta en vez de tocar filas reales.
+
+
+## Avisos al equipo de revisión — 14 noviembre 2026 (SHCWS-139)
+
+- Al enviarse una ficha (nueva o con cambios), cada miembro activo de `solution_reviewers` recibe un correo con el enlace a la postulación en ops. Lo envía el producto con `after()`; no lleva el correo privado de la ficha.
+- Cada mañana, el cron de correo (`/api/internal/mail`) manda un resumen de lo pendiente: fichas en revisión y reportes abiertos de fichas, reseñas, comunidad y comentarios, lo más antiguo primero y marcado con ⚠ lo que pasó del tiempo prometido (`SOLUTION_REVIEW_TARGET_HOURS`, o 48 h sin la variable). Si no hay nada pendiente, no sale.
+- Solo en producción o con `REVIEW_ALERTS=1` (docs/env.md): la base de desarrollo tiene revisores reales.
+- La cola de postulaciones ya muestra la antigüedad de cada ficha («Actualizada»).
+- Código: `src/lib/review-queue/alerts.ts`.
+
+## Demanda de búsquedas — 14 noviembre 2026 (SHCWS-107)
+
+`/panel/demanda`: búsquedas de los últimos 7 días (total, sin resultados, terminadas en una
+ficha, distintas), las 20 sin resultados más frecuentes, las 20 más buscadas y la tendencia
+de las últimas 8 semanas. Lee `search_demand` (`db/search-demand.sql`), que el producto llena
+con una baliza en `/buscar`, el buscador del inicio y las páginas de categoría
+(`src/components/search/search-demand-beacon.tsx`, `POST /api/search-demand`): agregado por
+día y consulta normalizada, sin cuenta, dirección ni identificador; nada con DNT/GPC; nunca
+guarda algo que parezca correo, teléfono o URL (`src/lib/search/demand.ts`). Retención de
+400 días en el mantenimiento diario. Sin la tabla, la página lo dice.

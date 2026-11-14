@@ -33,6 +33,7 @@ import { AreaChart } from '@/components/charts/AreaChart';
 import { AgeBadge } from '@/components/domain/StatusBadge';
 import { AuditLine } from '@/components/domain/AuditLine';
 import { Alert } from '@/components/ui/Field';
+import { NorthStarMetrics } from './NorthStarMetrics';
 
 export const metadata: Metadata = { title: 'Inicio' };
 
@@ -167,7 +168,7 @@ export default async function PanelHome() {
           tone="danger"
           href="/panel/reportes"
           icon={<FlagIcon aria-hidden className="size-4" />}
-          hint="Fichas y comunidad"
+          hint="Fichas, reseñas, comentarios, preguntas y comunidad"
         />
         <Stat
           label="Mensajes sin atender"
@@ -186,6 +187,8 @@ export default async function PanelHome() {
           hint={k.mailQueued ? `${fmtNumber(k.mailQueued)} en cola` : 'Nada en cola'}
         />
       </section>
+
+      <NorthStarMetrics />
 
       <div className="mt-6 grid items-start gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-2">
@@ -331,14 +334,18 @@ export default async function PanelHome() {
                 {data.reports.map(item => (
                   <QueueRow
                     key={item.id}
-                    href={`/panel/reportes?tipo=${item.kind === 'solution' ? 'fichas' : item.kind === 'review' ? 'resenas' : 'comunidad'}`}
+                    href={`/panel/reportes?tipo=${item.kind === 'solution' ? 'fichas' : item.kind === 'review' ? 'resenas' : item.kind === 'comment' ? 'comentarios' : item.kind === 'question' ? 'preguntas' : 'comunidad'}`}
                     title={item.subject}
                     meta={
                       item.kind === 'solution'
                         ? (SOLUTION_REPORT_REASON[item.reason] ?? item.reason)
                         : item.kind === 'review'
                           ? `Reseña · ${REVIEW_REPORT_REASON[item.reason] ?? item.reason}`
-                          : `Comunidad · ${COMMUNITY_REPORT_REASON[item.reason] ?? item.reason}`
+                          : item.kind === 'comment'
+                            ? `Comentario · ${COMMUNITY_REPORT_REASON[item.reason] ?? item.reason}`
+                            : item.kind === 'question'
+                              ? `Pregunta · ${COMMUNITY_REPORT_REASON[item.reason] ?? item.reason}`
+                              : `Comunidad · ${COMMUNITY_REPORT_REASON[item.reason] ?? item.reason}`
                     }
                     aside={<AgeBadge days={daysSince(item.createdAt)} />}
                   />

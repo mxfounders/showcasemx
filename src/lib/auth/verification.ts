@@ -40,6 +40,10 @@ export async function consumeVerification(token: string) {
   if (!validVerificationToken(token)) return false;
   const sql = authSql();
   const rows =
-    await sql`WITH changed AS (UPDATE auth_accounts a SET email_verified_at=now() FROM auth_email_verifications t WHERE t.token_hash=${hashToken(token)} AND t.account_id=a.id AND t.email=a.email AND t.expires_at>now() AND a.email_verified_at IS NULL RETURNING a.id), removed AS (DELETE FROM auth_email_verifications WHERE account_id IN(SELECT id FROM changed)) SELECT id FROM changed`;
+    await sql`WITH changed AS (UPDATE auth_accounts a SET email_verified_at=now() FROM auth_email_verifications t WHERE t.token_hash=${hashToken(token)} AND t.account_id=a.id AND t.email=a.email AND t.expires_at>now() AND a.email_verified_at IS NULL RETURNING a.id), removed AS (DELETE FROM auth_email_verifications WHERE account_id IN(SELECT id FROM changed)),
+    -- A verified address turns on the email for contact requests (SHCWS-27), but never
+    -- overrides a choice the person already made in Preferencias de avisos.
+    alerts AS (INSERT INTO notification_preferences(owner_id,contact_email) SELECT id,true FROM changed ON CONFLICT (owner_id) DO NOTHING)
+    SELECT id FROM changed`;
   return rows.length > 0;
 }

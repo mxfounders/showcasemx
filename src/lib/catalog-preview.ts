@@ -1,3 +1,4 @@
+import type { ResponseSignal } from '@/lib/solutions/response-model';
 import type { BrandTone } from '@/lib/brand-colors';
 
 // Mixed local catalog: official offerings are explicitly distinguished from design demos.
@@ -23,6 +24,14 @@ export type PreviewProduct = {
   reviews?: number;
   rating?: number | null;
   score?: number;
+  /** «Verificado por shwcs», decided by the team in ops (src/lib/recognition). */
+  verified?: boolean;
+  /** How the project answers contact requests (src/lib/solutions/response.ts, SHCWS-52). */
+  response?: ResponseSignal | null;
+  /** When the listing's domain was last proven by TXT record, while current (SHCWS-134). */
+  domainVerifiedAt?: string | null;
+  /** First editorial approval; published_at moves with every approved update. */
+  firstPublishedAt?: string | null;
   // Declared industries/company sizes (see src/lib/taxonomy.ts). Present only
   // for published solutions; [] means "declared, fits any" — a real answer —
   // distinct from absent, which static examples always are.
@@ -43,7 +52,7 @@ export type PreviewProduct = {
   publishedAt?: string | null;
   // Extra hand-authored search terms for the two real static entries, when a
   // concept a buyer would type ("tienda online", "automatización") isn't
-  // captured by any of the rigid 7 categories. Replaces the old per-URL
+  // captured by the declared categories. Replaces the old per-URL
   // keyword map in catalog-search.ts — attached to a stable identity, not a
   // website string that can be edited. Not part of SolutionData: a published
   // solution's vocabulary comes from its declared taxonomy.
@@ -79,8 +88,8 @@ const flouvia: PreviewProduct = {
   favicon: '/images/catalog/flouvia-favicon.svg',
   provider: 'Flouvia',
   offering: 'Servicio',
-  // "tienda online", "comercio electrónico", "portal b2b" — a services shop
-  // that builds these, not something the 7 problem categories name directly.
+  // "tienda online", "comercio electrónico", "portal b2b": the static entry stays
+  // filed under Agencias, so these words keep it findable from those searches.
   keywords: [
     'tienda',
     'tiendas',
@@ -467,6 +476,57 @@ export const previewCategories: PreviewCategory[] = [
       },
     ],
   },
+  // Categories added without fictitious examples: until a real project is approved
+  // they show only the «Espacio disponible» slots that invite founders to apply.
+  {
+    id: 'marketing',
+    label: 'Marketing',
+    action: 'Atraer clientes',
+    tone: 'terracotta',
+    products: [],
+  },
+  {
+    id: 'atencion-clientes',
+    label: 'Atención al cliente',
+    action: 'Responder mejor',
+    tone: 'sage',
+    products: [],
+  },
+  {
+    id: 'datos-ia',
+    label: 'Datos e IA',
+    action: 'Decidir con datos',
+    tone: 'lavender',
+    products: [],
+  },
+  {
+    id: 'ti-seguridad',
+    label: 'TI y seguridad',
+    action: 'Proteger tu operación',
+    tone: 'blue',
+    products: [],
+  },
+  {
+    id: 'comercio-electronico',
+    label: 'Comercio electrónico',
+    action: 'Vender en línea',
+    tone: 'amber',
+    products: [],
+  },
+  {
+    id: 'productividad',
+    label: 'Productividad',
+    action: 'Trabajar en equipo',
+    tone: 'terracotta',
+    products: [],
+  },
+  {
+    id: 'desarrollo',
+    label: 'Desarrollo',
+    action: 'Construir tu software',
+    tone: 'sage',
+    products: [],
+  },
 ];
 
 // English for each explorer category's tagline (`action`), keyed by
@@ -481,6 +541,13 @@ const previewActionEn: Record<string, string> = {
   operacion: 'Bring order to the day-to-day',
   legal: 'Formalize your agreements',
   agencias: 'Find an expert team',
+  marketing: 'Attract customers',
+  'atencion-clientes': 'Respond better',
+  'datos-ia': 'Decide with data',
+  'ti-seguridad': 'Protect your operation',
+  'comercio-electronico': 'Sell online',
+  productividad: 'Work as a team',
+  desarrollo: 'Build your software',
 };
 
 export function localizedPreviewAction(

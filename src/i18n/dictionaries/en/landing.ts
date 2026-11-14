@@ -2,10 +2,10 @@ import type { Dictionary } from '../../dictionary';
 
 export const landing = {
   loadingCatalog: 'Loading catalog',
-  founderTitle: 'Are you building something a company needs?',
+  founderTitle: 'Do you build software for companies?',
   founderSubtitle:
-    'Apply with your software, agency or service and tell us what you solve and for whom.',
-  founderButton: 'Apply my solution',
+    'Publish your software, agency or service for free: tell us what you solve and for whom. The team reviews every listing before it goes live.',
+  founderButton: 'Publish for free',
   founderDisclaimer: 'Applying does not guarantee publication.',
   heroLine1: 'Find solutions.',
   heroLine2: 'Meet their creators.',
@@ -14,11 +14,18 @@ export const landing = {
   heroSearchPlaceholder: 'What do you need to solve in your company?',
   heroSearchButton: 'Find solutions',
   heroSearchButtonMobile: 'Search',
-  heroSearchExample: 'Try with “I want to get paid on time” or “I need to organize my payroll”.',
+  heroSearchTry: 'Try',
+  heroSearchOr: 'or',
+  heroSearchExamples: [
+    'I want to get paid on time',
+    'wholesale quotes',
+    'an online store',
+    'I need to organize my payroll',
+    'control my finances',
+    'digital contracts',
+    'automate my operations',
+  ],
   heroExplore: 'Explore:',
-  heroExploreFinance: 'Finance',
-  heroExplorePayroll: 'Payroll',
-  heroExploreSales: 'CRM',
   features: {
     titleLine1: 'Find the exact technology',
     titleLine2: 'for your industry',
@@ -44,37 +51,34 @@ export const landing = {
   },
   stackingCards: {
     secondaryAction: 'Learn more',
-    slotLabel: 'Open slot',
-    slotTitleLine1: 'Your solution',
-    slotTitleLine2: 'could be here.',
     cards: {
-      data: {
+      catalog: {
         badge: 'CATALOG',
-        title: 'Get data from the most complete marketplace',
+        title: 'Listings that answer the same questions',
         description:
-          'One place to compare more than 2,000 B2B tools. Build intent signals and make decisions based on real usage and budget data across Latin America.',
+          "Every project answers the same questions: what problem it solves, for whom, what it can do, what it costs and how it's implemented. Whatever it didn't declare shows as missing; we don't make it up.",
         button: 'Explore catalog',
       },
-      agents: {
-        badge: 'RECOMMENDATIONS',
-        title: 'Find the needle in the haystack instantly',
+      lists: {
+        badge: 'LISTS AND COMPARISON',
+        title: 'Save options and compare them',
         description:
-          'Our AI analyzes your industry, size and budget to recommend the exact tech stack used by the most successful companies in your sector.',
-        button: 'See recommendations',
+          'Save projects, organize them in private lists with your own notes and compare two or three side by side using what each one published. No made-up scores or recommendations.',
+        button: 'Create a list',
       },
-      enrichment: {
-        badge: 'MANAGEMENT',
-        title: 'Take control of all your subscriptions',
+      contact: {
+        badge: 'CONTACT',
+        title: 'Reach out with context',
         description:
-          'Stop paying for licenses nobody uses. Connect your stack and get automatic alerts about duplicate spending and upcoming renewals.',
-        button: 'Optimize spending',
+          "Send a request to the project's team with your need, timeline and team size. Before sending you see exactly what you share, and you follow the reply from your account.",
+        button: 'Find a project',
       },
-      outbound: {
-        badge: 'IMPLEMENTATION',
-        title: 'Connect with certified experts',
+      reviews: {
+        badge: 'REVIEWS',
+        title: 'Reviews with a verification level',
         description:
-          "Don't stop halfway. We connect you directly with verified agencies and consultants who will set up your new software in record time.",
-        button: 'Contact experts',
+          'Every review shows what was checked about its author: verified email, company email or verified purchase. The project can reply in public, but it cannot delete them.',
+        button: 'How we review',
       },
     },
   },

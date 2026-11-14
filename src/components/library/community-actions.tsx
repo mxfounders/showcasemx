@@ -1,7 +1,15 @@
 'use client';
 import { useRef, useState } from 'react';
 import Link from '@/i18n/navigation';
-import { BookmarkIcon, CommentIcon, FlagIcon, HeartIcon, TrashIcon } from '@/components/icons/gota';
+import {
+  BellIcon,
+  BookmarkIcon,
+  CommentIcon,
+  FlagIcon,
+  HeartIcon,
+  PersonIcon,
+  TrashIcon,
+} from '@/components/icons/gota';
 import type { PublicComment } from '@/lib/library/community';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import { CommunityReportForm } from './community-report-form';
@@ -19,6 +27,18 @@ async function mutate(data: Record<string, unknown>) {
   if (!response.ok) throw Error(body.error);
   return body;
 }
+// Follows have their own endpoint (SHCWS-121); the answer is only the viewer's own state.
+async function follow(action: 'list' | 'curator', id: string): Promise<{ active: boolean }> {
+  const response = await fetch('/api/follows', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, id }),
+  });
+  const body = await response.json();
+  if (response.status === 401) throw Object.assign(Error(body.error), { login: true });
+  if (!response.ok) throw Error(body.error);
+  return body;
+}
 export function CommunityActions({
   id,
   initialLikes,
@@ -26,9 +46,13 @@ export function CommunityActions({
   initialCommentsCount,
   liked,
   saved,
+  following,
+  followingCurator,
+  curator,
   comments: initialComments,
   own = false,
   dict,
+  followDict,
   locale,
 }: {
   id: string;
@@ -37,13 +61,20 @@ export function CommunityActions({
   initialCommentsCount: number;
   liked: boolean;
   saved: boolean;
+  following: boolean;
+  followingCurator: boolean;
+  /** The list's public signature. */
+  curator: string;
   comments: PublicComment[];
   own?: boolean;
   dict: Dictionary['community'];
+  followDict: Dictionary['follows']['actions'];
   locale?: string;
 }) {
   const [like, setLike] = useState(liked),
     [save, setSave] = useState(saved),
+    [followsList, setFollowsList] = useState(following),
+    [followsCurator, setFollowsCurator] = useState(followingCurator),
     [likes, setLikes] = useState(initialLikes),
     [saves, setSaves] = useState(initialSaves),
     [commentsCount, setCommentsCount] = useState(initialCommentsCount),
@@ -58,6 +89,24 @@ export function CommunityActions({
   const lock = useRef(false),
     commentId = useRef<string | null>(null);
   const a = dict.actions;
+  async function toggleFollow(action: 'list' | 'curator') {
+    if (lock.current) return;
+    lock.current = true;
+    setPending(action);
+    setError('');
+    setLogin(false);
+    try {
+      const result = await follow(action, id);
+      if (action === 'list') setFollowsList(result.active);
+      else setFollowsCurator(result.active);
+    } catch (e) {
+      if (e instanceof Error && 'login' in e) setLogin(true);
+      else setError((e instanceof Error && e.message) || followDict.error);
+    } finally {
+      lock.current = false;
+      setPending('');
+    }
+  }
   async function toggle(action: 'like' | 'save') {
     if (lock.current) return;
     lock.current = true;
@@ -109,7 +158,39 @@ export function CommunityActions({
           <BookmarkIcon className="size-4" variant={save ? 'fill' : 'outline'} />
           {saves} {a.saveList}
         </button>
+        {!own && (
+          <>
+            <button
+              aria-pressed={followsList}
+              disabled={!!pending}
+              onClick={() => void toggleFollow('list')}
+              className={button}
+              style={followsList ? actionButtonStyle : undefined}
+            >
+              <BellIcon className="size-4" />
+              {followsList ? followDict.followingList : followDict.followList}
+            </button>
+            <button
+              aria-pressed={followsCurator}
+              disabled={!!pending}
+              onClick={() => void toggleFollow('curator')}
+              className={button}
+              style={followsCurator ? actionButtonStyle : undefined}
+            >
+              <PersonIcon className="size-4" />
+              {(followsCurator ? followDict.followingCurator : followDict.followCurator).replace(
+                '{name}',
+                curator,
+              )}
+            </button>
+          </>
+        )}
       </div>
+      {!own && (
+        <p className="mt-3 max-w-xl text-xs text-stone-400">
+          {followDict.hint.replace('{name}', curator)}
+        </p>
+      )}
       {login && (
         <p className="mt-4 text-sm text-stone-500">
           <Link

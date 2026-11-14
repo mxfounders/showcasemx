@@ -10,18 +10,22 @@ export async function navCounts(): Promise<Record<CountKey, number>> {
         (SELECT count(*) FROM founder_solutions WHERE status = 'pending')::int AS reviews,
         ((SELECT count(*) FROM solution_reports WHERE status = 'open')
           + (SELECT count(*) FROM community_reports WHERE status = 'open')
-          + (SELECT count(*) FROM solution_review_reports WHERE status = 'open'))::int AS reports,
+          + (SELECT count(*) FROM solution_review_reports WHERE status = 'open')
+          + (SELECT count(*) FROM solution_comment_reports WHERE status = 'open')
+          + (SELECT count(*) FROM solution_question_reports WHERE status = 'open'))::int AS reports,
         (SELECT count(*) FROM contact_inquiries WHERE handled_at IS NULL)::int AS inquiries,
-        (SELECT count(*) FROM account_notifications WHERE email_state = 'failed')::int AS mail
+        (SELECT count(*) FROM account_notifications WHERE email_state = 'failed')::int AS mail,
+        (SELECT count(*) FROM billing_documents WHERE status = 'failed')::int AS billing
     `;
     return {
       reviews: Number(row?.reviews ?? 0),
       reports: Number(row?.reports ?? 0),
       inquiries: Number(row?.inquiries ?? 0),
       mail: Number(row?.mail ?? 0),
+      billing: Number(row?.billing ?? 0),
     };
   } catch (err) {
     console.error('[ops/counts]', err);
-    return { reviews: 0, reports: 0, inquiries: 0, mail: 0 };
+    return { reviews: 0, reports: 0, inquiries: 0, mail: 0, billing: 0 };
   }
 }

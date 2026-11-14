@@ -2,6 +2,7 @@
 import { LogOutIcon } from '@/components/icons/gota';
 import { useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
+import { forgetAccount } from '@/lib/analytics/client';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
 export function LogoutButton({
@@ -37,6 +38,7 @@ export function LogoutButton({
               signal: AbortSignal.timeout(15000),
             });
             if (!response.ok) throw new Error();
+            forgetAccount();
             router.replace('/sign-in');
             router.refresh();
           } catch {

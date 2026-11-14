@@ -81,18 +81,30 @@ export function cordInvoiceDraft(
     currency: 'usd' | 'mxn';
     taxRate: number;
     reference: string;
+    /** Promotion code discount off the pre-tax subtotal (SHCWS-75), in minor units. */
+    discountAmount?: number;
   },
 ) {
+  // With a discount the CFDI carries what was actually sold: one line for the whole
+  // window at the net price, so its total and IVA match the Stripe charge to the cent.
+  const discount = booking.discountAmount ?? 0;
+  const item =
+    discount > 0
+      ? {
+          descripcion: booking.description,
+          cantidad: 1,
+          precio_unitario: (booking.days * booking.dailyAmount - discount) / 100,
+          tax_rate: booking.taxRate,
+        }
+      : {
+          descripcion: booking.description,
+          cantidad: booking.days,
+          precio_unitario: booking.dailyAmount / 100,
+          tax_rate: booking.taxRate,
+        };
   return {
     cliente_id: clientId,
-    items: [
-      {
-        descripcion: booking.description,
-        cantidad: booking.days,
-        precio_unitario: booking.dailyAmount / 100,
-        tax_rate: booking.taxRate,
-      },
-    ],
+    items: [item],
     currency: booking.currency.toUpperCase(),
     document_mode: 'fiscal' as const,
     iva_incluido: false,

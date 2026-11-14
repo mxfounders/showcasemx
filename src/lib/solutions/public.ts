@@ -4,12 +4,26 @@ import { neon } from '@neondatabase/serverless';
 import { unstable_cache } from 'next/cache';
 import { previewCategories, type PreviewProduct } from '@/lib/catalog-preview';
 import { solutionScore, rankingHalfLifeDays } from './ranking';
-import { freeEmailDomains, freeEmailPattern, reviewWeights } from '@/lib/reviews/model';
+import {
+  freeEmailDomains,
+  freeEmailPattern,
+  reviewInvitedFactor,
+  reviewWeights,
+} from '@/lib/reviews/model';
 import { solutionCover } from './gallery';
+import { recognitionHost } from '@/lib/recognition/model';
+import { verificationDomain } from '@/lib/trust/domain';
+import { responseSignals } from './response';
+import { responseRankBonus, type ResponseSignal } from './response-model';
 // industries/companySizes stay optional, mirroring SolutionData: absent means
 // the founder never declared them (excluded from a specific filter), while []
 // means declared to fit any (matches every filter) — see src/lib/taxonomy.ts.
-export type PublishedProduct = PreviewProduct & { category: string; categories: string[] };
+export type PublishedProduct = PreviewProduct & {
+  category: string;
+  categories: string[];
+  /** How the project answers contact requests; null below the minimum (SHCWS-52). */
+  response: ResponseSignal | null;
+};
 // Order reflects real interaction (comments > saves > likes > views), decayed
 // and — for the three account-linked signals — restricted to verified
 // accounts acting on someone else's ficha; catalog_key only breaks ties, it
@@ -42,6 +56,7 @@ const fetchPublishedRows = unstable_cache(
    sum(CASE WHEN a.email_verified_at IS NOT NULL AND sc.author_id<>s.owner_id
     THEN exp(-ln(2)*extract(epoch FROM now()-sc.created_at)/${rankingHalfLifeDays * 86400}) ELSE 0 END) AS decayed
    FROM solution_comments sc JOIN auth_accounts a ON a.id=sc.author_id JOIN founder_solutions s ON s.id=sc.solution_id
+   WHERE sc.hidden_at IS NULL
    GROUP BY sc.solution_id),
  views AS (
   SELECT solution_id,sum(views)::int AS n,
@@ -51,9 +66,13 @@ const fetchPublishedRows = unstable_cache(
   -- Only public reviews: published, from a verified address and not by the owner.
   -- n and average are what the cards show; decayed feeds the order.
   SELECT r.solution_id,count(*)::int AS n,avg(r.rating)::float AS average,
+   -- Level weight (reviewWeight in src/lib/reviews/model.ts), halved when the review came
+   -- through the founder's invitation link (SHCWS-132, db/review-invitations.sql).
    sum(r.rating*CASE WHEN EXISTS(SELECT 1 FROM solution_review_proofs p WHERE p.review_id=r.id) THEN ${reviewWeights.customer}::float
+     WHEN review_contact_backed(r.author_id,r.solution_id) THEN ${reviewWeights.contact}::float
      WHEN split_part(a.email,'@',2)<>ALL(${freeEmailDomains as readonly string[]}::text[])
      AND split_part(a.email,'@',2)!~${freeEmailPattern} THEN ${reviewWeights.work}::float ELSE ${reviewWeights.email}::float END
+    *CASE WHEN review_invited(r.author_id,r.solution_id) THEN ${reviewInvitedFactor}::float ELSE 1 END
     *exp(-ln(2)*extract(epoch FROM now()-r.created_at)/${rankingHalfLifeDays * 86400})) AS decayed
    FROM solution_reviews r JOIN auth_accounts a ON a.id=r.author_id JOIN founder_solutions s ON s.id=r.solution_id
    WHERE r.status='published' AND a.email_verified_at IS NOT NULL AND r.author_id<>s.owner_id
@@ -80,7 +99,11 @@ const fetchPublishedRows = unstable_cache(
   COALESCE(rv.n,0) reviews,rv.average AS rating,
   COALESCE(l.decayed,0) likes_score,COALESCE(c.decayed,0) comments_score,COALESCE(sv.decayed,0) saves_score,COALESCE(v.decayed,0) views_score,
   COALESCE(rv.decayed,0) reviews_score,
-  EXISTS(SELECT 1 FROM solution_site_image_ready r WHERE r.solution_id=s.id) has_site_image
+  EXISTS(SELECT 1 FROM solution_site_image_ready r WHERE r.solution_id=s.id) has_site_image,
+  (SELECT vf.host FROM solution_verifications vf WHERE vf.solution_id=s.id) verified_host,
+  (SELECT json_build_object('domain',p.domain,'at',p.verified_at) FROM solution_domain_proofs p
+    WHERE p.solution_id=s.id AND p.owner_id=s.owner_id AND p.verified_at IS NOT NULL AND p.expires_at>now()) domain_proof,
+  COALESCE((SELECT min(e.created_at) FROM solution_events e WHERE e.solution_id=s.id AND e.status='published'),s.published_at) first_published_at
  FROM founder_solutions s
  LEFT JOIN likes l ON l.solution_id=s.id LEFT JOIN comments c ON c.solution_id=s.id
  LEFT JOIN saves sv ON sv.solution_id=s.id LEFT JOIN views v ON v.solution_id=s.id
@@ -92,10 +115,27 @@ const fetchPublishedRows = unstable_cache(
   ['public-products'],
   { tags: ['catalog'], revalidate: 300 },
 );
+function proofDate(proof: unknown, website: unknown): string | null {
+  if (!proof || typeof proof !== 'object') return null;
+  const { domain, at } = proof as { domain?: unknown; at?: unknown };
+  return domain && at && verificationDomain(website) === domain ? String(at) : null;
+}
+
+// Same cache and tag as the rows: entries, because the cache stores JSON.
+const fetchResponseSignals = unstable_cache(
+  async () => [...(await responseSignals()).entries()],
+  ['public-response-signals'],
+  { tags: ['catalog'], revalidate: 300 },
+);
 export async function publicProducts(): Promise<PublishedProduct[]> {
   try {
-    const rows = await fetchPublishedRows();
-    return rows.map(row => {
+    const [rows, responseEntries] = await Promise.all([
+      fetchPublishedRows(),
+      fetchResponseSignals().catch(() => []),
+    ]);
+    const responses = new Map(responseEntries);
+    const products = rows.map(row => {
+      const response = responses.get(String(row.id)) ?? null;
       const staticProduct = previewCategories
         .flatMap(category => category.products)
         .find(product => product.catalogId === row.catalog_key);
@@ -138,22 +178,37 @@ export async function publicProducts(): Promise<PublishedProduct[]> {
         compliance: Array.isArray(row.compliance) ? (row.compliance as string[]) : undefined,
         scope: row.scope ? String(row.scope) : undefined,
         publishedAt: row.published_at ? String(row.published_at) : null,
+        // The first approval, not the latest: an approved update must not make an old
+        // listing «new» again (/nuevo, SHCWS-125).
+        firstPublishedAt: row.first_published_at ? String(row.first_published_at) : null,
         detailUrl: `/soluciones/${row.id}`,
+        // Only while the verification is for the host the listing points at today
+        // (src/lib/recognition/model.ts): a moved listing loses the check by itself.
+        verified:
+          !!row.verified_host && recognitionHost(String(row.website)) === String(row.verified_host),
+        // The TXT proof (SHCWS-134), only while it is current and for the host the listing
+        // points at today: control of the domain, not a legal identity.
+        domainVerifiedAt: proofDate(row.domain_proof, row.website),
         likes: Number(row.likes),
         saves: Number(row.saves),
         comments: Number(row.comments),
         views: Number(row.views),
         reviews: Number(row.reviews),
         rating: row.rating == null ? null : Number(row.rating),
+        response,
         score: solutionScore(
           Number(row.likes_score),
           Number(row.saves_score),
           Number(row.comments_score),
           Number(row.views_score),
           Number(row.reviews_score),
+          responseRankBonus(response),
         ),
       };
     });
+    // The SQL order has no response bonus; a stable sort on the full score adds it and
+    // keeps the SQL tie-breaks (Cord, Flouvia, newest) among equal scores.
+    return products.sort((a, b) => b.score - a.score);
   } catch (error) {
     // A transient failure is never cached: unstable_cache only stores what it
     // successfully returns, so the empty result here is retried on the next call

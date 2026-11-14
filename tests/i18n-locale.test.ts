@@ -67,6 +67,20 @@ test('middleware keeps the language of the page a bare internal link came from',
   assert.equal(response.headers.get('location'), 'http://localhost:3000/en/account/saved');
 });
 
+test('middleware gives pages a single URL without a trailing slash', () => {
+  const localized = middleware(new NextRequest('http://localhost:3000/en/blog/?page=2'));
+  assert.equal(localized.status, 308);
+  assert.equal(localized.headers.get('location'), 'http://localhost:3000/en/blog?page=2');
+  const bare = middleware(
+    new NextRequest('http://localhost:3000/account/', { headers: { 'accept-language': 'en' } }),
+  );
+  assert.equal(bare.headers.get('location'), 'http://localhost:3000/en/account');
+  const root = middleware(
+    new NextRequest('http://localhost:3000/', { headers: { 'accept-language': 'en' } }),
+  );
+  assert.equal(root.headers.get('location'), 'http://localhost:3000/en');
+});
+
 test('middleware forwards the route locale to the page as a request header', () => {
   const response = middleware(new NextRequest('http://localhost:3000/en/blog'));
   assert.equal(response.headers.get('x-middleware-request-x-locale'), 'en');

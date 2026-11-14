@@ -1,7 +1,8 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from '@/i18n/navigation';
-import { CommentIcon, TrashIcon } from '@/components/icons/gota';
+import { CommentIcon, FlagIcon, TrashIcon } from '@/components/icons/gota';
+import { CommentReportForm } from './comment-report-form';
 import type { SolutionComment } from '@/lib/solutions/social';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
@@ -41,9 +42,18 @@ export function SolutionSocial({
     [comment, setComment] = useState(''),
     [pending, setPending] = useState(''),
     [error, setError] = useState(''),
-    [login, setLogin] = useState(false);
+    [login, setLogin] = useState(false),
+    [reporting, setReporting] = useState<string | null>(null),
+    [reported, setReported] = useState<ReadonlySet<string>>(new Set()),
+    [justReported, setJustReported] = useState<string | null>(null);
   const lock = useRef(false),
-    commentId = useRef<string | null>(null);
+    commentId = useRef<string | null>(null),
+    flags = useRef(new Map<string, HTMLButtonElement>()),
+    receipts = useRef(new Map<string, HTMLParagraphElement>());
+  // The form unmounts on success; keep keyboard focus on its confirmation instead.
+  useEffect(() => {
+    if (justReported) receipts.current.get(justReported)?.focus();
+  }, [justReported]);
   return (
     <section
       className="mt-14 border-t border-stone-200 pt-8"
@@ -169,7 +179,7 @@ export function SolutionSocial({
                     )}
                   </time>
                 </div>
-                {item.mine && (
+                {item.mine ? (
                   <button
                     aria-label={dict.social.deleteLabel}
                     className="rounded-full p-2 text-stone-400 hover:bg-stone-100 hover:text-[#A94E35]"
@@ -189,11 +199,66 @@ export function SolutionSocial({
                   >
                     <TrashIcon className="size-4" />
                   </button>
+                ) : (
+                  // Anyone but the author can flag a comment, the listing's founder included:
+                  // they can't delete it (§46), only ask ops to review it (SHCWS-140).
+                  !reported.has(item.id) && (
+                    <button
+                      type="button"
+                      ref={element => {
+                        if (element) flags.current.set(item.id, element);
+                        else flags.current.delete(item.id);
+                      }}
+                      aria-label={dict.social.reportLabel}
+                      aria-expanded={reporting === item.id}
+                      aria-controls={`comment-report-${item.id}`}
+                      className="rounded-full p-2 text-stone-400 hover:bg-stone-100 hover:text-[#A94E35]"
+                      onClick={() => setReporting(value => (value === item.id ? null : item.id))}
+                    >
+                      <FlagIcon className="size-4" />
+                    </button>
+                  )
                 )}
               </div>
+              {item.hiddenReason && (
+                <p className="mt-3 rounded-xl bg-stone-100 px-3 py-2 text-xs leading-relaxed text-stone-600">
+                  {dict.social.hiddenNote} {item.hiddenReason}
+                </p>
+              )}
               <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-stone-600">
                 {item.body}
               </p>
+              {reporting === item.id && (
+                <div id={`comment-report-${item.id}`} className="mt-4 max-w-md">
+                  <CommentReportForm
+                    solutionId={id}
+                    commentId={item.id}
+                    dict={dict}
+                    onDone={() => {
+                      setReported(values => new Set(values).add(item.id));
+                      setReporting(null);
+                      setJustReported(item.id);
+                    }}
+                    onCancel={() => {
+                      setReporting(null);
+                      flags.current.get(item.id)?.focus();
+                    }}
+                  />
+                </div>
+              )}
+              {reported.has(item.id) && (
+                <p
+                  role="status"
+                  tabIndex={-1}
+                  ref={element => {
+                    if (element) receipts.current.set(item.id, element);
+                    else receipts.current.delete(item.id);
+                  }}
+                  className="mt-3 text-sm text-[#416B50]"
+                >
+                  {dict.commentReport.done}
+                </p>
+              )}
             </article>
           ))}
           {!comments.length && <p className="py-7 text-sm text-stone-500">{dict.social.empty}</p>}

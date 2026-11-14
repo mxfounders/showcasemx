@@ -61,7 +61,8 @@ export async function deliverReset(email: string, token: string) {
   });
   if (!response.ok) throw new Error('Delivery unavailable');
 }
-export async function consumeReset(token: string, passwordHash: string) {
+/** The account whose password changed, or null; callers that only need truthiness still work. */
+export async function consumeReset(token: string, passwordHash: string): Promise<string | null> {
   const sql = authSql();
   // Account CAS serializes competing tokens; changing the hash invalidates all earlier links.
   const rows = await sql`WITH changed AS (
@@ -70,5 +71,5 @@ export async function consumeReset(token: string, passwordHash: string) {
     RETURNING a.id
   ), sessions AS (DELETE FROM auth_sessions WHERE account_id IN(SELECT id FROM changed)),
   tokens AS (DELETE FROM auth_password_resets WHERE account_id IN(SELECT id FROM changed)) SELECT id FROM changed`;
-  return rows.length > 0;
+  return rows.length ? String(rows[0].id) : null;
 }

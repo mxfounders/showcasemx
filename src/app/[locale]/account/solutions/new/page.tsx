@@ -1,27 +1,33 @@
 import { requireFounder } from '@/lib/solutions/server';
-import { NewSolutionButton } from '@/components/solutions/new-solution-button';
+import { NewSolutionForm } from '@/components/solutions/new-solution-form';
 import { getDictionary } from '@/i18n/get-dictionary';
+
 export default async function NewSolutionPage(props: { params: Promise<{ locale: string }> }) {
   const { locale } = await props.params;
-  const dict = (await getDictionary(locale)).solutionEditor,
-    text = dict.newPage;
+  const text = (await getDictionary(locale)).solutionEditor.newPage;
   await requireFounder(true);
   return (
     <section className="account-page">
-      <h1 className="text-4xl font-semibold tracking-tight">{text.title}</h1>
-      <p className="mb-8 mt-5 leading-relaxed text-stone-500">{text.description}</p>
-      <ol className="mb-10 divide-y divide-stone-200 border-y border-stone-200">
-        {text.steps.map(({ title, description }, index) => (
-          <li key={title} className="flex gap-4 py-5">
-            <span className="text-sm text-stone-400">0{index + 1}</span>
-            <div>
-              <h2 className="text-sm font-medium">{title}</h2>
-              <p className="mt-1 text-sm text-stone-500">{description}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
-      <NewSolutionButton dict={dict.newSolution} />
+      <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">{text.title}</h1>
+      <p className="mb-10 mt-4 max-w-xl text-base leading-relaxed text-stone-500">
+        {text.description}
+      </p>
+      <NewSolutionForm dict={text} />
+      <div className="mt-14 max-w-xl border-t border-stone-200 pt-8">
+        <ol className="flex flex-wrap items-center gap-2">
+          {text.steps.map((step, index) => (
+            <li key={step} className="flex items-center gap-2 text-sm text-stone-700">
+              {index > 0 && <span aria-hidden="true" className="h-px w-5 bg-stone-300" />}
+              <span className="flex size-6 items-center justify-center rounded-full bg-[#E4EBFC] text-xs font-medium text-[#365DC4]">
+                {index + 1}
+              </span>
+              {step}
+            </li>
+          ))}
+        </ol>
+        <p className="mt-4 text-sm leading-relaxed text-stone-500">{text.stepsNote}</p>
+        <p className="mt-2 text-xs text-stone-400">{text.freeNote}</p>
+      </div>
     </section>
   );
 }

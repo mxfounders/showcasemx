@@ -43,3 +43,22 @@ export function searchCatalog(query: string, categories: PreviewCategory[] = pre
   const products = collectSearchableProducts(categories);
   return rankSearch(query, products, (a, b) => catalogPriority(a) - catalogPriority(b));
 }
+
+/**
+ * What the hero may suggest, computed from the catalog the visitor actually sees:
+ * category chips only for categories with at least one project, and example
+ * searches only when they return results. A hard-coded «Nómina» chip or
+ * «organizar mi nómina» example led to an empty catalog (SHCWS-40).
+ */
+export function heroSuggestions(
+  categories: PreviewCategory[],
+  examples: readonly string[],
+  limits: { chips: number; examples: number } = { chips: 3, examples: 2 },
+) {
+  return {
+    chips: categories.filter(category => category.products.length > 0).slice(0, limits.chips),
+    examples: examples
+      .filter(example => searchCatalog(example, categories).length > 0)
+      .slice(0, limits.examples),
+  };
+}

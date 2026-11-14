@@ -9,9 +9,12 @@ import type { Dictionary } from '@/i18n/dictionary';
 export function NewsletterUnsubscribe({
   token,
   dict,
+  endpoint = '/api/newsletter/unsubscribe',
 }: {
   token: string;
   dict: Dictionary['newsletter']['unsubscribe'];
+  /** Also used for the weekly summary (SHCWS-21), which posts the same body elsewhere. */
+  endpoint?: string;
 }) {
   const busy = useRef(false);
   const [pending, setPending] = useState(false);
@@ -24,7 +27,7 @@ export function NewsletterUnsubscribe({
     setPending(true);
     setError('');
     try {
-      const response = await fetch('/api/newsletter/unsubscribe', {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),

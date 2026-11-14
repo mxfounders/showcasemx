@@ -8,6 +8,8 @@ export const contactForm = {
     context: 'Cuéntanos el contexto.',
     review: '¿Todo correcto?',
   },
+  /** Message started for the person when they arrive from a search that found nothing. */
+  prefillNeed: 'Busco una solución para: {need}.',
   errors: {
     reason: 'Elige el motivo que más se acerque a tu mensaje.',
     name: 'Escribe tu nombre.',

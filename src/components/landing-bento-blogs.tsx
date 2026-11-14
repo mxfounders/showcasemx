@@ -24,11 +24,13 @@ export function LandingBentoBlogs({
   const postB = blogPosts[2]; // green (sage)
   const postD = blogPosts[3]; // lavender (purple)
   const postE = blogPosts[4]; // terracotta (orange)
+  const postC = blogPosts[5]; // amber
 
   const colorA = getToneColors(postA.tone);
   const colorB = getToneColors(postB.tone);
   const colorD = getToneColors(postD.tone);
   const colorE = getToneColors(postE.tone);
+  const colorC = getToneColors(postC.tone);
 
   return (
     <section className="w-full py-24 sm:py-32">
@@ -89,30 +91,25 @@ export function LandingBentoBlogs({
             />
           </Link>
 
-          {/* Card C: Middle Center (Dark) - External CordHQ */}
-          <a
-            href="https://cordhq.app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="col-span-1 md:col-span-4 md:row-span-1 bg-stone-900 rounded-[2.5rem] overflow-hidden flex flex-col group cursor-pointer hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.2)] hover:-translate-y-1 transition-all duration-300 relative min-h-[250px] md:min-h-0"
+          {/* Card C: Middle Center (Dark). Editorial only: a commercial link here
+              would have to be a labelled sponsored slot (docs/ads.md, rule 1). */}
+          <Link
+            href={`/blog/${postC.slug}`}
+            className="col-span-1 md:col-span-4 md:row-span-1 bg-stone-900 rounded-[2.5rem] overflow-hidden flex flex-col group cursor-pointer hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.2)] hover:-translate-y-1 transition-all duration-300 min-h-[250px] md:min-h-0"
           >
-            {/* CordHQ og:image Background */}
-            <div className="absolute inset-0 bg-[url('https://cordhq.app/og-cord.jpg')] bg-cover bg-center transition-transform duration-700 group-hover:scale-105" />
-            {/* Gradient overlay for readability without darkening the whole image */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/40" />
-
-            <div className="relative z-10 p-8 flex flex-col flex-1 h-full">
-              <span className="text-[11px] font-bold tracking-widest text-white/90 uppercase mb-4 drop-shadow-md">
-                {dict.promotion}
+            <div className="p-8 flex flex-col flex-1 h-full">
+              <span
+                className="text-[11px] font-bold tracking-widest uppercase mb-4"
+                style={{ color: colorC.soft }}
+              >
+                {postC.categoryLabel}
               </span>
-              <h3 className="text-2xl font-medium text-white leading-tight mb-4 drop-shadow-md">
-                {dict.promoTitle}
-              </h3>
-              <div className="mt-auto pt-4 flex items-center text-sm font-medium text-white transition-colors group-hover:text-white/80 drop-shadow-md">
-                {dict.promoAction} <ArrowIcon />
+              <h3 className="text-2xl font-medium text-white leading-tight mb-4">{postC.title}</h3>
+              <div className="mt-auto pt-4 flex items-center text-sm font-medium text-white transition-colors group-hover:text-white/80">
+                {dict.readArticle} <ArrowIcon />
               </div>
             </div>
-          </a>
+          </Link>
 
           {/* Card D: Tall Right */}
           <Link

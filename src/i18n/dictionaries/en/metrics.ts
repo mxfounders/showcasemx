@@ -4,7 +4,7 @@ export const metrics = {
   metaTitle: 'Metrics',
   numberLocale: 'en-US',
   unnamed: 'Untitled',
-  title: 'Metrics.',
+  title: 'Metrics',
   intro: 'How people find your projects and when that interest turns into contact.',
   period: 'Last 30 days',
   summaryAria: 'Activity summary',
@@ -34,7 +34,47 @@ export const metrics = {
   emptyDesc: "When a listing gets views, clicks or requests, you'll see the full journey here.",
   emptyCta: 'Review my solutions',
   footnote:
-    "These figures count events. We exclude your own visits and respect DNT/GPC; blockers, reloads and automated traffic can change the totals. Buyers' saved projects, lists and notes stay private.",
+    'These figures count events. We exclude your own visits and respect DNT/GPC; blockers, reloads and automated traffic can change the totals. Who saved your listing, their lists and their notes stay private: you only see totals.',
+  insights: {
+    intentTitle: 'Interest in your listings',
+    intentNote:
+      "Totals from real accounts, never who they are. Your own saves, lists and likes don't count.",
+    saves: 'Saves',
+    publicLists: 'In public lists',
+    publicListsDetail: 'Community lists that include your listing',
+    likes: 'Likes',
+    reviews: 'Public reviews',
+    last30: '{count} in the last 30 days',
+    rating: 'Average {rating} out of 5',
+    outcomesTitle: 'How your opportunities ended',
+    outcomesNote:
+      "What you record when closing each opportunity. Only you see it, and shwcs doesn't verify sales.",
+    won: 'Customers won through shwcs',
+    lost: 'Lost',
+    notFit: "Weren't for you",
+    unrecorded: 'Closed without an outcome',
+    valuesTitle: 'Approximate value of what you won',
+    outcomesEmpty:
+      "When you close an opportunity and record how it ended, you'll see here how many customers you won.",
+    positionTitle: 'Position in the catalog',
+    positionNote:
+      "Your place in each category's «Most popular» order, which weighs real interaction from verified accounts and fades over time. It isn't a rating.",
+    position: '{position} of {total}',
+    peersTitle: 'Against similar listings',
+    peersNote:
+      'Visits in the last 30 days against the median of other listings in your first category. We only show it when there are at least 3, so nobody is exposed.',
+    peersYours: 'Your listing: {views} visits',
+    peersMedian: 'Median of {peers} listings: {median} visits',
+    peersFew: 'There are still fewer than 3 listings from other projects in {category}.',
+    monthsTitle: 'Last 12 months',
+    monthsNote:
+      "By calendar month. A zero can also mean that signal wasn't measured yet that month.",
+    month: 'Month',
+    requests: 'Requests',
+    notMeasured:
+      "We don't record yet which searches show your listing or what it's compared with, so we don't show those figures.",
+    unavailable: "We couldn't load this section. Reload to try again.",
+  },
   chart: {
     ariaLabel: 'Daily activity. Use the left and right arrows to explore each date.',
     title: 'Daily activity over the last 30 days',

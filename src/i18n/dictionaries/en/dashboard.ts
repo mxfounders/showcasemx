@@ -3,8 +3,14 @@ import type { Dictionary } from '../../dictionary';
 export const dashboard = {
   title: 'Your home',
   hello: 'Hi,',
-  yourSpace: 'Your space.',
+  verifyEmailTitle: 'Confirm your email',
+  verifyEmailDesc:
+    "We sent you a link when you signed up. With a confirmed email we let you know about new contact requests, your likes and reviews count in the catalog's order, and projects know your email is real.",
+  yourSpace: 'Your space',
   yourProjects: 'Your projects',
+  metricsSummary:
+    'Last 30 days: {views} visits · {requests} requests. Customers won through shwcs: {won}.',
+  metricsSummaryLink: 'See metrics →',
   seeAll: 'See all →',
   yourProjectFallback: 'Your project',
   unnamed: 'Untitled',
@@ -18,6 +24,10 @@ export const dashboard = {
   latestSaved: 'Recently saved',
   exploreProjects: 'Explore projects',
   recentActivity: 'Recent activity',
+  yourTurn: 'Your turn',
+  waitingForYou: '{company} is waiting for your reply',
+  repliedToYou: '{project} replied to you',
+  answer: 'Reply',
   sent: 'Sent',
   received: 'Received',
   contactStatuses: {
@@ -33,6 +43,16 @@ export const dashboard = {
   },
   nextActions: {
     reviewComments: 'Review comments',
+    unreadOpportunity: 'You have 1 unread opportunity',
+    unreadOpportunities: 'You have {count} unread opportunities',
+    answerOpportunity: 'You have 1 unanswered opportunity',
+    answerOpportunities: 'You have {count} unanswered opportunities',
+    answerOpportunitiesDetail: 'Replying fast matters most to close a sale',
+    enableAlerts: 'Turn on request alerts',
+    enableAlertsDetail: 'We email you as soon as someone wants to talk to you',
+    verifyDomain: 'Verify the domain',
+    renewDomain: 'Renew the domain verification',
+    promote: 'Promote your listing',
     addScreenshots: 'Add screenshots',
     complete: 'Complete',
     yourProject: 'Your project',

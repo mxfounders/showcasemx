@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import QRCode from 'qrcode';
-import { getSession, sessionCookie } from '@/lib/auth/session';
+import { securityNotice } from '@/lib/auth/security-notices';
+import { getSession, readUserAgent, sessionCookie } from '@/lib/auth/session';
 import { verifyPassword } from '@/lib/auth/password';
 import { authSql, securityLimit } from '@/lib/auth/security';
 import { failure, solutionBody } from '@/lib/solutions/http';
@@ -82,6 +83,11 @@ export async function POST(request: NextRequest) {
       const confirmed =
         await sql`UPDATE auth_accounts SET totp_confirmed_at = now() WHERE id = ${account.id} AND totp_confirmed_at IS NULL RETURNING id`;
       if (!confirmed.length) return failure(t.totpAlreadyConfirmed, 409);
+      after(() =>
+        securityNotice(account.id, 'totp-on', readUserAgent(request.headers)).catch(
+          () => undefined,
+        ),
+      );
       return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
     }
 
@@ -103,6 +109,9 @@ export async function POST(request: NextRequest) {
     const cleared =
       await sql`WITH cleared AS (UPDATE auth_accounts SET totp_secret = NULL, totp_confirmed_at = NULL, totp_last_step = NULL, backup_codes = NULL WHERE id = ${account.id} AND totp_confirmed_at IS NOT NULL RETURNING id), challenges AS (DELETE FROM auth_login_challenges WHERE account_id IN (SELECT id FROM cleared)) SELECT id FROM cleared`;
     if (!cleared.length) return failure(t.totpAlreadyOff, 409);
+    after(() =>
+      securityNotice(account.id, 'totp-off', readUserAgent(request.headers)).catch(() => undefined),
+    );
     return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     if (error instanceof Error && error.message === 'AUTH_TOTP_KEY_MISSING')

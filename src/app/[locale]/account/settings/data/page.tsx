@@ -3,6 +3,7 @@ import { requireFounder } from '@/lib/solutions/server';
 import { authSql } from '@/lib/auth/security';
 import { ExportData, DeleteAccount } from '@/components/settings/data-controls';
 import { LanguagePreference } from '@/components/settings/language-preference';
+import { ConsentPreferencesButton } from '@/components/analytics/consent';
 import { i18n, type Locale } from '@/i18n/config';
 import { getDictionary } from '@/i18n/get-dictionary';
 
@@ -62,6 +63,7 @@ export default async function DataSettings(props: { params: Promise<{ locale: st
           <Link href="/cookies" className="font-medium text-[#365DC4] hover:underline">
             {dict.cookiesLink}
           </Link>
+          <ConsentPreferencesButton className="rounded font-medium text-[#365DC4] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#365DC4]" />
         </p>
       </div>
 

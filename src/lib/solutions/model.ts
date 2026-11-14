@@ -34,6 +34,12 @@ export type SolutionData = {
   priceBand?: string;
   setupTime?: string;
   compliance?: string[];
+  /**
+   * A category the founder could not find in the list, in their own words. Private:
+   * only the team reads it in ops, to learn which categories are missing. It never
+   * places the listing anywhere by itself.
+   */
+  otherCategory?: string;
 };
 export const emptySolution: SolutionData = {
   name: '',
@@ -52,6 +58,15 @@ export const solutionCategories = [
   'Operación',
   'Legal',
   'Agencias',
+  // Added so projects outside finance/operations have a real home instead of being
+  // filed under the nearest neighbour. The seven above stay as stored values.
+  'Marketing',
+  'Atención al cliente',
+  'Datos e IA',
+  'TI y seguridad',
+  'Comercio electrónico',
+  'Productividad',
+  'Desarrollo',
 ] as const;
 // Plain value lists a solution can declare. This file owns what is legal to
 // store; src/lib/taxonomy.ts imports these same arrays to attach labels,
@@ -66,6 +81,14 @@ export const solutionIndustries = [
   'Construcción',
   'Salud',
   'Educación',
+  'Tecnología',
+  'Servicios financieros',
+  'Logística y transporte',
+  'Hospitalidad',
+  'Inmobiliario',
+  'Servicios profesionales',
+  'Sector público',
+  'Agroindustria',
 ] as const;
 export const companySizes = ['micro', 'pyme', 'mediana', 'corporativo'] as const;
 // [] on either field means "declared, serves any" — a deliberate answer, not a
@@ -139,6 +162,50 @@ export const solutionCapabilities = [
   { id: 'reportes-cliente', category: 'Agencias' },
   { id: 'capacidad-equipo', category: 'Agencias' },
   { id: 'aprobaciones-creativas', category: 'Agencias' },
+  { id: 'email-marketing', category: 'Marketing' },
+  { id: 'redes-sociales', category: 'Marketing' },
+  { id: 'seo-contenido', category: 'Marketing' },
+  { id: 'publicidad-digital', category: 'Marketing' },
+  { id: 'automatizacion-marketing', category: 'Marketing' },
+  { id: 'analitica-marketing', category: 'Marketing' },
+  { id: 'eventos-webinars', category: 'Marketing' },
+  { id: 'chat-en-vivo', category: 'Atención al cliente' },
+  { id: 'whatsapp-atencion', category: 'Atención al cliente' },
+  { id: 'base-conocimiento', category: 'Atención al cliente' },
+  { id: 'encuestas-satisfaccion', category: 'Atención al cliente' },
+  { id: 'centro-contacto', category: 'Atención al cliente' },
+  { id: 'chatbots', category: 'Atención al cliente' },
+  { id: 'lealtad-clientes', category: 'Atención al cliente' },
+  { id: 'inteligencia-negocios', category: 'Datos e IA' },
+  { id: 'asistentes-ia', category: 'Datos e IA' },
+  { id: 'automatizacion-ia', category: 'Datos e IA' },
+  { id: 'procesamiento-documentos', category: 'Datos e IA' },
+  { id: 'modelos-predictivos', category: 'Datos e IA' },
+  { id: 'integracion-datos', category: 'Datos e IA' },
+  { id: 'ciberseguridad', category: 'TI y seguridad' },
+  { id: 'identidad-accesos', category: 'TI y seguridad' },
+  { id: 'respaldos-recuperacion', category: 'TI y seguridad' },
+  { id: 'gestion-dispositivos', category: 'TI y seguridad' },
+  { id: 'monitoreo-infraestructura', category: 'TI y seguridad' },
+  { id: 'soporte-ti', category: 'TI y seguridad' },
+  { id: 'tienda-online', category: 'Comercio electrónico' },
+  { id: 'venta-marketplaces', category: 'Comercio electrónico' },
+  { id: 'checkout-pagos-online', category: 'Comercio electrónico' },
+  { id: 'catalogo-online', category: 'Comercio electrónico' },
+  { id: 'carritos-abandonados', category: 'Comercio electrónico' },
+  { id: 'punto-venta', category: 'Comercio electrónico' },
+  { id: 'comunicacion-interna', category: 'Productividad' },
+  { id: 'documentos-colaborativos', category: 'Productividad' },
+  { id: 'agenda-reuniones', category: 'Productividad' },
+  { id: 'gestion-conocimiento', category: 'Productividad' },
+  { id: 'flujos-aprobacion', category: 'Productividad' },
+  { id: 'intranet', category: 'Productividad' },
+  { id: 'apis-integraciones', category: 'Desarrollo' },
+  { id: 'herramientas-desarrollo', category: 'Desarrollo' },
+  { id: 'infraestructura-nube', category: 'Desarrollo' },
+  { id: 'no-code-low-code', category: 'Desarrollo' },
+  { id: 'pruebas-calidad-software', category: 'Desarrollo' },
+  { id: 'analitica-producto', category: 'Desarrollo' },
 ] as const satisfies readonly { id: string; category: (typeof solutionCategories)[number] }[];
 // The other four commercial axes. None of these have a tri-state "any": an
 // empty/absent value means the same thing (never answered), so there's
@@ -236,6 +303,8 @@ export type FounderSolution = {
   editor_question?: string | null;
   has_site_image?: boolean;
   site_image_failure?: string | null;
+  /** Approved at some point, even if unpublished since: never deletable (SHCWS-32). */
+  was_published?: boolean;
 };
 export type SolutionEvent = {
   id: string;
@@ -243,6 +312,35 @@ export type SolutionEvent = {
   message: string;
   created_at: string;
 };
+/**
+ * Fixed messages the founder's own actions store in `solution_events`. They stay in
+ * Spanish in the database (ops reads them too); the account shows them through the
+ * dictionary. A reviewer's message is their own words and is never translated.
+ */
+export const solutionSystemMessages = {
+  submitted: 'Postulación enviada a revisión.',
+  unpublished: 'Ficha despublicada por su fundador.',
+  submissionWithdrawn: 'Envío retirado de la revisión por su fundador.',
+} as const;
+/**
+ * The decision a founder needs to read at the top of their listing (SHCWS-31): the latest
+ * event, when it is a request for changes or a rejection nobody has answered yet. Saving
+ * turns the listing back into a draft without writing an event, so the comment stays in
+ * view while the founder fixes it, and goes away once they submit again.
+ * `events` comes newest first, as getEvents returns it.
+ */
+export function latestDecision(status: SolutionStatus, events: readonly SolutionEvent[]) {
+  if (status === 'pending' || status === 'published') return null;
+  const event = events[0];
+  return event && (event.status === 'changes_requested' || event.status === 'rejected')
+    ? event
+    : null;
+}
+/** The review target ops commits to, in business hours, or null while none is set. */
+export function reviewTargetHours(value: string | undefined) {
+  const hours = Number(value);
+  return Number.isInteger(hours) && hours > 0 && hours <= 720 ? hours : null;
+}
 export const isSolutionId = (value: string) =>
   /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(value);
 export function readSolutionData(value: unknown): SolutionData | null {
@@ -326,6 +424,11 @@ export function readSolutionData(value: unknown): SolutionData | null {
     const links = readPublicLinks(input.projectLinks, 6);
     if (!links) return null;
     result.projectLinks = links;
+  }
+  if (input.otherCategory !== undefined) {
+    if (typeof input.otherCategory !== 'string' || input.otherCategory.length > 80) return null;
+    const value = input.otherCategory.trim();
+    if (value) result.otherCategory = value;
   }
   if (input.hideSiteImage !== undefined) {
     if (typeof input.hideSiteImage !== 'boolean') return null;

@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
+import { deliverNotifications } from '@/lib/notifications/server';
+import { matchSearchAlerts } from '@/lib/alerts/server';
 import { revalidateTag } from 'next/cache';
 import { authorizedCatalogRevalidate } from '@/lib/catalog-revalidate';
 
@@ -16,5 +18,12 @@ export async function POST(request: NextRequest) {
     );
   }
   revalidateTag('catalog');
+  // Ops calls this right after a publish/withdraw decision: send the founder's notice
+  // (and the launch kit, SHCWS-18) now instead of waiting for the daily cron, and tell
+  // buyers whose saved search the listing now matches (SHCWS-47).
+  after(async () => {
+    await matchSearchAlerts().catch(() => console.error('Search alerts failed.'));
+    await deliverNotifications({ categories: ['solution', 'alert'] }).catch(() => undefined);
+  });
   return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
 }

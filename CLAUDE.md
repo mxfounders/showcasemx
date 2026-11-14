@@ -48,6 +48,7 @@ Objetivos:
 | Fichas enriquecidas | Capturas, demo externa, límites de encaje, preview privada y guía de información | Evidencia declarada; storage de MVP, sin hosting de video |
 | Inicio adaptativo | Comprador/fundador/ambos, siguientes pasos y actividad propia | Preferencia visual, no permisos ni métricas de conversión |
 | Métricas | Vistas/clics agregados y solicitudes reales, 30 días por proyecto propio | No personas únicas, ventas ni identidades de guardados |
+| Analítica de producto | PostHog tras aceptar el banner: páginas, eventos clave, flags y errores | Variables en Vercel pendientes; sin grabación de sesiones; ops fuera |
 | Producción | Next actualizado, configuración Vercel, CI, preflight y builds locales | Credenciales externas, responsable editorial, políticas y despliegue remoto pendientes |
 
 El archivo de diseño contiene 63 entradas (7 × 9), con 57 ejemplos ficticios.
@@ -118,6 +119,7 @@ No asignar otros proyectos por nombre, dominio o coincidencia de correo.
 Next.js 15.5.24 App Router, React 19.2.8, TypeScript estricto, Tailwind 3, GSAP,
 Gota (los íconos de Flouvia, §72). Neon HTTP mediante @neondatabase/serverless. Sharp para avatares y capturas.
 No Clerk, sin ORM y sin SDK de IA (retirados en la limpieza de §62). Stripe (`stripe@23.0.0`) para anuncios (§64).
+PostHog (`posthog-js`, `posthog-node`) para analítica, flags y errores, solo con consentimiento (§73).
 jose valida JWT de Google. PostCSS 8.5.26 mediante override para Next; APIs dinámicas async.
 
 src/app:
@@ -470,7 +472,7 @@ respuestas, cierre/reapertura, conflictos de versión, retiro e historial atómi
 finally elimina solo cuentas del test, datos en cascada y sus contadores.
 No usar cuentas reales del usuario ni enviar emails.
 
-Pruebas unitarias: 181 pasando al 23 de octubre de 2026 (ver §72). Lint y TypeScript correctos.
+Pruebas unitarias: 185 pasando al 2 de noviembre de 2026 (ver §73). Lint y TypeScript correctos.
 Integraciones nuevas: `RUN_REVIEWS_INTEGRATION=1 node tests/integration/reviews.cjs` y
 `RUN_COMPLIANCE_INTEGRATION=1 node tests/integration/compliance.cjs` (esta con un SAT
 simulado; ver su encabezado). Ambas aceptan `APP_ORIGIN` para apuntar a un build aislado.
@@ -504,6 +506,7 @@ Leer según área:
 - docs/account-settings.md: perfil/contraseña/recuperación.
 - docs/newsletter-auth.md: newsletter y acceso inicial.
 - docs/roadmap.md: estado consolidado del plan de producto.
+- docs/analytics.md: PostHog, banner de consentimiento, eventos, proxy /relay y límites.
 - docs/ops.md: backoffice de operaciones (acceso, sesiones, modo seguro, bitácora encadenada, pantallas y procedimientos).
 - docs/database.md, docs/env.md, docs/stack.md: referencias técnicas.
 - docs/product.md, docs/design.md, docs/colors.md, docs/listings.md: producto y estética.
@@ -2749,16 +2752,17 @@ equipo `mxfounders` en esta máquina).
 2. **Nada de §62–§64 está commiteado ni desplegado.** Producción conserva los bugs que
    se corrigieron aquí: `/comunidad` roto, ficha y filtros sin títulos en español, 10
    artículos del blog en 404 y favicons cargados desde Google.
-3. **Stripe**: domicilio fiscal y registros en Stripe Tax (prueba y producción);
-   endpoint `https://shwcs.site/api/webhooks/stripe` con los eventos de docs/ads.md;
-   `STRIPE_SECRET_KEY` (clave restringida) y `STRIPE_WEBHOOK_SECRET` en Vercel; tarifas
-   reales con `npm run ads:rates`; autenticar el MCP de Stripe con `/mcp`; **regenerar
-   la clave secreta de prueba**, que se pegó en el chat.
+3. **Stripe** (§74; sandbox ya listo): en la cuenta en vivo de shwcs, Stripe Tax (país
+   México + registro MX) y el webhook `https://shwcs.site/api/webhooks/stripe`; clave
+   `rk_live_` con los cuatro permisos de docs/ads.md y `STRIPE_WEBHOOK_SECRET` en Vercel
+   como *sensitive* y redeploy; `npm run verify:stripe -- --prompt` en verde; tarifas en
+   `shwcs_production` y abrir ubicaciones al final; marca (ícono/logo) en Stripe;
+   **regenerar la clave secreta de prueba**, que se pegó en un chat anterior.
 4. ~~Migraciones en `shwcs_production`~~ **Hecho el 10 de octubre (§71)**: producción
    tiene todo el orden de docs/database.md, incluidas `ad-campaigns`, `billing`,
    `solution-reviews` y `compliance`; `media-renditions` y `ops-hardening` ya estaban.
-5. **Facturación CFDI con Cord** (§67, ya construida): quién es el emisor (RFC y CSD de
-   shwcs o de la empresa de Cord/Flouvia); `CORD_API_KEY` de esa cuenta (`sk_test_` para
+5. **Facturación CFDI con Cord** (§67, ya construida): emisor decidido el 14 de noviembre,
+   Flouvia, S.A.S. de C.V. (§74); confirmar que la cuenta de Stripe de shwcs está a su nombre; `CORD_API_KEY` de esa cuenta (`sk_test_` para
    repetir la prueba contra el sandbox real, `sk_live_` en Vercel); confirmar los nombres
    de los campos fiscales del cliente en Cord; tratamiento de compradores extranjeros y si
    el recibo de Stripe se conserva junto al CFDI (hoy: sí, para todos).
@@ -2772,6 +2776,9 @@ equipo `mxfounders` en esta máquina).
 10. **Verificar en Vercel**: `AUTH_TOTP_KEY` (§49), `VIEW_HASH_SECRET` activo tras un
     redeploy (§55), `OPS_MEDIA_SECRET`, `CATALOG_REVALIDATE_SECRET`.
 11. **Responsable editorial** y estado real de Cord en producción (§45 decía `pending`).
+12. **PostHog (§73)**: `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` y `NEXT_PUBLIC_POSTHOG_HOST` en Vercel
+    (Production y Preview) y redeploy; plazo de retención en PostHog; revisión legal de los
+    cambios en Privacidad y Cookies.
 
 ### B. Código y producto
 
@@ -3212,3 +3219,338 @@ necesita más presencia, se pide con `weight` y se vuelve a correr el sync.
 - **No capturado**: páginas con sesión (cuenta y panel de ops) y la ficha
   `/soluciones/[id]` (la base de desarrollo no tiene fichas publicadas). Las cubren los
   tipos y el build.
+
+## 73. PostHog con banner de consentimiento — 2 noviembre 2026
+
+Petición del propietario: instalar PostHog. Eligió banner de consentimiento (no el modo sin
+cookies), analítica de producto + feature flags + error tracking, en sitio público y cuenta.
+Proyecto 705502, región de EE. UU. Contrato completo: docs/analytics.md. Sustituye lo que
+§42 y las políticas decían de «sin cookies analíticas»: ahora existen, solo con permiso.
+
+- **Asistente de PostHog**: el propietario corrió `npx @posthog/wizard` a la vez. Iniciaba
+  PostHog para todos sin consentimiento, pasaba id y correo de la cuenta a la navbar
+  pública (contra §25) y a `identify`, lanzaba errores en desarrollo sin token (rompía
+  acciones ya guardadas) y añadía OpenTelemetry para logs. Todo eso se deshizo; se
+  conservaron los paquetes y sus eventos de servidor, ahora condicionados. Su paso
+  «warehouse» (copiar Neon, Resend y Stripe a PostHog) se saltó: cruzaría la frontera de
+  §44. No volver a conectarlo sin vistas agregadas y sin datos personales.
+- **Navegador**: `posthog-js` se importa de forma diferida solo tras aceptar; antes no
+  hay cookies `ph_`, almacenamiento ni peticiones. Cookie de decisión `shwcs-analytics`
+  (6 meses). Retirar borra `ph_*` y recarga. Clics sin texto, sin grabación de sesiones,
+  `cross_subdomain_cookie: false`, `before_send` quita `#fragmentos` (tokens de
+  recuperación y verificación). `identify` solo con el UUID, solo desde el layout de
+  `/account`; nunca correo ni nombre.
+- **Servidor**: `captureServerEvent(request, accountId, …)` solo si la petición trae
+  `granted`, enviado con `after()`. Eventos en docs/analytics.md, incluidos
+  `account_registered` y `signed_in`. `onRequestError` reporta errores sin persona.
+- **Proxy** `/relay` → PostHog (`next.config.mjs`); `skipTrailingSlashRedirect` activado y
+  el middleware quita la barra final de las páginas con 308 y excluye `/relay/`.
+- **Interfaz**: banner bilingüe (diccionario `consent`), «Preferencias de cookies» en el
+  footer y en Configuración → Datos (`common.cookiePreferences`). `global-error.tsx` usa el
+  idioma de la URL.
+- **Legal (es/en)**: Privacidad gana «Analítica de producto y errores» (`#analitica`) y
+  PostHog como subprocesador; Cookies gana «Analítica opcional (PostHog)» (`#analitica`);
+  revisión fechada en noviembre. Requiere revisión legal humana.
+- **Verificación**: 185 unitarias, lint, tipos y formato limpios; build aislado con el
+  mismo modo de renderizado por ruta que `HEAD` (+2 kB de JS compartido). Chrome sin
+  interfaz por DevTools, 17/17 contra el build con un token falso: banner sin peticiones,
+  rechazar no envía nada, reabrir con foco y Escape, aceptar envía solo por `/relay`,
+  inglés, retirar borra todo, móvil sin desbordamiento. Proxy comprobado con curl (assets
+  200, API 401 con token falso). **No probado**: eventos de servidor con sesión real
+  contra PostHog, ni con el token real (para no ensuciar el proyecto).
+- Pendiente: variables en Vercel y redeploy, borrar la persona en PostHog al eliminar una
+  cuenta, plazo de retención y revisión legal (§65 A12).
+
+## 74. Stripe para espacios patrocinados — 14 noviembre 2026
+
+Petición del propietario: «configurar bien Stripe para lo de sponsor». Decisiones suyas:
+emisor **Flouvia, S.A.S. de C.V.**, ya inscrito ante el SAT con IVA; tarifas de
+lanzamiento categoría 9 USD / 169 MXN e inicio 19 USD / 349 MXN por día, antes de
+impuestos. Contrato y pasos completos en docs/ads.md («Stripe Tax», «Clave restringida»,
+«Puesta en marcha»).
+
+- **Sandbox de shwcs** (`acct_1UOlLuCkrDiCJuPj`, el de la clave de prueba local): Stripe
+  Tax `active` con domicilio fiscal solo de país (México, igual que la cuenta de CORD;
+  Stripe no exige dirección postal), `tax_behavior: exclusive`, `tax_code: txcd_10701000`
+  (comprobado en el catálogo de Stripe: «Website Advertising») y registro MX activo
+  (la API solo ofrece `simplified` para MX; con domicilio en México calcula IVA nacional).
+  Cálculos verificados: empresa mexicana con o sin RFC 16 % `standard_rated`; UE con
+  NIF-IVA `reverse_charge`; EE. UU. y UE sin NIF `not_collecting`.
+- Una Checkout Session creada con `checkoutSessionParams` real queda en
+  `requires_location_inputs`: lo esperado, porque pide la dirección en la página y el
+  impuesto se calcula al escribirla. **No probado**: pagar en la página alojada.
+- `npm run verify:stripe` (`scripts/verify-stripe.cjs`): revisión de solo lectura con
+  cualquier clave (`--prompt` la pide sin mostrarla): tipo de clave, cuenta, Stripe Tax,
+  registro MX, IVA real con una vista previa de factura (gratis, solo `invoice_read`),
+  webhook con los nueve eventos y la versión que fija el SDK, y permisos de la clave con
+  sondas que Stripe rechaza sin crear nada (incluidos permisos de más: payouts,
+  webhooks, balance). Toma versión y código de impuesto de `src/lib/ads/stripe.ts`.
+- `npm run stripe:listen` (`scripts/stripe-listen.cjs`): reenvía al dev local los mismos
+  eventos y escribe `STRIPE_WEBHOOK_SECRET` en `.env.local` sin imprimirlo.
+- `tests/stripe-config.test.ts`: la lista de eventos del script coincide con los `case`
+  del webhook y con docs/ads.md. 192 unitarias, lint, tipos y formato limpios.
+- Base de desarrollo (`neondb`): tarifas de lanzamiento puestas y categoría e inicio
+  abiertos para probar en local. **Producción sin tocar**: escribir en `shwcs_production`
+  quedó bloqueado por permisos en esta sesión.
+- Pendiente (§65 A3): la cuenta en vivo de shwcs no estaba en el conector de Stripe de esta
+  sesión (solo CORD) y Vercel de `mxfounders` sigue sin acceso desde esta máquina. La
+  cuenta de CORD en Stripe figura como persona física, no como sociedad: confirmar a nombre
+  de quién está la cuenta de shwcs antes de vender.
+
+
+## 75. Issues fáciles de Linear (equipo shcws) — 14 noviembre 2026
+
+Sesión «issues». Todo en local, sin commit ni deploy. Cada issue tiene en Linear un
+comentario con el detalle y la verificación. Pasaron a Done: SHCWS-15, 34, 35, 37, 39,
+40, 46, 49, 71, 98, 106 y 116.
+
+- **Navegación**: `/sponsor` oculto hasta `/anunciate`. `tests/navigation.test.ts`
+  recorre footer y navbar (es/en) y falla si un enlace visible no tiene página.
+  La lista de páginas informativas y las `noindex` viven en `src/lib/info-pages.ts`.
+- **Copy verdadero** (§46, regla «sin éxito simulado»):
+  - las cuatro tarjetas del home describen funciones que existen y llevan a su destino;
+  - `/criterios` ya no promete precios exigidos, verificación de correo = dominio ni auditorías;
+  - `/aplicar` tiene CTA a `sign-up?next=/account/solutions/new` y tres pasos reales;
+  - las colecciones se llaman como lo que son (reglas automáticas);
+  - la tarjeta de Cord en el home ahora es un artículo del blog. Además cargaba una imagen
+    de cordhq.app, que era un tercero.
+- **Hero**: `heroSuggestions()` (`src/lib/catalog-search.ts`) solo muestra chips de
+  categorías con fichas y ejemplos de búsqueda con resultados. Con el catálogo vacío no
+  sugiere nada.
+- **Búsqueda sin resultados**: el home y las categorías vacías enlazan a
+  `/contacto?motivo=find&necesidad=…`. El formulario llega prellenado
+  (`readContactPrefill`, una línea, 200 caracteres).
+- **Oportunidades**: `isBuyerEmailVerified()` muestra si el correo del comprador está
+  verificado (la misma dirección que se envió), en vez de un aviso fijo.
+- **Confianza**: la tarjeta de identidad fiscal salió de la ficha del fundador. Ahora vive
+  en `/account/solutions/[id]/trust` («Confianza»), junto al TXT de dominio.
+- **SEO e IA**:
+  - `src/app/robots.ts`: bloquea `/api/` (salvo imágenes públicas de fichas), rutas
+    privadas y URLs con query; deja abierto `/_next/`;
+  - `src/app/sitemap.ts`: es/en con `hreflang`, `lastmod` solo real, cada hora;
+  - `/llms.txt` y `/soluciones/<id>.md` (`src/lib/machine-readable.ts`), con la misma
+    proyección que la ficha (sin `contactEmail`) y caché de 5 min sin `stale`.
+- **Comunidad**:
+  - la navbar muestra «Comunidad» y el footer «Listas de la comunidad»;
+  - `reservedCurator()` impide firmar listas como shwcs;
+  - una lista pública necesita 3 proyectos disponibles para publicarse y se oculta si baja
+    de 3.
+  - SHCWS-114 sigue abierto: la franja del home depende de SHCWS-113. El renombrado de
+    firmas en ops quedó en SHCWS-162.
+
+Verificación: pruebas nuevas en navigation, contacts, discovery, contact-inquiry,
+machine-readable y community; lint completo limpio. Los recorridos contra `next dev` y
+`neondb` usaron cuentas `@example.invalid`, borradas al terminar. No se corrió
+`npm run build`, porque el `next dev` del propietario usa el mismo `.next` (§13).
+
+Al cerrar esta sesión, la sesión «UX» tenía en curso el editor de fichas, la taxonomía y
+`ops/`. Por eso fallaban 5 pruebas, `typecheck` en `solution-editor.tsx` y el formato de
+7 archivos suyos; ninguno de esos archivos es de esta entrega.
+
+## 76. Registro rápido, «Verificado por shwcs», reconocimientos e insignias — 14 noviembre 2026
+
+Petición del propietario: registrar un proyecto tiene que ser rápido y abierto a cualquiera
+(sin RFC: un fundador de EE. UU. no tiene uno), el equipo verifica y lo muestra con una
+palomita, un reconocimiento propio en lugar del «Product of the Day» y una insignia para el
+sitio del fundador. Decisiones del propietario: reconocimientos **semanal automático y
+selección editorial**; autollenado con **metadatos del sitio, sin IA** (la IA sigue en
+SHCWS-151). Linear: SHCWS-29, -36, -163 a -167. Referencias: docs/recognition.md,
+docs/guided-solution-form.md, docs/compliance.md. Sustituye lo que §59 decía del editor
+de 17 preguntas y lo que §71 decía de que el dueño declara su identidad fiscal.
+
+- **Registro**: `/account/solutions/new` pide solo el enlace; el editor lee el sitio
+  (nombre, descripción, portada y redes, solo en campos vacíos) y presenta tres pasos
+  obligatorios (Lo básico, Dónde encaja, Para quién) y una pantalla de revisión con lo
+  opcional como tarjetas. Vista previa en vivo de la tarjeta del catálogo. Sugerencias de
+  categorías, capacidades e industrias en `src/lib/search/suggest.ts` (raíz común, sin
+  palabras genéricas). «¿No ves tu categoría?» → `otherCategory`, privado; ops lo quita al
+  publicar (`data - 'otherCategory'`). Los ids del editor anterior siguen funcionando.
+- **Taxonomía**: 14 categorías (nuevas: Marketing, Atención al cliente, Datos e IA, TI y
+  seguridad, Comercio electrónico, Productividad, Desarrollo), 15 industrias y 44
+  capacidades nuevas. `/explorar/soporte` redirige a `/explorar/atencion-clientes`.
+- **Identidad fiscal**: fuera de la cuenta del fundador (tarjeta y ruta borradas). La
+  registra el equipo en ops al verificar; sigue alimentando la 69-B y «Compra comprobada».
+  Privacidad actualizada en ambos idiomas; el propietario aprobó el texto el 14 de noviembre.
+- **Verificado por shwcs** (`solution_verifications`): lo decide ops con cuatro
+  comprobaciones, queda atado al host revisado y se ve junto al nombre, en las tarjetas y
+  como sello. **Top de la semana** y **Selección shwcs** (`solution_awards`,
+  `solution_award_runs`): el semanal lo calcula una vez el cron de monitor, con mínimos
+  (3 cuentas verificadas por proyecto, 3 proyectos por ranking) y uno, dos o tres puestos
+  según cuántos compiten; la selección la elige un admin, máximo 3 al mes y nunca para
+  una ficha propia (el propietario no puede elegir Cord ni Flouvia).
+- **Insignias**: `GET /api/badge/[id]` en formato horizontal o sello (escudo con metal por
+  tipo y puesto), claro/oscuro, es/en, SVG autocontenido con el wordmark oficial; la ficha
+  muestra los sellos reales y `/criterios#reconocimientos` explica todo.
+- **Migración** `db/solution-recognition.sql` (orden 34 en docs/database.md): aplicada en
+  `neondb` y, el 14 de noviembre por pedido del propietario, en `shwcs_production` con
+  `neondb_owner`. Verificado ahí: tres tablas y ocho índices, el rol
+  `shwcs_app_production` (producto y ops) con SELECT/INSERT/UPDATE/DELETE y probado como
+  ese rol, y datos sin cambios (6 cuentas, 5 fichas, 1 publicada).
+- **Decisiones del propietario** (14 nov): el precio sigue opcional en el registro; el texto
+  de Privacidad sobre verificación, identidad fiscal e insignias queda aprobado.
+- **Verificación**: 222 unitarias, lint, formato y tipos en verde (salvo
+  `tests/structured-data.test.ts`, de otra sesión); ops lint, tipos y build. Contra
+  `neondb` con cuentas temporales: cálculo semanal, verificación por host y ops 36/36.
+  Recorrido completo en Chrome sin interfaz contra el `next dev` en marcha: enlace →
+  lectura de `cordhq.app` → sugerencias → envío, ficha con sellos (es/en, móvil), tarjeta de
+  insignias y `/criterios`. Sin `npm run build` del producto (el dev usa el mismo `.next`,
+  §13). Sin commit ni despliegue.
+
+## 77. Conversación en las solicitudes y limpieza de la cuenta — 14 noviembre 2026
+
+Salió de la auditoría de la cuenta (SHCWS-160): con datos de prueba, el fundador preguntó
+«¿demo el jueves?» y la conversación murió ahí. El comprador no podía responder y el
+fundador solo podía pasar a «Cerrada», que además venía preseleccionada. Decisión del
+propietario (SHCWS-63): **hilo simple dentro de shwcs**. Sustituye «No es chat» de §9 y
+de docs/contacts.md. Linear: SHCWS-168 (conversación) y SHCWS-169 (limpieza).
+
+- **Conversación**: comprador y destinatario escriben mensajes de 1–2000 caracteres
+  mientras la solicitud está nueva o en conversación (`POST /api/contacts/[id]/messages`,
+  `src/lib/contacts/messages.ts`). El primer mensaje del destinatario la pasa a «En
+  conversación». Una sola sentencia comprueba participación y estado, sube la versión e
+  inserta el evento: un mensaje y un cierre simultáneos nunca ganan los dos. Mismo origen,
+  sesión, 60 mensajes por hora y aviso inmediato con `deliverNotifications`.
+- `db/contact-messages.sql`: `contact_events.kind` (`status` | `message`) y
+  `notify_contact_event` con asuntos «Nuevo mensaje de {empresa} sobre {proyecto}» y
+  «{proyecto} te respondió». Parte de la versión de db/contact-alerts-default.sql. El
+  correo de un mensaje lleva el texto y nunca vuelve a mandar la solicitud ni la copia a la
+  dirección privada de la ficha.
+- **Hilo** (`src/lib/contacts/thread.ts`, `components/contacts/thread.tsx`): de lo más
+  antiguo a lo más nuevo; la necesidad del comprador lo abre; los cambios de estado son
+  líneas del sistema, en segunda persona para quien lee («Cerraste…»). Las respuestas
+  antiguas, que venían dentro de un cambio de estado, se muestran como mensaje. Arriba,
+  «Te toca responder» o «Esperando a {nombre} · hace X» (`whoseTurn`: quién habló al
+  último). No hay tiempo real: se actualiza al enviar o al recargar.
+- **Estado como acción secundaria**: «Más acciones» empieza en «Elige un cambio», nunca en
+  «Cerrada». Cerrar y reabrir siguen pidiendo un motivo visible para el comprador; retirar
+  sigue igual.
+- **Limpieza**:
+  - Guardados ya no se desborda a 1440 px, y con menos de 6 guardados (y ningún filtro
+    activo) solo muestra orden y búsqueda.
+  - Los títulos de la cuenta van sin punto final (§37).
+  - Barra lateral en grupos «Comprar»/«Publicar», cada uno visible según el modo, lo que la
+    cuenta ya tiene o la página actual.
+  - Inicio con «Te toca» arriba («Atlas te respondió · anteayer», «Distribuidora Norte
+    espera tu respuesta»); «Explora por necesidad» solo en modo comprador.
+- **Migración**: aplicada solo en `neondb`. Antes de desplegar, aplicar en
+  `shwcs_production` **junto con** db/contact-alerts-default.sql, db/contact-read-state.sql
+  y db/contact-outcomes.sql de la otra sesión, en el orden de docs/database.md. Mi
+  migración redefine la misma función de avisos.
+- **Verificación**: unitarias del hilo y del correo de mensaje; contra `neondb` con cuentas
+  temporales: mensajes de ambos lados, cambio de estado, rechazo a terceros y a
+  conversaciones cerradas, carrera cierre/mensaje y los tres asuntos de aviso. En Chrome sin
+  interfaz: el comprador lee y responde, el fundador ve su turno, «Más acciones» sin
+  preselección, móvil sin desbordamiento. El `next dev` compartido dejó de responder a mitad
+  de la prueba (lo usaban otras sesiones), así que el último tramo (el fundador responde
+  desde la interfaz y el aviso del comprador) se hizo en una copia aislada en otro puerto,
+  como indica §13.
+
+## 78. Segunda tanda de issues: avisos, acceso, búsqueda y operación — 14 noviembre 2026
+
+Sesión «issues», continuación de §75. Pedido del propietario: cerrar issues hasta dejar
+100 abiertos, y al final aplicar las migraciones en producción y subir todo a `main`.
+Cada issue tiene en Linear un comentario con el detalle y la verificación. Parte del
+trabajo lo hicieron agentes en paralelo con la misma regla: `neondb` para probar,
+cuentas `@example.invalid`, correos solo a `delivered+…@resend.dev`.
+
+### Avisos y correo (`src/lib/notifications/`)
+
+- Contacto (SHCWS-13): correo encendido por defecto y envío inmediato con `after()`; el cron
+  queda como reintento. El aviso de una solicitud nueva lleva lo que el comprador compartió.
+- Seguridad y bienvenida (SHCWS-153/154/156): categorías `security` (siempre activas, con
+  «No fui yo» → elegir contraseña nueva) y `account`; dispositivo nuevo, contraseña,
+  2FA, Google; contraseñas filtradas rechazadas al registrar y avisadas al entrar.
+- Fichas (SHCWS-18/20, `db/listing-notices.sql`): correo encendido por defecto; decisión
+  editorial con su comentario; al publicar, el kit de lanzamiento (compartir, insignia,
+  invitación a reseñar); comentario, reporte (sin quién), reseña; espacios patrocinados
+  (pago, pausa, disputa, cancelación, reembolso, retiro de ops por `pause_reason`, «empieza
+  mañana», «terminó» con impresiones y clics, `src/lib/ads/notices.ts`). `listing_notice()`
+  corta títulos a 180 caracteres para que un nombre largo no tumbe el webhook de Stripe.
+- Comunidad (SHCWS-117, `db/community-notices.sql`): me gusta, guardados y comentarios
+  agrupados por lista y día, solo números; «tu proyecto aparece en una lista pública» solo
+  cuando la lista se ve (3 proyectos). Correo de comunidad opcional (`community_email`).
+  La campana acepta enlaces a `/comunidad/<id>` (`src/lib/notifications/href.ts`).
+- «Tu semana en shwcs» (SHCWS-21, `weekly.ts`, `db/weekly-digest.sql`): lunes, a fundadores
+  con ficha publicada; nada si la semana fue cero; baja firmada y `List-Unsubscribe` de un
+  clic; clics agregados por semana; sin aperturas (requieren píxel, §42).
+- Equipo de revisión (SHCWS-139, `src/lib/review-queue/alerts.ts`): correo al enviarse una
+  ficha y resumen diario con lo que pasó del plazo (`SOLUTION_REVIEW_TARGET_HOURS`, 48 h por
+  defecto). Solo en producción o con `REVIEW_ALERTS=1`: `neondb` tiene un revisor real.
+
+### Acceso (SHCWS-26/155)
+
+Sustituye en §6 «registro devuelve resultado genérico» y en §3 el botón de Google
+«Pendiente de conexión»:
+- una cuenta nueva sale del registro con sesión y sigue a `next`; «Guardar» estando fuera
+  guarda desde el propio formulario (`pendingSave`), nunca desde un enlace GET (§5);
+- una cuenta existente nunca abre sesión desde el registro; su dueño recibe «Ya tienes una
+  cuenta en shwcs», como máximo uno al día;
+- la cookie de sesión distingue cuenta nueva de existente: costo aceptado en SHCWS-26,
+  acotado por el límite por dirección y visible al dueño por el correo;
+- el botón de Google se oculta sin credenciales.
+
+### Búsqueda y demanda (SHCWS-107)
+
+`search_demand` (`db/search-demand.sql`): búsquedas por día y consulta normalizada, sin
+cuenta ni dirección, con veces, sin resultados y clics a una ficha; baliza en `/buscar`, el
+inicio y las categorías; DNT/GPC respetados; nunca guarda algo que parezca correo, teléfono
+o URL; 400 días. Ops: `/panel/demanda`. Párrafo nuevo en Privacidad (es/en).
+
+### Decisiones registradas en Linear
+
+SHCWS-63 (hilo de conversación, decidido por el propietario e implementado en SHCWS-168) y
+SHCWS-108 (PostHog con banner, §73).
+
+### Trabajo de los agentes
+
+El detalle de cada uno está en su issue y en docs/.
+
+- Contactos y cuenta del fundador (SHCWS-14, 22, 23, 31, 32): no leídas, resultado de cada
+  oportunidad, métricas del fundador, revisión visible y despublicar la propia ficha.
+- Ficha pública (19, 50, 54, 55, 140): `utm` en enlaces de salida, «Pedir propuesta» como
+  acción principal, compartir, parecidas por capacidades y reportar comentarios.
+- Catálogo (38, 41, 52, 131, 134): sin «Espacio disponible» en el home (sustituye §24),
+  búsqueda por raíz y temas, señal de respuesta del fundador, changelog real y dominio
+  verificado en tarjetas. SHCWS-125 tiene la página `/nuevo`; falta el correo (SHCWS-124).
+- Ops (69, 96, 142, 162, y la parte de ops de 57 y 140): acciones sobre espacios
+  patrocinados, CFDI fallidos, ocultar reseñas sin reporte, renombrar firmas, moderación
+  de preguntas y comentarios. SHCWS-110 espera decidir de dónde sale el origen de las visitas.
+- Anuncios (70, 72, 75, 77, 150): compra en una pantalla con calendario de disponibilidad,
+  códigos promocionales del servidor, lista de espera, alcance real y reporte del anunciante
+  con atribución por parámetro.
+- Reseñas y preguntas (57, 132, 135): enlace del fundador para invitar (reseñas marcadas
+  «Invitada por el proyecto», peso ×0.5), nivel «Contactó vía shwcs» (×2) e invitación a los
+  30 días, preguntas públicas con respuesta del fundador y `FAQPage`. Acceso por enlace
+  mágico solo para quien llega desde una invitación (`src/lib/auth/magic-link.ts`).
+- Alertas y seguimiento (47, 121): «Avísame» en búsqueda y categorías (`/account/alerts`) y
+  seguir listas y curadores, con avisos agrupados.
+- Seguridad (159): carreras de la verificación en dos pasos y de los códigos de respaldo,
+  límite por cuenta y vinculación de Google sin correo confirmado, corregidos con pruebas;
+  CSP con `script-src` (`src/lib/content-security-policy.mjs`). Seguimiento en SHCWS-170 a
+  174 (nonce, límites globales, Google y 2FA, cookies).
+
+### Pago en la página (sin redirigir a Stripe)
+
+Petición del propietario. La Checkout Session usa `ui_mode: 'elements'`: el formulario
+(dirección, identificador fiscal y Payment Element de Stripe con la apariencia de shwcs)
+vive en la página de promoción y confirma ahí mismo. Impuestos, códigos, factura,
+webhook y reembolsos no cambian. Requiere `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`; sin ella la
+compra no se abre. Solo esa página admite orígenes de Stripe en la CSP. Sin subdominio
+`billing.`: la sesión vive en `shwcs.site`. Detalle en docs/ads.md («Pago en la página»).
+
+### Migraciones y despliegue
+
+Migraciones 35 a 49 de docs/database.md: aplicadas en `neondb` y, el 14 de noviembre por
+pedido del propietario, en `shwcs_production` con `neondb_owner`, en ese orden, antes del
+push a `main`.
+Verificado después en producción: tablas y columnas nuevas, permisos del rol
+`shwcs_app_production` sobre cada tabla, secuencia y función nueva, y datos intactos (6
+cuentas, 6 fichas, 1 publicada).
+
+Dependencias: `npm audit` encontró avisos nuevos, no causados por esta entrega. Se
+actualizó `next` a 15.5.29 en producto y ops (crítico: ejecución remota en el optimizador de
+imágenes con SVG) y `@vercel/blob` a 2.9.0, con `overrides` para `undici` ≥6.29.1 y el `zod`
+de `@vercel/cli-config` ≥4.6.6. Ops recibió los `overrides` de `postcss` (el de `next`) y de
+`source-map-js` que ya tenía el producto. Resultado: 0 vulnerabilidades en dependencias de
+producción en las dos apps. Nuevos: `@stripe/stripe-js` 10.2.1 y `@stripe/react-stripe-js`
+7.0.1 (pago en la página). Tipos, 308 pruebas y builds aislados de producto y ops en verde.

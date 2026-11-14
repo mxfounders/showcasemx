@@ -43,7 +43,9 @@ export const POST = opsRoute({ limit: ['review', 120, 600] }, async ({ body, use
         version = version + 1,
         updated_at = now(),
         published_at = CASE WHEN ${isPublishing} THEN now() WHEN ${isWithdrawing} THEN NULL ELSE published_at END,
-        published_data = CASE WHEN ${isPublishing} THEN data WHEN ${isWithdrawing} THEN NULL ELSE published_data END
+        -- otherCategory is the founder's private «¿no ves tu categoría?» note for the
+        -- team: it never travels into what the public pages read.
+        published_data = CASE WHEN ${isPublishing} THEN data - 'otherCategory' WHEN ${isWithdrawing} THEN NULL ELSE published_data END
       WHERE id = ${solutionId} AND version = ${version} AND status = ANY(${ALLOWED_FROM[action]}::text[])
       RETURNING id, status, version
     ), event AS (

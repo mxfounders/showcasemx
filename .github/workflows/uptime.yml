@@ -1,0 +1,62 @@
+name: Uptime
+
+# External probe (SHCWS-6): every 15 minutes from GitHub, outside Vercel, so a disabled
+# deployment can't silence it. scripts/uptime-check.mjs has the rules.
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: 'URLs to probe instead, separated by spaces (to test the alert)'
+        required: false
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/uptime-check.mjs
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: check
+        continue-on-error: true
+        env:
+          URLS: ${{ inputs.urls }}
+        # URLS is split on purpose; it only ever comes from a collaborator's manual run.
+        run: node scripts/uptime-check.mjs $URLS
+      - name: Open the outage issue
+        if: steps.check.outputs.down == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPORT: ${{ steps.check.outputs.report }}
+        run: |
+          open=$(gh issue list --label uptime --state open --json number --jq '.[0].number')
+          if [ -z "$open" ]; then
+            gh label create uptime --color B60205 --description 'Alerta del vigía de disponibilidad' 2>/dev/null || true
+            gh issue create --title 'shwcs no responde' --label uptime --body "$REPORT"
+          fi
+      - name: Close the outage issue on recovery
+        if: steps.check.outputs.down == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          open=$(gh issue list --label uptime --state open --json number --jq '.[0].number')
+          if [ -n "$open" ]; then
+            gh issue close "$open" --comment "Volvió a responder ($(date -u +%Y-%m-%dT%H:%M:%SZ))."
+          fi
+      - name: Fail the run while something is down
+        if: steps.check.outputs.down == 'true'
+        run: exit 1

@@ -7,7 +7,11 @@ import { ArticleProgress, CopyArticleLink } from '@/components/blog/article-tool
 import { ArticleFeedback } from '@/components/blog/article-feedback';
 import { i18n } from '@/i18n/config';
 import { getDictionary } from '@/i18n/get-dictionary';
-import { localeAlternates } from '@/lib/seo';
+import { JsonLd } from '@/components/json-ld';
+import { ArticleCatalog } from '@/components/blog/article-catalog';
+import { InlineLinks } from '@/components/blog/inline-links';
+import { articleJsonLd, breadcrumbJsonLd } from '@/lib/structured-data';
+import { localeAlternates, pageOpenGraph } from '@/lib/seo';
 
 // {locale,slug} pairs, not just slug: same reasoning as explorar/[slug] — this
 // is the innermost dynamic segment under [locale], which has no
@@ -35,10 +39,20 @@ export async function generateMetadata({
   const { slug, locale } = await params;
   const post = getBlogPost(slug, locale);
   if (!post) notFound();
+  const { meta } = await getDictionary(locale);
   return {
     title: `${post.title} | shwcs`,
     description: post.excerpt,
     alternates: localeAlternates(locale, `/blog/${post.slug}`),
+    openGraph: pageOpenGraph({
+      locale,
+      path: `/blog/${post.slug}`,
+      title: post.title,
+      description: post.excerpt,
+      ogLocale: meta.site.ogLocale,
+      publishedTime: post.publishedAt,
+    }),
+    twitter: { card: 'summary_large_image' },
   };
 }
 
@@ -58,6 +72,14 @@ export default async function BlogArticle({
   const nextTone = blogTones[next.tone];
   return (
     <article className="pb-16 sm:pb-24">
+      <JsonLd data={articleJsonLd(post, locale)} />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: 'shwcs', path: `/${locale}` },
+          { name: 'Blog', path: `/${locale}/blog` },
+          { name: post.title, path: `/${locale}/blog/${post.slug}` },
+        ])}
+      />
       <ArticleProgress color={tone.background} />
       <header className="px-4 pt-5 sm:px-7 sm:pt-8 lg:px-10">
         <div
@@ -170,7 +192,7 @@ export default async function BlogArticle({
                             key={paragraph}
                             className={`${paragraphIndex === 0 ? 'text-xl leading-[1.55] text-stone-700 sm:text-2xl' : 'text-lg leading-8 text-stone-600'}`}
                           >
-                            {paragraph}
+                            <InlineLinks text={paragraph} />
                           </p>
                         ))}
                       </div>
@@ -181,19 +203,39 @@ export default async function BlogArticle({
             ))}
           </div>
 
+          <ArticleCatalog post={post} locale={locale} dict={dict} />
+
           <div className="mt-16 flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-t border-stone-200 pt-10 sm:mt-24">
             <ArticleFeedback dict={dict} />
-            <a
-              href={`https://x.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(`https://shwcs.site/${locale}/blog/${post.slug}`)}`}
-              target="_blank"
-              rel="noreferrer"
-              className="action-button flex w-fit items-center gap-2 rounded-full border border-stone-200 bg-white px-5 py-2.5 text-sm font-medium text-stone-600 transition-colors hover:border-black hover:text-black"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true" className="size-3.5 fill-current">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.008 5.965H5.078z" />
-              </svg>
-              {dict.shareOnX}
-            </a>
+            <div className="flex flex-wrap gap-2">
+              <a
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://shwcs.site/${locale}/blog/${post.slug}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="action-button flex w-fit items-center gap-2 rounded-full border border-stone-200 bg-white px-5 py-2.5 text-sm font-medium text-stone-600 transition-colors hover:border-black hover:text-black"
+              >
+                {dict.shareOnLinkedIn}
+              </a>
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(`${post.title} https://shwcs.site/${locale}/blog/${post.slug}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="action-button flex w-fit items-center gap-2 rounded-full border border-stone-200 bg-white px-5 py-2.5 text-sm font-medium text-stone-600 transition-colors hover:border-black hover:text-black"
+              >
+                {dict.shareOnWhatsApp}
+              </a>
+              <a
+                href={`https://x.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(`https://shwcs.site/${locale}/blog/${post.slug}`)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="action-button flex w-fit items-center gap-2 rounded-full border border-stone-200 bg-white px-5 py-2.5 text-sm font-medium text-stone-600 transition-colors hover:border-black hover:text-black"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" className="size-3.5 fill-current">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.008 5.965H5.078z" />
+                </svg>
+                {dict.shareOnX}
+              </a>
+            </div>
           </div>
         </div>
       </div>

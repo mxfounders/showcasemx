@@ -42,7 +42,7 @@ export const contacts = {
   refresh: 'Actualizar',
   newPage: {
     back: '← Volver a la ficha',
-    title: 'Conecta con {project}.',
+    title: 'Conecta con {project}',
     intro:
       'Cuéntale al proyecto qué necesitas. Antes de enviar podrás revisar los datos que vas a compartir.',
     ownSolution: 'Esta es tu solución. Puedes gestionar las solicitudes de otras empresas en',
@@ -59,7 +59,13 @@ export const contacts = {
     consentRequired: 'Autoriza compartir estos datos para enviar la solicitud.',
     yourName: 'Tu nombre',
     company: 'Empresa',
-    teamSize: 'Tamaño del equipo',
+    teamSize: 'Tamaño de tu empresa',
+    sizeFit: {
+      declared: 'Esta ficha declara servir a empresas de tu tamaño.',
+      any: 'Esta ficha declara servir a empresas de cualquier tamaño.',
+      other: 'Esta ficha declara servir a: {sizes}. Puedes contactar igual.',
+      unknown: 'Esta ficha no declaró para qué tamaños de empresa está pensada.',
+    },
     selectOption: 'Selecciona una opción',
     start: '¿Cuándo quieres empezar?',
     need: '¿Qué necesitas resolver?',
@@ -71,7 +77,7 @@ export const contacts = {
     review: 'Revisar solicitud',
     reviewTitle: 'Esto recibirá la cuenta propietaria de {project}',
     deliveryNote:
-      'Se entregará en su bandeja de shwcs. No enviamos correos automáticos ni garantizamos respuesta. No incluyas datos sensibles de clientes.',
+      'Se entregará en su bandeja de shwcs y le avisamos por correo si tiene su correo verificado y los avisos activos. No garantizamos respuesta. No incluyas datos sensibles de clientes.',
     sending: 'Enviando…',
     send: 'Enviar solicitud',
     edit: 'Editar datos',
@@ -81,12 +87,12 @@ export const contacts = {
     withdrawnNotice: 'El comprador retiró esta solicitud. No se admiten nuevas respuestas.',
     noActions: 'No hay acciones disponibles en este estado.',
     replyTooShort: 'Escribe al menos 10 caracteres para explicar el siguiente paso.',
-    updateStatus: 'Actualizar estado',
-    replyLabel: 'Respuesta para el comprador',
-    replyPlaceholder:
-      'Explica el siguiente paso o el motivo de cierre. Esta respuesta será visible para el comprador.',
-    emailNote:
-      'El estado no implica que se haya enviado un correo. La conversación fuera de shwcs la coordinan ustedes.',
+    updateStatus: 'Cambiar el estado',
+    /** First, disabled option of the status select: nothing is preselected (SHCWS-168). */
+    chooseChange: 'Elige un cambio',
+    replyLabel: 'Motivo, visible para el comprador',
+    replyPlaceholder: 'Cuéntale por qué cierras o reabres la conversación.',
+    emailNote: 'Para escribirle sin cambiar el estado, usa la conversación.',
     withdrawHint:
       'Puedes retirar la solicitud si ya no necesitas contacto. Esto no borra la información que el destinatario ya recibió.',
     confirmWithdraw:
@@ -98,23 +104,56 @@ export const contacts = {
     withdraw: 'Retirar solicitud',
     reviewReply: 'Revisar respuesta',
     cancel: 'Cancelar',
+    outcomeLegend: '¿Qué resultó?',
+    outcomeHint:
+      'Solo tú ves este dato. El comprador no lo recibe y shwcs solo usa totales sin identificar a nadie.',
+    outcomeRequired: 'Elige qué resultó para cerrar la oportunidad.',
+    outcomes: {
+      won: 'Ganada: se volvió cliente',
+      lost: 'Perdida',
+      not_fit: 'No era para nosotros',
+    },
+    valueLabel: 'Valor aproximado del acuerdo, en dólares estadounidenses',
+    valueNone: 'Prefiero no decirlo',
+    values: {
+      under_1k: 'Menos de 1,000 USD',
+      '1k_5k': '1,000–5,000 USD',
+      '5k_25k': '5,000–25,000 USD',
+      '25k_100k': '25,000–100,000 USD',
+      over_100k: 'Más de 100,000 USD',
+    },
+    outcomeTitle: 'Resultado privado',
+    outcomeEmpty: 'Aún no registras qué resultó de esta oportunidad.',
+    outcomeSave: 'Guardar resultado',
+    outcomeChange: 'Cambiar resultado',
+    outcomeReopenNote:
+      'Si reabres la conversación, el resultado se borra hasta que vuelvas a cerrarla.',
   },
   clientErrors: {
     fallback: 'No pudimos confirmar el cambio.',
     network: 'No pudimos confirmar el cambio. Recarga para comprobarlo antes de repetir.',
   },
   inbox: {
-    titleIncoming: 'Oportunidades.',
-    titleOutgoing: 'Mis contactos.',
+    titleIncoming: 'Oportunidades',
+    titleOutgoing: 'Mis contactos',
     introIncoming:
       'Empresas que quieren conocer lo que construyes. Lee su contexto y responde con un siguiente paso concreto.',
     introOutgoing:
       'Las solicitudes que enviaste y las respuestas de los proyectos, en un solo lugar.',
     noteIncoming:
       'Guardar o comparar una solución no genera una oportunidad. Aquí solo aparecen solicitudes enviadas con consentimiento.',
-    noteOutgoing: 'Las respuestas aparecen aquí. Por ahora no enviamos notificaciones por correo.',
+    noteOutgoing:
+      'Las respuestas aparecen aquí, y te avisamos por correo si lo tienes verificado y los avisos activos.',
     filterAria: 'Filtrar solicitudes',
     all: 'Todas',
+    unread: 'Sin leer',
+    unreadDot: 'Sin leer',
+    received: 'Recibida',
+    signals: {
+      unverified: 'Correo sin verificar',
+      email: 'Correo verificado',
+      work: 'Correo de empresa verificado',
+    },
     updated: 'Actualizada',
     emptyStatus: 'No hay solicitudes en este estado.',
     emptyIncomingTitle: 'Tu próxima conversación empieza aquí.',
@@ -136,13 +175,22 @@ export const contacts = {
     deliveredRecipient: 'Solicitud enviada expresamente por el comprador.',
     onlyParticipants: 'Solo ustedes pueden consultar este seguimiento.',
     sharedContext: 'Contexto compartido',
-    disclaimer:
-      'Datos declarados por el comprador. El correo de la cuenta aún no tiene verificación de propiedad. Guardados, listas y notas privadas no se comparten.',
+    disclaimerVerified:
+      'Datos declarados por el comprador. El correo de la cuenta está verificado: quien envió la solicitud controla esa dirección. Guardados, listas y notas privadas no se comparten.',
+    disclaimerUnverified:
+      'Datos declarados por el comprador. El correo de la cuenta aún no está verificado: no hay prueba de que quien envió la solicitud controle esa dirección. Guardados, listas y notas privadas no se comparten.',
+    emailVerified: 'Verificado',
+    emailWork: 'Verificado · correo de empresa',
+    emailUnverified: 'Sin verificar',
+    writeEmail: 'Escribir por correo',
+    emailSubject: 'Tu solicitud a {project} en shwcs',
+    writeEmailNote:
+      'Se abre tu programa de correo. Lo que escriban fuera de shwcs no queda en este seguimiento.',
     history: 'Seguimiento',
     buyer: 'Comprador',
     project: 'Proyecto',
     yourRequest: 'Tu solicitud',
-    replyTitle: 'Responder al comprador',
+    replyTitle: 'Más acciones',
     systemMessages: {
       created: 'Solicitud enviada con consentimiento.',
       withdrawn: 'El comprador retiró la solicitud.',
@@ -167,6 +215,9 @@ export const contacts = {
     requestUnavailable: 'Solicitud no disponible.',
     transitionUnavailable: 'Ese cambio no está disponible para esta solicitud.',
     replyTooShort: 'Escribe al menos 10 caracteres para explicar el siguiente paso al comprador.',
+    outcomeInvalid:
+      'Elige un resultado válido. El valor aproximado solo aplica a una oportunidad ganada.',
+    outcomeUnavailable: 'Solo puedes registrar el resultado de una oportunidad cerrada.',
     stale: 'La solicitud cambió. Recarga antes de continuar.',
   },
 } as const;

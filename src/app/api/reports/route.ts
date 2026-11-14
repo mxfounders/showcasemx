@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
+import { deliverNotifications } from '@/lib/notifications/server';
 import { getSession, sessionCookie } from '@/lib/auth/session';
 import { authSql, securityLimit } from '@/lib/auth/security';
 import { isSolutionId } from '@/lib/solutions/model';
@@ -28,6 +29,7 @@ export async function POST(request: NextRequest) {
       const rows =
         await sql`INSERT INTO solution_reports(solution_id,reporter_id,reason,details) SELECT id,${account.id},${String(body.reason)},${body.details.trim()} FROM founder_solutions WHERE id=${body.solutionId} AND published_data IS NOT NULL ON CONFLICT DO NOTHING RETURNING id`;
       if (!rows.length) return failure(t.duplicate, 409);
+      after(() => deliverNotifications({ categories: ['solution'] }).catch(() => undefined));
       // Visitors only open reports here. Resolving them belongs to the ops backoffice.
     } else return failure(t.invalidAction, 400);
     return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });

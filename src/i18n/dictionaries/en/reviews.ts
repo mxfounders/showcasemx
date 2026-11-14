@@ -9,6 +9,11 @@ export const reviews = {
   recommendShare: '{percent}% recommend it',
   workShare: '{count} from a company email',
   customerShare: '{count} with a proven purchase',
+  contactShare: '{count} after contacting via shwcs',
+  invitedShare: '{count} invited by the vendor',
+  invited: 'Invited by the vendor',
+  invitedTitle:
+    'It came through the link the vendor shares with its customers. It is published the same way, good or bad, and counts half in the catalogue order.',
   empty: 'No reviews yet. If you use {name}, tell other companies how it went.',
   write: 'Write a review',
   editMine: 'Edit my review',
@@ -16,10 +21,12 @@ export const reviews = {
   signInSuffix: 'to write a review.',
   ownNote:
     "You can't review your own solution. You can reply publicly to each review, but never delete one.",
+  ownInvite: 'Invite your customers to review',
   levels: {
     email: 'Verified email',
     work: 'Company email',
     unverified: 'Unverified',
+    contact: 'Contacted via shwcs',
     customer: 'Proven purchase',
   },
   how: {
@@ -28,7 +35,9 @@ export const reviews = {
       'Only reviews from accounts with a confirmed email are published, one per account and solution.',
       '"Company email" means the account uses a company domain rather than a free mailbox.',
       "Nobody can review their own solution or write from the vendor's domain.",
+      '"Contacted via shwcs" means its author wrote to the vendor from shwcs and the conversation reached "in conversation". We show nothing of what was said.',
       '"Proven purchase" means its author submitted a receipt from the vendor and a public authority confirmed it (in Mexico, a CFDI the SAT reports as valid). We keep only the result, never the receipt.',
+      '"Invited by the vendor" means it came through the link the vendor shares with its customers. It is published like any other and counts half in the order, because the vendor chooses whom to invite.',
       'The vendor replies publicly but cannot delete or edit reviews. Only moderation hides one, with a reason, when it breaks the rules.',
       'Reviews count toward catalogue order by their stars and verification. Paying changes neither.',
     ],
@@ -80,6 +89,71 @@ export const reviews = {
     deleteConfirm: 'Delete your review? This cannot be undone.',
     deleting: 'Deleting…',
     saved: 'Review saved.',
+  },
+  invite: {
+    card: {
+      title: 'Invite your customers to review',
+      body: 'Share this link with your customers. They sign in with their email, no password, and leave their review in a couple of minutes.',
+      weight:
+        'Reviews that come through your link are published the same way, good or bad, labelled "Invited by the vendor", and count half in the catalogue order because you choose whom to invite.',
+      rules:
+        "Invite all your customers, not only the happy ones. Don't offer anything in exchange for a positive review: any incentive must be the same whatever the review says.",
+      rulesLink: 'Review rules',
+      create: 'Create my link',
+      creating: 'Creating…',
+      label: 'Your invitation link',
+      copy: 'Copy link',
+      copied: 'Link copied',
+      rotate: 'Create another link',
+      rotateConfirm: 'The current link will stop working. Create another?',
+      rotateYes: 'Yes, create another',
+      cancel: 'Cancel',
+      failed: "We couldn't create the link. Try again.",
+    },
+    page: {
+      metaTitle: 'Review {name}',
+      title: 'Review {name}',
+      intro:
+        '{name} invited you to tell how it went. Your review is published as you write it, good or bad, labelled "Invited by the vendor". The vendor can reply, but not edit or delete it.',
+      invalidTitle: 'This link no longer works',
+      invalidBody:
+        'The vendor replaced its invitation link or the listing is no longer published. Ask for a new one or find the solution in the catalogue.',
+      toCatalog: 'Go to the catalogue',
+      emailLabel: 'Your email',
+      emailPlaceholder: 'name@company.com',
+      emailHint:
+        "We'll send you a link to sign in. Opening it confirms your email and brings you back here to write your review. If you don't have an account, we create one.",
+      send: 'Send me the link',
+      sending: 'Sending…',
+      sent: 'Done. Check {email} and open the link in this browser. It expires in 30 minutes.',
+      resend: 'Use another email',
+      orPassword: 'Prefer your password?',
+      signIn: 'Sign in',
+      signUp: 'Create account',
+      consuming: 'Signing in…',
+      own: "This is the page your customers see. You can't review your own solution.",
+      conflict:
+        "Your email is on this vendor's domain. To avoid conflicts of interest, you can't review it.",
+      already: 'You already reviewed {name}. You can edit it here.',
+    },
+    email: {
+      subject: 'Your link to review {name} on shwcs',
+      heading: 'Review {name}',
+      body: "Open this link to sign in to shwcs and leave your review of {name}. Opening it confirms your email; if you didn't have an account, we create one.",
+      button: 'Sign in and write my review',
+      expires: 'The link expires in {minutes} minutes and works once.',
+      ignore: "If you didn't ask for it, ignore this email: nobody signs in without opening it.",
+    },
+  },
+  composer: {
+    title: 'Review {name}',
+    contactNote:
+      'You contacted {name} through shwcs, so your review will show "Contacted via shwcs". That says a conversation happened, never what was said.',
+    intro: 'Tell how it went with {name}. Your review helps other companies decide.',
+    done: 'Thank you. Your review is published.',
+    doneUnverified: 'Thank you. Your review is saved and goes public once you confirm your email.',
+    viewListing: 'View the listing',
+    own: "You can't review your own solution.",
   },
   digest: {
     title: 'Reviews',
@@ -181,6 +255,17 @@ export const reviews = {
       total: 'Enter the invoice total.',
     },
     saveFailed: "We couldn't save. Try again.",
+    inviteInvalid:
+      'This invitation link no longer works. Ask the vendor for a new one or review from its listing.',
+    magicUnavailable: 'Email sending is unavailable right now. Sign in with your password.',
+    magicEmail: 'Enter a valid email.',
+    magicRateLimited: 'You asked for several links in a row. Wait a few minutes.',
+    magicInvalid: 'This link was already used or expired. Ask for a new one.',
+    magicTotp:
+      "Your account uses two-step verification, so you can't sign in with email alone. Sign in with your password.",
+    magicPassword:
+      "There's already an account with this email that was never confirmed. Sign in with its password or recover it.",
+    magicFailed: "We couldn't complete the sign-in. Try again.",
     fields: {
       name: 'Enter a public name of up to 60 characters.',
       rating: 'Choose 1 to 5 stars.',

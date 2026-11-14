@@ -44,7 +44,7 @@ export const footer = {
             },
             {
               label: 'Customer Support',
-              href: '/explorar/soporte',
+              href: '/explorar/atencion-clientes',
               icon: 'headphones',
             },
           ],
@@ -90,27 +90,32 @@ export const footer = {
           ],
         },
         {
-          subheading: 'Your selection',
+          subheading: 'Collections',
           links: [
             {
-              label: 'Essential Stack MX',
+              label: 'Operating basics',
               href: '/colecciones/essential',
               icon: 'layers',
             },
             {
-              label: 'CFO Toolkit',
+              label: 'For the finance team',
               href: '/colecciones/cfo',
               icon: 'briefcase',
             },
             {
-              label: 'Agency in 30 days',
+              label: 'For agencies',
               href: '/colecciones/agencia',
               icon: 'trend-up',
             },
             {
-              label: 'Modern Legal Stack',
+              label: 'Legal and contracts',
               href: '/colecciones/legal',
               icon: 'book-open',
+            },
+            {
+              label: 'Community lists',
+              href: '/comunidad',
+              icon: 'globe',
             },
           ],
         },
@@ -151,11 +156,6 @@ export const footer = {
               label: 'Newsletter',
               href: '/newsletter',
               icon: 'mail',
-            },
-            {
-              label: 'Events',
-              href: '/eventos',
-              icon: 'calendar',
             },
             {
               label: 'Sponsor',

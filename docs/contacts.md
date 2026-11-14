@@ -1,5 +1,18 @@
 # Comparador y contacto — entrega del 30 de agosto de 2026
 
+> **Vigente desde el 14 de noviembre de 2026 (SHCWS-168, decisión de André en
+> SHCWS-63): las solicitudes tienen una conversación.** Comprador y destinatario se
+> escriben mensajes de 1–2000 caracteres mientras la solicitud está nueva o en
+> conversación (`POST /api/contacts/[id]/messages`). El primer mensaje del destinatario
+> la pasa a «En conversación». Cada mensaje es un evento con `kind = 'message'`
+> (`db/contact-messages.sql`) y avisa a la otra parte, con correo inmediato si tiene los
+> avisos activos y el correo verificado. Cerrar, reabrir y retirar siguen igual, como
+> acciones secundarias. Quién tiene el turno sale de quién habló al último
+> (`whoseTurn`, `src/lib/contacts/thread.ts`) y se ve en el hilo y en «Te toca» de
+> Inicio. No hay tiempo real: el hilo se actualiza al enviar o al recargar. Donde este
+> documento dice «no hay chat» o «no hay mensajes fuera de transiciones», manda este
+> párrafo.
+
 > Actualización vigente, 31 agosto 2026: [launch.md](launch.md) incorpora avisos y
 > verificación de correo, OAuth Google preparado, TXT de dominio, reportes/retirada
 > y métricas. La migración launch-foundation.sql está aplicada a la base configurada.

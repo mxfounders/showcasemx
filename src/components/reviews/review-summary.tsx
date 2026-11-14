@@ -1,4 +1,4 @@
-import { ReceiptIcon, VerifiedIcon } from '@/components/icons/gota';
+import { CommentIcon, ReceiptIcon, SendIcon, VerifiedIcon } from '@/components/icons/gota';
 import type { ReviewSummary as Summary } from '@/lib/reviews/server';
 import type { Dictionary } from '@/i18n/dictionary';
 import { Stars } from './stars';
@@ -51,10 +51,22 @@ export function ReviewSummary({
               {dict.customerShare.replace('{count}', String(summary.customers))}
             </p>
           )}
+          {summary.contacts > 0 && (
+            <p className="mt-1 flex items-center gap-1.5 text-sm text-stone-500">
+              <CommentIcon className="size-4 text-[#416B50]" aria-hidden="true" />
+              {dict.contactShare.replace('{count}', String(summary.contacts))}
+            </p>
+          )}
           {summary.work > 0 && (
             <p className="mt-1 flex items-center gap-1.5 text-sm text-stone-500">
               <VerifiedIcon className="size-4 text-[#416B50]" aria-hidden="true" />
               {dict.workShare.replace('{count}', String(summary.work))}
+            </p>
+          )}
+          {summary.invited > 0 && (
+            <p className="mt-1 flex items-center gap-1.5 text-sm text-stone-500">
+              <SendIcon className="size-4 text-[#7753A5]" aria-hidden="true" />
+              {dict.invitedShare.replace('{count}', String(summary.invited))}
             </p>
           )}
         </div>

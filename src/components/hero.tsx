@@ -2,18 +2,61 @@
 
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
-import { CardIcon, ClientsIcon, DashboardIcon, SearchIcon } from '@/components/icons/gota';
+import {
+  BalanceScaleIcon,
+  CardIcon,
+  CartIcon,
+  ChartBarIcon,
+  ClientsIcon,
+  ClipboardCheckIcon,
+  CodeIcon,
+  DashboardIcon,
+  HeadphonesIcon,
+  MegaphoneIcon,
+  OfficeBuildingIcon,
+  ParcelIcon,
+  SearchIcon,
+  ShieldIcon,
+  SparklesIcon,
+  type GotaIcon,
+} from '@/components/icons/gota';
 
-import { actionButtonStyle, getAccentStyle } from '@/lib/brand-colors';
+import { actionButtonStyle, brandColors } from '@/lib/brand-colors';
+import type { PreviewCategory } from '@/lib/catalog-preview';
+import { localizedCategoryDisplayLabel } from '@/lib/taxonomy';
 import type { Dictionary } from '@/i18n/dictionary';
+
+const categoryIcons: Record<string, GotaIcon> = {
+  cobros: CardIcon,
+  finanzas: ChartBarIcon,
+  nomina: ClientsIcon,
+  ventas: DashboardIcon,
+  operacion: ParcelIcon,
+  legal: BalanceScaleIcon,
+  agencias: OfficeBuildingIcon,
+  marketing: MegaphoneIcon,
+  'atencion-clientes': HeadphonesIcon,
+  'datos-ia': SparklesIcon,
+  'ti-seguridad': ShieldIcon,
+  'comercio-electronico': CartIcon,
+  productividad: ClipboardCheckIcon,
+  desarrollo: CodeIcon,
+};
 
 export function Hero({
   onSearch,
   onCategory,
+  chips,
+  examples,
+  locale,
   dict,
 }: {
   onSearch: (query: string) => void;
   onCategory: (id: string) => void;
+  /** Only categories and searches that lead to results (see heroSuggestions). */
+  chips: readonly Pick<PreviewCategory, 'id' | 'label' | 'tone'>[];
+  examples: readonly string[];
+  locale: string;
   dict: Dictionary['landing'];
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -42,8 +85,10 @@ export function Hero({
         { opacity: 0, y: 20, scale: 0.98 },
         { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'power3.out' },
         '-=0.4',
-      )
-      .fromTo(
+      );
+    // The chips row only exists when some category has projects.
+    if (tagsRef.current)
+      tl.fromTo(
         tagsRef.current,
         { opacity: 0, y: 10 },
         { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' },
@@ -104,7 +149,7 @@ export function Hero({
                 maxLength={200}
                 type="text"
                 placeholder={dict.heroSearchPlaceholder}
-                aria-describedby="solution-search-example"
+                aria-describedby={examples.length > 0 ? 'solution-search-example' : undefined}
                 className="min-w-0 flex-1 rounded-lg border-none bg-transparent px-1 py-2 text-[14px] font-medium text-stone-900 outline-none placeholder:text-stone-400 focus-visible:underline focus-visible:decoration-stone-300 focus-visible:underline-offset-8 md:w-full md:px-2 md:py-3 md:text-[16px]"
               />
               <button
@@ -116,45 +161,49 @@ export function Hero({
                 <span className="sm:hidden">{dict.heroSearchButtonMobile}</span>
               </button>
             </form>
-            <p
-              id="solution-search-example"
-              className="relative mt-4 px-2 text-center text-[13px] leading-relaxed text-stone-500"
-            >
-              {dict.heroSearchExample}
-            </p>
+            {examples.length > 0 && (
+              <p
+                id="solution-search-example"
+                className="relative mt-4 px-2 text-center text-[13px] leading-relaxed text-stone-500"
+              >
+                {dict.heroSearchTry}{' '}
+                {examples.map((example, index) => (
+                  <span key={example}>
+                    {index > 0 && ` ${dict.heroSearchOr} `}“{example}”
+                  </span>
+                ))}
+                .
+              </p>
+            )}
           </div>
 
           {/* Quick tags */}
-          <div
-            ref={tagsRef}
-            className="flex items-center gap-3 text-[13px] font-medium text-stone-400 flex-wrap justify-center"
-          >
-            <span>{dict.heroExplore}</span>
-            <button
-              type="button"
-              onClick={() => onCategory('finanzas')}
-              style={getAccentStyle('/explorar/finanzas')}
-              className="action-button flex items-center gap-1.5 hover:brightness-95 px-3.5 py-1.5 rounded-full text-stone-600 transition-colors"
+          {chips.length > 0 && (
+            <div
+              ref={tagsRef}
+              className="flex items-center gap-3 text-[13px] font-medium text-stone-400 flex-wrap justify-center"
             >
-              <CardIcon className="size-3.5" /> {dict.heroExploreFinance}
-            </button>
-            <button
-              type="button"
-              onClick={() => onCategory('nomina')}
-              style={getAccentStyle('/explorar/nomina')}
-              className="action-button flex items-center gap-1.5 hover:brightness-95 px-3.5 py-1.5 rounded-full text-stone-600 transition-colors"
-            >
-              <ClientsIcon className="size-3.5" /> {dict.heroExplorePayroll}
-            </button>
-            <button
-              type="button"
-              onClick={() => onCategory('ventas')}
-              style={getAccentStyle('/explorar/ventas')}
-              className="action-button flex items-center gap-1.5 hover:brightness-95 px-3.5 py-1.5 rounded-full text-stone-600 transition-colors"
-            >
-              <DashboardIcon className="size-3.5" /> {dict.heroExploreSales}
-            </button>
-          </div>
+              <span>{dict.heroExplore}</span>
+              {chips.map(chip => {
+                const Icon = categoryIcons[chip.id] ?? CardIcon;
+                return (
+                  <button
+                    key={chip.id}
+                    type="button"
+                    onClick={() => onCategory(chip.id)}
+                    style={{
+                      backgroundColor: brandColors[chip.tone].soft,
+                      color: brandColors[chip.tone].solid,
+                    }}
+                    className="action-button flex items-center gap-1.5 hover:brightness-95 px-3.5 py-1.5 rounded-full transition-colors"
+                  >
+                    <Icon className="size-3.5" />{' '}
+                    {localizedCategoryDisplayLabel(chip.label, locale)}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>

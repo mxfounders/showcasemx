@@ -31,6 +31,8 @@ export function ReviewForm({
   countries,
   dict,
   onClose,
+  onSaved,
+  invite,
 }: {
   solutionId: string;
   solutionName: string;
@@ -40,6 +42,10 @@ export function ReviewForm({
   countries: Option[];
   dict: Dictionary['reviews'];
   onClose: () => void;
+  /** After a successful save; defaults to `onClose`. */
+  onSaved?: () => void;
+  /** The founder's link token when writing from an invitation page (SHCWS-132). */
+  invite?: string;
 }) {
   const router = useRouter();
   const form = dict.form;
@@ -86,9 +92,10 @@ export function ReviewForm({
         action: 'save',
         reviewId: reviewId.current,
         ...(existing?.own && { version: existing.own.version }),
+        ...(!existing && invite && { invite }),
         ...parsed.review,
       });
-      onClose();
+      (onSaved ?? onClose)();
       router.refresh();
     } catch (failure) {
       const field = (failure as { field?: ReviewField }).field;

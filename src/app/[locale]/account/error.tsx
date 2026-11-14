@@ -1,9 +1,11 @@
 'use client';
 import { useRouter } from '@/i18n/navigation';
-import { startTransition } from 'react';
+import { startTransition, useEffect } from 'react';
 import { actionButtonStyle } from '@/lib/brand-colors';
-export default function AccountError({ reset }: { reset: () => void }) {
+import { reportError } from '@/lib/analytics/client';
+export default function AccountError({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
+  useEffect(() => reportError(error), [error]);
   return (
     <section className="account-page">
       <h1 className="text-3xl font-semibold">No pudimos cargar tu cuenta.</h1>

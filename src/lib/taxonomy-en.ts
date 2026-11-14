@@ -46,17 +46,53 @@ export const categoryEn: Record<string, { label: string; title: string; descript
     description:
       'Map your pipeline, follow up on prospects and close more deals. CRMs built for long B2B sales cycles.',
   },
-  soporte: {
-    label: 'Operations',
-    title: 'Customer Support',
-    description:
-      'Omnichannel help desk, ticketing and response automation to scale your B2B support without chaos.',
-  },
   agencias: {
     label: 'Agencies',
     title: 'Software to Sell Services',
     description:
       'Tools for agencies, consultancies and studios that execute for you: billable hours, proposals and per-account profitability.',
+  },
+  marketing: {
+    label: 'Marketing',
+    title: 'Marketing & Growth',
+    description:
+      'Campaigns, email, social, content and analytics to attract B2B customers and measure what works.',
+  },
+  'atencion-clientes': {
+    label: 'Customer service',
+    title: 'Customer Service',
+    description:
+      'Omnichannel help desk, chat, WhatsApp and knowledge bases to answer fast without losing each customer’s context.',
+  },
+  'datos-ia': {
+    label: 'Data & AI',
+    title: 'Data & Artificial Intelligence',
+    description:
+      'Business dashboards, AI assistants and automations that read documents and data so you decide with real information.',
+  },
+  'ti-seguridad': {
+    label: 'IT & Security',
+    title: 'IT & Cybersecurity',
+    description:
+      'Protect accounts, devices and data: access, backups, monitoring and tech support so operations never stop.',
+  },
+  'comercio-electronico': {
+    label: 'E-commerce',
+    title: 'E-commerce',
+    description:
+      'Online stores, marketplaces and digital payments to sell online to businesses and consumers.',
+  },
+  productividad: {
+    label: 'Productivity',
+    title: 'Productivity & Collaboration',
+    description:
+      'Internal communication, shared documents, meetings and approvals so the team works in one place.',
+  },
+  desarrollo: {
+    label: 'Development',
+    title: 'Development & Product',
+    description:
+      'APIs, cloud infrastructure, no-code tools and testing to build and run your own software.',
   },
 };
 
@@ -102,6 +138,54 @@ export const industryEn: Record<string, { label: string; title: string; descript
     title: 'Education & EdTech',
     description:
       'School management systems, LMS platforms, tuition billing and effective parent communication.',
+  },
+  tecnologia: {
+    label: 'Technology & SaaS',
+    title: 'Technology & SaaS',
+    description:
+      'Software and digital-services companies: recurring sales, customer support, subscription billing and remote teams.',
+  },
+  'servicios-financieros': {
+    label: 'Financial services',
+    title: 'Financial Services & Fintech',
+    description:
+      'Banks, fintechs, insurers and accounting firms: compliance, reconciliation, origination and regulated customer service.',
+  },
+  logistica: {
+    label: 'Logistics & transportation',
+    title: 'Logistics & Transportation',
+    description:
+      'Fleets, warehouses and carriers: routing, shipment tracking, proof of delivery and freight billing.',
+  },
+  hospitalidad: {
+    label: 'Hotels & restaurants',
+    title: 'Hospitality & Restaurants',
+    description:
+      'Hotels, restaurants and tourism: bookings, point of sale, staff shifts and suppliers.',
+  },
+  inmobiliario: {
+    label: 'Real estate',
+    title: 'Real Estate',
+    description:
+      'Developers, property managers and brokers: rent collection, contracts, leads and property maintenance.',
+  },
+  'servicios-profesionales': {
+    label: 'Professional services',
+    title: 'Professional Services',
+    description:
+      'Accountants, consultants, architects and engineering firms: hours, proposals, client files and per-project billing.',
+  },
+  'sector-publico': {
+    label: 'Government & public sector',
+    title: 'Government & Public Sector',
+    description:
+      'Agencies, municipalities and public bodies: digital procedures, transparency, public procurement and citizen services.',
+  },
+  agroindustria: {
+    label: 'Agribusiness',
+    title: 'Agribusiness & Food',
+    description:
+      'Growers, packers and distributors: traceability, harvests, cold chain and wholesale sales.',
   },
 };
 
@@ -177,6 +261,50 @@ export const capabilityEn: Record<string, string> = {
   'reportes-cliente': 'Client reporting',
   'capacidad-equipo': 'Team capacity',
   'aprobaciones-creativas': 'Creative approvals',
+  'email-marketing': 'Email marketing',
+  'redes-sociales': 'Social media',
+  'seo-contenido': 'SEO & content',
+  'publicidad-digital': 'Digital advertising',
+  'automatizacion-marketing': 'Marketing automation',
+  'analitica-marketing': 'Analytics & attribution',
+  'eventos-webinars': 'Events & webinars',
+  'chat-en-vivo': 'Live chat',
+  'whatsapp-atencion': 'WhatsApp support',
+  'base-conocimiento': 'Knowledge base',
+  'encuestas-satisfaccion': 'Satisfaction surveys',
+  'centro-contacto': 'Contact center',
+  chatbots: 'Chatbots',
+  'lealtad-clientes': 'Loyalty & retention',
+  'inteligencia-negocios': 'Business intelligence',
+  'asistentes-ia': 'AI assistants',
+  'automatizacion-ia': 'AI automation',
+  'procesamiento-documentos': 'Document processing',
+  'modelos-predictivos': 'Predictive models',
+  'integracion-datos': 'Data integration',
+  ciberseguridad: 'Cybersecurity',
+  'identidad-accesos': 'Identity & access',
+  'respaldos-recuperacion': 'Backup & recovery',
+  'gestion-dispositivos': 'Device management',
+  'monitoreo-infraestructura': 'Infrastructure monitoring',
+  'soporte-ti': 'IT support',
+  'tienda-online': 'Online store',
+  'venta-marketplaces': 'Marketplace selling',
+  'checkout-pagos-online': 'Checkout & online payments',
+  'catalogo-online': 'Online catalog',
+  'carritos-abandonados': 'Abandoned-cart recovery',
+  'punto-venta': 'Point of sale',
+  'comunicacion-interna': 'Internal communication',
+  'documentos-colaborativos': 'Collaborative documents',
+  'agenda-reuniones': 'Scheduling & meetings',
+  'gestion-conocimiento': 'Knowledge management',
+  'flujos-aprobacion': 'Approval workflows',
+  intranet: 'Intranet',
+  'apis-integraciones': 'APIs & integrations',
+  'herramientas-desarrollo': 'Developer tools',
+  'infraestructura-nube': 'Cloud infrastructure',
+  'no-code-low-code': 'No-code & low-code',
+  'pruebas-calidad-software': 'Software testing',
+  'analitica-producto': 'Product analytics',
 };
 
 export const integrationEn: Record<string, string> = {
@@ -262,20 +390,22 @@ export const publicLinkKindEn: Record<string, string> = {
 
 export const collectionEn: Record<string, { title: string; description: string }> = {
   essential: {
-    title: 'Essential Stack',
-    description: 'The minimum, indispensable tools to run a business without chaos.',
+    title: 'Operating basics',
+    description:
+      'Automatically gathers the approved listings in Billing, Finance, Payroll and Operations: what almost every company solves first.',
   },
   cfo: {
-    title: 'CFO Toolkit',
-    description: 'High-level financial control for finance directors and modern accounting teams.',
+    title: 'For the finance team',
+    description:
+      'Automatically gathers the approved listings in Finance and Billing, for whoever runs financial control.',
   },
   agencia: {
-    title: 'Agency in 30 Days',
-    description: 'The operating stack to launch, run and scale your B2B services agency from zero.',
+    title: 'For agencies',
+    description:
+      'Automatically gathers the approved listings that say they serve agencies and consultancies.',
   },
   legal: {
-    title: 'Modern Legal Stack',
-    description:
-      'The complete digital transformation kit for your in-house legal department or firm.',
+    title: 'Legal and contracts',
+    description: 'Automatically gathers the approved listings in the Legal category.',
   },
 };

@@ -1,9 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { NextRequest } from 'next/server';
-import { listPublicationDetails } from '../src/lib/library/model';
+import {
+  listPublicationDetails,
+  minPublicListProjects,
+  reservedCurator,
+} from '../src/lib/library/model';
 import {
   communityComment,
+  communityRank,
   communityScore,
   communityReport,
   escapeLikeTerm,
@@ -44,6 +49,52 @@ test('publication is opt-in; legacy inputs and private metadata never become pub
       ?.visibility,
     'private',
   );
+});
+test('nobody signs a list as shwcs, however the name is spelled', () => {
+  for (const name of [
+    'shwcs',
+    'shwcs editorial',
+    'Equipo SHWCS',
+    's.h.w.c.s',
+    'Shwcs Team',
+    'shwсs', // Cyrillic «с»
+    'ｓｈｗｃｓ', // full-width letters
+    'Showcase MX',
+  ])
+    assert.equal(reservedCurator(name), true, name);
+  for (const name of ['Ana Torres', 'Equipo de finanzas', 'Show me the cases', ''])
+    assert.equal(reservedCurator(name), false, name);
+  const base = {
+    visibility: 'public',
+    categories: ['Finanzas'],
+    publishConfirmed: true,
+  };
+  assert.equal(listPublicationDetails({ ...base, curatorName: 'shwcs editorial' }), null);
+  // A private list can't keep a reserved signature for later either.
+  assert.equal(
+    listPublicationDetails({ ...base, visibility: 'private', curatorName: 'SHWCS' }),
+    null,
+  );
+  assert.equal(listPublicationDetails({ ...base, curatorName: 'Ana' })?.curatorName, 'Ana');
+  assert.equal(minPublicListProjects, 3);
+});
+test('«Popular» counts verified, non-owner interactions and lets them fade', () => {
+  const fresh = { verified: true, own: false, ageDays: 0 };
+  assert.equal(communityRank([{ kind: 'comment', ...fresh }], 60), 3);
+  // Unverified accounts and the list's own maker add nothing, however many.
+  assert.equal(
+    communityRank(
+      [
+        ...Array.from({ length: 50 }, () => ({ kind: 'like' as const, ...fresh, verified: false })),
+        { kind: 'save', ...fresh, own: true },
+      ],
+      60,
+    ),
+    0,
+  );
+  // One half-life halves the weight; the raw counters are a separate number.
+  assert.ok(Math.abs(communityRank([{ kind: 'save', ...fresh, ageDays: 60 }], 60) - 1) < 1e-9);
+  assert.equal(communityScore(1, 1, 1), 6);
 });
 test('community ranking is explicit and interaction counts are weighted consistently', () => {
   assert.equal(communityScore(0, 0, 0), 0);

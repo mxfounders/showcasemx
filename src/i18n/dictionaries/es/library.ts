@@ -13,6 +13,9 @@ export const library = {
     listUnavailable: 'Lista no disponible.',
     invalidListUpdate: 'Revisa los datos, las categorías y la confirmación de publicación.',
     listConflict: 'La lista cambió o no está disponible. Recarga antes de continuar.',
+    reservedCurator: 'Esa firma está reservada para shwcs. Usa tu nombre o un alias propio.',
+    publicNeedsProjects:
+      'Para hacerla pública, la lista necesita al menos 3 proyectos disponibles.',
     projectUnavailable: 'Este proyecto ya no está disponible para guardar.',
     savedLimit: 'Puedes guardar hasta 200 proyectos. Quita alguno antes de añadir otro.',
     actionUnavailable: 'Acción no disponible.',
@@ -41,7 +44,8 @@ export const library = {
     private: 'Privada',
     public: 'Pública',
     privateHint: 'Solo tú puedes verla.',
-    publicHint: 'Visible en la comunidad y para quien tenga el enlace.',
+    publicHint:
+      'Visible en la comunidad y para quien tenga el enlace mientras tenga al menos 3 proyectos disponibles.',
     categories: 'Categorías',
     categoriesRequired: 'Elige al menos una',
     publicDescription: 'Descripción pública',
@@ -166,7 +170,7 @@ export const library = {
   },
   savedPage: {
     metaTitle: 'Guardados',
-    title: 'Guardados.',
+    title: 'Guardados',
     onlyYou: 'Solo tú.',
     resume: 'El proyecto que querías guardar',
     countSingular: '{count} proyecto guardado',
@@ -177,7 +181,7 @@ export const library = {
   },
   listsPage: {
     metaTitle: 'Mis listas',
-    title: 'Mis listas.',
+    title: 'Mis listas',
   },
   listPage: {
     metaTitle: 'Tu lista',
@@ -199,7 +203,7 @@ export const library = {
     invalidBody: 'La selección cambió o no pertenece a esta lista.',
     backToList: 'Volver a la lista →',
     backTo: '← Volver a {name}',
-    title: 'Decide con contexto.',
+    title: 'Decide con contexto',
     intro:
       'Información publicada por cada proyecto, sin puntuaciones ni certificaciones. Confirma precios, alcance y disponibilidad antes de contratar.',
     help: 'En móvil, desliza la tabla horizontalmente. Tus notas solo las ves tú.',
@@ -232,7 +236,7 @@ export const library = {
   },
   communitySaved: {
     metaTitle: 'Listas guardadas',
-    title: 'Listas guardadas.',
+    title: 'Listas guardadas',
     subtitle: 'Selecciones de la comunidad que quieres volver a consultar.',
     explore: 'Explorar comunidad →',
     emptyTitle: 'Guarda una selección que valga la pena.',

@@ -72,6 +72,22 @@ migración a object storage:
 31. db/billing.sql — datos fiscales y CFDI de los pagos (docs/billing.md)
 32. db/solution-reviews.sql — reseñas verificadas y sus reportes (docs/reviews.md); el catálogo la consulta, así que va antes del despliegue
 33. db/compliance.sql — identidad fiscal privada, espejo de la lista 69-B del SAT y comprobantes de compra de reseñas (docs/compliance.md)
+34. db/solution-recognition.sql — «Verificado por shwcs» (solution_verifications) y reconocimientos (solution_awards, solution_award_runs) (docs/recognition.md); solo depende de founder_solutions y auth_accounts; aplicada en neondb y shwcs_production (14 nov 2026)
+35. db/contact-alerts-default.sql — avisos de contacto por correo encendidos salvo que la persona los apague (SHCWS-13); reemplaza notify_contact_event() de launch-foundation.sql
+36. db/security-notices.sql — categorías `security` (avisos de seguridad, siempre activos) y `account` (bienvenida) en account_notifications (SHCWS-154/156/153)
+37. db/listing-notices.sql — avisos de fichas por correo encendidos por defecto; avisos de comentarios, reportes y espacios patrocinados (SHCWS-18/20); redefine notify_solution_event() y notify_solution_review()
+38. db/community-notices.sql — avisos de comunidad: me gusta, guardados y comentarios en listas públicas agrupados por lista y día; «tu proyecto aparece en una lista pública» al fundador; preferencia `community_email` (apagada por defecto) y categoría `community` (SHCWS-117). Después de listing-notices.sql
+39. db/contact-messages.sql — hilo de conversación: contact_events.kind y avisos de mensaje (SHCWS-168)
+40. db/solution-comment-reports.sql — reportes de comentarios de fichas desde el sitio y `solution_comments.hidden_at`/`hidden_reason` (SHCWS-140)
+41. db/contact-read-state.sql — `contact_requests.recipient_read_at`: oportunidades sin leer (SHCWS-14); rellena desde el último evento del destinatario
+42. db/contact-outcomes.sql — resultado de cada oportunidad cerrada: `outcome`, `outcome_value`, `outcome_at` (SHCWS-22). `getContact`/`listContacts` leen estas columnas: aplicar 41 y 42 antes de desplegar
+43. db/weekly-digest.sql — «Tu semana en shwcs»: preferencia `weekly_email` (encendida por defecto), envíos por cuenta y semana y conteos agregados de envíos y clics (SHCWS-21)
+44. db/search-demand.sql — búsquedas del catálogo agregadas por día, sin cuenta ni dirección: veces, sin resultados y con clic (SHCWS-107); se borran a los 400 días
+45. db/solution-questions.sql — preguntas y respuestas públicas en las fichas, sus reportes y el aviso al fundador (SHCWS-57); después de listing-notices.sql
+46. db/review-invitations.sql — reseñas invitadas por el proyecto y nivel «Contactó vía shwcs» con su invitación a los 30 días (SHCWS-132/135); después de solution-reviews, listing-notices, contact-outcomes y contact-messages. El catálogo y las reseñas llaman sus funciones: aplicar antes de desplegar
+47. db/ad-self-serve.sql — compra de espacios en una pantalla: códigos promocionales y descuento, lista de espera, alcance por ubicación y atribución de visitas y solicitudes desde un espacio patrocinado (SHCWS-70/72/75/77/150); después de contact-requests.sql y listing-notices.sql
+48. db/search-alerts.sql — alertas de búsqueda guardada: categoría de aviso `alert`, preferencia `alert_email`, `search_alerts` y `search_alert_matches` (SHCWS-47); después de community-notices.sql. `deliverNotifications` lee `alert_email`: aplicar antes de desplegar
+49. db/community-follows.sql — seguir listas y curadores: `community_list_follows`, `community_curator_follows`, `community_list_announcements` y sus triggers (SHCWS-121); después de community-notices.sql
 
 db/solution-applications.sql es el intake anónimo retirado: no aplicarlo.
 Newsletter es independiente; segments depende de subscribers.

@@ -8,6 +8,8 @@ import {
   solutionErrors,
   isSolutionId,
   solutionCapabilities,
+  solutionCategories,
+  solutionIndustries,
 } from '../src/lib/solutions/model';
 import { POST } from '../src/app/api/solutions/route';
 import { DELETE, PATCH } from '../src/app/api/solutions/[id]/route';
@@ -69,7 +71,12 @@ test('multiple categories validate, deduplicate and preserve legacy solutions', 
   assert.equal(value?.category, 'Finanzas');
   assert.deepEqual(solutionErrors(value!), {});
   assert.ok(solutionErrors({ ...full, categories: [] }).category);
-  for (const categories of [['unknown'], [1], Array(8).fill('Cobros'), 'Cobros'])
+  for (const categories of [
+    ['unknown'],
+    [1],
+    Array(solutionCategories.length + 1).fill('Cobros'),
+    'Cobros',
+  ])
     assert.equal(readSolutionData({ ...full, categories }), null);
   const { category, ...rest } = full;
   assert.ok(category);
@@ -137,7 +144,12 @@ test('industries/companySizes are declared fields with a real tri-state: absent,
   assert.deepEqual(declared?.companySizes, ['pyme', 'micro']);
   assert.deepEqual(solutionErrors({ ...full, industries: ['Retail'], companySizes: ['pyme'] }), {});
   // Unknown values or the wrong shape reject the whole submission, same as categories.
-  for (const industries of [['Marte'], [1], 'Retail', Array(8).fill('Retail')])
+  for (const industries of [
+    ['Marte'],
+    [1],
+    'Retail',
+    Array(solutionIndustries.length + 1).fill('Retail'),
+  ])
     assert.equal(readSolutionData({ ...full, industries }), null);
   for (const companySizes of [['gigante'], [1], 'pyme', Array(5).fill('pyme')])
     assert.equal(readSolutionData({ ...full, companySizes }), null);

@@ -13,5 +13,12 @@ export default async function OpportunitiesPage(props: {
 }) {
   const [{ locale }, searchParams] = await Promise.all([props.params, props.searchParams]);
   const dictionary = await getDictionary(locale);
-  return <ContactsInbox incoming searchParams={searchParams} dict={dictionary.contacts} />;
+  return (
+    <ContactsInbox
+      incoming
+      searchParams={searchParams}
+      locale={locale}
+      dict={dictionary.contacts}
+    />
+  );
 }

@@ -25,6 +25,69 @@ export const solutionEditor = {
       next: 'Consulta el motivo. Puedes preparar una versión corregida.',
     },
   },
+  /**
+   * The status of a listing that is published while a newer version is being prepared
+   * (SHCWS-31): the public version stays live, so it never reads as a plain draft.
+   */
+  liveStatuses: {
+    draft: 'Publicada · cambios sin enviar',
+    pending: 'Publicada · cambios en revisión',
+    changes_requested: 'Publicada · cambios pedidos',
+    rejected: 'Publicada · cambios no aceptados',
+  },
+  /** /account/solutions/[id]: where the listing stands, at the top (SHCWS-31). */
+  reviewBand: {
+    pendingTitle: 'En revisión desde el {date}',
+    pendingUpdateTitle: 'Tus cambios están en revisión desde el {date}',
+    pendingText:
+      'El equipo revisa que la información sea clara y verificable; no certifica resultados. Te avisamos en Avisos cuando haya una decisión.',
+    pendingUpdateText:
+      'Mientras tanto, la versión aprobada sigue publicada. Te avisamos en Avisos cuando haya una decisión.',
+    expected: 'Normalmente revisamos en {hours} horas hábiles.',
+    withdraw: 'Retirar envío y volver a editar',
+    withdrawConfirm:
+      'El envío sale de la cola de revisión y vuelve a borrador. Podrás editarlo y enviarlo otra vez cuando quieras.',
+    withdrawConfirmButton: 'Retirar envío',
+    withdrawing: 'Retirando…',
+    cancel: 'Cancelar',
+    changesTitle: 'El equipo pidió cambios el {date}',
+    rejectedTitle: 'Tu postulación no se aceptó el {date}',
+    comment: 'Comentario del equipo',
+    fixLink: 'Ir a corregir',
+    resubmitNote: 'Corrige lo que te piden y vuelve a enviar desde el último paso del formulario.',
+    liveDraftTitle: 'Tu ficha sigue publicada',
+    liveDraftText:
+      'Lo que cambies aquí no es público hasta que lo envíes a revisión y el equipo lo apruebe.',
+    unpublishedTitle: 'Ficha despublicada',
+    unpublishedText:
+      'Ya no aparece en el catálogo. Conservas el borrador, las reseñas y las conversaciones. Para volver a publicarla, envíala a revisión.',
+  },
+  /** Taking an approved listing off the catalog (SHCWS-32). */
+  unpublish: {
+    title: 'Despublicar ficha',
+    intro:
+      'Retírala del catálogo cuando quieras, por ejemplo si cerraste el producto o no quieres recibir más solicitudes. Para volver a publicarla, pasa otra vez por revisión.',
+    button: 'Despublicar',
+    confirmTitle: '¿Despublicar {name}?',
+    consequences: [
+      'Deja de aparecer en el catálogo, en las búsquedas y en las listas desde este momento.',
+      'Conservas el borrador, las reseñas y las conversaciones. Cada comprador sigue viendo las suyas, pero nadie puede enviar solicitudes nuevas.',
+      'Si tenías cambios en revisión, el envío también se retira.',
+    ],
+    bookingsOne:
+      'Se cancela tu espacio patrocinado activo. Reembolsamos cada día que empiece al menos 24 horas después; los días ya iniciados no se reembolsan.',
+    bookingsOther:
+      'Se cancelan tus {count} espacios patrocinados activos. Reembolsamos cada día que empiece al menos 24 horas después; los días ya iniciados no se reembolsan.',
+    confirm: 'Confirmar despublicación',
+    working: 'Despublicando…',
+    cancel: 'Cancelar',
+  },
+  /** Fixed messages of the founder's own actions in the history (`solutionSystemMessages`). */
+  historyMessages: {
+    submitted: 'Postulación enviada a revisión.',
+    unpublished: 'Despublicaste la ficha.',
+    submissionWithdrawn: 'Retiraste el envío de la revisión.',
+  },
   /** Keyed by `solutionEvaluationFields[].key` (src/lib/solutions/model.ts). */
   evaluationFields: {
     scope: {
@@ -74,7 +137,7 @@ export const solutionEditor = {
       'Elige los tamaños de empresa donde encaja, o marca que sirve a cualquiera.',
     capabilitiesRequired: 'Marca al menos una capacidad: qué hace tu solución en concreto.',
     capabilitiesOrphaned: 'Quitaste una categoría; revisa las capacidades que ya no aplican.',
-    websiteInvalid: 'Escribe un sitio válido, empezando por https://.',
+    websiteInvalid: 'Escribe un enlace válido, por ejemplo tuproyecto.com.',
     contactEmailInvalid: 'Escribe un correo de contacto válido.',
     evidenceUrlInvalid:
       'El enlace de evidencia debe empezar por https:// y no contener credenciales.',
@@ -87,78 +150,75 @@ export const solutionEditor = {
   },
   /** Keyed by `solutionQuestions[].id` (src/lib/solutions/questions.ts). */
   questions: {
-    identity: {
-      title: '¿Cómo se llama lo que construyes?',
-      hint: 'El nombre que verá una empresa al descubrir tu proyecto.',
+    basics: {
+      title: '¿Qué es tu proyecto?',
+      hint: 'Lo que verá una empresa en el catálogo. Si leímos tu sitio, ajústalo con tus palabras.',
     },
-    categories: {
-      title: '¿Qué ofreces y dónde encaja?',
-      hint: 'Elige el tipo de solución y todas las categorías que realmente cubres.',
-    },
-    problem: {
-      title: '¿Qué problema haces más fácil?',
-      hint: 'Explica qué ocurre hoy y qué cambia con tu solución. Habla de lo concreto.',
-    },
-    capabilities: {
-      title: '¿Qué hace tu solución, en concreto?',
-      hint: 'Marca todo lo que realmente cubres. Es lo que te hace encontrable: no es lo mismo "Ventas" que "cotizaciones y facturación".',
+    fit: {
+      title: '¿Dónde encaja?',
+      hint: 'Elige sus categorías y marca lo que hace en concreto. Es lo que te hace encontrable.',
     },
     audience: {
-      title: '¿Para quién está pensada?',
-      hint: 'Tipo de empresa, equipo y momento en el que tu solución resulta útil.',
-    },
-    market: {
-      title: '¿A quién sirve, en concreto?',
-      hint: 'Industrias y tamaños de empresa donde tu solución encaja de verdad. Si sirve a cualquiera, dilo — es una respuesta válida.',
-    },
-    scope: {
-      title: '¿Qué incluye y hasta dónde llega?',
-      hint: 'Ayuda a entender el alcance antes de iniciar una conversación.',
-    },
-    founders: {
-      title: '¿Quién está detrás del proyecto?',
-      hint: 'Presenta a sus creadores o al equipo responsable. Estos datos serán públicos si se aprueba la ficha.',
-    },
-    links: {
-      title: '¿Dónde podemos seguir el proyecto?',
-      hint: 'Redes oficiales, comunidad y enlaces útiles. Las redes personales van en la pregunta anterior.',
-    },
-    screenshots: {
-      title: 'Muéstralo por dentro.',
-      hint: 'Capturas del producto o del trabajo entregado, con contexto y sin datos privados.',
-    },
-    demo: {
-      title: '¿Podemos verlo en acción?',
-      hint: 'Una demo interactiva, un recorrido en video o una presentación pública.',
-    },
-    pricing: {
-      title: '¿Cómo se contrata?',
-      hint: 'Modelo, rango de precio y condiciones. Si cotizas a medida, explica de qué depende.',
-    },
-    delivery: {
-      title: '¿Qué pasa después de contratar?',
-      hint: 'Tiempo de arranque y acompañamiento real.',
-    },
-    integrations: {
-      title: '¿Con qué se conecta?',
-      hint: 'Herramientas con las que ya te integras hoy. Si no te conectas con nada, dilo — también es información útil.',
-    },
-    compliance: {
-      title: '¿Qué cumplimiento acreditas?',
-      hint: 'Normativa mexicana o de datos que tu solución cubre. Solo marca lo que realmente puedes sostener.',
-    },
-    evidence: {
-      title: '¿Qué trabajo puedes respaldar?',
-      hint: 'Comparte un caso, un portafolio o una experiencia con contexto; evita resultados sin sustento.',
-    },
-    contact: {
-      title: '¿Dónde te encuentran?',
-      hint: 'El sitio aparecerá en la ficha. El correo es privado y se usa para la revisión.',
+      title: '¿Para quién es?',
+      hint: 'Quién lo usa y en qué empresas encaja. «Cualquiera» también es una respuesta válida.',
     },
     review: {
-      title: 'Así estás presentando tu proyecto.',
-      hint: 'Revisa la información pública y el contacto privado antes de enviar.',
+      title: 'Revisa y envía',
+      hint: 'Con esto ya puedes enviarla. Lo de abajo es opcional y ayuda a que una empresa decida.',
     },
+    screenshots: {
+      title: 'Capturas',
+      hint: 'Hasta cuatro capturas reales del producto o del trabajo entregado, con una línea de contexto y sin datos de tus clientes.',
+    },
+    demo: {
+      title: 'Demo',
+      hint: 'Un recorrido en video, una demo interactiva o una presentación pública.',
+    },
+    pricing: {
+      title: 'Precio',
+      hint: 'Cómo se contrata y cuánto cuesta. Si cotizas a medida, explica de qué depende.',
+    },
+    delivery: {
+      title: 'Arranque y soporte',
+      hint: 'Cuánto tarda en estar listo y qué acompañamiento ofreces.',
+    },
+    integrations: {
+      title: 'Integraciones',
+      hint: 'Con qué herramientas se conecta hoy. Si no se conecta con nada, dilo: también ayuda a decidir.',
+    },
+    compliance: {
+      title: 'Cumplimiento',
+      hint: 'Normas y certificaciones que puedes sostener. Marca solo lo que sea cierto.',
+    },
+    scope: {
+      title: 'Alcance',
+      hint: 'Qué incluye y cuándo no es la opción adecuada.',
+    },
+    founders: {
+      title: 'Equipo',
+      hint: 'Quién está detrás. Será público al aprobarse; comparte solo lo que cada persona autorice.',
+    },
+    links: {
+      title: 'Redes',
+      hint: 'Redes oficiales y enlaces útiles del proyecto.',
+    },
+    evidence: {
+      title: 'Casos y evidencia',
+      hint: 'Un caso, un portafolio o un resultado con contexto. Nada que no puedas respaldar.',
+    },
+  },
+  /** One line under each optional section's card on the review screen. */
+  sections: {
+    screenshots: 'Muestra cómo se ve por dentro.',
+    demo: 'Deja que lo vean en acción.',
+    pricing: 'Modelo, rango y condiciones.',
+    delivery: 'Tiempo de arranque y acompañamiento.',
+    integrations: 'Con qué se conecta.',
+    compliance: 'Normas que puedes sostener.',
+    scope: 'Qué incluye y cuándo no encaja.',
+    founders: 'Quién está detrás del proyecto.',
+    links: 'Redes y enlaces oficiales.',
+    evidence: 'Un caso o portafolio con contexto.',
   },
   editor: {
     any: 'Cualquiera',
@@ -167,78 +227,118 @@ export const solutionEditor = {
     saveUnconfirmed:
       'No pudimos confirmar el guardado. Conservamos tus cambios; comprueba el borrador antes de repetir.',
     pendingNotice:
-      'Tu postulación está en revisión. Podrás editar cuando termine; puedes consultar la vista previa de lo enviado.',
-    prepareUpdate: 'Preparar actualización',
-    formAria: 'Postular mi solución',
-    questionCounter: 'Pregunta {current} de {total}',
-    progressAria: 'Recorrido de la ficha',
+      'Tu ficha está en revisión. Podrás editarla cuando termine; mientras tanto puedes ver la vista previa de lo que enviaste.',
+    formAria: 'Registrar mi proyecto',
+    progressAria: 'Pasos del registro',
+    /** Keyed by the required question ids. */
+    stepLabels: {
+      basics: 'Lo básico',
+      fit: 'Dónde encaja',
+      audience: 'Para quién',
+      review: 'Enviar',
+    },
     statusSaving: 'Guardando…',
     statusProcessingScreenshot: 'Procesando captura…',
     statusUnsaved: 'Cambios sin guardar',
     statusSaved: 'Avance guardado',
     saveAndExit: 'Guardar y salir',
-    optional: 'Opcional · Puedes completarlo después.',
-    nameLabel: 'Nombre del proyecto',
+    websiteLabel: 'Enlace del proyecto',
+    websitePlaceholder: 'tuproyecto.com',
+    websiteHint: 'Tu sitio o un perfil público del proyecto. Aparece en la ficha.',
+    readSite: 'Leer mi sitio',
+    reread: 'Volver a leer',
+    readingSite: 'Leyendo tu sitio…',
+    readingSiteFrom: 'Leyendo {host}…',
+    readDone: 'Listo: tomamos lo que tu sitio dice de sí mismo. Revísalo y ajústalo.',
+    readPartial: 'Tomamos el nombre y la descripción, pero no la portada:',
+    fromSite: 'Tomado de tu sitio.',
+    fromSiteDescription:
+      'Tomada de tu sitio. Ajústala para que diga qué problema resuelve y para quién.',
+    useFromSite: 'Usar «{value}», como dice tu sitio',
+    useDescriptionFromSite: 'Usar la descripción de tu sitio',
+    nameLabel: 'Nombre',
     namePlaceholder: 'Por ejemplo: Cord',
-    kindLegend: 'Tipo de solución',
-    categoriesLegend: 'Categorías · Puedes elegir varias',
-    problemLabel: 'El problema y cómo lo resuelves',
-    problemPlaceholder: 'Sin términos vagos: ¿qué puede hacer mejor una empresa contigo?',
-    capabilitiesEmpty:
-      'Primero elige tus categorías en la pregunta anterior; aquí verás las capacidades de cada una.',
+    kindLegend: '¿Qué es?',
+    /** Keyed by offering value (src/lib/taxonomy.ts offerings). */
+    kindHints: {
+      Software: 'un producto',
+      Agencia: 'un equipo que lo hace por ti',
+      Servicio: 'un servicio profesional',
+    },
+    problemLabel: 'Descripción',
+    problemPlaceholder:
+      'Qué problema resuelve y qué cambia para una empresa que lo usa. Sin frases vacías.',
+    problemCounter: '{count}/1500 · mínimo 20',
+    suggestedCategories: 'Por lo que escribiste, encaja en',
+    categoriesLegend: 'Categorías · elige todas las que apliquen',
+    otherCategoryToggle: '¿No ves tu categoría?',
+    otherCategoryLabel: '¿Cuál sería?',
+    otherCategoryPlaceholder: 'Por ejemplo: reservas para restaurantes',
+    otherCategoryNote:
+      'No se publica. Lo lee el equipo para saber qué categorías faltan; elige también la más cercana.',
+    capabilitiesIntro: 'Ahora marca lo que hace en concreto. Es lo que una empresa busca.',
+    capabilitiesLegend: '¿Qué hace en {category}?',
+    capabilitiesEmpty: 'Elige al menos una categoría y aquí verás lo que puede hacer en cada una.',
     suggestionsTitle: 'Detectamos esto en lo que escribiste',
-    audienceLabel: 'Tu cliente ideal',
-    audiencePlaceholder: 'Industria, tamaño, equipo y necesidad.',
+    audienceLabel: 'Quién lo usa',
+    audiencePlaceholder: 'Por ejemplo: equipos de finanzas de distribuidoras de 20 a 200 personas.',
+    suggestedIndustries: 'Mencionas estas industrias',
     industriesLegend: 'Industrias',
-    anyIndustry: 'Sirve a cualquier industria',
+    anyIndustry: 'Cualquier industria',
     companySizeLegend: 'Tamaño de empresa',
-    anyCompanySize: 'Sirve a cualquier tamaño',
+    anyCompanySize: 'Cualquier tamaño',
+    toReview: 'Revisar y enviar',
+    continue: 'Continuar',
+    previous: 'Anterior',
+    keyboardHint: 'Enter para continuar · ⌘/Ctrl + Enter en textos largos',
+    review: {
+      essentials: 'Lo esencial',
+      edit: 'Editar',
+      project: 'Proyecto',
+      problem: 'Descripción',
+      kindAndCategories: 'Categorías',
+      capabilities: 'Qué hace',
+      audience: 'Quién lo usa',
+      market: 'Industrias y tamaño',
+    },
+    contactEmailLabel: 'Correo para la revisión · privado',
+    contactEmailNote: 'No aparece en la ficha. Las solicitudes de compradores llegan a tu cuenta.',
+    submit: 'Enviar a revisión',
+    submitUpdate: 'Enviar actualización a revisión',
+    reviewNote:
+      'Publicar es gratis. El equipo revisa la ficha y sus enlaces antes de publicarla; si falta algo, te lo decimos. Si ya tienes una versión aprobada, sigue visible mientras revisamos.',
+    noChanges:
+      'Tu ficha está publicada y no tiene cambios pendientes. Edita una sección para preparar una actualización.',
+    reviewPublishedTitle: 'Tu ficha',
+    reviewPublishedHint:
+      'Está publicada. Cada cambio se guarda como borrador y pasa por revisión antes de verse en público.',
+    optionalTitle: 'Hazla más fuerte',
+    optionalHint:
+      'Todo es opcional. Cada sección responde una pregunta que una empresa se hace antes de contactarte.',
+    optionalCount: '{done} de {total}',
+    added: 'Listo',
+    add: 'Agregar',
+    backToReview: 'Volver a revisar',
+    saveSection: 'Guardar',
+    discardSection: 'Descartar cambios',
+    previewTitle: 'Así se verá en el catálogo',
+    previewNamePlaceholder: 'Tu proyecto',
+    previewDescriptionPlaceholder: 'Aquí aparecerá la descripción.',
+    useSiteCover: 'Usar la imagen de mi sitio como portada',
+    openPreview: 'Ver la ficha completa',
+    autosaveNote:
+      'Guardamos cada vez que avanzas. Nada se publica hasta que lo envías y el equipo lo aprueba.',
     notForLabel: '¿Cuándo no es la opción adecuada?',
     notForPlaceholder: 'Necesidades que no cubres o condiciones que necesitas.',
     projectLinksLabel: 'Redes y enlaces del proyecto',
     demoLabel: 'Enlace a la demo o recorrido',
-    pricingModelLegend: 'Modelo de contratación · Puedes elegir varios',
+    pricingModelLegend: 'Modelo de contratación · puedes elegir varios',
     priceBandLegend: 'Rango de precio',
     setupTimeLegend: 'Tiempo de arranque',
+    integrationsLegend: 'Herramientas',
     noIntegrations: 'No se conecta con otras herramientas',
+    complianceLegend: 'Normas y certificaciones',
     evidenceUrlLabel: 'Enlace al caso, portafolio o evidencia',
-    websiteLabel: 'Sitio oficial · Público',
-    contactEmailLabel: 'Correo de revisión · Privado',
-    contactEmailNote:
-      'Este correo no aparecerá en la ficha. Las solicitudes de compradores llegan a tu cuenta.',
-    review: {
-      project: 'Proyecto',
-      kindAndCategories: 'Tipo y categorías',
-      problem: 'Problema',
-      capabilities: 'Qué hace',
-      audience: 'Cliente ideal',
-      industries: 'Industrias',
-      companySizes: 'Tamaño de empresa',
-      notFor: 'Cuándo no encaja',
-      demo: 'Demo',
-      screenshots: 'Capturas',
-      pricingModel: 'Modelo de contratación',
-      priceBand: 'Rango de precio',
-      setupTime: 'Tiempo de arranque',
-      integrations: 'Se integra con',
-      noIntegrations: 'Ninguna herramienta',
-      compliance: 'Cumplimiento',
-      website: 'Sitio',
-      contactEmail: 'Contacto privado',
-      evidenceUrl: 'Enlace de evidencia',
-      founders: 'Creadores',
-      projectLinks: 'Redes del proyecto',
-    },
-    reviewNote:
-      'Al enviar, el equipo revisará la ficha y sus enlaces públicos. No se publica automáticamente. Si ya tienes una versión aprobada, seguirá visible mientras revisamos esta actualización.',
-    submit: 'Enviar a revisión',
-    continue: 'Continuar',
-    previous: 'Anterior',
-    keyboardHint: 'Enter para continuar · Ctrl/⌘ + Enter en textos',
-    jumpToQuestion: 'Ir a otra pregunta',
-    questionsNavAria: 'Preguntas de la ficha',
-    autosaveNote:
-      'Cada vez que avanzas guardamos el borrador. Nada se publica hasta que envíes y el equipo lo apruebe.',
   },
   profile: {
     linkType: 'Tipo de enlace {index}',
@@ -262,7 +362,7 @@ export const solutionEditor = {
   media: {
     tooLarge: 'Cada imagen admite hasta 2 MB.',
     networkError: 'No pudimos confirmar el cambio. Recarga para comprobarlo antes de repetir.',
-    title: 'Muestra cómo funciona.',
+    title: 'Muestra cómo funciona',
     description:
       'Hasta 4 capturas reales. JPG, PNG o WebP, máximo 2 MB cada una. Oculta datos personales de clientes antes de subirlas.',
     uploadNote:
@@ -293,20 +393,7 @@ export const solutionEditor = {
   siteImage: {
     readError: 'No pudimos leer la portada.',
     readNetworkError: 'No pudimos leer la portada del sitio. Intenta de nuevo.',
-    toggleError: 'No pudimos guardar el cambio.',
-    toggleNetworkError: 'No pudimos guardar el cambio. Recarga e intenta de nuevo.',
-    title: 'Portada desde tu sitio',
-    descriptionBefore: 'Tomamos la imagen',
-    descriptionAfter:
-      'que ya publica tu sitio y guardamos una copia. Es la primera imagen de tu ficha, antes de tus capturas.',
-    searching: 'Buscando…',
-    refresh: 'Actualizar',
-    search: 'Buscar portada',
     imageAlt: 'Portada tomada de tu sitio',
-    showInListing: 'Mostrar esta portada en mi ficha',
-    toggledNote:
-      'Guardado en tu borrador. Como cualquier otro cambio, se verá en tu ficha pública después de la próxima revisión.',
-    reading: 'Leyendo {website}…',
     /** Keyed by `SiteImageFailure` (src/lib/solutions/site-image.ts). */
     failures: {
       unreachable: 'No pudimos abrir el sitio. Revisa que responda públicamente por HTTPS.',
@@ -322,16 +409,7 @@ export const solutionEditor = {
       processingFailed: 'No pudimos procesar la imagen del sitio.',
     },
   },
-  completeness: {
-    title: 'Una ficha que ayude a decidir.',
-    progress: '{done}/{total} bloques completos',
-    note: 'Esta guía mide información disponible, no calidad ni certificación. No inventes datos para completarla.',
-    progressAria: 'Información completada',
-    reviewGuide: 'Revisar la guía',
-    seeMissing: 'Ver qué falta y completarlo',
-    preview: 'Vista previa del borrador guardado',
-    otherTab: '(otra pestaña)',
-  },
+
   deleteDraft: {
     error: 'No pudimos eliminar el borrador.',
     trigger: 'Eliminar',
@@ -343,8 +421,6 @@ export const solutionEditor = {
     confirm: 'Sí, eliminar',
   },
   newSolution: {
-    error: 'No pudimos abrir el borrador. Inténtalo de nuevo.',
-    creating: 'Creando borrador…',
     cta: 'Postular mi solución',
   },
   domain: {
@@ -362,7 +438,7 @@ export const solutionEditor = {
   list: {
     metaTitle: 'Mis soluciones',
     eyebrow: 'Tu portafolio',
-    title: 'Mis soluciones.',
+    title: 'Mis soluciones',
     description:
       'Postula lo que construyes, consulta su revisión y mantén cada ficha lista para quien la descubre.',
     emptyTitle: 'Dale un lugar a lo que estás construyendo.',
@@ -384,7 +460,6 @@ export const solutionEditor = {
     actionChanges: 'Revisar cambios',
     actionRejected: 'Revisar postulación',
     actionDraft: 'Continuar borrador',
-    previousStillPublic: 'La versión anterior sigue pública',
     updated: 'Actualizada',
     kindPending: 'Tipo por definir',
     infoLabel: 'Información de la ficha',
@@ -394,39 +469,30 @@ export const solutionEditor = {
   },
   /** /account/solutions/new */
   newPage: {
-    title: 'Tu próxima solución empieza aquí.',
+    title: 'Publica tu proyecto',
     description:
-      'Prepara tu ficha pregunta por pregunta. Guarda tu borrador y continúa cuando quieras; nada se publica sin revisión.',
-    steps: [
-      {
-        title: 'Tu solución',
-        description: 'Nombre, tipo y todas las categorías en las que encaja.',
-      },
-      {
-        title: 'Quién y qué hay detrás',
-        description: 'El problema, tu público, creadores, redes, capturas y demo.',
-      },
-      {
-        title: 'Contratación y contacto',
-        description: 'Precios, implementación, integraciones, soporte y contacto privado.',
-      },
-      {
-        title: 'Revisar y enviar',
-        description: 'Comprueba tu ficha antes de compartirla con el equipo.',
-      },
-    ],
+      'Empieza con el enlace. Leemos lo que tu sitio ya dice para llenar lo básico; tú lo revisas y lo envías.',
+    websiteLabel: 'Enlace de tu proyecto',
+    placeholder: 'tuproyecto.com',
+    noWebsite: '¿Sin sitio? Usa un perfil público del proyecto: LinkedIn, Instagram, Product Hunt…',
+    cta: 'Empezar',
+    creating: 'Creando borrador…',
+    invalid: 'Escribe un enlace válido, por ejemplo tuproyecto.com.',
+    error: 'No pudimos crear el borrador. Inténtalo de nuevo.',
+    steps: ['Lo básico', 'Dónde encaja', 'Para quién'],
+    stepsNote: 'Tres pasos cortos y lo envías. Capturas, precio, equipo y lo demás son opcionales.',
+    freeNote: 'Publicar es gratis. Nada se publica sin revisión.',
   },
   /** /account/solutions/[id] */
   detail: {
     metaTitle: 'Mi postulación',
     back: 'Mis soluciones',
-    preview: 'Vista previa del borrador guardado',
-    verifyDomain: 'Verificar dominio →',
+    verifyDomain: 'Verificación →',
     previewMetaTitle: 'Vista previa privada',
     promote: 'Promocionar →',
     viewPublished: 'Ver ficha publicada',
     otherTab: '(otra pestaña)',
-    untitled: 'Tu nueva solución.',
+    untitled: 'Tu nueva solución',
     approvedStillPublic:
       'La versión aprobada sigue publicada mientras preparas esta actualización.',
     applicationInfo: 'Información de la postulación',
@@ -447,7 +513,25 @@ export const solutionEditor = {
   /** /account/solutions/[id]/trust */
   trust: {
     back: '← Volver a mi ficha',
-    title: 'Verificar dominio.',
+    title: 'Verificación',
+    intro:
+      'La palomita «Verificado por shwcs» la decide el equipo después de revisar tu proyecto. No tienes que llenar nada ni enviar documentos.',
+    whatTitle: 'Qué revisamos',
+    /** Keyed by `verificationChecks` (src/lib/recognition/model.ts). */
+    checks: {
+      site: 'Que el sitio funciona y es del proyecto.',
+      product: 'Que el producto o servicio existe y hace lo que dice tu ficha.',
+      team: 'Que quien la registró representa al proyecto.',
+      registries: 'Los registros públicos que apliquen en tu país.',
+    },
+    verifiedOn: 'Verificada el {date}.',
+    pending:
+      'Todavía no está verificada. La revisamos después de publicarla; si necesitamos algo, te escribimos.',
+    moved:
+      'Tu ficha cambió de sitio, así que la palomita dejó de mostrarse hasta que la revisemos otra vez.',
+    domainTitle: 'Acelera la verificación (opcional)',
+    domainIntro:
+      'Un registro TXT en tu dominio demuestra que lo controlas y nos ahorra un paso. No cambia tu sitio.',
   },
   /** Messages returned by the /api/solutions/* routes and the retired /api/applications. */
   errors: {
@@ -476,6 +560,11 @@ export const solutionEditor = {
     stepMismatch: 'El paso no corresponde a la pregunta.',
     conflict: 'La postulación cambió o no admite esta acción. Recarga antes de continuar.',
     saveFailed: 'No pudimos guardar. Tus cambios siguen en el formulario.',
+    notPending: 'Este envío ya no está en revisión. Recarga para ver en qué va.',
+    unconfirmed: 'No pudimos confirmar el cambio. Recarga para comprobarlo antes de repetir.',
+    notPublished: 'Esta ficha no está publicada.',
+    unpublishBookingsPending:
+      'No pudimos cancelar tus espacios patrocinados, así que la ficha sigue publicada. Inténtalo de nuevo en unos minutos o escríbenos a hola@shwcs.site.',
     solutionUnavailable: 'Solución no disponible.',
     mediaListFailed: 'No pudimos consultar las capturas.',
     waitForReview: 'Espera la revisión antes de subir nuevas capturas.',
@@ -500,6 +589,7 @@ export const solutionEditor = {
     coverLoadFailed: 'No pudimos cargar la portada.',
     tooManyCoverLookups: 'Demasiadas búsquedas de portada. Intenta más tarde.',
     addWebsiteFirst: 'Añade primero el sitio de tu proyecto.',
+    invalidWebsite: 'Escribe un enlace válido, por ejemplo tuproyecto.com.',
     coverSaveFailed: 'No pudimos guardar la portada del sitio.',
     coverReadFailed: 'No pudimos leer la portada del sitio.',
     unavailable: 'No disponible.',

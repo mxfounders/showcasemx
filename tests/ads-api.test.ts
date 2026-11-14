@@ -63,8 +63,14 @@ test('checkout carries the booking id to the PaymentIntent and invoice, and expi
   // payment_method_types on Checkout, so methods are excluded instead.
   assert.ok(params.excluded_payment_method_types?.includes('oxxo'));
   assert.equal('payment_method_types' in params, false);
-  assert.match(params.success_url ?? '', /\{CHECKOUT_SESSION_ID\}/);
-  assert.match(params.cancel_url ?? '', /\/en\/account\/solutions\/.+\/promote\?checkout=canceled/);
+  // The form is ours (ui_mode elements): no hosted page to send the buyer to or back from.
+  assert.equal(params.ui_mode, 'elements');
+  assert.equal('success_url' in params, false);
+  assert.equal('cancel_url' in params, false);
+  assert.match(
+    params.return_url ?? '',
+    /\/en\/account\/solutions\/.+\/promote\?checkout=success&session_id=\{CHECKOUT_SESSION_ID\}/,
+  );
 });
 
 /** Runs `body` with environment overrides (undefined deletes), restoring them afterwards. */
@@ -92,16 +98,34 @@ const post = (url: string, origin: string, body: unknown = {}) =>
   });
 
 test('ad mutations reject other origins and require a session', async () => {
-  await withEnv({ STRIPE_SECRET_KEY: 'sk_test_unit_only' }, async () => {
-    const checkoutUrl = 'http://localhost:3000/api/ads/checkout';
-    const cancelUrl = 'http://localhost:3000/api/ads/cancel';
-    assert.equal((await checkout(post(checkoutUrl, 'https://evil.example'))).status, 403);
-    assert.equal((await checkout(post(checkoutUrl, 'http://localhost:3000'))).status, 401);
-    assert.equal((await cancel(post(cancelUrl, 'https://evil.example'))).status, 403);
-    assert.equal((await cancel(post(cancelUrl, 'http://localhost:3000'))).status, 401);
-    const eventsUrl = 'http://localhost:3000/api/ads/events';
-    assert.equal((await events(post(eventsUrl, 'https://evil.example'))).status, 403);
-  });
+  await withEnv(
+    {
+      STRIPE_SECRET_KEY: 'sk_test_unit_only',
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_unitonly',
+    },
+    async () => {
+      const checkoutUrl = 'http://localhost:3000/api/ads/checkout';
+      const cancelUrl = 'http://localhost:3000/api/ads/cancel';
+      assert.equal((await checkout(post(checkoutUrl, 'https://evil.example'))).status, 403);
+      assert.equal((await checkout(post(checkoutUrl, 'http://localhost:3000'))).status, 401);
+      assert.equal((await cancel(post(cancelUrl, 'https://evil.example'))).status, 403);
+      assert.equal((await cancel(post(cancelUrl, 'http://localhost:3000'))).status, 401);
+      const eventsUrl = 'http://localhost:3000/api/ads/events';
+      assert.equal((await events(post(eventsUrl, 'https://evil.example'))).status, 403);
+    },
+  );
+});
+
+test('checkout stays closed without the publishable key the payment form needs', async () => {
+  await withEnv(
+    { STRIPE_SECRET_KEY: 'sk_test_unit_only', NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: undefined },
+    async () => {
+      const response = await checkout(
+        post('http://localhost:3000/api/ads/checkout', 'http://localhost:3000'),
+      );
+      assert.equal(response.status, 503);
+    },
+  );
 });
 
 test('checkout answers 503 instead of pretending to charge when Stripe is not configured', async () => {

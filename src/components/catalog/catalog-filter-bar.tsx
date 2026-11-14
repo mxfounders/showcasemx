@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ChevronDownIcon, SlidersHorizontalIcon } from '@/components/icons/gota';
 import type { Dictionary } from '@/i18n/dictionary';
 import { FilterMenu, type FilterOption } from './filter-menu';
+import { ExpandingSearch } from '@/components/search/expanding-search';
 
 // Beyond three axes, dropdowns stop fitting one row (capabilities alone add
 // a fourth on /explorar, plus integrations/price/setup/compliance). Rather
@@ -28,6 +29,9 @@ export function CatalogFilterBar({
   values,
   onChange,
   onClear,
+  query,
+  onQueryChange,
+  clearSearchLabel,
   dict,
   sortOptions,
 }: {
@@ -36,6 +40,10 @@ export function CatalogFilterBar({
   values: { [key: string]: string[] | undefined };
   onChange: (id: string, value: string) => void;
   onClear: () => void;
+  /** Free text within the page, filtered client-side like the facets. */
+  query: string;
+  onQueryChange: (value: string) => void;
+  clearSearchLabel: string;
   dict: Dictionary['catalog'];
   sortOptions?: FilterOption[];
 }) {
@@ -110,7 +118,16 @@ export function CatalogFilterBar({
         </div>
 
         <div className="flex items-center gap-4 shrink-0">
-          <span className="text-[12.5px] text-stone-400">
+          <div onPointerDown={() => setOpenFilter('')}>
+            <ExpandingSearch
+              label={dict.searchLabel}
+              placeholder={dict.searchPlaceholder}
+              clearLabel={clearSearchLabel}
+              value={query}
+              onChange={onQueryChange}
+            />
+          </div>
+          <span role="status" className="text-[12.5px] text-stone-400">
             {dict.showingPrefix} {totalItems}{' '}
             {totalItems === 1 ? dict.solutionSingular : dict.solutionPlural}
           </span>

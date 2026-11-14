@@ -19,15 +19,31 @@ if (typeof window !== 'undefined') {
 type StackCardId = keyof Dictionary['landing']['stackingCards']['cards'];
 
 // Non-text card data; each card's copy lives in `landing.stackingCards.cards[id]`.
-const stackCards: readonly { id: StackCardId; color: { soft: string; solid: string } }[] = [
-  { id: 'data', color: { soft: brandColors.blue.soft, solid: brandColors.blue.solid } },
+// Every card describes something that exists today and links to where it lives
+// (CLAUDE.md §46, SHCWS-37): update the copy together with the feature.
+const stackCards: readonly {
+  id: StackCardId;
+  href: string;
+  color: { soft: string; solid: string };
+}[] = [
   {
-    id: 'agents',
+    id: 'catalog',
+    href: '#catalogo',
+    color: { soft: brandColors.blue.soft, solid: brandColors.blue.solid },
+  },
+  {
+    id: 'lists',
+    href: '/account/lists',
     color: { soft: brandColors.terracotta.soft, solid: brandColors.terracotta.solid },
   },
-  { id: 'enrichment', color: { soft: brandColors.sage.soft, solid: brandColors.sage.solid } },
   {
-    id: 'outbound',
+    id: 'contact',
+    href: '#catalogo',
+    color: { soft: brandColors.sage.soft, solid: brandColors.sage.solid },
+  },
+  {
+    id: 'reviews',
+    href: '/criterios',
     color: { soft: brandColors.lavender.soft, solid: brandColors.lavender.solid },
   },
 ];
@@ -141,8 +157,8 @@ export function LandingStackingCards({
               </div>
 
               <div className="mb-8 flex flex-wrap gap-4 items-center">
-                <a
-                  href="#catalogo"
+                <Link
+                  href={item.href}
                   className="px-7 py-3 rounded-full text-white font-medium shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-2 group text-sm sm:text-base"
                   style={{ backgroundColor: item.color.solid }}
                 >
@@ -151,37 +167,31 @@ export function LandingStackingCards({
                     aria-hidden="true"
                     className="w-4 h-4 transition-transform group-hover:translate-x-1"
                   />
-                </a>
-                <Link
-                  href="/criterios"
-                  className="px-7 py-3 rounded-full bg-white text-stone-800 font-medium shadow-sm transition-all hover:bg-stone-50 hover:shadow-md text-sm sm:text-base"
-                >
-                  {copy.secondaryAction}
                 </Link>
+                {item.href !== '/criterios' && (
+                  <Link
+                    href="/criterios"
+                    className="px-7 py-3 rounded-full bg-white text-stone-800 font-medium shadow-sm transition-all hover:bg-stone-50 hover:shadow-md text-sm sm:text-base"
+                  >
+                    {copy.secondaryAction}
+                  </Link>
+                )}
               </div>
             </div>
           </div>
 
-          <div className="flex-1 relative hidden md:block opacity-90 overflow-hidden">
-            <RightVisual color={item.color.solid} products={products} dict={copy} />
-          </div>
+          {products.length > 0 && (
+            <div className="flex-1 relative hidden md:block opacity-90 overflow-hidden">
+              <RightVisual color={item.color.solid} products={products} />
+            </div>
+          )}
         </div>
       ))}
     </section>
   );
 }
 
-type StackingCardsDict = Dictionary['landing']['stackingCards'];
-
-const RightVisual = ({
-  color,
-  products,
-  dict,
-}: {
-  color: string;
-  products: PublishedProduct[];
-  dict: StackingCardsDict;
-}) => {
+const RightVisual = ({ color, products }: { color: string; products: PublishedProduct[] }) => {
   return (
     <div
       className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden"
@@ -191,22 +201,42 @@ const RightVisual = ({
           'linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)',
       }}
     >
-      <MockupGridVisual color={color} products={products} dict={dict} />
+      <MockupGridVisual color={color} products={products} />
     </div>
   );
 };
 
-const MockupGridVisual = ({
-  color,
-  products,
-  dict,
-}: {
-  color: string;
-  products: PublishedProduct[];
-  dict: StackingCardsDict;
-}) => {
+// Only real projects (SHCWS-38): the two columns scroll endlessly once they are full
+// (sixteen listings); until then the real ones stand still, never padded with empty
+// «your solution could be here» cards.
+const MockupGridVisual = ({ color, products }: { color: string; products: PublishedProduct[] }) => {
   // Ranked by real interaction, not a fabricated number. See src/lib/solutions/ranking.ts.
   const rankedProducts = [...products].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+
+  if (rankedProducts.length < 16) {
+    const shown = rankedProducts.slice(0, 6);
+    return (
+      <div className="absolute inset-0 flex items-center justify-center gap-4 sm:gap-6 rotate-[-6deg] px-8">
+        {[shown.filter((_, i) => i % 2 === 0), shown.filter((_, i) => i % 2 === 1)].map(
+          (column, index) =>
+            column.length > 0 && (
+              <div
+                key={index}
+                className={`flex flex-col gap-4 sm:gap-6 w-48 sm:w-56 ${index === 1 ? 'mt-12' : ''}`}
+              >
+                {column.map(product => (
+                  <ProductMockupCard
+                    key={product.detailUrl ?? product.name}
+                    product={product}
+                    color={color}
+                  />
+                ))}
+              </div>
+            ),
+        )}
+      </div>
+    );
+  }
 
   const col1Products = rankedProducts.slice(0, 8);
   const col2Products = rankedProducts.slice(8, 16);
@@ -218,14 +248,13 @@ const MockupGridVisual = ({
         transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
         className="flex flex-col gap-4 sm:gap-6 w-48 sm:w-56"
       >
-        {Array.from({ length: 8 }).map((_, i) => {
-          const product = col1Products[i];
-          return product ? (
-            <ProductMockupCard key={`col1-prod-${i}`} product={product} color={color} />
-          ) : (
-            <MiniMockupCard key={`col1-empty-${i}`} dict={dict} />
-          );
-        })}
+        {col1Products.map(product => (
+          <ProductMockupCard
+            key={product.detailUrl ?? product.name}
+            product={product}
+            color={color}
+          />
+        ))}
       </motion.div>
 
       <motion.div
@@ -233,14 +262,13 @@ const MockupGridVisual = ({
         transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
         className="flex flex-col gap-4 sm:gap-6 w-48 sm:w-56 mt-12"
       >
-        {Array.from({ length: 8 }).map((_, i) => {
-          const product = col2Products[i];
-          return product ? (
-            <ProductMockupCard key={`col2-prod-${i}`} product={product} color={color} />
-          ) : (
-            <MiniMockupCard key={`col2-empty-${i}`} dict={dict} />
-          );
-        })}
+        {col2Products.map(product => (
+          <ProductMockupCard
+            key={product.detailUrl ?? product.name}
+            product={product}
+            color={color}
+          />
+        ))}
       </motion.div>
     </div>
   );
@@ -272,22 +300,6 @@ const ProductMockupCard = ({ product, color }: { product: PublishedProduct; colo
       <p className="text-[11px] text-stone-600 line-clamp-2 leading-relaxed">
         {product.description || product.feature}
       </p>
-    </div>
-  </div>
-);
-
-const MiniMockupCard = ({ dict }: { dict: StackingCardsDict }) => (
-  <div className="bg-transparent border border-dashed border-black/10 rounded-[1.5rem] p-6 flex flex-col h-44 w-full">
-    <div className="flex justify-between text-[10px] font-bold text-black/20 tracking-widest uppercase mb-auto">
-      <span>{dict.slotLabel}</span>
-      <span className="text-black/20 text-lg leading-none">+</span>
-    </div>
-    <div>
-      <h4 className="text-[15px] font-medium text-black/40 leading-tight">
-        {dict.slotTitleLine1}
-        <br />
-        {dict.slotTitleLine2}
-      </h4>
     </div>
   </div>
 );

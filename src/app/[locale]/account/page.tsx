@@ -3,7 +3,8 @@ import Link from '@/i18n/navigation';
 import { localeRedirect } from '@/i18n/redirect';
 import { ArrowRightIcon, PlusIcon } from '@/components/icons/gota';
 import { requireFounder, getOwnedSolutions } from '@/lib/solutions/server';
-import { dashboardData } from '@/lib/dashboard/server';
+import { dashboardData, founderSignals } from '@/lib/dashboard/server';
+import { founderSummary } from '@/lib/metrics/founder';
 import { resolveDashboardMode } from '@/lib/dashboard/model';
 import { NextActions, ExploreNeeds } from '@/components/dashboard/next-actions';
 import { DashboardModeSwitch } from '@/components/dashboard/mode-switch';
@@ -17,6 +18,8 @@ import { previewCategories } from '@/lib/catalog-preview';
 import { solutionCover } from '@/lib/solutions/gallery';
 import { isSolutionId } from '@/lib/solutions/model';
 import { actionButtonStyle } from '@/lib/brand-colors';
+import { EmailVerification } from '@/components/notifications/verification';
+import { recoveryConfig } from '@/lib/auth/recovery';
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const dictionary = await getDictionary((await params).locale);
   return {
@@ -42,6 +45,13 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
     ),
     buyer = mode !== 'founder',
     founder = mode !== 'buyer';
+  const [signals, summary] = founder
+    ? await Promise.all([
+        founderSignals(account.id),
+        // One quiet line of the founder's metrics (SHCWS-23); a failure just hides it.
+        founderSummary(account.id).catch(() => null),
+      ])
+    : [undefined, null];
   const [boards, saved, memberships] = buyer
     ? await Promise.all([getBoards(account.id), getSaved(account.id), getMemberships(account.id)])
     : [[], [], []];
@@ -51,17 +61,90 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
     ? await resolveProjects(saved.slice(0, 3).map(item => item.project_key))
     : {};
   const first = dashboard.profile.name?.trim().split(/\s+/)[0];
-  const requests = dashboard.requests
-    .filter(item => mode === 'both' || (buyer ? item.outgoing : !item.outgoing))
-    .slice(0, 4);
+  const visibleRequests = dashboard.requests.filter(
+    item => mode === 'both' || (buyer ? item.outgoing : !item.outgoing),
+  );
+  // What needs this account first (SHCWS-169): conversations waiting on its reply. The
+  // rest stays in «Actividad reciente» below.
+  const waiting = visibleRequests.filter(item => item.waiting).slice(0, 4);
+  const requests = visibleRequests.filter(item => !item.waiting).slice(0, 4);
+  const ago = new Intl.RelativeTimeFormat(locale === 'en' ? 'en' : 'es', { numeric: 'auto' });
+  const since = (iso: string | null) => {
+    const days = iso ? Math.round((Date.parse(iso) - Date.now()) / 86_400_000) : 0;
+    return ago.format(days, 'day');
+  };
   return (
     <section className="account-page">
       <header className="mb-12 flex flex-col justify-between gap-6 xl:flex-row xl:items-center">
         <h1 className="break-words text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
-          {first ? `${dict.hello} ${first}.` : dict.yourSpace}
+          {first ? `${dict.hello} ${first}` : dict.yourSpace}
         </h1>
         <DashboardModeSwitch mode={mode} dict={dict} />
       </header>
+      {waiting.length > 0 && (
+        <section aria-labelledby="your-turn-title" className="mb-12">
+          <h2 id="your-turn-title" className="mb-4 text-xl font-semibold tracking-tight">
+            {dict.yourTurn}
+          </h2>
+          <ul className="grid gap-3 md:grid-cols-2">
+            {waiting.map(request => (
+              <li key={request.id}>
+                <Link
+                  href={`/account/${request.outgoing ? 'contacts' : 'opportunities'}/${request.id}`}
+                  className="group flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-4 transition-[border-color,box-shadow] hover:border-stone-300 hover:shadow-[0_8px_20px_-12px_rgba(0,0,0,0.18)]"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="size-2.5 shrink-0 rounded-full bg-[#365DC4]"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium text-stone-900">
+                      {request.outgoing
+                        ? dict.repliedToYou.replace('{project}', request.project_name)
+                        : dict.waitingForYou.replace(
+                            '{company}',
+                            request.company || request.project_name,
+                          )}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-stone-500">
+                      {request.outgoing
+                        ? since(request.last_at)
+                        : `${request.project_name} · ${since(request.last_at)}`}
+                    </span>
+                  </span>
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#E4EBFC] px-3 py-1.5 text-xs font-medium text-[#365DC4]">
+                    {dict.answer}
+                    <ArrowRightIcon aria-hidden="true" className="size-3.5" />
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {!dashboard.profile.email_verified && (
+        // A quiet reminder until the address is confirmed (SHCWS-27): contact alerts,
+        // the weight of likes and reviews, and the buyer signal all depend on it.
+        <section
+          aria-labelledby="verify-email-title"
+          className="mb-12 flex flex-col gap-4 rounded-2xl border border-stone-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div>
+            <h2 id="verify-email-title" className="font-medium text-stone-900">
+              {dict.verifyEmailTitle}
+            </h2>
+            <p className="mt-1 max-w-xl text-sm leading-relaxed text-stone-500">
+              {dict.verifyEmailDesc}
+            </p>
+          </div>
+          <div className="shrink-0">
+            <EmailVerification
+              available={Boolean(recoveryConfig())}
+              dict={dictionary.notifications.verification}
+            />
+          </div>
+        </section>
+      )}
       <div className="space-y-12">
         {founder && (
           <section aria-label={dict.yourProjects}>
@@ -71,6 +154,23 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
                 {dict.seeAll}
               </Link>
             </div>
+            {summary?.published && (
+              <p className="-mt-3 mb-6 text-sm text-stone-500">
+                {dict.metricsSummary
+                  .replace('{views}', summary.views.toLocaleString(dictionary.metrics.numberLocale))
+                  .replace(
+                    '{requests}',
+                    summary.requests.toLocaleString(dictionary.metrics.numberLocale),
+                  )
+                  .replace(
+                    '{won}',
+                    summary.won.toLocaleString(dictionary.metrics.numberLocale),
+                  )}{' '}
+                <Link href="/account/metrics" className="text-[#365DC4]">
+                  {dict.metricsSummaryLink}
+                </Link>
+              </p>
+            )}
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
               {solutions.slice(0, 5).map(solution => {
                 const missing = solutionChecklist(solution.data, locale).find(item => !item.done);
@@ -100,6 +200,11 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
                         <StatusBadge
                           status={solution.status}
                           dict={dictionary.solutionEditor.statuses}
+                          live={
+                            solution.published_data
+                              ? dictionary.solutionEditor.liveStatuses
+                              : undefined
+                          }
                         />
                       </span>
                     </div>
@@ -179,6 +284,7 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
           solutions={solutions}
           boards={boards}
           unorganized={unorganized}
+          signals={signals}
           dict={dict}
           locale={locale}
         />
@@ -216,7 +322,8 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
             </ul>
           </section>
         )}
-        <ExploreNeeds dict={dict} locale={locale} />
+        {/* Browsing by need is a buyer's shortcut; a founder's home stays on their work. */}
+        {buyer && <ExploreNeeds dict={dict} locale={locale} />}
       </div>
     </section>
   );

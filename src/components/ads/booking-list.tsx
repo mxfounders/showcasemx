@@ -1,18 +1,24 @@
-import { addDays, bookingState, type BookingState } from '@/lib/ads/model';
+import Link from '@/i18n/navigation';
+import { ArrowRightIcon } from '@/components/icons/gota';
+import { addDays, bookingState, clickThroughRate, type BookingState } from '@/lib/ads/model';
 import { formatDay, formatMoney } from '@/lib/ads/format';
 import type { OwnedBooking } from '@/lib/ads/server';
 import type { Dictionary } from '@/i18n/dictionary';
 import { CancelBookingButton } from './cancel-booking-button';
 
 const cancelable: BookingState[] = ['scheduled', 'live'];
+/** States with something to report: the booking was paid. */
+const reported: BookingState[] = ['scheduled', 'live', 'ended', 'canceled', 'paused', 'disputed'];
 
 /** The advertiser's bookings for one listing: what runs when, what it cost, how it did. */
 export function BookingList({
+  solutionId,
   bookings,
   today,
   categoryLabel,
   dict,
 }: {
+  solutionId: string;
   bookings: OwnedBooking[];
   today: string;
   categoryLabel: (slug: string) => string;
@@ -20,6 +26,10 @@ export function BookingList({
 }) {
   const t = dict.bookings;
   const day = (date: string) => formatDay(date, dict.dateLocale);
+  const percent = new Intl.NumberFormat(dict.numberLocale, {
+    style: 'percent',
+    maximumFractionDigits: 1,
+  });
 
   return (
     <section className="mt-14 max-w-2xl" aria-labelledby="bookings-title">
@@ -32,6 +42,7 @@ export function BookingList({
         <ol className="mt-5 divide-y divide-stone-200 border-y border-stone-200">
           {bookings.map(booking => {
             const state = bookingState(booking, today);
+            const ctr = clickThroughRate(booking.clicks, booking.impressions);
             const money = (minor: number) =>
               formatMoney(minor, booking.currency, dict.numberLocale);
             const place =
@@ -79,7 +90,39 @@ export function BookingList({
                     <dt className="text-xs text-stone-400">{t.clicks}</dt>
                     <dd className="text-stone-800">{booking.clicks}</dd>
                   </div>
+                  {booking.discount > 0 && (
+                    <div>
+                      <dt className="text-xs text-stone-400">{t.discount}</dt>
+                      <dd className="text-stone-800">
+                        {money(booking.discount)}
+                        {booking.promotionCode ? ` · ${booking.promotionCode}` : ''}
+                      </dd>
+                    </div>
+                  )}
+                  <div>
+                    <dt className="text-xs text-stone-400">{t.ctr}</dt>
+                    <dd className="text-stone-800">
+                      {ctr === null ? t.noData : percent.format(ctr)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-stone-400">{t.visits}</dt>
+                    <dd className="text-stone-800">{booking.visits}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-stone-400">{t.contacts}</dt>
+                    <dd className="text-stone-800">{booking.contacts}</dd>
+                  </div>
                 </dl>
+                {reported.includes(state) && (
+                  <Link
+                    href={`/account/solutions/${solutionId}/promote/${booking.id}`}
+                    className="mt-3 mr-5 inline-flex items-center gap-1.5 text-sm font-medium text-[#365DC4] underline-offset-4 hover:underline"
+                  >
+                    {t.report}
+                    <ArrowRightIcon aria-hidden="true" className="size-4" />
+                  </Link>
+                )}
                 {booking.invoiceUrl && (
                   <a
                     href={booking.invoiceUrl}

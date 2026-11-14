@@ -9,7 +9,7 @@ import {
   MailIcon,
   ShieldIcon,
 } from '@/components/icons/gota';
-import { authReturnTo } from '@/lib/auth/return-to';
+import { authReturnTo, pendingSave } from '@/lib/auth/return-to';
 import { credentialErrors, type CredentialErrors } from '@/lib/auth/validation';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
@@ -28,6 +28,27 @@ export function AuthForm({
   const text = dict.form;
   const router = useRouter();
   const busy = useRef(false);
+  // Signed in: finish what brought the person here, then continue. A pending save is done
+  // now; if it fails, the saved page still offers the button, so nothing is lost.
+  async function continueSignedIn() {
+    const destination = authReturnTo(returnTo);
+    const key = pendingSave(destination);
+    if (key) {
+      const saved = await fetch('/api/library', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'save', projectKey: key }),
+        signal: AbortSignal.timeout(15000),
+      }).catch(() => null);
+      if (saved?.ok) {
+        router.replace('/account/saved');
+        router.refresh();
+        return;
+      }
+    }
+    router.replace(destination);
+    router.refresh();
+  }
   const [pending, setPending] = useState(false);
   const [visible, setVisible] = useState(false);
   const [error, setError] = useState('');
@@ -57,8 +78,7 @@ export function AuthForm({
       });
       const result = await response.json();
       if (!response.ok || result.ok !== true) throw new Error(result.error || text.totpVerifyError);
-      router.replace(authReturnTo(returnTo));
-      router.refresh();
+      await continueSignedIn();
     } catch (failure) {
       setError(
         failure instanceof Error &&
@@ -95,12 +115,10 @@ export function AuthForm({
       });
       const result = await response.json();
       if (!response.ok || result.ok !== true) throw new Error(result.error || text.requestError);
-      if (mode === 'register') setRegistered(true);
+      // A new account comes back signed in (SHCWS-26); otherwise the email has the next step.
+      if (mode === 'register' && result.signedIn !== true) setRegistered(true);
       else if (result.step === 'totp') setChallenge(true);
-      else {
-        router.replace(authReturnTo(returnTo));
-        router.refresh();
-      }
+      else await continueSignedIn();
     } catch (failure) {
       setError(
         failure instanceof Error &&
@@ -203,47 +221,48 @@ export function AuthForm({
       aria-label={mode === 'login' ? text.ariaLogin : text.ariaRegister}
       aria-busy={pending}
     >
-      <div>
-        <button
-          type="button"
-          disabled={!googleAvailable || pending}
-          onClick={() =>
-            window.location.assign(`/api/auth/google/start?next=${encodeURIComponent(returnTo)}`)
-          }
-          aria-describedby={googleAvailable ? undefined : 'google-coming-soon'}
-          className="flex w-full disabled:cursor-not-allowed items-center justify-center gap-3 rounded-xl border border-stone-300 bg-transparent px-5 py-4 text-base font-medium text-stone-700"
-        >
-          <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 shrink-0">
-            <path
-              fill="#4285F4"
-              d="M21.6 12.23c0-.71-.06-1.39-.18-2.05H12v3.88h5.38a4.6 4.6 0 0 1-1.99 3.02v2.51h3.23c1.89-1.74 2.98-4.3 2.98-7.36Z"
-            />
-            <path
-              fill="#34A853"
-              d="M12 22c2.7 0 4.96-.9 6.62-2.41l-3.23-2.51c-.9.6-2.05.96-3.39.96-2.61 0-4.82-1.76-5.61-4.13H3.05v2.59A10 10 0 0 0 12 22Z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M6.39 13.91a6 6 0 0 1 0-3.82V7.5H3.05a10 10 0 0 0 0 9l3.34-2.59Z"
-            />
-            <path
-              fill="#EA4335"
-              d="M12 5.96c1.47 0 2.79.5 3.83 1.5l2.87-2.87A9.61 9.61 0 0 0 12 2a10 10 0 0 0-8.95 5.5l3.34 2.59C7.18 7.72 9.39 5.96 12 5.96Z"
-            />
-          </svg>
-          {text.loginGoogle}
-        </button>
-        {!googleAvailable && (
-          <p id="google-coming-soon" className="mt-2 text-center text-xs text-stone-400">
-            {text.googlePending}
-          </p>
-        )}
-      </div>
-      <div className="flex items-center gap-4 py-2 text-xs text-stone-400">
-        <span aria-hidden="true" className="h-px flex-1 bg-stone-200" />
-        <span>{text.orEmail}</span>
-        <span aria-hidden="true" className="h-px flex-1 bg-stone-200" />
-      </div>
+      {/* Hidden until Google sign-in is configured: a button that can't work is noise (SHCWS-26). */}
+      {googleAvailable && (
+        <>
+          <div>
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() =>
+                window.location.assign(
+                  `/api/auth/google/start?next=${encodeURIComponent(returnTo)}`,
+                )
+              }
+              className="flex w-full disabled:cursor-not-allowed items-center justify-center gap-3 rounded-xl border border-stone-300 bg-transparent px-5 py-4 text-base font-medium text-stone-700"
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 shrink-0">
+                <path
+                  fill="#4285F4"
+                  d="M21.6 12.23c0-.71-.06-1.39-.18-2.05H12v3.88h5.38a4.6 4.6 0 0 1-1.99 3.02v2.51h3.23c1.89-1.74 2.98-4.3 2.98-7.36Z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 22c2.7 0 4.96-.9 6.62-2.41l-3.23-2.51c-.9.6-2.05.96-3.39.96-2.61 0-4.82-1.76-5.61-4.13H3.05v2.59A10 10 0 0 0 12 22Z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M6.39 13.91a6 6 0 0 1 0-3.82V7.5H3.05a10 10 0 0 0 0 9l3.34-2.59Z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.96c1.47 0 2.79.5 3.83 1.5l2.87-2.87A9.61 9.61 0 0 0 12 2a10 10 0 0 0-8.95 5.5l3.34 2.59C7.18 7.72 9.39 5.96 12 5.96Z"
+                />
+              </svg>
+              {text.loginGoogle}
+            </button>
+          </div>
+          <div className="flex items-center gap-4 py-2 text-xs text-stone-400">
+            <span aria-hidden="true" className="h-px flex-1 bg-stone-200" />
+            <span>{text.orEmail}</span>
+            <span aria-hidden="true" className="h-px flex-1 bg-stone-200" />
+          </div>
+        </>
+      )}
       <div className="relative">
         <label htmlFor="account-email" className="sr-only">
           {text.emailLabel}

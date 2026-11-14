@@ -23,19 +23,115 @@ export interface SearchableProduct {
 const STOPWORDS = new Set(
   [
     'quiero necesito busco para mi mis una un el la los las de del a al en y o que me con por como',
+    'queremos necesitamos buscamos nuestro nuestra nuestros nuestras su sus se le les lo nos',
+    'tengo tenemos hay hacer puedo poder pueda sirva ayude este esta estos estas ese esa eso',
+    'mas muy todo todos toda todas cada sin sobre entre desde donde cuando algo alguien otro otra',
     'empresa negocio tiempo organizar ayuda solucion soluciones',
     'i we want need looking find for my our the an of to in on and or that with by as is are get',
+    'me us your can could would should some any so it its this these those from at be',
     'company business time help solution solutions',
   ]
     .join(' ')
     .split(' '),
 );
 
+// Words that say what *kind* of thing a buyer wants, not what it should do: «software»,
+// «un sistema», «una app», «una plataforma», «para mis clientes». Every listing is one of
+// those, so next to a real need they only add noise: «sistema para mi restaurante» is
+// about the restaurant, «que mis clientes paguen» is about getting paid (SHCWS-41). They
+// still count when they are the whole query, so «software» or «app» alone searches.
+const GENERIC = new Set(
+  [
+    'software softwares sistema sistemas plataforma plataformas herramienta herramientas',
+    'programa programas app apps aplicacion aplicaciones servicio servicios proveedor proveedores',
+    'cliente clientes equipo gestion manejo control controlar administrar gestionar manejar llevar',
+    'empresas negocios companies businesses',
+    'system systems platform platforms tool tools program programs application applications',
+    'service services provider providers vendor vendors client clients customer customers team',
+    'management manage',
+  ]
+    .join(' ')
+    .split(' '),
+);
+
+/**
+ * The words of a query that carry its meaning: without fillers, and without the generic
+ * words above when something more specific is left.
+ */
+export function queryTokens(query: string): string[] {
+  const tokens = tokenize(query).filter(token => token.length > 0 && !STOPWORDS.has(token));
+  const specific = tokens.filter(token => !GENERIC.has(token));
+  return specific.length ? specific : tokens;
+}
+
 function commonPrefixLength(a: string, b: string): number {
   const max = Math.min(a.length, b.length);
   let i = 0;
   while (i < max && a[i] === b[i]) i += 1;
   return i;
+}
+
+// Endings a buyer conjugates or derives around the same root: «cobren», «cobro» and
+// «cobrar» are one verb; «facturen» and «facturación», «cotice» and «cotización» too.
+// Longest first. English «-ing»/«-ed» ride along («invoicing» ~ «invoice»).
+const ENDINGS = [
+  'amientos',
+  'imientos',
+  'aciones',
+  'iciones',
+  'amiento',
+  'imiento',
+  'ieron',
+  'acion',
+  'icion',
+  'iendo',
+  'ando',
+  'aron',
+  'aran',
+  'eran',
+  'ados',
+  'adas',
+  'idos',
+  'idas',
+  'amos',
+  'emos',
+  'imos',
+  'ado',
+  'ada',
+  'ido',
+  'ida',
+  'ing',
+  'ed',
+  'ar',
+  'er',
+  'ir',
+  'an',
+  'en',
+  'as',
+  'es',
+  'os',
+  'a',
+  'e',
+  'o',
+];
+
+/**
+ * The root a word shares with its conjugations, or null when it has none worth comparing.
+ * A root keeps at least four letters, so short words never fold together («pago» and
+ * «pages», «dato» and «date» stay apart; the few short verbs buyers use, like «paguen»,
+ * are spelled out in the vocabulary instead). Spelling changes before an «e» are undone:
+ * «cotice» ~ «cotizar», «busque» ~ «buscar», «pague» ~ «pagar».
+ */
+export function wordRoot(word: string): string | null {
+  for (const ending of ENDINGS) {
+    if (!word.endsWith(ending)) continue;
+    let root = word.slice(0, -ending.length);
+    if (root.endsWith('gu')) root = root.slice(0, -1);
+    else if (root.endsWith('qu')) root = `${root.slice(0, -2)}c`;
+    else if (root.endsWith('z')) root = `${root.slice(0, -1)}c`;
+    if (root.length >= 4) return root;
+  }
+  return null;
 }
 
 // Singular candidates for a word, so plurals compare equal in both languages without a
@@ -48,20 +144,37 @@ function singulars(word: string): string[] {
   return forms;
 }
 
-// A query token matches a document word if they're equal, if their stems are
-// equal (singular/plural), or if they share a 6+ char prefix (automatizar ~
-// automatizacion). Words under 4 characters only match exactly. The 6-char
-// prefix floor is deliberate: 5 would fold contrato ~ control.
-function tokenMatches(queryToken: string, word: string): boolean {
-  if (queryToken === word) return true;
-  if (queryToken.length < 4 || word.length < 4) return false;
-  const forms = singulars(word);
-  if (singulars(queryToken).some(form => forms.includes(form))) return true;
-  return commonPrefixLength(queryToken, word) >= 6;
+function roots(word: string): string[] {
+  return singulars(word)
+    .map(wordRoot)
+    .filter((root): root is string => root !== null);
 }
 
-function anyMatch(token: string, words: readonly string[]): boolean {
-  return words.some(word => tokenMatches(token, word));
+// How strongly a query token matches a document word: 1 if they're equal, if their stems
+// are equal (singular/plural) or if they share a root («cobren» ~ «cobro», «facturen» ~
+// «facturación», see wordRoot); ½ if they only share a long prefix («facturar» ~
+// «facturables»), weaker evidence than a shared root; 0 otherwise. Words under 4
+// characters only match exactly. The prefix must be 7 letters, or 6 when both words are
+// longer: 5 would fold contrato ~ control, and a whole six-letter word is not a prefix of
+// a longer one («custom» is not «customer»).
+export function matchStrength(queryToken: string, word: string): number {
+  if (queryToken === word) return 1;
+  if (queryToken.length < 4 || word.length < 4) return 0;
+  const forms = singulars(word);
+  if (singulars(queryToken).some(form => forms.includes(form))) return 1;
+  const wordRoots = roots(word);
+  if (wordRoots.length && roots(queryToken).some(root => wordRoots.includes(root))) return 1;
+  const common = commonPrefixLength(queryToken, word);
+  return common >= 7 || (common >= 6 && Math.min(queryToken.length, word.length) > 6) ? 0.5 : 0;
+}
+
+function bestMatch(token: string, words: readonly string[]): number {
+  let best = 0;
+  for (const word of words) {
+    best = Math.max(best, matchStrength(token, word));
+    if (best === 1) break;
+  }
+  return best;
 }
 
 // Literal fields carry the strongest evidence, weighted by how much a hit
@@ -76,6 +189,8 @@ interface Scored<T> {
   product: T;
   score: number;
   matchedAll: boolean;
+  /** Some query word hit the product's own text or declared facets, not just implied vocabulary. */
+  literal: boolean;
 }
 
 function scoreProduct<T extends SearchableProduct>(
@@ -107,45 +222,51 @@ function scoreProduct<T extends SearchableProduct>(
 
   let score = 0;
   let matched = 0;
+  let literal = false;
   for (const token of tokens) {
     let hit = false;
-    if (anyMatch(token, nameWords)) {
-      score += WEIGHTS.name;
-      hit = true;
+    for (const [words, weight] of [
+      [nameWords, WEIGHTS.name],
+      [facetWords, WEIGHTS.facet],
+      [featureWords, WEIGHTS.feature],
+      [descriptionWords, WEIGHTS.description],
+      [providerWords, WEIGHTS.provider],
+    ] as const) {
+      const strength = bestMatch(token, words);
+      if (strength > 0) {
+        score += weight * strength;
+        hit = true;
+      }
     }
-    if (anyMatch(token, facetWords)) {
-      score += WEIGHTS.facet;
-      hit = true;
-    }
-    if (anyMatch(token, featureWords)) {
-      score += WEIGHTS.feature;
-      hit = true;
-    }
-    if (anyMatch(token, descriptionWords)) {
-      score += WEIGHTS.description;
-      hit = true;
-    }
-    if (anyMatch(token, providerWords)) {
-      score += WEIGHTS.provider;
-      hit = true;
-    }
-    if (anyMatch(token, vocabularyWords)) {
-      score += WEIGHTS.vocabulary;
+    if (hit) literal = true;
+    const implied = bestMatch(token, vocabularyWords);
+    if (implied > 0) {
+      score += WEIGHTS.vocabulary * implied;
       hit = true;
     }
     if (hit) matched += 1;
   }
-  return { product, score, matchedAll: matched === tokens.length };
+  return { product, score, matchedAll: matched === tokens.length, literal };
 }
 
 // A reusable scorer for one query, for callers that need to keep their own
 // data structure around each product (the saved library filters entries, not
 // bare products). Returns null when the query has no usable tokens; otherwise
 // a function giving 0 (no match) or a positive relevance score.
-export function makeQueryScorer(query: string): ((product: SearchableProduct) => number) | null {
-  const tokens = tokenize(query).filter(token => token.length > 0 && !STOPWORDS.has(token));
+//
+// `requireLiteral` drops products that match only through implied vocabulary. Inside a
+// category page every product shares that category's vocabulary, so without it any
+// word of the field ("recordatorios" on Cobros) would keep the whole page (SHCWS-45).
+export function makeQueryScorer(
+  query: string,
+  { requireLiteral = false }: { requireLiteral?: boolean } = {},
+): ((product: SearchableProduct) => number) | null {
+  const tokens = queryTokens(query);
   if (!tokens.length) return null;
-  return product => scoreProduct(tokens, product).score;
+  return product => {
+    const scored = scoreProduct(tokens, product);
+    return requireLiteral && !scored.literal ? 0 : scored.score;
+  };
 }
 
 // Ranks products against a free-text query. Products that match every token
@@ -156,7 +277,7 @@ export function rankSearch<T extends SearchableProduct>(
   products: readonly T[],
   tieBreak?: (a: T, b: T) => number,
 ): T[] {
-  const tokens = tokenize(query).filter(token => token.length > 0 && !STOPWORDS.has(token));
+  const tokens = queryTokens(query);
   if (!tokens.length) return [];
   return products
     .map(product => scoreProduct(tokens, product))

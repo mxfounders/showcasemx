@@ -4,7 +4,9 @@ import { SolutionGallery } from './solution-gallery';
 import { SaveProjectButton } from '@/components/library/save-project-button';
 import { LikeButton } from './like-button';
 import { SolutionSocial } from './solution-social';
-import { SimilarSolutions } from './similar-solutions';
+import { SimilarSolutions, type SimilarSection } from './similar-solutions';
+import { ShareSolution } from './share-solution';
+import { ContactBar } from './contact-bar';
 import type { ReactNode } from 'react';
 import Link from '@/i18n/navigation';
 import {
@@ -13,6 +15,7 @@ import {
   ArrowUpRightIcon,
   ImportantIcon,
   PlayIcon,
+  VerifiedIcon,
 } from '@/components/icons/gota';
 import { SocialIcon } from '@/components/icons/social-icons';
 import {
@@ -23,6 +26,7 @@ import {
   type SolutionData,
 } from '@/lib/solutions/model';
 import { solutionSlides } from '@/lib/solutions/gallery';
+import { outboundRel, outboundUrl, type OutboundMedium } from '@/lib/solutions/outbound';
 import { solutionChecklist } from '@/lib/solutions/completeness';
 import { actionButtonStyle, brandColors, solutionCategoryTones } from '@/lib/brand-colors';
 import {
@@ -39,7 +43,6 @@ import {
   localizedLinkKind,
 } from '@/lib/taxonomy';
 import type { SolutionComment } from '@/lib/solutions/social';
-import type { PublishedProduct } from '@/lib/solutions/public';
 import type { Dictionary } from '@/i18n/dictionary';
 const industryTones = Object.fromEntries(industryOptions.map(item => [item.value, item.tone]));
 const capabilityCategories = Object.fromEntries(
@@ -64,10 +67,15 @@ export function SolutionPresentation({
   viewerLoggedIn = false,
   viewerVerified = false,
   hasSiteImage = false,
-  similar = [],
+  similar,
+  outboundMedium = 'listing',
+  sponsoredBooking = null,
   reviewBadge,
+  recognition,
+  verified,
   reviews,
   compliance,
+  responseSignal,
   locale,
   dict,
   uiDict,
@@ -85,19 +93,38 @@ export function SolutionPresentation({
   viewerLoggedIn?: boolean;
   viewerVerified?: boolean;
   hasSiteImage?: boolean;
-  similar?: PublishedProduct[];
+  /** Public listing only: similar listings and the exits after them (SHCWS-55). */
+  similar?: SimilarSection;
+  /** `utm_medium` of the project's links: `sponsored` when the visit came from a paid slot. */
+  outboundMedium?: OutboundMedium;
+  /**
+   * The sponsored booking this visit came from (`?ad=`): the contact form carries it on, so
+   * a request sent from it counts for that booking (SHCWS-70).
+   */
+  sponsoredBooking?: string | null;
   /** Public ficha only: rating under the title and the reviews section (src/components/reviews). */
   reviewBadge?: ReactNode;
+  /** Public ficha only: «Verificado por shwcs» and awards (src/components/recognition). */
+  recognition?: ReactNode;
+  /** Draws the verified check after the name; the pill below explains it. */
+  verified?: { label: string } | null;
   reviews?: ReactNode;
   /** Public registry result (src/components/compliance), under the domain check. */
   compliance?: ReactNode;
+  /** Public ficha only: how the founder answers contact requests (SHCWS-52), under the CTA. */
+  responseSignal?: ReactNode;
   locale?: string;
   dict: Dictionary['solution'];
   uiDict: Dictionary['solutionUi'];
 }) {
+  // The project's own links say they come from shwcs (SHCWS-19): UTM tags and, with
+  // `rel="noopener"` instead of `noreferrer`, shwcs as the referring origin. The private
+  // preview leaves them untouched so the founder's own tests don't count as our traffic.
+  const out = (href: string) => (preview ? href : outboundUrl(href, outboundMedium));
   const website = safeSolutionUrl(data.website),
     evidence = safeSolutionUrl(data.evidenceUrl),
     demo = safeSolutionUrl(data.demoUrl);
+  const contactHref = `/account/contacts/new?solution=${id}${sponsoredBooking ? `&ad=${sponsoredBooking}` : ''}`;
   const evaluation = solutionEvaluationFields.filter(
     field => !['scope', 'evidence'].includes(field.key),
   );
@@ -134,7 +161,14 @@ export function SolutionPresentation({
   // completeness is never equated with quality — see the copy below.
   const missing = solutionChecklist(data, locale).filter(item => !item.done);
   return (
-    <article className={preview ? 'account-page' : 'mx-auto max-w-6xl px-6 py-12 sm:py-20'}>
+    <article
+      className={
+        preview
+          ? 'account-page'
+          : // Room for the phone-only contact bar (ContactBar) below the last section.
+            'mx-auto max-w-6xl px-6 pb-28 pt-12 sm:pt-20 lg:pb-20'
+      }
+    >
       {!preview && <PublicMetrics solutionId={id} />}
       <Link
         href={preview ? '/account/solutions/' + id : '/#catalogo'}
@@ -168,8 +202,15 @@ export function SolutionPresentation({
         </div>
         <h1 className="break-words text-4xl font-semibold tracking-tight sm:text-6xl">
           {data.name || dict.namePending}
+          {!preview && verified && (
+            <VerifiedIcon
+              aria-label={verified.label}
+              className="ml-3 inline-block size-8 align-[-0.05em] text-[#365DC4] sm:size-11"
+            />
+          )}
         </h1>
         {!preview && reviewBadge}
+        {!preview && recognition}
         <p className="mt-5 max-w-3xl whitespace-pre-wrap break-words text-lg leading-relaxed text-stone-600">
           {data.problem || dict.descriptionPending}
         </p>
@@ -387,9 +428,9 @@ export function SolutionPresentation({
             </p>
             {evidence && (
               <a
-                href={evidence}
+                href={out(evidence)}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel={outboundRel}
                 className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-[#365DC4]"
               >
                 {dict.viewDemoLink}
@@ -420,9 +461,9 @@ export function SolutionPresentation({
                           return href ? (
                             <a
                               key={i}
-                              href={href}
+                              href={out(href)}
                               target="_blank"
-                              rel="noopener noreferrer"
+                              rel={outboundRel}
                               className="inline-flex items-center gap-1.5 text-sm text-[#365DC4]"
                             >
                               <SocialIcon label={link.label} className="size-4 shrink-0" />
@@ -440,48 +481,60 @@ export function SolutionPresentation({
           )}
         </div>
         <aside className="border-t border-stone-200 pt-6 lg:sticky lg:top-24 lg:border-t-0 lg:pt-0">
-          {demo && (
-            <div className="mb-8">
-              <a
-                href={demo}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={actionButtonStyle}
-                className="action-button flex w-full items-center justify-between gap-2 rounded-full px-5 py-3 text-sm font-medium"
-              >
-                {dict.demoButton}
-                <PlayIcon className="size-4" aria-hidden="true" />
-                <span className="sr-only"> {dict.otherTab}</span>
-              </a>
-            </div>
-          )}
           <h2 className="text-lg font-medium">{dict.fitTitle}</h2>
           <p className="mt-3 text-sm leading-relaxed text-stone-500">{dict.fitDesc}</p>
-          {website && (
-            <a
-              data-official-site
-              href={website}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={actionButtonStyle}
-              className="action-button mt-6 flex w-full items-center justify-between gap-2 rounded-full px-5 py-3 text-sm font-medium"
-            >
-              {dict.officialSite}
-              <ArrowUpRightIcon className="size-4 button-arrow-diagonal" aria-hidden="true" />
-              <span className="sr-only"> {dict.otherTab}</span>
-            </a>
-          )}
+          {/* Contact is the main action (SHCWS-50): the buyer leaves context and the founder
+              hears about it. The site and demo stay one tap away, measured, never hidden. */}
           {!preview && (
             <>
               <Link
-                href={`/account/contacts/new?solution=${id}`}
+                id="solution-contact"
+                href={contactHref}
                 style={actionButtonStyle}
-                className="action-button mt-3 flex w-full items-center justify-between gap-2 rounded-full px-5 py-3 text-sm font-medium"
+                className="action-button mt-6 flex w-full items-center justify-between gap-2 rounded-full px-5 py-3 text-sm font-medium"
               >
                 {dict.contactCta}
                 <ArrowRightIcon className="size-4 button-arrow" aria-hidden="true" />
               </Link>
-              <div className="mt-3">
+              <p className="mt-2 text-xs leading-relaxed text-stone-400">{dict.contactNote}</p>
+              {responseSignal}
+            </>
+          )}
+          {(website || demo) && (
+            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+              {website && (
+                <a
+                  data-official-site
+                  href={out(website)}
+                  target="_blank"
+                  rel={outboundRel}
+                  className="group inline-flex items-center gap-1.5 font-medium text-[#365DC4] underline-offset-4 hover:underline"
+                >
+                  {dict.officialSite}
+                  <ArrowUpRightIcon
+                    className="size-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transform-none"
+                    aria-hidden="true"
+                  />
+                  <span className="sr-only"> {dict.otherTab}</span>
+                </a>
+              )}
+              {demo && (
+                <a
+                  href={out(demo)}
+                  target="_blank"
+                  rel={outboundRel}
+                  className="inline-flex items-center gap-1.5 font-medium text-[#365DC4] underline-offset-4 hover:underline"
+                >
+                  {dict.demoButton}
+                  <PlayIcon className="size-3.5" aria-hidden="true" />
+                  <span className="sr-only"> {dict.otherTab}</span>
+                </a>
+              )}
+            </div>
+          )}
+          {!preview && (
+            <>
+              <div className="mt-6">
                 <SaveProjectButton
                   variant="secondary"
                   projectKey={catalogKey ? `catalog:${catalogKey}` : `solution:${id}`}
@@ -511,6 +564,9 @@ export function SolutionPresentation({
                   )}
                 </div>
               )}
+              <div className="mt-3">
+                <ShareSolution id={id} name={data.name} dict={dict.share} />
+              </div>
             </>
           )}
           {!!data.projectLinks?.length && (
@@ -522,9 +578,9 @@ export function SolutionPresentation({
                   return href ? (
                     <a
                       key={index}
-                      href={href}
+                      href={out(href)}
                       target="_blank"
-                      rel="noopener noreferrer"
+                      rel={outboundRel}
                       className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 px-3 py-1.5 text-xs text-stone-600 transition-colors hover:border-stone-300 hover:text-stone-900"
                     >
                       <SocialIcon label={link.label} className="size-3.5 shrink-0" />
@@ -559,7 +615,17 @@ export function SolutionPresentation({
           locale={locale}
         />
       )}
-      {!preview && !!similar.length && <SimilarSolutions products={similar} dict={dict} />}
+      {!preview && similar && (
+        <SimilarSolutions similar={similar} solutionName={data.name} dict={dict} locale={locale} />
+      )}
+      {!preview && !own && (
+        <ContactBar
+          href={contactHref}
+          label={dict.contactCta}
+          name={data.name}
+          watchId="solution-contact"
+        />
+      )}
     </article>
   );
 }

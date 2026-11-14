@@ -16,6 +16,7 @@ export interface ConfirmSpec {
   field?: 'reason' | 'message' | null;
   fieldLabel?: string;
   minLength?: number;
+  maxLength?: number;
   placeholder?: string;
   templates?: string[];
   typeToConfirm?: string;
@@ -105,6 +106,7 @@ export function ActionButton({
           destructive={confirm.destructive}
           fieldLabel={confirm.field === null ? null : (confirm.fieldLabel ?? 'Motivo')}
           minLength={confirm.minLength}
+          maxLength={confirm.maxLength}
           placeholder={confirm.placeholder}
           templates={confirm.templates}
           typeToConfirm={confirm.typeToConfirm}

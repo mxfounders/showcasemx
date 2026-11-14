@@ -167,6 +167,7 @@ test('review filters keep the viewer first and only offer values that exist', as
     cons: 'x',
     usageDuration: 'lt6m' as const,
     level: 'email' as const,
+    invited: false,
     edited: false,
     reply: null,
   };

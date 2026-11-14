@@ -17,6 +17,7 @@ export type CommunityFilters = {
   page: number;
 };
 
+// Only known values, each once: a URL can never select more than the taxonomy holds.
 const clean = (raw: string | undefined, allowed: readonly string[]): string[] =>
   raw
     ? Array.from(
@@ -26,7 +27,7 @@ const clean = (raw: string | undefined, allowed: readonly string[]): string[] =>
             .map(v => v.trim())
             .filter(v => allowed.includes(v)),
         ),
-      ).slice(0, 7)
+      )
     : [];
 
 export function readCommunityFilters(params: {

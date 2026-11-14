@@ -8,7 +8,7 @@ import { i18n } from '@/i18n/config';
 import { industries, localizedIndustries } from '@/lib/taxonomy';
 import { matchIndustry, isRealMatch } from '@/lib/search/facets';
 import { getDictionary } from '@/i18n/get-dictionary';
-import { localeAlternates } from '@/lib/seo';
+import { localeAlternates, pageOpenGraph } from '@/lib/seo';
 
 // See explorar/[slug]/page.tsx for why {locale, slug} pairs (not just slug)
 // and dynamicParams=false both matter here.
@@ -23,10 +23,18 @@ export async function generateMetadata(props: {
   const { slug, locale } = await props.params;
   const info = localizedIndustries(locale).find(item => item.slug === slug);
   if (!info) return {};
+  const { meta } = await getDictionary(locale);
   return {
     title: `${info.title} | shwcs`,
     description: info.description,
     alternates: localeAlternates(locale, `/industria/${slug}`),
+    openGraph: pageOpenGraph({
+      locale,
+      path: `/industria/${slug}`,
+      title: `${info.title} | shwcs`,
+      description: info.description,
+      ogLocale: meta.site.ogLocale,
+    }),
   };
 }
 
@@ -62,6 +70,7 @@ export default async function IndustriaCategoryPage(props: {
         products={categoryProducts}
         locale={params.locale}
         dict={dict.catalog}
+        alertDict={dict.alerts.button}
       />
     </Suspense>
   );

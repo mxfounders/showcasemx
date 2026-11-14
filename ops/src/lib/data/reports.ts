@@ -1,5 +1,6 @@
 import { getDb } from '../db';
 import { iso } from '../http';
+import { reviewSignals } from './reviews';
 
 export const REPORT_STATUSES = ['open', 'resolved', 'dismissed', 'all'] as const;
 export type ReportStatusFilter = (typeof REPORT_STATUSES)[number];
@@ -117,10 +118,17 @@ export async function listReviewReports(status: ReportStatusFilter, page = 1, pa
     ORDER BY CASE WHEN r.status = 'open' THEN r.created_at END ASC, r.created_at DESC
     LIMIT ${pageSize + 1} OFFSET ${(page - 1) * pageSize}
   `;
+  const signals = await reviewSignals(
+    rows
+      .slice(0, pageSize)
+      .filter(r => r.review_id)
+      .map(r => String(r.review_id)),
+  );
   return {
     hasMore: rows.length > pageSize,
     page,
     items: rows.slice(0, pageSize).map(r => ({
+      signal: r.review_id ? (signals.get(String(r.review_id)) ?? null) : null,
       id: String(r.id),
       reason: String(r.reason),
       details: String(r.details ?? ''),
@@ -153,6 +161,130 @@ export async function listReviewReports(status: ReportStatusFilter, page = 1, pa
   };
 }
 
+/**
+ * Reports on comments of listings (db/solution-comment-reports.sql, SHCWS-140). The
+ * comment row may be gone — its author can delete it — so its columns are nullable.
+ */
+export async function listCommentReports(status: ReportStatusFilter, page = 1, pageSize = 30) {
+  const sql = getDb();
+  const rows = await sql`
+    SELECT r.id, r.reason, r.details, r.status, r.decision, r.created_at, r.resolved_at, r.version,
+      r.solution_id, COALESCE(s.published_data->>'name', s.data->>'name') AS solution_name,
+      (s.published_data IS NOT NULL) AS solution_published,
+      r.comment_id, c.body AS comment_body, c.author_name AS comment_author_name, c.created_at AS comment_created_at,
+      c.hidden_at, c.hidden_reason, author.id AS author_id, author.email AS author_email,
+      reporter.email AS reporter_email, (r.reporter_id = s.owner_id) AS reported_by_owner,
+      reviewer.email AS reviewer_email,
+      (SELECT count(*)::int FROM solution_comment_reports o
+        WHERE o.comment_id = r.comment_id AND o.status = 'open') AS open_on_comment
+    FROM solution_comment_reports r
+    JOIN founder_solutions s ON s.id = r.solution_id
+    LEFT JOIN solution_comments c ON c.id = r.comment_id
+    LEFT JOIN auth_accounts author ON author.id = c.author_id
+    LEFT JOIN auth_accounts reporter ON reporter.id = r.reporter_id
+    LEFT JOIN auth_accounts reviewer ON reviewer.id = r.reviewer_id
+    WHERE (${status}::text = 'all' OR r.status = ${status})
+    ORDER BY CASE WHEN r.status = 'open' THEN r.created_at END ASC, r.created_at DESC
+    LIMIT ${pageSize + 1} OFFSET ${(page - 1) * pageSize}
+  `;
+  return {
+    hasMore: rows.length > pageSize,
+    page,
+    items: rows.slice(0, pageSize).map(r => ({
+      id: String(r.id),
+      reason: String(r.reason),
+      details: String(r.details ?? ''),
+      status: String(r.status),
+      decision: r.decision ? String(r.decision) : null,
+      createdAt: iso(r.created_at),
+      resolvedAt: iso(r.resolved_at),
+      version: Number(r.version),
+      solutionId: String(r.solution_id),
+      solutionName: r.solution_name ? String(r.solution_name) : '(sin nombre)',
+      solutionPublished: Boolean(r.solution_published),
+      comment: r.comment_id
+        ? {
+            id: String(r.comment_id),
+            body: String(r.comment_body ?? ''),
+            authorName: String(r.comment_author_name ?? ''),
+            authorId: r.author_id ? String(r.author_id) : null,
+            authorEmail: r.author_email ? String(r.author_email) : null,
+            createdAt: iso(r.comment_created_at),
+            hidden: r.hidden_at !== null && r.hidden_at !== undefined,
+            hiddenReason: r.hidden_reason ? String(r.hidden_reason) : null,
+          }
+        : null,
+      reporterEmail: r.reporter_email ? String(r.reporter_email) : null,
+      reportedByOwner: Boolean(r.reported_by_owner),
+      reviewerEmail: r.reviewer_email ? String(r.reviewer_email) : null,
+      openOnComment: Number(r.open_on_comment),
+    })),
+  };
+}
+
+/**
+ * Reports on public questions of listings (db/solution-questions.sql, SHCWS-57). The
+ * question row may be gone — its author can delete it — so its columns are nullable.
+ */
+export async function listQuestionReports(status: ReportStatusFilter, page = 1, pageSize = 30) {
+  const sql = getDb();
+  const rows = await sql`
+    SELECT r.id, r.reason, r.details, r.status, r.decision, r.created_at, r.resolved_at, r.version,
+      r.solution_id, COALESCE(s.published_data->>'name', s.data->>'name') AS solution_name,
+      (s.published_data IS NOT NULL) AS solution_published,
+      r.question_id, q.body AS question_body, q.author_name AS question_author_name,
+      q.answer AS question_answer, q.created_at AS question_created_at,
+      q.hidden_at, q.hidden_reason, author.id AS author_id, author.email AS author_email,
+      reporter.email AS reporter_email, (r.reporter_id = s.owner_id) AS reported_by_owner,
+      reviewer.email AS reviewer_email,
+      (SELECT count(*)::int FROM solution_question_reports o
+        WHERE o.question_id = r.question_id AND o.status = 'open') AS open_on_question
+    FROM solution_question_reports r
+    JOIN founder_solutions s ON s.id = r.solution_id
+    LEFT JOIN solution_questions q ON q.id = r.question_id
+    LEFT JOIN auth_accounts author ON author.id = q.author_id
+    LEFT JOIN auth_accounts reporter ON reporter.id = r.reporter_id
+    LEFT JOIN auth_accounts reviewer ON reviewer.id = r.reviewer_id
+    WHERE (${status}::text = 'all' OR r.status = ${status})
+    ORDER BY CASE WHEN r.status = 'open' THEN r.created_at END ASC, r.created_at DESC
+    LIMIT ${pageSize + 1} OFFSET ${(page - 1) * pageSize}
+  `;
+  return {
+    hasMore: rows.length > pageSize,
+    page,
+    items: rows.slice(0, pageSize).map(r => ({
+      id: String(r.id),
+      reason: String(r.reason),
+      details: String(r.details ?? ''),
+      status: String(r.status),
+      decision: r.decision ? String(r.decision) : null,
+      createdAt: iso(r.created_at),
+      resolvedAt: iso(r.resolved_at),
+      version: Number(r.version),
+      solutionId: String(r.solution_id),
+      solutionName: r.solution_name ? String(r.solution_name) : '(sin nombre)',
+      solutionPublished: Boolean(r.solution_published),
+      question: r.question_id
+        ? {
+            id: String(r.question_id),
+            body: String(r.question_body ?? ''),
+            answer: r.question_answer ? String(r.question_answer) : null,
+            authorName: String(r.question_author_name ?? ''),
+            authorId: r.author_id ? String(r.author_id) : null,
+            authorEmail: r.author_email ? String(r.author_email) : null,
+            createdAt: iso(r.question_created_at),
+            hidden: r.hidden_at !== null && r.hidden_at !== undefined,
+            hiddenReason: r.hidden_reason ? String(r.hidden_reason) : null,
+          }
+        : null,
+      reporterEmail: r.reporter_email ? String(r.reporter_email) : null,
+      reportedByOwner: Boolean(r.reported_by_owner),
+      reviewerEmail: r.reviewer_email ? String(r.reviewer_email) : null,
+      openOnQuestion: Number(r.open_on_question),
+    })),
+  };
+}
+
 export async function reportCounts() {
   const sql = getDb();
   const [row] = await sql`
@@ -160,6 +292,8 @@ export async function reportCounts() {
       (SELECT count(*)::int FROM solution_reports WHERE status = 'open') AS solution_open,
       (SELECT count(*)::int FROM community_reports WHERE status = 'open') AS community_open,
       (SELECT count(*)::int FROM solution_review_reports WHERE status = 'open') AS review_open,
+      (SELECT count(*)::int FROM solution_comment_reports WHERE status = 'open') AS comment_open,
+      (SELECT count(*)::int FROM solution_question_reports WHERE status = 'open') AS question_open,
       (SELECT count(*)::int FROM solution_reports) AS solution_all,
       (SELECT count(*)::int FROM community_reports) AS community_all,
       (SELECT count(*)::int FROM solution_review_reports) AS review_all
@@ -171,5 +305,7 @@ export async function reportCounts() {
     communityAll: Number(row?.community_all ?? 0),
     reviewOpen: Number(row?.review_open ?? 0),
     reviewAll: Number(row?.review_all ?? 0),
+    commentOpen: Number(row?.comment_open ?? 0),
+    questionOpen: Number(row?.question_open ?? 0),
   };
 }

@@ -149,61 +149,71 @@ export function SavedGallery({
       { value: 'oldest', label: t.sortOldest },
       { value: 'name', label: t.sortName },
     ];
+  // Also when a filter is already on (e.g. «sin organizar» from Inicio), or it could
+  // not be cleared.
+  const manyEntries = entries.length >= 6 || !!(kind || category || industry || size || list);
   const filterOpen = (id: string) => (open: boolean) =>
     setOpenFilter(current => (open ? id : current === id ? '' : current));
   return (
     <>
       <div className="mb-8 border-b border-stone-200 pb-6">
-        <div className="flex flex-wrap items-center gap-2 xl:flex-nowrap">
-          <FilterMenu
-            label={t.filterType}
-            value={kind}
-            defaultValue=""
-            options={typeOptions}
-            open={openFilter === 'kind'}
-            onOpenChange={filterOpen('kind')}
-            onChange={setKind}
-          />
-          <FilterMenu
-            label={t.filterCategory}
-            value={category}
-            defaultValue=""
-            options={categoryOptions}
-            open={openFilter === 'category'}
-            onOpenChange={filterOpen('category')}
-            onChange={setCategory}
-          />
-          {industryOptions.length > 1 && (
-            <FilterMenu
-              label={t.filterIndustry}
-              value={industry}
-              defaultValue=""
-              options={industryOptions}
-              open={openFilter === 'industry'}
-              onOpenChange={filterOpen('industry')}
-              onChange={setIndustry}
-            />
+        {/* Wraps instead of forcing one row: six menus and the search overflowed the
+            page at 1440 px. With a handful of saved projects the filters are noise, so
+            only sort and search show until there are enough to narrow down. */}
+        <div className="flex flex-wrap items-center gap-2">
+          {manyEntries && (
+            <>
+              <FilterMenu
+                label={t.filterType}
+                value={kind}
+                defaultValue=""
+                options={typeOptions}
+                open={openFilter === 'kind'}
+                onOpenChange={filterOpen('kind')}
+                onChange={setKind}
+              />
+              <FilterMenu
+                label={t.filterCategory}
+                value={category}
+                defaultValue=""
+                options={categoryOptions}
+                open={openFilter === 'category'}
+                onOpenChange={filterOpen('category')}
+                onChange={setCategory}
+              />
+              {industryOptions.length > 1 && (
+                <FilterMenu
+                  label={t.filterIndustry}
+                  value={industry}
+                  defaultValue=""
+                  options={industryOptions}
+                  open={openFilter === 'industry'}
+                  onOpenChange={filterOpen('industry')}
+                  onChange={setIndustry}
+                />
+              )}
+              {sizeOptions.length > 1 && (
+                <FilterMenu
+                  label={t.filterSize}
+                  value={size}
+                  defaultValue=""
+                  options={sizeOptions}
+                  open={openFilter === 'size'}
+                  onOpenChange={filterOpen('size')}
+                  onChange={setSize}
+                />
+              )}
+              <FilterMenu
+                label={t.filterList}
+                value={list}
+                defaultValue=""
+                options={listOptions}
+                open={openFilter === 'list'}
+                onOpenChange={filterOpen('list')}
+                onChange={setList}
+              />
+            </>
           )}
-          {sizeOptions.length > 1 && (
-            <FilterMenu
-              label={t.filterSize}
-              value={size}
-              defaultValue=""
-              options={sizeOptions}
-              open={openFilter === 'size'}
-              onOpenChange={filterOpen('size')}
-              onChange={setSize}
-            />
-          )}
-          <FilterMenu
-            label={t.filterList}
-            value={list}
-            defaultValue=""
-            options={listOptions}
-            open={openFilter === 'list'}
-            onOpenChange={filterOpen('list')}
-            onChange={setList}
-          />
           <FilterMenu
             label={t.sortLabel}
             value={sort}

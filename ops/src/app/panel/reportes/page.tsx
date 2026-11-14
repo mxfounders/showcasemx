@@ -6,14 +6,18 @@ import {
   CommentIcon,
   EyeOffIcon,
   FlagIcon,
+  InboxIcon,
   LogIcon,
+  MessageAlertIcon,
   StarIcon,
   TrashIcon,
   UndoIcon,
 } from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
 import {
+  listCommentReports,
   listCommunityReports,
+  listQuestionReports,
   listReviewReports,
   listSolutionReports,
   reportCounts,
@@ -36,6 +40,7 @@ import { Pagination } from '@/components/ui/Pagination';
 import { RelativeTime } from '@/components/ui/RelativeTime';
 import { AgeBadge, ReportStatusBadge } from '@/components/domain/StatusBadge';
 import { ActionButton } from '@/components/actions/ActionButton';
+import { ReviewSignalBadges } from '@/components/domain/ReviewSignal';
 
 export const metadata: Metadata = { title: 'Reportes' };
 
@@ -58,16 +63,31 @@ export default async function ReportesPage({
 }) {
   await requireOps();
   const params = await searchParams;
-  const kind = choice(params, 'tipo', ['fichas', 'comunidad', 'resenas'] as const, 'fichas');
+  const kind = choice(
+    params,
+    'tipo',
+    ['fichas', 'comunidad', 'resenas', 'comentarios', 'preguntas'] as const,
+    'fichas',
+  );
   const status = choice(params, 'estado', REPORT_STATUSES, 'open');
   const page = pageParam(params);
-  const [counts, solutionReports, communityReports, reviewReports] = await Promise.all([
+  const [
+    counts,
+    solutionReports,
+    communityReports,
+    reviewReports,
+    commentReports,
+    questionReports,
+  ] = await Promise.all([
     reportCounts(),
     kind === 'fichas' ? listSolutionReports(status, page) : null,
     kind === 'comunidad' ? listCommunityReports(status, page) : null,
     kind === 'resenas' ? listReviewReports(status, page) : null,
+    kind === 'comentarios' ? listCommentReports(status, page) : null,
+    kind === 'preguntas' ? listQuestionReports(status, page) : null,
   ]);
-  const data = solutionReports ?? communityReports ?? reviewReports!;
+  const data =
+    solutionReports ?? communityReports ?? reviewReports ?? commentReports ?? questionReports!;
 
   return (
     <>
@@ -100,6 +120,20 @@ export default async function ReportesPage({
               count: counts.reviewOpen,
               icon: StarIcon,
             },
+            {
+              label: 'Comentarios de fichas',
+              href: hrefWith('/panel/reportes', params, { tipo: 'comentarios', page: null }),
+              active: kind === 'comentarios',
+              count: counts.commentOpen,
+              icon: MessageAlertIcon,
+            },
+            {
+              label: 'Preguntas',
+              href: hrefWith('/panel/reportes', params, { tipo: 'preguntas', page: null }),
+              active: kind === 'preguntas',
+              count: counts.questionOpen,
+              icon: InboxIcon,
+            },
           ]}
         />
         <Segmented
@@ -117,7 +151,7 @@ export default async function ReportesPage({
           <EmptyState
             icon={CheckCircleIcon}
             title={status === 'open' ? 'No hay reportes abiertos' : 'Sin reportes en este filtro'}
-            description="Cuando alguien reporte una ficha, una reseña o un contenido de la comunidad aparecerá aquí."
+            description="Cuando alguien reporte una ficha, una reseña, un comentario, una pregunta o un contenido de la comunidad aparecerá aquí."
           />
         </Card>
       ) : (
@@ -371,6 +405,7 @@ export default async function ReportesPage({
                       {report.reportedByOwner && (
                         <Badge tone="lavender">Reportada por el dueño</Badge>
                       )}
+                      <ReviewSignalBadges signal={report.signal} />
                       {report.status === 'open' && <AgeBadge days={daysSince(report.createdAt)} />}
                     </div>
                     <Link
@@ -491,6 +526,306 @@ export default async function ReportesPage({
                           confirm={decisionConfirm(
                             'Restaurar la reseña',
                             'Vuelve a ser pública con su contenido actual.',
+                          )}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </li>
+          ))}
+          {commentReports?.items.map(report => (
+            <li key={report.id}>
+              <Card className="p-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <ReportStatusBadge status={report.status} />
+                      <Badge tone="terracotta">
+                        {COMMUNITY_REPORT_REASON[report.reason] ?? report.reason}
+                      </Badge>
+                      {report.comment?.hidden && (
+                        <Badge tone="amber" icon={EyeOffIcon}>
+                          Comentario oculto
+                        </Badge>
+                      )}
+                      {report.reportedByOwner && (
+                        <Badge tone="lavender">Reportado por el dueño de la ficha</Badge>
+                      )}
+                      {report.openOnComment > 1 && (
+                        <Badge tone="amber">{report.openOnComment} reportes abiertos</Badge>
+                      )}
+                      {report.status === 'open' && <AgeBadge days={daysSince(report.createdAt)} />}
+                    </div>
+                    <Link
+                      href={`/panel/postulaciones/${report.solutionId}?tab=comentarios`}
+                      className="block text-[15px] font-semibold hover:text-accent-fg"
+                    >
+                      {report.solutionName}
+                    </Link>
+                    {report.comment ? (
+                      <blockquote className="rounded-xl border border-line bg-surface-2 px-3.5 py-2.5 text-[13.5px] text-fg-2">
+                        <p className="whitespace-pre-line">{report.comment.body}</p>
+                        <span className="mt-1 block text-[12px] text-muted">
+                          — {report.comment.authorName} ·{' '}
+                          {report.comment.authorId ? (
+                            <Link
+                              href={`/panel/cuentas/${report.comment.authorId}`}
+                              className="hover:text-accent-fg"
+                            >
+                              {report.comment.authorEmail}
+                            </Link>
+                          ) : (
+                            'cuenta eliminada'
+                          )}
+                        </span>
+                        {report.comment.hidden && report.comment.hiddenReason && (
+                          <span className="mt-1 block text-[12px] text-muted">
+                            Motivo que ve su autor: «{report.comment.hiddenReason}»
+                          </span>
+                        )}
+                      </blockquote>
+                    ) : (
+                      <p className="text-[13px] text-muted">El comentario ya no existe.</p>
+                    )}
+                    <p className="whitespace-pre-line text-[13.5px] leading-relaxed text-fg-2">
+                      {report.details}
+                    </p>
+                    <p className="text-[12.5px] text-muted">
+                      Reportó {report.reporterEmail ?? 'una cuenta eliminada'} ·{' '}
+                      <RelativeTime value={report.createdAt} /> ·{' '}
+                      {report.solutionPublished ? 'ficha publicada' : 'ficha no publicada'}
+                    </p>
+                    {report.decision && (
+                      <div className="rounded-xl bg-surface-2 px-3.5 py-2.5 text-[13px]">
+                        <span className="font-medium">{report.reviewerEmail ?? 'ops'}:</span>{' '}
+                        {report.decision}
+                      </div>
+                    )}
+                  </div>
+                  {(report.status === 'open' || report.comment?.hidden) && (
+                    <div className="flex shrink-0 flex-wrap gap-2 lg:w-[220px] lg:flex-col">
+                      {report.status === 'open' && (
+                        <>
+                          <ActionButton
+                            label="Resolver sin cambios"
+                            icon={<CheckCircleIcon />}
+                            tone="success"
+                            endpoint="/api/solution-comment-reports"
+                            payload={{
+                              reportId: report.id,
+                              decision: 'resolve',
+                              version: report.version,
+                            }}
+                            success="Reporte resuelto"
+                            confirm={decisionConfirm(
+                              'Resolver el reporte',
+                              'Revisaste el comentario y puede quedarse.',
+                            )}
+                          />
+                          <ActionButton
+                            label="Descartar"
+                            icon={<CloseIcon />}
+                            endpoint="/api/solution-comment-reports"
+                            payload={{
+                              reportId: report.id,
+                              decision: 'dismiss',
+                              version: report.version,
+                            }}
+                            success="Reporte descartado"
+                            confirm={decisionConfirm(
+                              'Descartar el reporte',
+                              'El reporte no procede.',
+                            )}
+                          />
+                          {report.comment && !report.comment.hidden && (
+                            <ActionButton
+                              label="Ocultar el comentario"
+                              icon={<EyeOffIcon />}
+                              tone="danger"
+                              endpoint="/api/solution-comment-reports"
+                              payload={{
+                                reportId: report.id,
+                                decision: 'hide',
+                                version: report.version,
+                              }}
+                              success="Comentario oculto"
+                              confirm={{
+                                ...decisionConfirm(
+                                  'Ocultar el comentario',
+                                  'Sale de la ficha, de su número de comentarios, del orden del catálogo y de los reconocimientos. Su autor lo conserva y verá tu decisión como motivo, así que escríbela para esa persona.',
+                                  true,
+                                ),
+                                maxLength: 500,
+                              }}
+                            />
+                          )}
+                        </>
+                      )}
+                      {report.comment?.hidden && (
+                        <ActionButton
+                          label="Restaurar el comentario"
+                          icon={<UndoIcon />}
+                          endpoint="/api/solution-comment-reports"
+                          payload={{ action: 'restore', commentId: report.comment.id }}
+                          success="Comentario restaurado"
+                          confirm={decisionConfirm(
+                            'Restaurar el comentario',
+                            'Vuelve a ser público y a contar en la ficha.',
+                          )}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </li>
+          ))}
+          {questionReports?.items.map(report => (
+            <li key={report.id}>
+              <Card className="p-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <ReportStatusBadge status={report.status} />
+                      <Badge tone="terracotta">
+                        {COMMUNITY_REPORT_REASON[report.reason] ?? report.reason}
+                      </Badge>
+                      {report.question?.hidden && (
+                        <Badge tone="amber" icon={EyeOffIcon}>
+                          Pregunta oculta
+                        </Badge>
+                      )}
+                      {report.reportedByOwner && (
+                        <Badge tone="lavender">Reportada por el dueño de la ficha</Badge>
+                      )}
+                      {report.openOnQuestion > 1 && (
+                        <Badge tone="amber">{report.openOnQuestion} reportes abiertos</Badge>
+                      )}
+                      {report.status === 'open' && <AgeBadge days={daysSince(report.createdAt)} />}
+                    </div>
+                    <Link
+                      href={`/panel/postulaciones/${report.solutionId}`}
+                      className="block text-[15px] font-semibold hover:text-accent-fg"
+                    >
+                      {report.solutionName}
+                    </Link>
+                    {report.question ? (
+                      <blockquote className="rounded-xl border border-line bg-surface-2 px-3.5 py-2.5 text-[13.5px] text-fg-2">
+                        <p className="whitespace-pre-line">{report.question.body}</p>
+                        <span className="mt-1 block text-[12px] text-muted">
+                          — {report.question.authorName} ·{' '}
+                          {report.question.authorId ? (
+                            <Link
+                              href={`/panel/cuentas/${report.question.authorId}`}
+                              className="hover:text-accent-fg"
+                            >
+                              {report.question.authorEmail}
+                            </Link>
+                          ) : (
+                            'cuenta eliminada'
+                          )}
+                        </span>
+                        {report.question.answer && (
+                          <span className="mt-1.5 block whitespace-pre-line text-[12.5px]">
+                            <span className="font-medium text-fg">Respuesta del proyecto: </span>
+                            {report.question.answer}
+                          </span>
+                        )}
+                        {report.question.hidden && report.question.hiddenReason && (
+                          <span className="mt-1 block text-[12px] text-muted">
+                            Motivo que ve su autor: «{report.question.hiddenReason}»
+                          </span>
+                        )}
+                      </blockquote>
+                    ) : (
+                      <p className="text-[13px] text-muted">Su autor borró la pregunta.</p>
+                    )}
+                    <p className="whitespace-pre-line text-[13.5px] leading-relaxed text-fg-2">
+                      {report.details}
+                    </p>
+                    <p className="text-[12.5px] text-muted">
+                      Reportó {report.reporterEmail ?? 'una cuenta eliminada'} ·{' '}
+                      <RelativeTime value={report.createdAt} /> ·{' '}
+                      {report.solutionPublished ? 'ficha publicada' : 'ficha no publicada'}
+                    </p>
+                    {report.decision && (
+                      <div className="rounded-xl bg-surface-2 px-3.5 py-2.5 text-[13px]">
+                        <span className="font-medium">{report.reviewerEmail ?? 'ops'}:</span>{' '}
+                        {report.decision}
+                      </div>
+                    )}
+                  </div>
+                  {(report.status === 'open' || report.question?.hidden) && (
+                    <div className="flex shrink-0 flex-wrap gap-2 lg:w-[220px] lg:flex-col">
+                      {report.status === 'open' && (
+                        <>
+                          <ActionButton
+                            label="Resolver sin cambios"
+                            icon={<CheckCircleIcon />}
+                            tone="success"
+                            endpoint="/api/question-reports"
+                            payload={{
+                              reportId: report.id,
+                              decision: 'resolve',
+                              version: report.version,
+                            }}
+                            success="Reporte resuelto"
+                            confirm={decisionConfirm(
+                              'Resolver el reporte',
+                              'Revisaste la pregunta y puede quedarse.',
+                            )}
+                          />
+                          <ActionButton
+                            label="Descartar"
+                            icon={<CloseIcon />}
+                            endpoint="/api/question-reports"
+                            payload={{
+                              reportId: report.id,
+                              decision: 'dismiss',
+                              version: report.version,
+                            }}
+                            success="Reporte descartado"
+                            confirm={decisionConfirm(
+                              'Descartar el reporte',
+                              'El reporte no procede.',
+                            )}
+                          />
+                          {report.question && !report.question.hidden && (
+                            <ActionButton
+                              label="Ocultar la pregunta"
+                              icon={<EyeOffIcon />}
+                              tone="danger"
+                              endpoint="/api/question-reports"
+                              payload={{
+                                reportId: report.id,
+                                decision: 'hide',
+                                version: report.version,
+                              }}
+                              success="Pregunta oculta"
+                              confirm={{
+                                ...decisionConfirm(
+                                  'Ocultar la pregunta',
+                                  'Sale de la ficha y de sus datos estructurados, con su respuesta. Su autor la conserva y verá tu decisión como motivo, así que escríbela para esa persona.',
+                                  true,
+                                ),
+                                maxLength: 500,
+                              }}
+                            />
+                          )}
+                        </>
+                      )}
+                      {report.question?.hidden && (
+                        <ActionButton
+                          label="Restaurar la pregunta"
+                          icon={<UndoIcon />}
+                          endpoint="/api/question-reports"
+                          payload={{ action: 'restore', questionId: report.question.id }}
+                          success="Pregunta restaurada"
+                          confirm={decisionConfirm(
+                            'Restaurar la pregunta',
+                            'Vuelve a la ficha con su respuesta, si la tiene.',
                           )}
                         />
                       )}

@@ -1,21 +1,25 @@
 export const categoryExplorer = {
   emptyTitle: 'Todavía no tenemos una solución para eso.',
-  emptyDesc:
-    'El catálogo está creciendo. Prueba con cobros, tienda online o automatización, o explora otra categoría.',
+  emptyDesc: 'El catálogo está creciendo. Prueba con otras palabras o explora una categoría.',
+  briefCta: 'Cuéntanos qué necesitas',
+  briefNote: 'Tu búsqueda va en el mensaje. Lo lee una persona del equipo de shwcs.',
+  /** The card a category with few projects ends with (SHCWS-38). Heading: no final period (§37). */
+  briefCardTitle: 'Cuéntanos qué necesitas',
+  briefCardEmpty:
+    'Todavía no hay proyectos de {category} publicados. Escríbenos qué buscas: lo lee una persona del equipo de shwcs y te ayuda a encontrarlo.',
+  briefCardFew:
+    '¿No ves lo que buscas en {category}? Escríbenos qué necesitas: lo lee una persona del equipo de shwcs.',
+  briefPrefill: 'Busco una solución de {category}:',
+  briefCardCta: 'Escribir mi necesidad',
   solutionFor: 'para',
   clearBtn: 'Limpiar búsqueda',
   option: 'opción',
   options: 'opciones',
   solution: 'solución',
   solutions: 'soluciones',
-  applySpaceTitle: 'Tu solución puede estar aquí.',
-  applySpaceBtn: 'Postular en',
-  availableSpace: 'Espacio disponible',
   realResultsLabel: 'Resultados del catálogo real',
   realSolutionsCount: 'solución real',
   realSolutionsCountPlural: 'soluciones reales',
-  availableSlotsCount: 'espacio disponible',
-  availableSlotsCountPlural: 'espacios disponibles',
   fictionalNotice: 'Los ejemplos son ficticios · No son proveedores disponibles',
   seeSolution: 'Conocer solución',
   seeExample: 'Ver ejemplo',
@@ -33,7 +37,6 @@ export const categoryExplorer = {
   searchResultsLabel: 'Resultados de búsqueda',
   categoryResultsLabel: 'Soluciones de {category}',
   coverAlt: 'Portada de {name}',
-  applySpaceLabel: 'Postular una solución para {category}, espacio {slot}',
   closePreview: 'Cerrar ficha',
   opensInNewTab: '(abre en una pestaña nueva)',
 } as const;

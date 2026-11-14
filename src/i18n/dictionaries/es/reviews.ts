@@ -7,6 +7,11 @@ export const reviews = {
   recommendShare: '{percent} % la recomienda',
   workShare: '{count} con correo de empresa',
   customerShare: '{count} con compra comprobada',
+  contactShare: '{count} tras contactar vía shwcs',
+  invitedShare: '{count} por invitación del proyecto',
+  invited: 'Invitada por el proyecto',
+  invitedTitle:
+    'Llegó por el enlace que el proyecto comparte con sus clientes. Se publica igual, buena o mala, y cuenta la mitad en el orden del catálogo.',
   empty: 'Todavía no hay reseñas. Si usas {name}, cuéntale a otras empresas cómo te fue.',
   write: 'Escribir una reseña',
   editMine: 'Editar mi reseña',
@@ -14,10 +19,12 @@ export const reviews = {
   signInSuffix: 'para escribir una reseña.',
   ownNote:
     'No puedes reseñar tu propia solución. Puedes responder en público a cada reseña; nunca borrarlas.',
+  ownInvite: 'Invita a tus clientes a reseñar',
   levels: {
     email: 'Correo verificado',
     work: 'Correo de empresa',
     unverified: 'Sin verificar',
+    contact: 'Contactó vía shwcs',
     customer: 'Compra comprobada',
   },
   how: {
@@ -26,7 +33,9 @@ export const reviews = {
       'Solo se publican reseñas de cuentas con el correo confirmado; una por cuenta y solución.',
       '«Correo de empresa» significa que la cuenta usa el dominio de una empresa, no un buzón gratuito.',
       'Nadie puede reseñar su propia solución ni escribir desde el dominio del proveedor.',
+      '«Contactó vía shwcs» significa que su autor le escribió al proveedor desde shwcs y la conversación llegó a «en conversación». No mostramos nada de lo que hablaron.',
       '«Compra comprobada» significa que su autor presentó un comprobante del proveedor y una autoridad pública lo confirmó (en México, un CFDI vigente ante el SAT). Solo guardamos el resultado, nunca el comprobante.',
+      '«Invitada por el proyecto» significa que llegó por el enlace que el proveedor comparte con sus clientes. Se publica igual que cualquier otra y cuenta la mitad en el orden, porque el proveedor elige a quién invitar.',
       'El proveedor responde en público, pero no puede borrar ni editar reseñas. Solo moderación las oculta, con un motivo, cuando incumplen las reglas.',
       'Las reseñas cuentan para el orden del catálogo según sus estrellas y su verificación. Pagar no cambia ninguna de las dos.',
     ],
@@ -78,6 +87,71 @@ export const reviews = {
     deleteConfirm: '¿Borrar tu reseña? No se puede deshacer.',
     deleting: 'Borrando…',
     saved: 'Reseña guardada.',
+  },
+  invite: {
+    card: {
+      title: 'Invita a tus clientes a reseñar',
+      body: 'Comparte este enlace con tus clientes. Entran con su correo, sin contraseña, y dejan su reseña en un par de minutos.',
+      weight:
+        'Las reseñas que llegan por tu enlace se publican igual, buenas o malas, con la etiqueta «Invitada por el proyecto», y cuentan la mitad en el orden del catálogo porque tú eliges a quién invitar.',
+      rules:
+        'Invita a todos tus clientes, no solo a los contentos. No ofrezcas nada a cambio de una reseña positiva: cualquier incentivo debe ser el mismo diga lo que diga la reseña.',
+      rulesLink: 'Reglas de las reseñas',
+      create: 'Crear mi enlace',
+      creating: 'Creando…',
+      label: 'Tu enlace de invitación',
+      copy: 'Copiar enlace',
+      copied: 'Enlace copiado',
+      rotate: 'Crear otro enlace',
+      rotateConfirm: 'El enlace actual dejará de funcionar. ¿Crear otro?',
+      rotateYes: 'Sí, crear otro',
+      cancel: 'Cancelar',
+      failed: 'No pudimos crear el enlace. Intenta de nuevo.',
+    },
+    page: {
+      metaTitle: 'Reseña {name}',
+      title: 'Reseña {name}',
+      intro:
+        '{name} te invitó a contar cómo te fue. Tu reseña se publica tal como la escribas, buena o mala, con la etiqueta «Invitada por el proyecto». El proyecto puede responder, pero no editarla ni borrarla.',
+      invalidTitle: 'Este enlace ya no funciona',
+      invalidBody:
+        'El proyecto cambió su enlace de invitación o la ficha ya no está publicada. Pídele uno nuevo o busca la solución en el catálogo.',
+      toCatalog: 'Ir al catálogo',
+      emailLabel: 'Tu correo',
+      emailPlaceholder: 'nombre@empresa.com',
+      emailHint:
+        'Te enviamos un enlace para entrar. Al abrirlo confirmamos tu correo y vuelves aquí para escribir tu reseña. Si no tienes cuenta, la creamos.',
+      send: 'Enviarme el enlace',
+      sending: 'Enviando…',
+      sent: 'Listo. Revisa {email} y abre el enlace en este navegador. Caduca en 30 minutos.',
+      resend: 'Usar otro correo',
+      orPassword: '¿Prefieres tu contraseña?',
+      signIn: 'Entrar',
+      signUp: 'Crear cuenta',
+      consuming: 'Entrando…',
+      own: 'Esta es la página que ven tus clientes. No puedes reseñar tu propia solución.',
+      conflict:
+        'Tu correo es del dominio de este proveedor. Para evitar conflictos de interés, no puedes reseñarlo.',
+      already: 'Ya escribiste una reseña de {name}. Puedes editarla aquí.',
+    },
+    email: {
+      subject: 'Tu enlace para reseñar {name} en shwcs',
+      heading: 'Reseña {name}',
+      body: 'Abre este enlace para entrar a shwcs y dejar tu reseña de {name}. Al abrirlo confirmamos tu correo; si no tenías cuenta, la creamos.',
+      button: 'Entrar y escribir mi reseña',
+      expires: 'El enlace caduca en {minutes} minutos y sirve una sola vez.',
+      ignore: 'Si no lo pediste, ignora este correo: nadie entra sin abrirlo.',
+    },
+  },
+  composer: {
+    title: 'Reseña {name}',
+    contactNote:
+      'Contactaste a {name} por shwcs, así que tu reseña mostrará «Contactó vía shwcs». Eso dice que hubo una conversación, nunca lo que hablaron.',
+    intro: 'Cuenta cómo te fue con {name}. Tu reseña ayuda a otras empresas a decidir.',
+    done: 'Gracias. Tu reseña ya está publicada.',
+    doneUnverified: 'Gracias. Tu reseña está guardada y se publica en cuanto confirmes tu correo.',
+    viewListing: 'Ver la ficha',
+    own: 'No puedes reseñar tu propia solución.',
   },
   digest: {
     title: 'Reseñas',
@@ -180,6 +254,17 @@ export const reviews = {
       total: 'Escribe el total de la factura.',
     },
     saveFailed: 'No pudimos guardar. Intenta de nuevo.',
+    inviteInvalid:
+      'Este enlace de invitación ya no funciona. Pide uno nuevo al proyecto o reseña desde su ficha.',
+    magicUnavailable: 'El envío de correos no está disponible ahora. Entra con tu contraseña.',
+    magicEmail: 'Escribe un correo válido.',
+    magicRateLimited: 'Pediste varios enlaces seguidos. Espera unos minutos.',
+    magicInvalid: 'Este enlace ya se usó o caducó. Pide uno nuevo.',
+    magicTotp:
+      'Tu cuenta usa verificación en dos pasos, así que no puedes entrar solo con el correo. Entra con tu contraseña.',
+    magicPassword:
+      'Ya hay una cuenta con este correo que todavía no se confirmó. Entra con su contraseña o recupérala.',
+    magicFailed: 'No pudimos completar el acceso. Intenta de nuevo.',
     fields: {
       name: 'Escribe un nombre público de hasta 60 caracteres.',
       rating: 'Elige de 1 a 5 estrellas.',

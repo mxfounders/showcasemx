@@ -21,8 +21,12 @@ import {
   type PreviewCategory,
 } from '@/lib/catalog-preview';
 import { localizedCategoryDisplayLabel, localizedOfferingOptions } from '@/lib/taxonomy';
+import { contactBriefHref } from '@/lib/contact-inquiry';
 import type { Dictionary } from '@/i18n/dictionary';
 import { ProjectMark } from '@/components/project-mark';
+import { VerifiedMark } from '@/components/recognition/verified-mark';
+import { ResponseSignalNote } from '@/components/catalog/response-signal';
+import { DomainVerifiedChip } from '@/components/catalog/domain-verified';
 
 function ProductVisual({ variant, color }: { variant: number; color: string }) {
   return (
@@ -128,7 +132,9 @@ export function CategoryExplorer({
   const palette = brandColors[category.tone];
   const products = results ?? category.products;
   const realCount = products.filter(product => product.website).length;
-  const availableSlots = results === null ? Math.max(0, 9 - products.length) : 0;
+  // Only real projects (SHCWS-38): a category with few of them ends with one card that
+  // asks what the buyer needs, never with empty «available space» placeholders.
+  const showBrief = results === null && products.length < 3;
 
   useEffect(() => {
     const grid = gridRef.current;
@@ -173,8 +179,10 @@ export function CategoryExplorer({
             ref={navRef}
             role="group"
             aria-label={dict.categoriesLabel}
-            style={{ gridTemplateRows: `repeat(${categories.length}, minmax(0, 1fr))` }}
-            className="flex gap-2.5 overflow-x-auto pb-2 lg:sticky lg:top-20 lg:self-start lg:grid lg:h-[min(800px,calc(100svh-104px))] lg:overflow-visible lg:pb-0"
+            // Fourteen categories no longer fit as rows sharing a fixed height: on desktop
+            // the column is a compact list that scrolls inside itself, padded so focus
+            // outlines are not clipped. Mobile keeps the horizontal row of cards.
+            className="flex gap-2.5 overflow-x-auto pb-2 lg:sticky lg:top-20 lg:-m-1 lg:max-h-[calc(100svh-104px)] lg:flex-col lg:gap-1.5 lg:self-start lg:overflow-y-auto lg:p-1"
             onKeyDown={event => {
               const keys = ['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft', 'Home', 'End'];
               if (!keys.includes(event.key)) return;
@@ -199,7 +207,7 @@ export function CategoryExplorer({
                 aria-pressed={results === null && selected === index}
                 aria-controls="category-products"
                 onClick={() => selectCategory(index)}
-                className={`group relative flex min-h-24 w-40 shrink-0 flex-col justify-between rounded-2xl border p-4 text-left transition-[background-color,color,border-color,box-shadow] duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800 lg:min-h-0 lg:w-full ${results === null && selected === index ? 'border-transparent text-white shadow-md' : 'border-black/[0.04] text-stone-800 hover:border-stone-400'}`}
+                className={`group relative flex min-h-24 w-40 shrink-0 flex-col justify-between rounded-2xl border p-4 text-left transition-[background-color,color,border-color,box-shadow] duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800 lg:min-h-0 lg:w-full lg:flex-row lg:items-center lg:gap-3 lg:rounded-xl lg:px-3.5 lg:py-3 ${results === null && selected === index ? 'border-transparent text-white shadow-md' : 'border-black/[0.04] text-stone-800 hover:border-stone-400'}`}
                 style={{
                   backgroundColor:
                     results === null && selected === index
@@ -211,10 +219,10 @@ export function CategoryExplorer({
                       : brandColors[item.tone].solid,
                 }}
               >
-                <span className="flex w-full items-center justify-between text-[11px] tabular-nums">
+                <span className="flex w-full items-center justify-between text-[11px] tabular-nums lg:w-auto lg:shrink-0 lg:gap-1.5">
                   <span>
-                    {String(index + 1).padStart(2, '0')}{' '}
-                    <span className="ml-2 opacity-65">
+                    <span className="lg:hidden">{String(index + 1).padStart(2, '0')} </span>
+                    <span className="ml-2 opacity-65 lg:ml-0">
                       {item.products.length}{' '}
                       {item.products.length === 1 ? dict.option : dict.options}
                     </span>
@@ -224,7 +232,7 @@ export function CategoryExplorer({
                     className={`size-4 transition-[transform,opacity] duration-300 motion-reduce:transition-none ${results === null && selected === index ? 'opacity-100' : '-translate-x-1 translate-y-1 opacity-0 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100'}`}
                   />
                 </span>
-                <span className="text-[18px] font-medium tracking-tight">
+                <span className="text-[18px] font-medium tracking-tight lg:order-first lg:min-w-0 lg:flex-1 lg:text-[15px] lg:leading-tight">
                   {localizedCategoryDisplayLabel(item.label, locale)}
                 </span>
               </button>
@@ -254,6 +262,18 @@ export function CategoryExplorer({
                 <p className="mt-3 max-w-md text-sm leading-relaxed text-stone-500">
                   {dict.emptyDesc}
                 </p>
+                {/* The need doesn't get lost: it travels to the contact form (SHCWS-39). */}
+                <Link
+                  href={contactBriefHref(query)}
+                  style={actionButtonStyle}
+                  className="action-button mt-6 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium"
+                >
+                  {dict.briefCta}
+                  <span className="button-arrow" aria-hidden="true">
+                    →
+                  </span>
+                </Link>
+                <p className="mt-3 text-xs text-stone-400">{dict.briefNote}</p>
               </div>
             )}
             <div
@@ -298,6 +318,11 @@ export function CategoryExplorer({
                         <span className="absolute right-3 top-3 rounded-full bg-white/90 px-2 py-1 text-[10px] font-medium">
                           {offeringLabel(product.offering)}
                         </span>
+                        <DomainVerifiedChip
+                          at={product.domainVerifiedAt}
+                          locale={locale}
+                          className="absolute left-3 top-3"
+                        />
                       </div>
                     ) : (
                       <ProductVisual variant={index % 4} color={palette.soft} />
@@ -314,6 +339,7 @@ export function CategoryExplorer({
                       <span className="text-[20px] font-semibold tracking-[-0.03em] text-stone-900">
                         {product.name}
                       </span>
+                      {product.verified && <VerifiedMark locale={locale} />}
                       <ArrowUpRightIcon
                         aria-hidden="true"
                         className="ml-auto size-4 text-stone-400 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transform-none"
@@ -322,6 +348,11 @@ export function CategoryExplorer({
                     <p className="line-clamp-2 px-1 pt-2 text-[13px] leading-relaxed text-stone-500">
                       {product.description}
                     </p>
+                    <ResponseSignalNote
+                      signal={product.response}
+                      locale={locale}
+                      className="px-1 pt-2 text-[11px] text-stone-500"
+                    />
                     <div className="mt-auto flex items-center justify-between gap-2 px-1 pt-3 text-[11px] text-stone-400">
                       <span className="truncate">
                         {product.website ? `${dict.byLabel} ${product.provider}` : product.feature}
@@ -354,50 +385,50 @@ export function CategoryExplorer({
                   </button>
                 );
               })}
-              {Array.from({ length: availableSlots }, (_, index) => (
+              {showBrief && (
                 <Link
-                  key={`available-${category.id}-${index}`}
-                  href="/account/solutions/new"
-                  aria-label={dict.applySpaceLabel
-                    .replace('{category}', categoryLabel)
-                    .replace('{slot}', String(index + 1))}
-                  className="group flex h-[328px] min-w-0 flex-col justify-between rounded-[20px] border border-dashed border-stone-300 bg-stone-200/45 p-5 text-left transition-[background-color,border-color,transform] duration-300 hover:-translate-y-0.5 hover:border-stone-400 hover:bg-stone-200/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800 motion-reduce:transform-none sm:h-[340px]"
+                  href={contactBriefHref(dict.briefPrefill.replace('{category}', categoryLabel))}
+                  className="group flex h-[328px] min-w-0 flex-col justify-between rounded-[20px] p-5 text-left transition-[background-color,transform] duration-300 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800 motion-reduce:transform-none sm:h-[340px]"
+                  style={{ backgroundColor: palette.soft, color: palette.solid }}
                 >
-                  <span className="flex items-center justify-between text-[11px] uppercase tracking-[0.12em] text-stone-400">
-                    <span>{dict.availableSpace}</span>
-                    <span className="tabular-nums">
-                      {String(products.length + index + 1).padStart(2, '0')}
-                    </span>
+                  <span className="text-[11px] uppercase tracking-[0.12em] opacity-75">
+                    {categoryLabel}
                   </span>
                   <span>
-                    <span className="block max-w-[14rem] text-xl font-medium tracking-[-0.03em] text-stone-500">
-                      {dict.applySpaceTitle}
+                    <span className="block max-w-[16rem] text-xl font-medium tracking-[-0.03em] text-stone-900">
+                      {dict.briefCardTitle}
                     </span>
-                    <span className="mt-4 inline-flex items-center gap-2 text-sm text-stone-500 transition-colors group-hover:text-stone-900">
-                      {dict.applySpaceBtn} {categoryLabel}
-                      <PlusIcon
+                    <span className="mt-3 block max-w-[18rem] text-[13px] leading-relaxed text-stone-600">
+                      {products.length === 0
+                        ? dict.briefCardEmpty.replace('{category}', categoryLabel)
+                        : dict.briefCardFew.replace('{category}', categoryLabel)}
+                    </span>
+                    <span className="mt-5 inline-flex items-center gap-2 text-sm font-medium">
+                      {dict.briefCardCta}
+                      <span
                         aria-hidden="true"
-                        className="size-4 transition-transform duration-300 group-hover:rotate-90 motion-reduce:transform-none"
-                      />
+                        className="button-arrow transition-transform duration-300 group-hover:translate-x-0.5 motion-reduce:transform-none"
+                      >
+                        →
+                      </span>
                     </span>
                   </span>
                 </Link>
-              ))}
+              )}
             </div>
           </div>
         </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2 px-1 text-[11px] text-stone-500">
           <span role="status">
-            {results !== null ? dict.realResultsLabel : localizedPreviewAction(category, locale)}{' '}
-            <span aria-hidden="true" className="mx-2 text-stone-300">
-              /
-            </span>{' '}
-            {realCount} {realCount === 1 ? dict.realSolutionsCount : dict.realSolutionsCountPlural}
-            {availableSlots > 0 && (
+            {results !== null ? dict.realResultsLabel : localizedPreviewAction(category, locale)}
+            {realCount > 0 && (
               <>
                 {' '}
-                · {availableSlots}{' '}
-                {availableSlots === 1 ? dict.availableSlotsCount : dict.availableSlotsCountPlural}
+                <span aria-hidden="true" className="mx-2 text-stone-300">
+                  /
+                </span>{' '}
+                {realCount}{' '}
+                {realCount === 1 ? dict.realSolutionsCount : dict.realSolutionsCountPlural}
               </>
             )}
           </span>

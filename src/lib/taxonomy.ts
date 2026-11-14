@@ -97,14 +97,6 @@ export const categories: CategoryEntry[] = [
     description:
       'Mapea tu pipeline, haz seguimiento a prospectos y cierra más tratos. CRM especializados en ciclos de venta B2B largos.',
   },
-  {
-    slug: 'soporte',
-    label: 'Operación',
-    tone: 'amber',
-    title: 'Atención al cliente',
-    description:
-      'Mesa de ayuda omnicanal, ticketing y automatización de respuestas para escalar tu soporte B2B sin caos.',
-  },
   // Agencias is a legal category (solutionCategories) with no route of its
   // own until now — a solution that only declared it had no landing page and
   // no filter option (bug fixed alongside the capabilities axis). Distinct
@@ -119,9 +111,69 @@ export const categories: CategoryEntry[] = [
     description:
       'Herramientas de agencias, consultorías y estudios que ejecutan por ti: horas facturables, propuestas y rentabilidad por cuenta.',
   },
+  // The seven categories added so marketing, support, data/AI, IT, e-commerce,
+  // productivity and developer tools have a real home. /explorar/soporte used to
+  // show Operación under the title «Atención al cliente»; it now redirects to the
+  // real category (next.config.mjs).
+  {
+    slug: 'marketing',
+    label: 'Marketing',
+    tone: 'terracotta',
+    title: 'Marketing y crecimiento',
+    description:
+      'Campañas, correo, redes, contenido y analítica para atraer clientes B2B y medir qué funciona.',
+  },
+  {
+    slug: 'atencion-clientes',
+    label: 'Atención al cliente',
+    tone: 'sage',
+    title: 'Atención al cliente',
+    description:
+      'Mesa de ayuda omnicanal, chat, WhatsApp y bases de conocimiento para responder rápido sin perder el contexto de cada cliente.',
+  },
+  {
+    slug: 'datos-ia',
+    label: 'Datos e IA',
+    tone: 'lavender',
+    title: 'Datos e inteligencia artificial',
+    description:
+      'Tableros de negocio, asistentes de IA y automatizaciones que leen documentos y datos para decidir con información real.',
+  },
+  {
+    slug: 'ti-seguridad',
+    label: 'TI y seguridad',
+    tone: 'blue',
+    title: 'TI y ciberseguridad',
+    description:
+      'Protege cuentas, equipos y datos: accesos, respaldos, monitoreo y soporte técnico para que la operación no se detenga.',
+  },
+  {
+    slug: 'comercio-electronico',
+    label: 'Comercio electrónico',
+    tone: 'amber',
+    title: 'Comercio electrónico',
+    description:
+      'Tiendas en línea, marketplaces y pagos digitales para vender por internet a empresas y consumidores.',
+  },
+  {
+    slug: 'productividad',
+    label: 'Productividad',
+    tone: 'terracotta',
+    title: 'Productividad y colaboración',
+    description:
+      'Comunicación interna, documentos compartidos, reuniones y aprobaciones para que el equipo trabaje en un mismo lugar.',
+  },
+  {
+    slug: 'desarrollo',
+    label: 'Desarrollo',
+    tone: 'sage',
+    title: 'Desarrollo y producto',
+    description:
+      'APIs, infraestructura en la nube, herramientas no-code y pruebas para construir y operar software propio.',
+  },
 ];
 
-/** The seven industries, exactly matching solutionIndustries and the seven routes. */
+/** The industries, exactly matching solutionIndustries and the /industria routes. */
 export const industries: {
   slug: string;
   value: (typeof solutionIndustries)[number];
@@ -192,6 +244,78 @@ export const industries: {
     title: 'Educación y EdTech',
     description:
       'Sistemas de control escolar, plataformas LMS, cobranza de colegiaturas y comunicación efectiva con padres.',
+  },
+  {
+    slug: 'tecnologia',
+    value: 'Tecnología',
+    label: 'Tecnología y SaaS',
+    tone: 'blue',
+    title: 'Tecnología y SaaS',
+    description:
+      'Empresas de software y servicios digitales: ventas recurrentes, soporte a clientes, cobro por suscripción y equipos remotos.',
+  },
+  {
+    slug: 'servicios-financieros',
+    value: 'Servicios financieros',
+    label: 'Servicios financieros',
+    tone: 'sage',
+    title: 'Servicios financieros y fintech',
+    description:
+      'Bancos, fintechs, aseguradoras y despachos contables: cumplimiento, conciliación, originación y atención regulada.',
+  },
+  {
+    slug: 'logistica',
+    value: 'Logística y transporte',
+    label: 'Logística y transporte',
+    tone: 'amber',
+    title: 'Logística y transporte',
+    description:
+      'Flotillas, almacenes y operadores: rutas, rastreo de envíos, evidencias de entrega y facturación de fletes.',
+  },
+  {
+    slug: 'hospitalidad',
+    value: 'Hospitalidad',
+    label: 'Hoteles y restaurantes',
+    tone: 'terracotta',
+    title: 'Hospitalidad y restaurantes',
+    description:
+      'Hoteles, restaurantes y turismo: reservaciones, punto de venta, turnos del personal y proveedores.',
+  },
+  {
+    slug: 'inmobiliario',
+    value: 'Inmobiliario',
+    label: 'Inmobiliario',
+    tone: 'lavender',
+    title: 'Inmobiliario y bienes raíces',
+    description:
+      'Desarrolladoras, administradoras y corredores: cobranza de rentas, contratos, prospectos y mantenimiento de inmuebles.',
+  },
+  {
+    slug: 'servicios-profesionales',
+    value: 'Servicios profesionales',
+    label: 'Servicios profesionales',
+    tone: 'blue',
+    title: 'Servicios profesionales',
+    description:
+      'Contadores, consultores, arquitectos e ingenierías: horas, propuestas, expedientes de clientes y cobranza por proyecto.',
+  },
+  {
+    slug: 'sector-publico',
+    value: 'Sector público',
+    label: 'Gobierno y sector público',
+    tone: 'sage',
+    title: 'Gobierno y sector público',
+    description:
+      'Dependencias, municipios y organismos: trámites digitales, transparencia, compras públicas y atención ciudadana.',
+  },
+  {
+    slug: 'agroindustria',
+    value: 'Agroindustria',
+    label: 'Agroindustria',
+    tone: 'amber',
+    title: 'Agroindustria y alimentos',
+    description:
+      'Productores, empacadoras y distribuidoras: trazabilidad, cosechas, cadena de frío y venta a mayoristas.',
   },
 ];
 export type Industry = (typeof solutionIndustries)[number];
@@ -283,6 +407,50 @@ export const capabilityLabels: Record<string, string> = {
   'reportes-cliente': 'Reportes para clientes',
   'capacidad-equipo': 'Capacidad del equipo',
   'aprobaciones-creativas': 'Aprobaciones creativas',
+  'email-marketing': 'Email marketing',
+  'redes-sociales': 'Redes sociales',
+  'seo-contenido': 'SEO y contenido',
+  'publicidad-digital': 'Publicidad digital',
+  'automatizacion-marketing': 'Automatización de marketing',
+  'analitica-marketing': 'Analítica y atribución',
+  'eventos-webinars': 'Eventos y webinars',
+  'chat-en-vivo': 'Chat en vivo',
+  'whatsapp-atencion': 'Atención por WhatsApp',
+  'base-conocimiento': 'Base de conocimiento',
+  'encuestas-satisfaccion': 'Encuestas de satisfacción',
+  'centro-contacto': 'Centro de contacto',
+  chatbots: 'Chatbots',
+  'lealtad-clientes': 'Lealtad y retención',
+  'inteligencia-negocios': 'Inteligencia de negocio',
+  'asistentes-ia': 'Asistentes de IA',
+  'automatizacion-ia': 'Automatización con IA',
+  'procesamiento-documentos': 'Lectura de documentos',
+  'modelos-predictivos': 'Modelos predictivos',
+  'integracion-datos': 'Integración de datos',
+  ciberseguridad: 'Ciberseguridad',
+  'identidad-accesos': 'Identidad y accesos',
+  'respaldos-recuperacion': 'Respaldos y recuperación',
+  'gestion-dispositivos': 'Gestión de dispositivos',
+  'monitoreo-infraestructura': 'Monitoreo de infraestructura',
+  'soporte-ti': 'Soporte técnico',
+  'tienda-online': 'Tienda en línea',
+  'venta-marketplaces': 'Venta en marketplaces',
+  'checkout-pagos-online': 'Checkout y pagos en línea',
+  'catalogo-online': 'Catálogo en línea',
+  'carritos-abandonados': 'Recuperación de carritos',
+  'punto-venta': 'Punto de venta',
+  'comunicacion-interna': 'Comunicación interna',
+  'documentos-colaborativos': 'Documentos colaborativos',
+  'agenda-reuniones': 'Agenda y reuniones',
+  'gestion-conocimiento': 'Gestión del conocimiento',
+  'flujos-aprobacion': 'Flujos de aprobación',
+  intranet: 'Intranet',
+  'apis-integraciones': 'APIs e integraciones',
+  'herramientas-desarrollo': 'Herramientas para desarrolladores',
+  'infraestructura-nube': 'Infraestructura en la nube',
+  'no-code-low-code': 'No-code y low-code',
+  'pruebas-calidad-software': 'Pruebas de software',
+  'analitica-producto': 'Analítica de producto',
 };
 
 const integrationLabels: Record<string, string> = {
@@ -366,29 +534,29 @@ export type CollectionEntry = {
 export const collections: CollectionEntry[] = [
   {
     slug: 'essential',
-    title: 'Essential Stack',
-    description: 'Las herramientas mínimas e indispensables para operar una empresa sin caos.',
+    title: 'Lo básico para operar',
+    description:
+      'Reúne automáticamente las fichas aprobadas de Cobros, Finanzas, Nómina y Operación: lo que casi toda empresa resuelve primero.',
     rule: { categories: ['Cobros', 'Finanzas', 'Nómina', 'Operación'] },
   },
   {
     slug: 'cfo',
-    title: 'CFO Toolkit',
+    title: 'Para el área de finanzas',
     description:
-      'Control financiero de alto nivel para directores de finanzas y equipos contables modernos.',
+      'Reúne automáticamente las fichas aprobadas de Finanzas y Cobros, para quien lleva el control financiero.',
     rule: { categories: ['Finanzas', 'Cobros'] },
   },
   {
     slug: 'agencia',
-    title: 'Agencia en 30 días',
+    title: 'Para agencias',
     description:
-      'El stack operativo para lanzar, operar y escalar tu agencia de servicios B2B desde cero.',
+      'Reúne automáticamente las fichas aprobadas que declaran servir a agencias y consultoras.',
     rule: { industries: ['Agencias'] },
   },
   {
     slug: 'legal',
-    title: 'Stack legal moderno',
-    description:
-      'El kit completo de transformación digital para tu departamento legal interno o despacho.',
+    title: 'Legal y contratos',
+    description: 'Reúne automáticamente las fichas aprobadas de la categoría Legal.',
     rule: { categories: ['Legal'] },
   },
 ];

@@ -124,3 +124,102 @@ export async function adsOverview(filter: AdFilter, q = '', page = 1, pageSize =
     throw err;
   }
 }
+
+/** One booking with what ops needs to pause, withdraw or retry its refund (SHCWS-69). */
+export async function adBooking(id: string) {
+  const sql = getDb();
+  try {
+    const [rows, metrics, documents, audit] = await sql.transaction(
+      [
+        sql`
+          SELECT c.id, c.version, c.solution_id, c.owner_id, c.solution_name, c.billing_email, c.placement,
+            c.scope, c.starts_on::text AS starts_on, c.ends_on::text AS ends_on,
+            c.served_until::text AS served_until, c.currency, c.daily_amount, c.subtotal_amount,
+            c.tax_amount, c.total_amount, c.refund_requested_amount, c.refunded_amount, c.status,
+            c.canceled_at, c.paused_at, c.pause_reason, c.dispute_status, c.created_at, c.paid_at,
+            c.updated_at, c.invoice_url, right(COALESCE(c.stripe_payment_intent_id, ''), 8) AS payment_ref,
+            (c.stripe_payment_intent_id IS NOT NULL) AS has_payment,
+            (s.published_data IS NOT NULL) AS listing_published
+          FROM ad_campaigns c LEFT JOIN founder_solutions s ON s.id = c.solution_id
+          WHERE c.id = ${id}
+        `,
+        sql`
+          SELECT day::text AS day, impressions, clicks FROM ad_campaign_daily_metrics
+          WHERE campaign_id = ${id} ORDER BY day
+        `,
+        sql`
+          SELECT id, kind, amount, currency, status, folio_fiscal, last_error, attempts, created_at, issued_at
+          FROM billing_documents WHERE campaign_id = ${id} ORDER BY created_at
+        `,
+        sql`
+          SELECT l.id, l.action, l.reason, l.actor_email, l.created_at, l.metadata
+          FROM ops_audit_log l WHERE l.subject_type = 'ad_campaign' AND l.subject_id = ${id}
+          ORDER BY l.created_at DESC LIMIT 50
+        `,
+      ],
+      { readOnly: true },
+    );
+    const r = rows[0];
+    if (!r) return undefined;
+    return {
+      id: String(r.id),
+      version: Number(r.version),
+      solutionId: r.solution_id ? String(r.solution_id) : null,
+      ownerId: r.owner_id ? String(r.owner_id) : null,
+      solutionName: String(r.solution_name),
+      billingEmail: String(r.billing_email),
+      placement: String(r.placement),
+      scope: String(r.scope ?? ''),
+      startsOn: String(r.starts_on),
+      endsOn: String(r.ends_on),
+      servedUntil: r.served_until ? String(r.served_until) : null,
+      currency: String(r.currency),
+      dailyAmount: Number(r.daily_amount),
+      subtotal: Number(r.subtotal_amount),
+      tax: r.tax_amount !== null ? Number(r.tax_amount) : null,
+      total: r.total_amount !== null ? Number(r.total_amount) : null,
+      refundRequested: Number(r.refund_requested_amount),
+      refunded: Number(r.refunded_amount),
+      status: String(r.status),
+      canceledAt: iso(r.canceled_at),
+      pausedAt: iso(r.paused_at),
+      pauseReason: r.pause_reason ? String(r.pause_reason) : null,
+      disputeStatus: r.dispute_status ? String(r.dispute_status) : null,
+      createdAt: iso(r.created_at),
+      paidAt: iso(r.paid_at),
+      updatedAt: iso(r.updated_at),
+      invoiceUrl: r.invoice_url ? String(r.invoice_url) : null,
+      paymentRef: r.payment_ref ? String(r.payment_ref) : null,
+      hasPayment: Boolean(r.has_payment),
+      listingPublished: Boolean(r.listing_published),
+      metrics: metrics.map(m => ({
+        day: String(m.day),
+        impressions: Number(m.impressions),
+        clicks: Number(m.clicks),
+      })),
+      documents: documents.map(d => ({
+        id: String(d.id),
+        kind: String(d.kind),
+        amount: Number(d.amount),
+        currency: String(d.currency),
+        status: String(d.status),
+        folio: d.folio_fiscal ? String(d.folio_fiscal) : null,
+        lastError: d.last_error ? String(d.last_error) : null,
+        attempts: Number(d.attempts),
+        createdAt: iso(d.created_at),
+        issuedAt: iso(d.issued_at),
+      })),
+      audit: audit.map(a => ({
+        id: String(a.id),
+        action: String(a.action),
+        reason: a.reason ? String(a.reason) : '',
+        actorEmail: String(a.actor_email ?? ''),
+        createdAt: iso(a.created_at),
+        metadata: (a.metadata ?? {}) as Record<string, unknown>,
+      })),
+    };
+  } catch (err) {
+    if (isMissingTable(err)) return null;
+    throw err;
+  }
+}

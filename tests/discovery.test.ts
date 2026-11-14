@@ -20,3 +20,32 @@ test('Spanish intent, accents and deduplication', () => {
   assert.equal(searchCatalog('quiero una solución').length, 0);
   assert.equal(searchCatalog('inexistente').length, 0);
 });
+
+test('the hero only suggests categories and searches that lead to results', async () => {
+  const { heroSuggestions } = await import('../src/lib/catalog-search');
+  const { previewCategories } = await import('../src/lib/catalog-preview');
+  const { getDictionary } = await import('../src/i18n/get-dictionary');
+  // What the home renders without demo projects: only real projects (with a site).
+  const realOnly = previewCategories.map(category => ({
+    ...category,
+    products: category.products.filter(product => product.website),
+  }));
+  for (const locale of ['es', 'en']) {
+    const examples = (await getDictionary(locale)).landing.heroSearchExamples;
+    const suggested = heroSuggestions(realOnly, examples);
+    assert.ok(suggested.examples.length > 0, `${locale}: no example works`);
+    for (const example of suggested.examples)
+      assert.ok(searchCatalog(example, realOnly).length > 0, `${locale}: «${example}» is empty`);
+    assert.ok(suggested.chips.length > 0);
+    for (const chip of suggested.chips) assert.ok(chip.products.length > 0, chip.id);
+  }
+  const es = heroSuggestions(realOnly, (await getDictionary('es')).landing.heroSearchExamples);
+  assert.ok(!es.chips.some(chip => chip.id === 'nomina'), 'no project declares Nómina');
+  assert.ok(!es.examples.includes('necesito organizar mi nómina'));
+  // An empty catalog suggests nothing at all instead of dead ends.
+  const empty = heroSuggestions(
+    realOnly.map(category => ({ ...category, products: [] })),
+    ['quiero cobrar a tiempo'],
+  );
+  assert.deepEqual(empty, { chips: [], examples: [] });
+});

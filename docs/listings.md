@@ -14,9 +14,10 @@ Flouvia ofrece desarrollo de e-commerce, portales B2B y automatizaciones a medid
 Agencias agrupa proveedores de servicios; es distinto de la industria de empresas
 compradoras «Agencias y consultoras» enlazada en la navegación.
 
-Se mantienen nueve tarjetas en cada una de siete categorías: 63 entradas visuales,
-seis apariciones de dos ofertas reales y 57 ejemplos ficticios. Los datos están
-en `src/lib/catalog-preview.ts`; ahora se vinculan a publicaciones de Neon mediante catalog_key.
+Los ejemplos ficticios de `src/lib/catalog-preview.ts` solo se muestran con
+`NEXT_PUBLIC_SHOW_DEMO_PROJECTS=true`; las entradas reales se vinculan a
+publicaciones de Neon mediante catalog_key. Desde SHCWS-38 el home ya no rellena
+cada categoría hasta nueve lugares con «Espacio disponible» (ver abajo).
 
 Las entradas reales tienen `website`, `provider` y `offering`. La ficha ofrece
 «Visitar sitio oficial» en una pestaña nueva. Los ejemplos mantienen «Ver ejemplo»
@@ -159,3 +160,35 @@ sin ningún valor presente entre esos resultados no se renderiza. Con el
 catálogo real todavía en una o dos fichas, esto evita ocho dropdowns casi
 vacíos; el comportamiento cambia solo — y automáticamente — según crece el
 catálogo real.
+
+## Home para compradores y señales en las tarjetas — noviembre 2026
+
+- **Sin huecos (SHCWS-38)**: el explorador del home, las pestañas de «Encuentra la
+  tecnología» y las tarjetas apiladas muestran solo proyectos reales. Una categoría o
+  pestaña con menos de tres (cuatro en las pestañas) termina con una tarjeta «Cuéntanos qué
+  necesitas» que lleva al formulario de contacto con la necesidad prellenada
+  (`contactBriefHref`). La única llamada a fundadores del home es la franja final
+  «¿Construyes software para empresas? Publicar gratis» (`FounderInvitation`). Sustituye la
+  decisión histórica de los nueve lugares (CLAUDE.md §24).
+- **Señal de respuesta (SHCWS-52)**: `src/lib/solutions/response.ts` (consulta) y
+  `response-model.ts` (reglas y texto, sin driver de base). Mediana de horas hasta la
+  primera respuesta del destinatario (mensaje o cambio de estado) y cuántas respondió, en
+  los últimos 90 días, solo solicitudes de cuentas con correo verificado; no cuentan las de
+  las últimas 72 h sin respuesta ni las retiradas antes de responder. Mínimo 3 solicitudes.
+  `PublishedProduct.response` la lleva a las tarjetas (`ResponseSignalNote`); para una sola
+  ficha, `solutionResponseSignal(id)`. Filtro «Responde rápido» (≥ 8 de 10 respondidas y
+  mediana ≤ 48 h) y bonificación de hasta 2 puntos en el orden (`responseRankBonus`),
+  publicada en `/criterios`.
+- **Dominio verificado (SHCWS-134)**: las tarjetas muestran «Dominio verificado · mes»
+  (`DomainVerifiedChip`) mientras la prueba TXT esté vigente y sea del host al que apunta la
+  ficha (`PublishedProduct.domainVerifiedAt`). Es control del dominio, no identidad legal ni
+  «Verificado por shwcs». El cron diario de monitor llama a `renewDomainProofs`
+  (`src/lib/trust/renewal.ts`): 14 días antes de vencer, si el TXT sigue publicado renueva
+  90 días; si no, crea un aviso al fundador con `listing_notice` (cuenta y, con los avisos
+  de fichas activos, correo por la cola existente), una vez por fecha de vencimiento.
+- **Nuevo esta semana (SHCWS-125)**: `/nuevo` muestra las fichas cuya primera aprobación
+  (primer evento `published` en `solution_events`, o `published_at`) cae en los últimos
+  siete días, por fecha, sin votos; después, un archivo por semana (lunes a domingo, hora de
+  Ciudad de México, hasta 12 semanas). El home muestra hasta cuatro en un bloque que no se
+  renderiza si no hay ninguna. Lógica en `src/lib/solutions/new-this-week.ts`.
+

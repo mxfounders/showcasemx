@@ -2,50 +2,55 @@ export const criteria = {
   metaTitle: 'Qué revisamos',
   titleLine1: 'Qué revisamos',
   titleLine2: 'antes de publicar',
-  desc: 'Evaluamos exhaustivamente cada proyecto en 8 dimensiones clave operativas para garantizar la calidad del directorio.',
+  desc: 'Antes de publicar, una persona del equipo editorial revisa cada ficha con estos 8 criterios. Revisamos la información que declaras; la revisión no certifica la calidad, la seguridad ni los resultados del proyecto.',
   link: 'Ver proceso de publicación',
   criterionPrefix: 'Criterio',
   items: {
     clarity: {
       title: 'Claridad del problema',
-      desc: 'Un directorio útil requiere contexto real. Evaluamos que la ficha explique de forma cristalina qué problema operativo resuelve, quién es el cliente ideal y por qué es mejor que usar una hoja de cálculo. Cero jerga genérica de marketing.',
+      desc: 'Un catálogo útil necesita contexto real. Revisamos que la ficha explique con claridad qué problema operativo resuelve y quién es su cliente ideal, sin jerga genérica de marketing.',
     },
     architecture: {
-      title: 'Arquitectura y técnica',
-      desc: 'No auditamos el código fuente, pero revisamos la coherencia de la arquitectura. Si prometes integraciones nativas con SAP o Salesforce, buscamos la documentación técnica. Evaluamos los tiempos de carga, las dependencias de infraestructura (como SSO, APIs abiertas y webhooks) y nos aseguramos de que el producto no sea simplemente una capa gráfica inestable montada sobre ChatGPT. Queremos software corporativo real.',
+      title: 'Coherencia técnica',
+      desc: 'No auditamos el código ni probamos el producto a fondo. Sí revisamos que lo que declaras sea coherente: si mencionas integraciones con otras herramientas, buscamos documentación o una página pública que las muestre.',
     },
     design: {
-      title: 'Diseño y UX',
-      desc: 'La consumerización del B2B es real. Revisamos que las capturas de la plataforma muestren una interfaz moderna, limpia y que respete los estándares actuales de usabilidad.',
+      title: 'Capturas y demo',
+      desc: 'Son opcionales, pero ayudan a decidir. Si agregas capturas o una demo, revisamos que muestren el producto real y no imágenes genéricas.',
     },
     businessModel: {
       title: 'Modelo de negocio',
-      desc: 'Transparencia absoluta. Exigimos que la estructura de precios, las tarifas de implementación y los módulos adicionales ocultos se expliquen claramente.',
+      desc: 'Precio, implementación y costos adicionales son opcionales, pero si los declaras deben entenderse. Si no los publicas, la ficha lo muestra como información faltante en lugar de inventarla.',
     },
     domain: {
-      title: 'Identidad del dominio',
-      desc: 'Para evitar fraudes o suplantación, verificamos exhaustivamente que el correo del fundador coincida directamente con el dominio del sitio web postulado.',
+      title: 'Control del dominio',
+      desc: 'Después de publicar puedes demostrar, con un registro TXT, que controlas el dominio de tu sitio; la ficha lo indica mientras siga vigente. Es opcional y prueba control del dominio, no identidad legal.',
     },
     evidence: {
       title: 'Evidencia y casos de uso',
-      desc: 'Las promesas gigantes necesitan resultados verificables. Pedimos que el ROI prometido, las horas ahorradas y los casos de éxito se presenten con fuentes. No aceptamos muros llenos de logotipos de "clientes confiables" sin un desglose detallado de qué problema exacto les resolviste.',
+      desc: 'Si la ficha promete resultados, como horas ahorradas, retorno o casos de éxito, pedimos el contexto o una fuente que los respalde. No verificamos esos resultados por nuestra cuenta.',
     },
     security: {
-      title: 'Seguridad base',
-      desc: 'Buscamos certificados SSL activos, políticas de privacidad transparentes, soporte de roles (RBAC) y, para planes Enterprise, normativas como SOC2 o GDPR.',
+      title: 'Datos y normativas',
+      desc: 'Revisamos que el sitio enlazado sea el oficial del proyecto. Las normativas que declares, como protección de datos o facturación local, aparecen como declaradas por el proyecto, no como certificadas por shwcs.',
     },
     ethics: {
       title: 'Ética comercial',
-      desc: 'Nuestra regla fundamental: cero tolerancia a tácticas de spam agresivas, afirmaciones falsas sobre competidores o robo de propiedad intelectual.',
+      desc: 'Cero tolerancia a spam agresivo, afirmaciones falsas sobre competidores o uso de propiedad intelectual ajena. Cualquier persona con cuenta puede reportar una ficha publicada.',
     },
   },
   orderTitle: 'Cómo se ordena el catálogo',
   orderDesc:
     'Dentro de cada categoría, el orden refleja interacción real de compradores — reseñar, comentar, guardar, dar like — no una puntuación de calidad ni un aval editorial. Todo empieza en cero. Solo cuenta la actividad de cuentas con correo verificado, y pesa menos con el tiempo: un empujón antiguo no fija el orden para siempre. Es una señal auxiliar, no una certificación.',
+  communityOrder:
+    'Las listas de Comunidad ordenadas por «Populares» siguen las mismas reglas: cuentan los likes, guardados y comentarios de cuentas con correo verificado, nunca los de quien hizo la lista, y pierden peso con el tiempo.',
+  /** SHCWS-52: the response signal (src/lib/solutions/response-model.ts). */
+  responseNote:
+    'Cuando un proyecto recibió al menos 3 solicitudes de contacto de cuentas con correo verificado en los últimos 90 días, su ficha y sus tarjetas dicen cuánto suele tardar en responder (la mediana hasta la primera respuesta) y cuántas respondió. «Responde rápido» marca a quien responde al menos 8 de cada 10 con esa mediana en 48 h o menos. No cuentan las solicitudes de las últimas 72 horas que aún esperan respuesta ni las que el comprador retiró antes de recibirla.',
   weights: {
     review: {
       label: 'Reseña',
-      desc: 'La señal más fuerte: suma sus estrellas, y vale 1.5 veces si quien la escribe usa un correo de empresa. Una reseña baja nunca resta. Nadie puede reseñar su propia solución ni escribir desde el dominio del proveedor.',
+      desc: 'La señal más fuerte: suma sus estrellas multiplicadas según su verificación: ×1 con correo verificado, ×1.5 con correo de empresa, ×2 si su autor contactó al proyecto vía shwcs y la conversación avanzó, ×3 con compra comprobada. Las que llegan por el enlace de invitación del propio proyecto cuentan la mitad, porque el proyecto elige a quién invitar. Una reseña baja nunca resta. Nadie puede reseñar su propia solución ni escribir desde el dominio del proveedor.',
     },
     comment: {
       label: 'Comentario',
@@ -58,6 +63,10 @@ export const criteria = {
     like: {
       label: 'Like',
       desc: 'La interacción más fácil de dar. Un fundador tampoco puede dársela a su propia ficha.',
+    },
+    response: {
+      label: 'Respuesta',
+      desc: 'Suma hasta 2 puntos —lo que un guardado— según la parte de las solicitudes que responde: completo si la mediana de respuesta es de 48 h o menos, la mitad si es de una semana o menos.',
     },
     view: {
       label: 'Vista',

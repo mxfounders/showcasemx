@@ -8,7 +8,9 @@ export const solution = {
   backToCatalog: 'Volver al catálogo',
   beforeDecidingTitle: 'Antes de decidir',
   complianceLabel: 'Cumplimiento',
-  contactCta: 'Quiero conocer esta solución',
+  contactCta: 'Pedir propuesta',
+  contactNote:
+    'Comparte tu contexto con su equipo. La solicitud llega a su bandeja en shwcs y la sigues desde tu cuenta.',
   dateUnknown: 'Fecha de actualización no registrada',
   declaredBy: 'Información declarada por el proyecto',
   demoButton: 'Ver demo o recorrido',
@@ -28,7 +30,7 @@ export const solution = {
     evidence: 'Experiencia y evidencia',
   },
   fieldNotProvided: 'Información no proporcionada. Consúltala con el proyecto.',
-  fitDesc: 'Conoce al equipo desde su sitio y confirma alcance, precio y tiempos para tu empresa.',
+  fitDesc: 'Pide una propuesta y confirma con su equipo alcance, precio y tiempos para tu empresa.',
   fitTitle: '¿Encaja con lo que necesitas?',
   followProject: 'Sigue al proyecto',
   integratesWith: 'Se integra con',
@@ -55,6 +57,36 @@ export const solution = {
   setupTime: 'Tiempo de arranque',
   similarCta: 'Conocer solución',
   similarTitle: 'Otras soluciones que te podrían interesar',
+  /** Before what two listings declared in common, e.g. «En común: Cotizaciones, Ventas». */
+  similarCommon: 'En común:',
+  /** Title when no listing is similar enough and only the exits below are shown. */
+  exploreTitle: 'Sigue explorando',
+  /** Exits shown when there are fewer than three similar listings (SHCWS-55). */
+  exits: {
+    collectionLabel: 'Colección',
+    collectionCta: 'Ver colección',
+    categoryTitle: 'Todo en {category}',
+    categoryDesc: 'Las soluciones aprobadas de esta categoría, ordenadas por interacción real.',
+    categoryCta: 'Ver categoría',
+    briefTitle: 'Cuéntanos qué necesitas',
+    briefDesc: 'Si ninguna encaja, escríbenos qué buscas. Lo lee una persona del equipo de shwcs.',
+    briefCta: 'Escribirnos',
+    /** Prefilled in the contact form; {name} is this listing. */
+    briefNeed: 'Busco algo parecido a {name}',
+  },
+  /** Share button on the listing (SHCWS-54). */
+  share: {
+    button: 'Compartir',
+    menuLabel: 'Compartir esta ficha',
+    copy: 'Copiar enlace',
+    copied: 'Enlace copiado',
+    copyFallback: 'Copia este enlace',
+    linkedin: 'LinkedIn',
+    whatsapp: 'WhatsApp',
+    x: 'X',
+    /** Text that goes with the link; {name} is the listing. */
+    text: '{name} en shwcs',
+  },
   teamNote: 'Personas presentadas por el proyecto. Identidad no verificada por shwcs.',
   teamTitle: 'Quién está detrás',
   toolsCount: 'herramientas',

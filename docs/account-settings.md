@@ -37,10 +37,22 @@ inventa estado.
 `POST /api/auth/login` deja de crear sesión cuando la cuenta tiene el factor
 activo: escribe `auth_login_challenges` (5 minutos, con el hash de contraseña
 del momento) y responde `{step:'totp'}`. `POST /api/auth/totp` lo consume.
-`totp_last_step` impide repetir un código dentro de su ventana; un código de
-respaldo se borra con `array_remove` en la misma transacción que abre la sesión.
-Cinco fallos queman el reto. Cambiar la contraseña lo invalida, porque el hash
-guardado deja de coincidir.
+Desde SHCWS-159:
+
+- Cada código reserva antes un intento del reto con un `UPDATE … attempts < 5`
+  atómico: cinco códigos por reto aunque lleguen en paralelo, y el reto se borra
+  al agotarse.
+- Los topes por red y global solo cuentan peticiones con un reto vivo; una cookie
+  inventada no los gasta.
+- Por cuenta, 10 códigos fallidos por hora sin importar el reto ni la red
+  (`auth-totp-fail:<hash de la cuenta>`). Un código correcto devuelve su lugar.
+- El código se gasta en la misma sentencia que abre la sesión: `totp_last_step`
+  sube solo si el paso es mayor, el código de respaldo se quita solo si sigue en la
+  lista y el reto se borra. Una repetición simultánea encuentra el código gastado.
+
+Cambiar la contraseña invalida el reto, porque el hash guardado deja de
+coincidir. `RUN_AUTH_SECURITY_INTEGRATION=1 node tests/integration/auth-security.cjs`
+lo comprueba contra un servidor aislado.
 
 ### Sesiones abiertas
 

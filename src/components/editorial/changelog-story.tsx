@@ -4,14 +4,20 @@ import { useState } from 'react';
 import Link from '@/i18n/navigation';
 import {
   ArrowRightIcon,
+  BalanceScaleIcon,
   BookOpenIcon,
   ChartComboIcon,
   CommentIcon,
+  FlagIcon,
+  GlobeIcon,
   LayersIcon,
+  LockIcon,
   PersonIcon,
   PriceTagsIcon,
   SearchIcon,
   ShieldIcon,
+  SparklesIcon,
+  StarIcon,
   ViewCarouselIcon,
   type GotaIcon,
 } from '@/components/icons/gota';
@@ -32,7 +38,26 @@ type Release = {
   icon: GotaIcon;
 };
 
+// Newest first. Only releases that are live (SHCWS-131).
 const releases: readonly Release[] = [
+  { id: 'gota', month: 'october', category: 'product', accent: '#365DC4', icon: SparklesIcon },
+  { id: 'reviews', month: 'october', category: 'community', accent: '#88631B', icon: StarIcon },
+  {
+    id: 'registries',
+    month: 'october',
+    category: 'product',
+    accent: '#416B50',
+    icon: BalanceScaleIcon,
+  },
+  { id: 'english', month: 'october', category: 'product', accent: '#7753A5', icon: GlobeIcon },
+  {
+    id: 'communityReports',
+    month: 'september',
+    category: 'community',
+    accent: '#B15C3F',
+    icon: FlagIcon,
+  },
+  { id: 'security', month: 'september', category: 'account', accent: '#416B50', icon: LockIcon },
   {
     id: 'capabilities',
     month: 'september',
@@ -86,6 +111,9 @@ const releases: readonly Release[] = [
   { id: 'oneAccount', month: 'august', category: 'account', accent: '#B15C3F', icon: ShieldIcon },
 ];
 
+// Month groups, newest first; the newest one gets the large, single-column cards.
+const releaseMonths: readonly ReleaseMonth[] = ['october', 'september', 'august'];
+
 const releaseCategories: readonly CategoryId[] = [
   'all',
   'product',
@@ -99,8 +127,9 @@ export function ChangelogStory({ dict }: { dict: ChangelogDict }) {
 
   const visibleReleases =
     category === 'all' ? releases : releases.filter(release => release.category === category);
-  const septemberReleases = visibleReleases.filter(release => release.month === 'september');
-  const augustReleases = visibleReleases.filter(release => release.month === 'august');
+  const groups = releaseMonths
+    .map(month => ({ month, items: visibleReleases.filter(release => release.month === month) }))
+    .filter(group => group.items.length > 0);
 
   return (
     <article className="pb-24 sm:pb-32">
@@ -156,70 +185,44 @@ export function ChangelogStory({ dict }: { dict: ChangelogDict }) {
         {/* FLUID LAYOUT GRID */}
         <div>
           <AnimatePresence mode="popLayout">
-            {septemberReleases.length > 0 && (
-              <motion.div
-                layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20, filter: 'blur(4px)' }}
-                transition={{ duration: 0.4 }}
-                key="septiembre-group"
-                id="septiembre"
-                className="scroll-mt-28 mb-16"
-              >
-                <div className="flex items-center justify-between border-b border-stone-200 pb-4">
-                  <h2 className="text-sm font-medium">{dict.months.september}</h2>
-                  <span className="text-xs text-stone-400">
-                    {septemberReleases.length}{' '}
-                    {septemberReleases.length === 1 ? dict.updateLabel : dict.updatesLabel}
-                  </span>
-                </div>
-                <motion.div layout className="mt-8 grid gap-5">
-                  <AnimatePresence mode="popLayout">
-                    {septemberReleases.map(release => (
-                      <ReleaseCard
-                        key={release.id}
-                        release={release}
-                        copy={dict.releases[release.id]}
-                        featured
-                      />
-                    ))}
-                  </AnimatePresence>
+            {groups.map((group, index) => {
+              const featured = index === 0;
+              return (
+                <motion.div
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20, filter: 'blur(4px)' }}
+                  transition={{ duration: 0.4 }}
+                  key={`${group.month}-group`}
+                  id={group.month}
+                  className="scroll-mt-28 mb-16 last:mb-0"
+                >
+                  <div className="flex items-center justify-between border-b border-stone-200 pb-4">
+                    <h2 className="text-sm font-medium">{dict.months[group.month]}</h2>
+                    <span className="text-xs text-stone-400">
+                      {group.items.length}{' '}
+                      {group.items.length === 1 ? dict.updateLabel : dict.updatesLabel}
+                    </span>
+                  </div>
+                  <motion.div
+                    layout
+                    className={`mt-8 grid gap-5 ${featured ? '' : 'sm:grid-cols-2'}`}
+                  >
+                    <AnimatePresence mode="popLayout">
+                      {group.items.map(release => (
+                        <ReleaseCard
+                          key={release.id}
+                          release={release}
+                          copy={dict.releases[release.id]}
+                          featured={featured}
+                        />
+                      ))}
+                    </AnimatePresence>
+                  </motion.div>
                 </motion.div>
-              </motion.div>
-            )}
-
-            {augustReleases.length > 0 && (
-              <motion.div
-                layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20, filter: 'blur(4px)' }}
-                transition={{ duration: 0.4 }}
-                key="agosto-group"
-                id="agosto"
-                className="scroll-mt-28"
-              >
-                <div className="flex items-center justify-between border-b border-stone-200 pb-4">
-                  <h2 className="text-sm font-medium">{dict.months.august}</h2>
-                  <span className="text-xs text-stone-400">
-                    {augustReleases.length}{' '}
-                    {augustReleases.length === 1 ? dict.updateLabel : dict.updatesLabel}
-                  </span>
-                </div>
-                <motion.div layout className="mt-8 grid gap-5 sm:grid-cols-2">
-                  <AnimatePresence mode="popLayout">
-                    {augustReleases.map(release => (
-                      <ReleaseCard
-                        key={release.id}
-                        release={release}
-                        copy={dict.releases[release.id]}
-                      />
-                    ))}
-                  </AnimatePresence>
-                </motion.div>
-              </motion.div>
-            )}
+              );
+            })}
           </AnimatePresence>
         </div>
       </section>

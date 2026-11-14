@@ -20,10 +20,87 @@ export const changelog = {
     account: 'Cuenta',
   },
   months: {
+    october: 'Octubre de 2026',
     september: 'Septiembre de 2026',
     august: 'Agosto de 2026',
   },
+  /**
+   * Only what is live (SHCWS-131): each entry matches a release in the git history of
+   * main, dated by the day it shipped. Work still on a branch stays out.
+   */
   releases: {
+    gota: {
+      date: '23 de octubre de 2026',
+      label: 'Diseño',
+      title: 'Íconos nuevos en todo shwcs',
+      summary:
+        'Toda la interfaz se dibuja ahora con Gota, el set de íconos de Flouvia: trazos más finos y un solo estilo en el sitio, la cuenta y el panel del equipo.',
+      items: [
+        'Cada página carga solo los íconos que usa.',
+        'Los íconos decorativos siguen ocultos para lectores de pantalla; los que significan algo conservan su nombre accesible.',
+      ],
+    },
+    reviews: {
+      date: '10 de octubre de 2026',
+      label: 'Reseñas',
+      title: 'Reseñas de quienes usan cada proyecto',
+      summary:
+        'Cualquier cuenta puede reseñar una ficha publicada: estrellas, para qué la usa, lo mejor y lo que mejoraría. Cada reseña dice qué tan comprobado está quien la escribe.',
+      items: [
+        'Una reseña por cuenta y ficha; se publica cuando el correo de quien la escribe está verificado.',
+        'Niveles visibles: correo verificado, correo de empresa y compra comprobada con su CFDI.',
+        'El dueño responde en público, pero nunca edita ni borra una reseña; nadie reseña su propia ficha.',
+        'Las estrellas y el número de reseñas aparecen en las tarjetas del catálogo.',
+      ],
+    },
+    registries: {
+      date: '10 de octubre de 2026',
+      label: 'Confianza',
+      title: 'Registros públicos en la ficha',
+      summary:
+        'Cuando hay una identidad fiscal registrada, la ficha dice si el proveedor aparece en la lista 69-B del SAT y con qué fecha de corte, sin mostrar el RFC.',
+      items: [
+        'La lista se actualiza cada día desde la fuente oficial.',
+        '«Compra comprobada»: quien reseña puede validar su CFDI ante el SAT; solo se guarda una huella del folio.',
+      ],
+    },
+    english: {
+      date: '10 de octubre de 2026',
+      label: 'Idiomas',
+      title: 'shwcs completo en inglés',
+      summary:
+        'Después de las páginas informativas en septiembre, ahora todo el sitio y la cuenta funcionan en español y en inglés.',
+      items: [
+        'Catálogo, fichas, comunidad, blog, cuenta y configuración en los dos idiomas.',
+        'Los mensajes de error llegan en el idioma de la página desde la que actúas.',
+        'Los 16 artículos del blog tienen versión en inglés.',
+        'Los correos siguen en español por ahora.',
+      ],
+    },
+    communityReports: {
+      date: '5 de septiembre de 2026',
+      label: 'Comunidad',
+      title: 'Reporta listas y comentarios de la comunidad',
+      summary:
+        'Si una lista pública o un comentario rompe las reglas, cualquier cuenta puede reportarlo y el equipo lo revisa.',
+      items: [
+        'Motivos claros: spam, abuso, suplantación u otro.',
+        'Nadie puede reportar su propia lista o comentario.',
+        'La búsqueda de Comunidad encuentra coincidencias parciales en el nombre, la descripción y los proyectos de cada lista.',
+      ],
+    },
+    security: {
+      date: '3 de septiembre de 2026',
+      label: 'Cuenta',
+      title: 'Más control sobre tu cuenta y tus datos',
+      summary:
+        'Configuración ahora muestra qué falta por proteger y te deja decidir qué pasa con tu información.',
+      items: [
+        'Verificación en dos pasos opcional con app autenticadora y códigos de respaldo.',
+        'Lista de sesiones abiertas para cerrar las que no reconozcas.',
+        'Descarga una copia de tus datos o elimina tu cuenta cuando quieras.',
+      ],
+    },
     capabilities: {
       date: '5 de septiembre de 2026',
       label: 'Nuevo',

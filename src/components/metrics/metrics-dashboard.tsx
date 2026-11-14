@@ -61,10 +61,13 @@ export function MetricsDashboard({
   projects,
   days,
   dict,
+  insights,
 }: {
   projects: ProjectMetric[];
   days: DailyMetric[];
   dict: Dictionary['metrics'];
+  /** Interest, outcomes, position and a year of history (SHCWS-23), below the 30 days. */
+  insights?: React.ReactNode;
 }) {
   const locale = dict.numberLocale;
   const number = new Intl.NumberFormat(locale);
@@ -312,6 +315,7 @@ export function MetricsDashboard({
           </Link>
         </div>
       )}
+      {insights}
       <p className="mt-8 max-w-3xl text-xs leading-relaxed text-stone-400">{dict.footnote}</p>
     </section>
   );

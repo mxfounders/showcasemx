@@ -20,6 +20,8 @@ export type PublicReview = {
   companySize: string | null;
   country: string | null;
   level: ReviewLevel | 'unverified';
+  /** Written through the founder's invitation link (SHCWS-132): labelled, weighs half. */
+  invited: boolean;
   createdAt: string;
   edited: boolean;
   reply: { body: string; at: string } | null;
@@ -34,10 +36,14 @@ export type ReviewSummary = {
   /** Reviews per star, index 0 = one star. */
   distribution: [number, number, number, number, number];
   recommends: number;
-  /** Each review counts once, at its highest level: `work` excludes proven purchases. */
+  /** Each review counts once, at its highest level: `work` excludes the two above it. */
   work: number;
+  /** Reviewers who contacted the vendor through shwcs, without a checked receipt. */
+  contacts: number;
   /** Reviews backed by a checked receipt. */
   customers: number;
+  /** Reviews that came through the founder's invitation link, whatever their level. */
+  invited: number;
 };
 
 export const emptyReviewSummary: ReviewSummary = {
@@ -46,7 +52,9 @@ export const emptyReviewSummary: ReviewSummary = {
   distribution: [0, 0, 0, 0, 0],
   recommends: 0,
   work: 0,
+  contacts: 0,
   customers: 0,
+  invited: 0,
 };
 
 /**
@@ -66,7 +74,9 @@ export async function getSolutionReviews(
       r.usage_duration,r.company_size,r.country,r.status,r.hidden_reason,r.reply,r.reply_at,
       r.version,r.created_at,r.updated_at,r.author_id=${viewerId}::uuid AS mine,
       split_part(a.email,'@',2) AS domain,a.email_verified_at IS NOT NULL AS verified,
-      EXISTS(SELECT 1 FROM solution_review_proofs p WHERE p.review_id=r.id) AS proven
+      EXISTS(SELECT 1 FROM solution_review_proofs p WHERE p.review_id=r.id) AS proven,
+      review_contact_backed(r.author_id,r.solution_id) AS contacted,
+      review_invited(r.author_id,r.solution_id) AS invited
       FROM solution_reviews r JOIN auth_accounts a ON a.id=r.author_id
       JOIN founder_solutions s ON s.id=r.solution_id
       WHERE r.solution_id=${solutionId} AND r.author_id<>s.owner_id
@@ -79,8 +89,12 @@ export async function getSolutionReviews(
       count(*) FILTER (WHERE r.rating=5)::int AS s5,
       count(*) FILTER (WHERE split_part(a.email,'@',2)<>ALL(${freeEmailDomains as readonly string[]}::text[])
         AND split_part(a.email,'@',2)!~${freeEmailPattern}
-        AND NOT EXISTS(SELECT 1 FROM solution_review_proofs p WHERE p.review_id=r.id))::int AS work,
-      count(*) FILTER (WHERE EXISTS(SELECT 1 FROM solution_review_proofs p WHERE p.review_id=r.id))::int AS customers
+        AND NOT EXISTS(SELECT 1 FROM solution_review_proofs p WHERE p.review_id=r.id)
+        AND NOT review_contact_backed(r.author_id,r.solution_id))::int AS work,
+      count(*) FILTER (WHERE review_contact_backed(r.author_id,r.solution_id)
+        AND NOT EXISTS(SELECT 1 FROM solution_review_proofs p WHERE p.review_id=r.id))::int AS contacts,
+      count(*) FILTER (WHERE EXISTS(SELECT 1 FROM solution_review_proofs p WHERE p.review_id=r.id))::int AS customers,
+      count(*) FILTER (WHERE review_invited(r.author_id,r.solution_id))::int AS invited
       FROM solution_reviews r JOIN auth_accounts a ON a.id=r.author_id
       JOIN founder_solutions s ON s.id=r.solution_id
       WHERE r.solution_id=${solutionId} AND r.status='published'
@@ -99,7 +113,9 @@ export async function getSolutionReviews(
         ],
         recommends: Number(aggregate.recommends),
         work: Number(aggregate.work),
+        contacts: Number(aggregate.contacts),
         customers: Number(aggregate.customers),
+        invited: Number(aggregate.invited),
       }
     : emptyReviewSummary;
   const reviews = rows.map(row => {
@@ -117,7 +133,13 @@ export async function getSolutionReviews(
       usageDuration: row.usage_duration as ReviewUsageDuration,
       companySize: row.company_size ? String(row.company_size) : null,
       country: row.country ? String(row.country) : null,
-      level: reviewLevel(String(row.domain), Boolean(row.verified), Boolean(row.proven)),
+      level: reviewLevel(
+        String(row.domain),
+        Boolean(row.verified),
+        Boolean(row.proven),
+        Boolean(row.contacted),
+      ),
+      invited: Boolean(row.invited),
       createdAt: created.toISOString(),
       // A minute of slack so the first save never reads as an edit.
       edited: new Date(row.updated_at).getTime() - created.getTime() > 60_000,

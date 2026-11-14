@@ -1,8 +1,10 @@
 import {
   AppsIcon,
   ChartBarIcon,
+  SearchIcon,
   ClientsIcon,
   ClipboardCheckIcon,
+  DocumentIcon,
   CpuIcon,
   FlagIcon,
   GlobeIcon,
@@ -16,10 +18,11 @@ import {
   NewspaperIcon,
   PersonGearIcon,
   ShieldIcon,
+  StarIcon,
   type GotaIcon,
 } from '@/components/icons/gota';
 
-export type CountKey = 'reviews' | 'reports' | 'inquiries' | 'mail';
+export type CountKey = 'reviews' | 'reports' | 'inquiries' | 'mail' | 'billing';
 
 export interface NavItem {
   href: string;
@@ -67,6 +70,12 @@ export const NAV: Array<{ section: string; items: NavItem[] }> = [
         label: 'Dominios',
         Icon: GlobeIcon,
         keywords: 'txt verificación dns',
+      },
+      {
+        href: '/panel/destacados',
+        label: 'Destacados',
+        Icon: StarIcon,
+        keywords: 'premios reconocimientos top de la semana selección shwcs verificados',
       },
     ],
   },
@@ -118,10 +127,23 @@ export const NAV: Array<{ section: string; items: NavItem[] }> = [
         keywords: 'patrocinados stripe pagos ingresos campañas',
       },
       {
+        href: '/panel/facturacion',
+        label: 'Facturación',
+        Icon: DocumentIcon,
+        count: 'billing',
+        keywords: 'cfdi facturas notas de crédito cord sat timbrado fallidos',
+      },
+      {
         href: '/panel/metricas',
         label: 'Métricas',
         Icon: ChartBarIcon,
         keywords: 'vistas clics analytics',
+      },
+      {
+        href: '/panel/demanda',
+        label: 'Demanda',
+        Icon: SearchIcon,
+        keywords: 'búsquedas sin resultados demanda no atendida qué buscan',
       },
     ],
   },

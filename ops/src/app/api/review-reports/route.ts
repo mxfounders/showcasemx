@@ -1,6 +1,7 @@
 import { opsRoute } from '@/lib/api';
 import { failure, intParam, isUuid, ok, oneOf } from '@/lib/http';
 import { listReviewReports, REPORT_STATUSES } from '@/lib/data/reports';
+import { triggerCatalogRevalidate } from '@/lib/catalog';
 
 export const runtime = 'nodejs';
 const DECISIONS = ['resolve', 'dismiss', 'hide'] as const;
@@ -19,8 +20,8 @@ export const GET = opsRoute({}, async ({ url }) => {
  * `hide` keeps the review (its author can still read and edit it) but takes it off the
  * public ficha; the decision text becomes the reason the author sees. The founder of
  * the solution can never do this — only ops, always with a reason in the audit log.
- * The product's catalogue cache picks the change up within its 5-minute window
- * (CLAUDE.md §52: ops cannot invalidate the product's cache).
+ * Hiding or restoring asks the product to refresh its cached catalogue (stars feed the
+ * order); if the product is unreachable it catches up within its 5-minute window.
  */
 export const POST = opsRoute(
   { limit: ['review-reports-review', 120, 600] },
@@ -46,6 +47,7 @@ export const POST = opsRoute(
         SELECT id FROM restored
       `;
       if (!rows.length) return failure('La reseña ya no está oculta o no existe.', 409);
+      await triggerCatalogRevalidate();
       return ok({});
     }
 
@@ -82,6 +84,7 @@ export const POST = opsRoute(
         'El reporte cambió, no existe o lo presentaste tú. Recarga e intenta de nuevo.',
         409,
       );
+    if (decision === 'hide') await triggerCatalogRevalidate();
     return ok({});
   },
 );

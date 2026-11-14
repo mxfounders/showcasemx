@@ -2,11 +2,12 @@
 
 ## Experiencia
 
-- `/comunidad`: galería pública, búsqueda por título/descripción/firma, categorías y paginación de 24 listas. `Recientes` ordena por creación; `Populares` usa actividad real con la fórmula `likes × 1 + guardados × 2 + comentarios × 3`, desempate por creación reciente. Búsqueda, orden y categorías se conservan en la URL; cambiar categoría vuelve a página 1. No se inventan colecciones, autores ni actividad.
-- Navbar: globo inclinado inspirado en la referencia del usuario, enlace accesible «Listas de la comunidad», hover lavanda y giro discreto que respeta movimiento reducido. Acceso también desde footer, sidebar y Mis listas. Explorar catálogo sigue inmediatamente encima del menú de cuenta.
+- `/comunidad`: galería pública, búsqueda, categorías y paginación de 24 listas. La búsqueda usa el mismo buscador del catálogo (`rankCollections`, SHCWS-118): sinónimos, plurales y el vocabulario de las categorías de cada lista, sobre su título, descripción pública, firma y nombres de sus proyectos; con texto, el SQL aplica los demás filtros y el puntaje y la paginación se hacen en el servidor de la app (hasta 500 listas). El índice trigram de §56 ya no se usa para esto. `Recientes` ordena por creación; `Populares` usa `likes × 1 + guardados × 2 + comentarios × 3`, pero solo de cuentas con correo verificado, nunca del dueño de la lista y con el decaimiento de `rankingHalfLifeDays` (SHCWS-115); desempate por creación reciente. Búsqueda, orden y categorías se conservan en la URL; cambiar categoría vuelve a página 1. No se inventan colecciones, autores ni actividad.
+- Navbar: globo inclinado inspirado en la referencia del usuario con la palabra «Comunidad» visible desde `lg` (en pantallas chicas es el nombre accesible, con «Listas de la comunidad» como `title`), hover lavanda y giro discreto que respeta movimiento reducido. Acceso también desde el footer («Listas de la comunidad», columna Colecciones), sidebar y Mis listas. La franja del home espera a las listas editoriales (SHCWS-113). Explorar catálogo sigue inmediatamente encima del menú de cuenta.
 - `/account/lists`: tableros de cuatro espacios (2 × 2), sin repetir portadas para llenar huecos; búsqueda y filtro Todas/Privadas/Públicas.
 - Crear/editar lista permite escoger visibilidad y varias categorías de la taxonomía del catálogo. Las categorías son de la colección y las elige su autor; no se infieren ni se restringe la pertenencia de proyectos.
-- Publicar requiere al menos una categoría, firma pública (nombre o alias, hasta 60 caracteres) y confirmación explícita. La firma es declarada, no identidad verificada.
+- Publicar requiere al menos una categoría, firma pública (nombre o alias, hasta 60 caracteres) y confirmación explícita. La firma es declarada, no identidad verificada, y nunca puede ser la de la plataforma: `reservedCurator()` rechaza en servidor cualquier firma que, sin acentos, signos, mayúsculas ni letras parecidas de otros alfabetos, contenga «shwcs» o «showcase» (SHCWS-116).
+- Hacer pública una lista exige al menos 3 proyectos disponibles (fichas publicadas), comprobado en servidor al pasar de privada a pública; una lista nueva nace privada. Si una lista pública baja de 3 por retiros, Comunidad, su detalle y «Guardadas» la ocultan hasta que vuelva a tener 3; conserva su configuración y su dueño puede seguir editándola (SHCWS-116).
 - Descripción pública opcional de hasta 400 caracteres, independiente del propósito privado. Se conserva el título de la lista y se advierte que será público.
 - `/comunidad/[UUID]`: nombre, descripción pública, firma, categorías, proyectos actualmente publicados, likes, guardado de la lista y conversación pública. Cada proyecto también puede guardarse en la biblioteca del visitante; sin sesión se ofrece acceso/registro y se conserva la intención existente para proyectos.
 - Los likes y guardados son únicos por cuenta y lista. El autor no puede puntuar ni guardar su propia colección. Guardar una lista la añade a `/account/community`; si el autor la vuelve privada, deja de mostrarse de inmediato.
@@ -101,8 +102,56 @@ pocas listas el planificador todavía prefiere un seq scan (esperado, no un defe
 índice se vuelve determinante según crece la tabla, se confirmó forzando su uso con
 `enable_seqscan=off`).
 
+## Avisos de comunidad — 14 noviembre 2026 (SHCWS-117)
+
+Migración `db/community-notices.sql` (aplicada solo en `neondb`).
+
+- Al curador: me gusta, guardados y comentarios en su lista pública. Un aviso por tipo,
+  lista y día cuyo número sube («A 2 personas les gustó tu lista «X»»); al subir vuelve
+  arriba y sin leer. Solo números: nunca quién dio me gusta o la guardó. Lo propio no
+  cuenta. Enlaza a `/account/lists/<id>`.
+- Por correo solo si el curador lo activa en Preferencias de avisos (`community_email`,
+  apagado por defecto). Un aviso del día ya enviado no se vuelve a enviar al subir.
+- Al fundador: «Tu proyecto aparece en la lista pública X», una vez por lista y proyecto,
+  con enlace a la lista y botones para compartirla. Solo cuando la lista se ve en la
+  galería (pública y con 3 proyectos disponibles, SHCWS-116); los proyectos del propio
+  curador no avisan. Es un aviso de ficha: sigue la preferencia de correo de fichas.
+- La campana acepta enlaces a `/comunidad/<id>` además de `/account…`
+  (`src/lib/notifications/href.ts`).
+- Prueba: `RUN_COMMUNITY_NOTICES_INTEGRATION=1 node tests/integration/community-notices.cjs`.
+
+## Seguir listas y curadores — 14 noviembre 2026 (SHCWS-121)
+
+Migración `db/community-follows.sql` (aplicada solo en `neondb`), después de
+`db/community-notices.sql`.
+
+- En `/comunidad/<id>`, «Seguir lista» y «Seguir a {firma}» (no para el dueño). La lista
+  tiene que verse en la galería (pública y con 3 proyectos disponibles).
+- **Curador = firma**, no una identidad: se sigue el par (cuenta detrás de la lista, firma
+  normalizada con `curator_key()`: minúsculas y espacios). Las listas que esa cuenta firme
+  de otra forma no entran, y otra cuenta con la misma firma es otra persona. El cliente solo
+  nombra una lista; el servidor resuelve la cuenta y nunca la devuelve (ni en la API, ni en
+  el HTML, ni en la exportación).
+- Avisos solo a quien sigue, en la categoría `community`: un aviso por persona y semana cuyo
+  número sube («Un proyecto nuevo en una lista que sigues», «Esta semana en lo que sigues:
+  1 proyecto nuevo y 1 lista nueva»), enlazado a `/account/community`.
+  - Proyecto nuevo: un proyecto publicado que entra a una lista seguida y visible.
+  - Lista nueva: la primera vez que una lista de esa firma se ve en la galería
+    (`community_list_announcements`). La migración marca como ya anunciadas las listas
+    visibles hoy, para no presentar nada viejo como nuevo.
+  - Solo cuenta lo que pasó después de empezar a seguir.
+- Correo: un **resumen semanal**, nunca uno por cambio. Sale el lunes siguiente
+  (`next_attempt_at`), solo con `community_email` activo y correo verificado. El texto de
+  Preferencias de avisos lo dice.
+- `/account/community` suma «Listas que sigues», «Curadores que sigues» (con dejar de
+  seguir) y, para quien tiene listas públicas, «Quién te sigue»: solo números por firma y
+  por lista, nunca quién.
+- API `POST /api/follows`: `list`, `curator` (alternan desde una lista visible),
+  `unfollow-list` y `unfollow-curator` (por el id propio del seguimiento; funcionan aunque
+  la lista ya sea privada). Mismo origen, sesión y 60 cambios por hora.
+
 ## Límites pendientes
 
-No hay colaboración entre autores, seguimiento de curadores, clonado, portadas personalizadas, perfiles públicos ni notificaciones sociales. El ranking mide interacción bruta, no calidad ni tendencia temporal, y puede manipularse creando cuentas; usarlo solo como orden auxiliar durante beta. El curador modera comentarios de su lista directamente y ahora también existe un reporte central en ops (ver arriba), pero todavía faltan bloqueo, apelación, reputación y defensa sólida ante multicuentas — no promover masivamente la función hasta cerrar esa operación.
+No hay colaboración entre autores, clonado, portadas personalizadas ni perfiles públicos. El ranking mide interacción bruta, no calidad ni tendencia temporal, y puede manipularse creando cuentas; usarlo solo como orden auxiliar durante beta. El curador modera comentarios de su lista directamente y ahora también existe un reporte central en ops (ver arriba), pero todavía faltan bloqueo, apelación, reputación y defensa sólida ante multicuentas — no promover masivamente la función hasta cerrar esa operación.
 
 Marca vigente: **shwcs**. Rebranding de interfaz aplicado después de esta entrega; dominio, logo y servicios externos pendientes.

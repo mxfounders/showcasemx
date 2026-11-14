@@ -65,19 +65,28 @@ function NotificationAction({
 export function NotificationPreferences({
   contactEmail,
   solutionEmail,
+  communityEmail,
+  weeklyEmail,
+  alertEmail,
   verified,
   emailAvailable,
   dict,
 }: {
   contactEmail: boolean;
   solutionEmail: boolean;
+  communityEmail: boolean;
+  weeklyEmail: boolean;
+  alertEmail: boolean;
   verified: boolean;
   emailAvailable: boolean;
   dict: Pick<Dictionary['notifications'], 'preferences' | 'action'>;
 }) {
   const text = dict.preferences;
   const [contacts, setContacts] = useState(contactEmail),
-    [solutions, setSolutions] = useState(solutionEmail);
+    [solutions, setSolutions] = useState(solutionEmail),
+    [community, setCommunity] = useState(communityEmail),
+    [weekly, setWeekly] = useState(weeklyEmail),
+    [alerts, setAlerts] = useState(alertEmail);
   const [beforeLink, afterLink] = text.verifyHint.split('{link}');
   return (
     <div className="max-w-xl">
@@ -103,8 +112,45 @@ export function NotificationPreferences({
           />
           {text.solutions}
         </label>
+        <label className="flex items-center gap-3 text-sm">
+          <input
+            type="checkbox"
+            checked={community}
+            disabled={!verified && !community}
+            onChange={e => setCommunity(e.target.checked)}
+            className="size-4 accent-[#365DC4]"
+          />
+          {text.community}
+        </label>
+        <label className="flex items-center gap-3 text-sm">
+          <input
+            type="checkbox"
+            checked={weekly}
+            disabled={!verified && !weekly}
+            onChange={e => setWeekly(e.target.checked)}
+            className="size-4 accent-[#365DC4]"
+          />
+          {text.weekly}
+        </label>
+        <label className="flex items-center gap-3 text-sm">
+          <input
+            type="checkbox"
+            checked={alerts}
+            disabled={!verified && !alerts}
+            onChange={e => setAlerts(e.target.checked)}
+            className="size-4 accent-[#365DC4]"
+          />
+          {text.alerts}
+        </label>
         <NotificationAction
-          body={{ action: 'preferences', contactEmail: contacts, solutionEmail: solutions }}
+          body={{
+            action: 'preferences',
+            contactEmail: contacts,
+            solutionEmail: solutions,
+            communityEmail: community,
+            weeklyEmail: weekly,
+            alertEmail: alerts,
+          }}
           label={text.save}
           dict={dict.action}
         />

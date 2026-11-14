@@ -9,14 +9,22 @@ import { requestLocale } from './i18n/negotiate';
  */
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  // next.config.mjs turns off Next's own trailing-slash redirect for the analytics
+  // relay, so pages keep a single URL here instead.
+  const path = pathname.replace(/(.)\/+$/, '$1');
   const locale = i18n.locales.find(
-    candidate => pathname === `/${candidate}` || pathname.startsWith(`/${candidate}/`),
+    candidate => path === `/${candidate}` || path.startsWith(`/${candidate}/`),
   );
-  if (locale) return withLocaleHeader(request, locale);
+  if (locale && path === pathname) return withLocaleHeader(request, locale);
 
-  // Clone so the query survives the redirect (e.g. /sign-in?next=/account/saved).
-  const url = request.nextUrl.clone();
-  url.pathname = `/${requestLocale(request)}${pathname}`;
+  // A plain URL keeps the query (e.g. /sign-in?next=/account/saved); a NextURL clone
+  // would also put back the trailing slash being removed.
+  const url = new URL(request.nextUrl.href);
+  if (locale) {
+    url.pathname = path;
+    return NextResponse.redirect(url, 308);
+  }
+  url.pathname = `/${requestLocale(request)}${path === '/' ? '' : path}`;
   return NextResponse.redirect(url);
 }
 
@@ -27,5 +35,5 @@ function withLocaleHeader(request: NextRequest, locale: Locale) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|.*\\.).*)'],
+  matcher: ['/((?!api|relay/|_next/static|_next/image|favicon.ico|.*\\.).*)'],
 };

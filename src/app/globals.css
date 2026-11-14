@@ -134,6 +134,11 @@
     animation: none;
   }
 }
+@media (prefers-reduced-motion: no-preference) {
+  .consent-banner {
+    animation: contact-step 180ms ease-out;
+  }
+}
 
 /* One page grid across the private account, matching Inicio. */
 @layer components {

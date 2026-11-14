@@ -1,9 +1,10 @@
 export const landing = {
   loadingCatalog: 'Cargando catálogo',
-  founderTitle: '¿Construyes algo que una empresa necesita?',
+  /** The home's only call to founders (SHCWS-38): the buyer flow above shows real projects only. */
+  founderTitle: '¿Construyes software para empresas?',
   founderSubtitle:
-    'Postula tu software, agencia o servicio y cuéntanos qué resuelves y para quién.',
-  founderButton: 'Postular mi solución',
+    'Publica gratis tu software, agencia o servicio: cuéntanos qué resuelves y para quién. El equipo revisa cada ficha antes de publicarla.',
+  founderButton: 'Publicar gratis',
   founderDisclaimer: 'La postulación no garantiza la publicación.',
   heroLine1: 'Encuentra soluciones.',
   heroLine2: 'Conoce a sus creadores.',
@@ -12,11 +13,19 @@ export const landing = {
   heroSearchPlaceholder: '¿Qué necesitas resolver en tu empresa?',
   heroSearchButton: 'Encontrar soluciones',
   heroSearchButtonMobile: 'Buscar',
-  heroSearchExample: 'Prueba con “quiero cobrar a tiempo” o “necesito organizar mi nómina”.',
+  heroSearchTry: 'Prueba con',
+  heroSearchOr: 'o',
+  /** Candidates only: the hero shows the first ones that return results today. */
+  heroSearchExamples: [
+    'quiero cobrar a tiempo',
+    'cotizaciones para mayoreo',
+    'una tienda en línea',
+    'necesito organizar mi nómina',
+    'controlar mis finanzas',
+    'contratos digitales',
+    'automatizar mi operación',
+  ],
   heroExplore: 'Explora:',
-  heroExploreFinance: 'Finanzas',
-  heroExplorePayroll: 'Nómina',
-  heroExploreSales: 'CRM',
   features: {
     titleLine1: 'Encuentra la tecnología',
     titleLine2: 'exacta para tu industria',
@@ -43,37 +52,34 @@ export const landing = {
   },
   stackingCards: {
     secondaryAction: 'Conocer más',
-    slotLabel: 'Espacio',
-    slotTitleLine1: 'Tu solución',
-    slotTitleLine2: 'puede estar aquí.',
     cards: {
-      data: {
+      catalog: {
         badge: 'CATÁLOGO',
-        title: 'Obtén datos del marketplace más completo',
+        title: 'Fichas que responden lo mismo',
         description:
-          'Un solo lugar para comparar más de 2,000 herramientas B2B. Crea señales de intención y toma decisiones basadas en datos reales de uso y presupuesto en Latinoamérica.',
+          'Cada proyecto contesta las mismas preguntas: qué problema resuelve, para quién, qué puede hacer, cuánto cuesta y cómo se implementa. Lo que no declaró aparece como faltante; no lo inventamos.',
         button: 'Explorar catálogo',
       },
-      agents: {
-        badge: 'RECOMENDACIONES',
-        title: 'Encuentra la aguja en el pajar al instante',
+      lists: {
+        badge: 'LISTAS Y COMPARADOR',
+        title: 'Guarda opciones y compáralas',
         description:
-          'Nuestra IA analiza tu industria, tamaño y presupuesto para recomendarte el stack tecnológico exacto que usan las empresas más exitosas de tu sector.',
-        button: 'Ver recomendaciones',
+          'Guarda proyectos, organízalos en listas privadas con tus propias notas y compara dos o tres lado a lado con lo que cada uno publicó. Sin puntajes ni recomendaciones inventadas.',
+        button: 'Crear una lista',
       },
-      enrichment: {
-        badge: 'GESTIÓN',
-        title: 'Centraliza el control de tus suscripciones',
+      contact: {
+        badge: 'CONTACTO',
+        title: 'Contacta con contexto',
         description:
-          'Deja de pagar por licencias que nadie usa. Conecta tu stack y recibe alertas automáticas sobre gastos duplicados y renovaciones próximas.',
-        button: 'Optimizar gastos',
+          'Envía una solicitud al equipo del proyecto con tu necesidad, plazo y tamaño de equipo. Antes de enviarla ves exactamente qué compartes, y das seguimiento a la respuesta desde tu cuenta.',
+        button: 'Buscar un proyecto',
       },
-      outbound: {
-        badge: 'IMPLEMENTACIÓN',
-        title: 'Conecta con expertos certificados',
+      reviews: {
+        badge: 'RESEÑAS',
+        title: 'Reseñas con nivel de verificación',
         description:
-          'No te quedes a la mitad. Te conectamos directamente con agencias y consultores verificados que configurarán tu software nuevo en tiempo récord.',
-        button: 'Contactar expertos',
+          'Cada reseña muestra qué se comprobó de quien la escribió: correo verificado, correo de empresa o compra comprobada. El proyecto puede responder en público, pero no borrarlas.',
+        button: 'Cómo revisamos',
       },
     },
   },

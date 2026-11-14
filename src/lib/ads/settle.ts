@@ -14,7 +14,13 @@ export const adsCacheTag = 'ads';
 export async function settleCheckout(stripe: Stripe, session: Stripe.Checkout.Session) {
   const paid = await fulfillCheckout(session);
   if (!paid) return false;
-  revalidateTag(adsCacheTag);
+  try {
+    revalidateTag(adsCacheTag);
+  } catch {
+    // The buyer's return page settles during render, where Next refuses to revalidate.
+    // The webhook bumps the tag, and the sponsored-slot cache expires in minutes anyway;
+    // the invoice below must not be skipped because of it.
+  }
   // The fiscal document is queued with the payment and issued right after the response.
   await queueInvoice(session.id);
   after(() => processBillingQueue());

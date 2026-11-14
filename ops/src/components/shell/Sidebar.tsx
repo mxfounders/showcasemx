@@ -133,7 +133,9 @@ function NavLinks({
                         <Count
                           value={count}
                           tone={
-                            item.count === 'mail' || item.count === 'reports'
+                            item.count === 'mail' ||
+                            item.count === 'reports' ||
+                            item.count === 'billing'
                               ? 'terracotta'
                               : 'blue'
                           }

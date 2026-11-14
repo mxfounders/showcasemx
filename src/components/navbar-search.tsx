@@ -82,7 +82,8 @@ export function NavbarSearch({
             }
             close();
             const locale = pathname.split('/')[1] || 'es';
-            router.push(`/${locale}/?q=${encodeURIComponent(query)}#catalogo`);
+            // The whole site's search: listings, lists and articles (SHCWS-44).
+            router.push(`/${locale}/buscar?q=${encodeURIComponent(query)}`);
           }}
           className="navbar-search-panel fixed left-4 right-4 top-16 z-20 flex h-14 items-center gap-2 rounded-full border border-stone-200 focus-within:border-[#365DC4]/40 bg-white px-3 shadow-[0_12px_36px_-12px_rgba(0,0,0,0.22)] sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+20px)] sm:w-[420px]"
         >

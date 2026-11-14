@@ -31,10 +31,16 @@ const focusStyle =
 export function AccountSidebar({
   name,
   avatar,
+  opportunitiesUnread = 0,
+  sections = { buyer: true, founder: true },
   dict,
 }: {
   name: string;
   avatar: string | null;
+  /** Opportunities the founder has not opened since the buyer last acted (SHCWS-14). */
+  opportunitiesUnread?: number;
+  /** Which halves this account needs, resolved by the layout from its mode and data. */
+  sections?: { buyer: boolean; founder: boolean };
   dict: Dictionary['account'];
 }) {
   const locale = useLocale();
@@ -65,44 +71,51 @@ export function AccountSidebar({
     };
   }, [accountOpen]);
   const links = [
-    { href: '/account', label: text.home, Icon: HomeIcon, tone: brandColors.blue },
+    { href: '/account', label: text.home, Icon: HomeIcon, tone: brandColors.blue, group: 'home' },
     {
-      href: '/account/solutions',
-      label: text.mySolutions,
-      Icon: LayersIcon,
-      tone: brandColors.sage,
-    },
-    {
+      group: 'buyer',
       href: '/account/saved',
       label: text.saved,
       Icon: BookmarkIcon,
       tone: brandColors.lavender,
     },
     {
+      group: 'buyer',
       href: '/account/lists',
       label: text.myLists,
       Icon: FolderOpenIcon,
       tone: brandColors.amber,
     },
     {
+      group: 'buyer',
       href: '/account/community',
       label: text.savedLists,
       Icon: BookshelfIcon,
       tone: brandColors.terracotta,
     },
     {
+      group: 'buyer',
       href: '/account/contacts',
       label: text.myContacts,
       Icon: SendIcon,
       tone: brandColors.blue,
     },
     {
+      group: 'founder',
+      href: '/account/solutions',
+      label: text.mySolutions,
+      Icon: LayersIcon,
+      tone: brandColors.sage,
+    },
+    {
+      group: 'founder',
       href: '/account/opportunities',
       label: text.opportunities,
       Icon: InboxIcon,
       tone: brandColors.terracotta,
     },
     {
+      group: 'founder',
       href: '/account/metrics',
       label: text.metrics,
       Icon: ChartComboIcon,
@@ -115,6 +128,17 @@ export function AccountSidebar({
       : href === '/account/solutions'
         ? path === href || (path.startsWith(href + '/') && path !== href + '/new')
         : path === href || path.startsWith(`${href}/`);
+  // The page being viewed always keeps its group, whatever the mode says.
+  const inGroup = (group: string) =>
+    links.some(link => link.group === group && link.href !== '/account' && isActive(link.href));
+  const showBuyer = sections.buyer || inGroup('buyer'),
+    showFounder = sections.founder || inGroup('founder'),
+    headings = showBuyer && showFounder;
+  const groups = [
+    { id: 'home', heading: '', visible: true },
+    { id: 'buyer', heading: text.buyerGroup, visible: showBuyer },
+    { id: 'founder', heading: text.founderGroup, visible: showFounder },
+  ];
 
   return (
     <aside
@@ -159,30 +183,60 @@ export function AccountSidebar({
           className={`${open ? 'flex sidebar-reveal' : 'hidden'} max-h-[calc(100svh-112px)] flex-col overflow-y-auto lg:flex lg:min-h-0 lg:max-h-none lg:flex-1`}
         >
           <nav aria-label={text.navigationAria} className="space-y-1 px-3 pb-7">
-            {links.map(({ href, label, Icon, tone }) => {
-              const active = isActive(href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={() => setOpen(false)}
-                  aria-current={active ? 'page' : undefined}
-                  style={active ? { backgroundColor: tone.soft, color: tone.solid } : undefined}
-                  className={`group flex min-h-12 items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-colors duration-200 ${active ? '' : 'text-stone-500 hover:bg-stone-50 hover:text-stone-900'} ${focusStyle}`}
-                >
-                  <span
-                    className="flex size-7 shrink-0 items-center justify-center rounded-lg transition-transform duration-200 group-hover:-translate-y-px motion-reduce:transform-none"
-                    style={{
-                      backgroundColor: active ? 'rgba(255,255,255,0.6)' : tone.soft,
-                      color: tone.solid,
-                    }}
+            {groups
+              .filter(group => group.visible)
+              .flatMap(group => [
+                ...(headings && group.heading
+                  ? [
+                      <p
+                        key={`heading-${group.id}`}
+                        className="px-3 pb-1 pt-5 text-[11px] font-medium uppercase tracking-[0.08em] text-stone-400"
+                      >
+                        {group.heading}
+                      </p>,
+                    ]
+                  : []),
+                ...links.filter(link => link.group === group.id),
+              ])
+              .map(item => {
+                if (!('href' in item)) return item;
+                const { href, label, Icon, tone } = item;
+                const active = isActive(href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={() => setOpen(false)}
+                    aria-current={active ? 'page' : undefined}
+                    style={active ? { backgroundColor: tone.soft, color: tone.solid } : undefined}
+                    className={`group flex min-h-12 items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-colors duration-200 ${active ? '' : 'text-stone-500 hover:bg-stone-50 hover:text-stone-900'} ${focusStyle}`}
                   >
-                    <Icon aria-hidden="true" className="size-4" />
-                  </span>
-                  {label}
-                </Link>
-              );
-            })}
+                    <span
+                      className="flex size-7 shrink-0 items-center justify-center rounded-lg transition-transform duration-200 group-hover:-translate-y-px motion-reduce:transform-none"
+                      style={{
+                        backgroundColor: active ? 'rgba(255,255,255,0.6)' : tone.soft,
+                        color: tone.solid,
+                      }}
+                    >
+                      <Icon aria-hidden="true" className="size-4" />
+                    </span>
+                    {label}
+                    {href === '/account/opportunities' && opportunitiesUnread > 0 && (
+                      <span
+                        className="ml-auto min-w-6 rounded-full px-2 py-0.5 text-center text-[11px] font-semibold tabular-nums"
+                        style={{ backgroundColor: tone.solid, color: '#fff' }}
+                      >
+                        <span aria-hidden="true">
+                          {opportunitiesUnread > 99 ? '99+' : opportunitiesUnread}
+                        </span>
+                        <span className="sr-only">
+                          {text.opportunitiesUnread.replace('{count}', String(opportunitiesUnread))}
+                        </span>
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
           </nav>
           <div className="px-3 pb-3 lg:mt-auto">
             <div className="mx-3 mb-3 border-t border-stone-100" />

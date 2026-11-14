@@ -3,12 +3,15 @@ import Link from '@/i18n/navigation';
 import type { Dictionary } from '@/i18n/dictionary';
 import { Stars } from './stars';
 import { formatRating } from './review-summary';
+import { ReviewInviteCard } from './review-invite-card';
+import { getReviewInvite } from '@/lib/reviews/invitations';
 
 /**
  * Reviews at a glance on the owner's listing page, where the "new review" notification
- * lands. Replying happens on the public ficha, next to the review itself.
+ * lands. Replying happens on the public ficha, next to the review itself. Below it, the
+ * link to invite customers (SHCWS-132); it is only read here, never created by a page load.
  */
-export function OwnerReviewDigest({
+export async function OwnerReviewDigest({
   solutionId,
   digest,
   locale,
@@ -20,6 +23,13 @@ export function OwnerReviewDigest({
   dict: Dictionary['reviews'];
 }) {
   const text = dict.digest;
+  // An outage or a database without db/review-invitations.sql hides only the link card.
+  let invite: string | null | undefined;
+  try {
+    invite = await getReviewInvite(solutionId);
+  } catch {
+    invite = undefined;
+  }
   return (
     <section
       aria-labelledby="owner-reviews"
@@ -73,6 +83,16 @@ export function OwnerReviewDigest({
           </Link>
         )}
       </div>
+      {invite !== undefined && (
+        <div className="mt-6 border-t border-stone-200 pt-6">
+          <ReviewInviteCard
+            solutionId={solutionId}
+            initialToken={invite}
+            locale={locale}
+            dict={dict}
+          />
+        </div>
+      )}
     </section>
   );
 }

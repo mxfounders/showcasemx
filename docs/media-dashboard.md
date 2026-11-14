@@ -110,9 +110,12 @@ se retira de la nueva aprobación, deja de ser pública aunque el dueño la cons
 Respuestas de imagen: `image/webp`, `nosniff`, `private, no-store`; evita que una
 caché compartida conserve imágenes privadas o retiradas. No hay optimización
 pública de Next Image (`unoptimized`), CDN ni URLs persistentes sin autorización.
-El archivo no referenciado sigue privado incluso para revisores. Queda pendiente
-limpieza operativa de archivos abandonados y cuota global de almacenamiento por
-cuenta; los 12 archivos por solución no sustituyen esos controles.
+El archivo no referenciado sigue privado incluso para revisores. Desde SHCWS-12, el
+cron diario del monitor (`runMaintenance`, `src/lib/maintenance.ts`) borra las capturas
+con más de 30 días que no están ni en el borrador ni en la versión publicada; se salta
+las fichas en revisión y las que se están guardando en ese momento (`SKIP LOCKED`), y el
+trigger encola sus blobs para el barrido. La Política de privacidad lo dice. Sigue
+pendiente una cuota global de almacenamiento por cuenta.
 
 ## Inicio para compradores y cuentas mixtas
 

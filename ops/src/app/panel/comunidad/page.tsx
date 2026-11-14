@@ -6,8 +6,10 @@ import {
   EyeOffIcon,
   FlagIcon,
   HeartIcon,
+  InboxIcon,
   ListBulletsIcon,
   MessagesIcon,
+  StarIcon,
 } from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
 import { communityOverview } from '@/lib/data/community';
@@ -23,6 +25,9 @@ import { Pagination } from '@/components/ui/Pagination';
 import { RelativeTime } from '@/components/ui/RelativeTime';
 import { Stat } from '@/components/ui/Stat';
 import { ActionButton } from '@/components/actions/ActionButton';
+import { RenameCurator } from './RenameCurator';
+import { ReviewsView } from './ReviewsView';
+import { QuestionsView } from './QuestionsView';
 
 export const metadata: Metadata = { title: 'Comunidad' };
 
@@ -31,9 +36,14 @@ export default async function ComunidadPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  await requireOps();
+  const user = await requireOps();
   const params = await searchParams;
-  const view = choice(params, 'vista', ['listas', 'comentarios', 'fichas'] as const, 'listas');
+  const view = choice(
+    params,
+    'vista',
+    ['listas', 'comentarios', 'fichas', 'resenas', 'preguntas'] as const,
+    'listas',
+  );
   const page = pageParam(params);
   const data = await communityOverview(param(params, 'q'), page);
   const comments = view === 'comentarios' ? data.listComments : data.solutionComments;
@@ -90,12 +100,37 @@ export default async function ComunidadPage({
               active: view === 'fichas',
               icon: CommentIcon,
             },
+            {
+              label: 'Reseñas',
+              href: hrefWith('/panel/comunidad', params, { vista: 'resenas', filtro: null }),
+              active: view === 'resenas',
+              icon: StarIcon,
+            },
+            {
+              label: 'Preguntas',
+              href: hrefWith('/panel/comunidad', params, { vista: 'preguntas', filtro: null }),
+              active: view === 'preguntas',
+              icon: InboxIcon,
+            },
           ]}
         />
-        <SearchField placeholder="Buscar listas, firmas o comentarios…" className="lg:w-80" />
+        <SearchField
+          placeholder={
+            view === 'resenas'
+              ? 'Buscar reseñas, autores o fichas…'
+              : view === 'preguntas'
+                ? 'Buscar preguntas, respuestas o fichas…'
+                : 'Buscar listas, firmas o comentarios…'
+          }
+          className="lg:w-80"
+        />
       </div>
 
-      {view === 'listas' ? (
+      {view === 'resenas' ? (
+        <ReviewsView params={params} page={page} />
+      ) : view === 'preguntas' ? (
+        <QuestionsView params={params} page={page} />
+      ) : view === 'listas' ? (
         data.lists.items.length === 0 ? (
           <Card>
             <EmptyState
@@ -141,7 +176,7 @@ export default async function ComunidadPage({
                     ))}
                   </div>
                 )}
-                <div className="mt-auto flex items-center justify-between gap-3 pt-4">
+                <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-4">
                   <p className="num flex items-center gap-3 text-[12.5px] text-muted">
                     <span>{list.itemCount} proyectos</span>
                     <span className="flex items-center gap-1">
@@ -160,22 +195,31 @@ export default async function ComunidadPage({
                       · <RelativeTime value={list.updatedAt} />
                     </span>
                   </p>
-                  <ActionButton
-                    label="Volver privada"
-                    icon={<EyeOffIcon />}
-                    tone="ghost"
-                    size="xs"
-                    endpoint="/api/community"
-                    payload={{ action: 'unpublish_list', listId: list.id }}
-                    success="La lista ya no es pública"
-                    confirm={{
-                      title: `Volver privada «${list.name}»`,
-                      description:
-                        'Su enlace deja de funcionar para otros. Sus notas privadas no se tocan.',
-                      destructive: true,
-                      confirmLabel: 'Volver privada',
-                    }}
-                  />
+                  <div className="flex shrink-0 items-center gap-1">
+                    {user.level === 'admin' && (
+                      <RenameCurator
+                        listId={list.id}
+                        listName={list.name}
+                        current={list.curatorName}
+                      />
+                    )}
+                    <ActionButton
+                      label="Volver privada"
+                      icon={<EyeOffIcon />}
+                      tone="ghost"
+                      size="xs"
+                      endpoint="/api/community"
+                      payload={{ action: 'unpublish_list', listId: list.id }}
+                      success="La lista ya no es pública"
+                      confirm={{
+                        title: `Volver privada «${list.name}»`,
+                        description:
+                          'Su enlace deja de funcionar para otros. Sus notas privadas no se tocan.',
+                        destructive: true,
+                        confirmLabel: 'Volver privada',
+                      }}
+                    />
+                  </div>
                 </div>
               </Card>
             ))}
@@ -209,6 +253,14 @@ export default async function ComunidadPage({
                   <p className="mt-1 whitespace-pre-line text-[13.5px] leading-relaxed text-fg-2">
                     {comment.body}
                   </p>
+                  {comment.hiddenReason !== null && (
+                    <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[12.5px] text-muted">
+                      <Badge tone="amber" icon={EyeOffIcon}>
+                        Oculto
+                      </Badge>
+                      Su autor lee: «{comment.hiddenReason}»
+                    </p>
+                  )}
                 </div>
                 <ActionButton
                   label="Borrar"
@@ -234,11 +286,13 @@ export default async function ComunidadPage({
           </ul>
         </Card>
       )}
-      <Pagination
-        page={page}
-        hasMore={view === 'listas' ? data.lists.hasMore : comments.hasMore}
-        hrefFor={target => hrefWith('/panel/comunidad', params, { page: target })}
-      />
+      {view !== 'resenas' && view !== 'preguntas' && (
+        <Pagination
+          page={page}
+          hasMore={view === 'listas' ? data.lists.hasMore : comments.hasMore}
+          hrefFor={target => hrefWith('/panel/comunidad', params, { page: target })}
+        />
+      )}
     </>
   );
 }

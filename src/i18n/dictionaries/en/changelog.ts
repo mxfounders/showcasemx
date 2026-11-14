@@ -22,10 +22,83 @@ export const changelog = {
     account: 'Account',
   },
   months: {
+    october: 'October 2026',
     september: 'September 2026',
     august: 'August 2026',
   },
   releases: {
+    gota: {
+      date: 'October 23, 2026',
+      label: 'Design',
+      title: 'New icons across shwcs',
+      summary:
+        "The whole interface is now drawn with Gota, Flouvia's icon set: finer strokes and a single style across the site, the account and the team's panel.",
+      items: [
+        'Each page loads only the icons it uses.',
+        'Decorative icons stay hidden from screen readers; meaningful ones keep their accessible name.',
+      ],
+    },
+    reviews: {
+      date: 'October 10, 2026',
+      label: 'Reviews',
+      title: 'Reviews from people who use each project',
+      summary:
+        'Any account can review a published listing: stars, what they use it for, the best part and what they would improve. Each review says how verified its author is.',
+      items: [
+        "One review per account and listing; it goes public once the author's email is verified.",
+        'Visible levels: verified email, company email and verified purchase with its CFDI.',
+        'The owner answers in public but never edits or deletes a review; nobody reviews their own listing.',
+        'Stars and the number of reviews show on catalog cards.',
+      ],
+    },
+    registries: {
+      date: 'October 10, 2026',
+      label: 'Trust',
+      title: 'Public registries on the listing',
+      summary:
+        "When a tax identity is on file, the listing says whether the provider appears on the SAT's 69-B list and as of which date, without showing the RFC.",
+      items: [
+        'The list is refreshed daily from the official source.',
+        '«Verified purchase»: a reviewer can validate their CFDI with the SAT; only a fingerprint of the folio is kept.',
+      ],
+    },
+    english: {
+      date: 'October 10, 2026',
+      label: 'Languages',
+      title: 'All of shwcs in English',
+      summary:
+        'After the information pages in September, the whole site and the account now work in Spanish and English.',
+      items: [
+        'Catalog, listings, community, blog, account and settings in both languages.',
+        'Error messages come back in the language of the page you act from.',
+        'All 16 blog articles have an English version.',
+        'Emails are still in Spanish for now.',
+      ],
+    },
+    communityReports: {
+      date: 'September 5, 2026',
+      label: 'Community',
+      title: 'Report community lists and comments',
+      summary:
+        'If a public list or a comment breaks the rules, any account can report it and the team reviews it.',
+      items: [
+        'Clear reasons: spam, abuse, impersonation or other.',
+        'Nobody can report their own list or comment.',
+        "Community search finds partial matches in each list's name, description and projects.",
+      ],
+    },
+    security: {
+      date: 'September 3, 2026',
+      label: 'Account',
+      title: 'More control over your account and your data',
+      summary:
+        'Settings now show what is left to protect and let you decide what happens to your information.',
+      items: [
+        'Optional two-step verification with an authenticator app and backup codes.',
+        "A list of open sessions to close the ones you don't recognize.",
+        'Download a copy of your data or delete your account whenever you want.',
+      ],
+    },
     capabilities: {
       date: 'September 5, 2026',
       label: 'New',

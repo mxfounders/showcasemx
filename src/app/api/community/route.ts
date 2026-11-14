@@ -7,6 +7,7 @@ import { isSolutionId } from '@/lib/solutions/model';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { requestLocale } from '@/i18n/negotiate';
 import { communityComment, communityReport } from '@/lib/library/community-model';
+import { captureServerEvent } from '@/lib/analytics/server';
 const ok = (data: Record<string, unknown> = {}) =>
   NextResponse.json({ ok: true, ...data }, { headers: { 'Cache-Control': 'no-store' } });
 export async function POST(request: NextRequest) {
@@ -37,6 +38,9 @@ export async function POST(request: NextRequest) {
         body.action === 'like'
           ? await sql`SELECT count(*)::int count FROM community_list_likes WHERE list_id=${id}`
           : await sql`SELECT count(*)::int count FROM community_saved_lists WHERE list_id=${id}`;
+      if (body.action === 'like' && rows[0].active) {
+        captureServerEvent(request, account.id, 'community_list_liked');
+      }
       return ok({ active: !!rows[0].active, count: Number(count) });
     }
     if (body.action === 'comment') {

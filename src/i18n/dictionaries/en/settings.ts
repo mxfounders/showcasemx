@@ -279,6 +279,8 @@ export const settings = {
     profileUnavailable: "We couldn't save the changes. Your details are still in the form.",
     passwordInvalid:
       'Check the passwords. The new one must have at least 6 characters and match the confirmation.',
+    passwordLeaked:
+      "This password appeared in other sites' data breaches; choose one you don't use anywhere else.",
     currentPasswordWrong: 'The current password is incorrect.',
     passwordUnchanged: 'Choose a password different from your current one.',
     passwordUnavailable: "We couldn't confirm the change. Try signing in before repeating it.",
@@ -291,6 +293,7 @@ export const settings = {
     googlePasswordWrong:
       'Incorrect password. If you only signed in with Google, first set a password with I forgot my password.',
     googleChanged: 'The connection changed. Reload.',
+    googleVerifyFirst: 'Confirm your email before linking Google. Request the link in Security.',
     googleNotConfigured: "Google isn't configured yet.",
     googleUseMainDomain: 'Use the main domain.',
     googleUnavailable: "We couldn't change the connection.",

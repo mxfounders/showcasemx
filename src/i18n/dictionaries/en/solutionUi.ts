@@ -41,6 +41,22 @@ export const solutionUi = {
     empty: 'Be the first to comment on this listing.',
     deleteError: "We couldn't delete it.",
     postError: "We couldn't post it.",
+    reportLabel: 'Report this comment',
+    hiddenNote: 'Only you can see this comment: the shwcs team hid it. Reason:',
+  },
+  commentReport: {
+    done: 'Report received. The shwcs team will review it.',
+    loginSuffix: 'to report it.',
+    reasonLabel: 'Reason',
+    reasonSpam: 'Spam or unwanted promotion',
+    reasonAbuse: 'Abuse or offensive content',
+    reasonImpersonation: "Impersonation or someone else's personal data",
+    reasonOther: 'Other reason',
+    detailsLabel: 'What should we review?',
+    saving: 'Saving…',
+    submit: 'Send report',
+    cancel: 'Cancel',
+    genericError: 'Please try again.',
   },
   report: {
     done: "Report received. We'll review what you shared.",
@@ -68,6 +84,10 @@ export const solutionUi = {
     invalidAction: 'Invalid action.',
     saveFailed: "We couldn't save the change.",
     unconfirmed: "We couldn't confirm the change. Reload to check before trying again.",
+    reportDetails: 'Choose a reason and add at least 10 characters of context.',
+    reportRateLimited: 'Too many reports. Please try again later.',
+    reportConflict:
+      'You already have an open report on this comment, or it is no longer available.',
   },
   reportErrors: {
     foreignOrigin: 'Use shwcs directly.',

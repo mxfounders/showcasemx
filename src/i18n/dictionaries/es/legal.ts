@@ -32,8 +32,18 @@ export const legal = {
           id: 'subprocesadores',
           title: 'Infraestructura y subprocesadores',
           paragraphs: [
-            'Toda la información es procesada mediante infraestructuras de grado empresarial. Utilizamos alojamiento y almacenamiento de archivos de Vercel (vercel.com), bases de datos en la nube (Neon, con alojamiento en AWS us-east-1), el proveedor de correo transaccional Resend y, para el pago de espacios patrocinados, Stripe (stripe.com). Estos subprocesadores cumplen con estándares de encriptación en tránsito (TLS 1.2+) y en reposo (AES-256).',
+            'Toda la información es procesada mediante infraestructuras de grado empresarial. Utilizamos alojamiento y almacenamiento de archivos de Vercel (vercel.com), bases de datos en la nube (Neon, con alojamiento en AWS us-east-1), el proveedor de correo transaccional Resend, para el pago de espacios patrocinados Stripe (stripe.com) y, para la analítica y el registro de errores descritos en la sección siguiente, PostHog (posthog.com). Estos subprocesadores cumplen con estándares de encriptación en tránsito (TLS 1.2+) y en reposo (AES-256).',
             'Al utilizar shwcs, reconoces que la información puede ser enrutada, procesada o almacenada en servidores distribuidos geográficamente por nuestros subprocesadores. Exigimos acuerdos de confidencialidad y medidas de seguridad estrictas a nuestra cadena de suministro tecnológico, pero shwcs no se hace responsable por eventos de fuerza mayor o vulneraciones originadas en la infraestructura subyacente.',
+          ],
+        },
+        {
+          id: 'analitica',
+          title: 'Analítica de producto y errores',
+          paragraphs: [
+            'Si lo aceptas en el aviso de cookies, usamos PostHog (posthog.com) para entender cómo se usa shwcs: las páginas que visitas, los clics (sin el texto de lo que pulsas) y acciones como registrarte, iniciar sesión, guardar un proyecto, crear una lista, enviar una solicitud de contacto o una ficha a revisión, publicar una reseña o iniciar el pago de un espacio patrocinado. Si tienes sesión iniciada, esos eventos se asocian al identificador interno de tu cuenta. Nunca enviamos tu correo, tu nombre, tus notas, el contenido de tus mensajes ni tus datos fiscales. Base legal: tu consentimiento.',
+            'Si no aceptas, PostHog no se carga en tu navegador y no se envía ningún evento sobre ti. Puedes cambiar tu decisión cuando quieras desde «Preferencias de cookies», al pie de cada página o en Configuración, sección Datos. Al retirar el consentimiento borramos de tu navegador lo que PostHog había guardado. Para que eliminemos los eventos ya enviados y asociados a tu cuenta, escríbenos a hola@shwcs.site.',
+            'También enviamos a PostHog los errores no controlados del servidor para poder corregirlos. Esos informes contienen la ruta y el detalle técnico del fallo, sin datos de tu cuenta ni de tu navegador, por lo que no dependen de tu consentimiento. Base legal: interés legítimo en mantener el servicio funcionando.',
+            'PostHog, Inc. (Estados Unidos) actúa como encargado del tratamiento y aloja estos datos en su región de Estados Unidos. Las peticiones pasan por nuestro propio dominio, así que tu navegador no se conecta directamente con PostHog.',
           ],
         },
         {
@@ -41,20 +51,21 @@ export const legal = {
           title: 'Privacidad transaccional y terceros',
           paragraphs: [
             'La arquitectura de shwcs separa estrictamente la información pública de la privada. Los borradores, el contenido en revisión, tus notas analíticas y tus listas (salvo que declares lo contrario) residen en silos de acceso exclusivo para tu cuenta.',
+            'Si nos escribes desde el formulario de contacto, guardamos tu nombre, correo, organización, rol, sitio y mensaje para responderte, y los eliminamos 24 meses después de recibirlos. No los usamos para el newsletter ni para publicidad. Las sesiones de acceso caducadas y las capturas que subes a una ficha y no usas en 30 días también se eliminan automáticamente.',
             'El componente de contacto es un conducto pasivo. Al iniciar una solicitud de conexión con un proyecto listado, otorgas tu consentimiento explícito para transmitir tu información de perfil, correo y el contexto del mensaje al destinatario. A partir de la entrega, el tratamiento queda sujeto a las políticas del destinatario. shwcs carece de autoridad para auditar o revocar ese uso posterior.',
-            'Las reseñas y los comentarios que publicas son públicos: muestran el nombre que escribes y, si los indicas, tu país y el tamaño de tu empresa. Para mostrar el nivel de verificación de una reseña («Correo verificado» o «Correo de empresa») usamos si confirmaste tu correo y su dominio; nunca publicamos tu correo ni su dominio. Puedes editar o borrar tus reseñas en cualquier momento, y se incluyen en la exportación de tus datos.',
-            'Si publicas una solución puedes declarar su identificación fiscal (en México, el RFC). Es privada: solo la usamos para consultarla en registros públicos —en México, la lista del artículo 69-B del SAT— y mostrar el resultado en tu ficha, nunca el identificador. Si compruebas una compra en una reseña, enviamos al SAT el folio fiscal, los RFC y el total del CFDI para consultar su estado; guardamos solo el resultado, la fecha y una huella irreversible del folio que impide usar el mismo comprobante dos veces.',
+            'Las reseñas y los comentarios que publicas son públicos: muestran el nombre que escribes y, si los indicas, tu país y el tamaño de tu empresa. Para mostrar el nivel de verificación de una reseña («Correo verificado» o «Correo de empresa») usamos si confirmaste tu correo y su dominio; nunca publicamos tu correo ni su dominio. Puedes editar o borrar tus reseñas en cualquier momento, y se incluyen en la exportación de tus datos. Si escribes una reseña desde el enlace de invitación de un proyecto, la marcamos «Invitada por el proyecto». Si contactaste al proyecto desde shwcs y la conversación avanzó, tu reseña muestra «Contactó vía shwcs»: eso revela que hubo una conversación, nunca su contenido, y te avisamos antes de que la escribas. Las preguntas públicas muestran el nombre que escribes y su texto. Si pides un enlace para entrar desde una invitación, guardamos tu correo y una huella del enlace durante 30 minutos para enviarlo; si no tenías cuenta, la creamos al abrirlo.',
+            'La palomita «Verificado por shwcs» la decide el equipo después de revisar el sitio, el producto y que quien registró la ficha representa al proyecto; guardamos qué revisamos, la fecha y una nota interna, y solo publicamos la palomita y su fecha. Al verificar, el equipo puede registrar la identificación fiscal del proyecto (en México, el RFC); nunca te la pedimos en un formulario. Es privada: solo la usamos para consultarla en registros públicos —en México, la lista del artículo 69-B del SAT— y mostrar el resultado en la ficha, nunca el identificador. Las insignias que pones en tu sitio se sirven desde shwcs y no registran quién las ve. Si compruebas una compra en una reseña, enviamos al SAT el folio fiscal, los RFC y el total del CFDI para consultar su estado; guardamos solo el resultado, la fecha y una huella irreversible del folio que impide usar el mismo comprobante dos veces.',
           ],
         },
         {
           id: 'pagos',
           title: 'Pagos y espacios patrocinados',
           paragraphs: [
-            'Cuando reservas un espacio patrocinado, el pago se realiza en la página segura de Stripe (stripe.com). Stripe recibe directamente los datos de tu tarjeta u otro método de pago; shwcs nunca los recibe ni los almacena. Durante el pago, Stripe también recaba tu dirección de facturación y, si la proporcionas, tu identificación fiscal, para calcular los impuestos y emitir el comprobante.',
+            'Cuando reservas un espacio patrocinado, pagas en shwcs mediante un formulario seguro de Stripe (stripe.com) incrustado en la página: los campos de tu tarjeta u otro método de pago son de Stripe, que recibe esos datos directamente; shwcs nunca los recibe ni los almacena. Durante el pago, Stripe también recaba tu dirección de facturación y, si la proporcionas, tu identificación fiscal, para calcular los impuestos y emitir el comprobante.',
             'shwcs conserva el registro de cada reserva: la ficha y el espacio contratados, las fechas, los montos, impuestos y reembolsos, el correo de la cuenta, la versión de las condiciones aceptadas y los identificadores de la transacción en Stripe. Finalidad: ejecutar el contrato, emitir comprobantes, gestionar cancelaciones, reembolsos y disputas, y cumplir obligaciones fiscales y contables. Bases legales: ejecución del contrato y cumplimiento de obligaciones legales.',
             'Stripe actúa como encargado del tratamiento para procesar el pago y, para la prevención de fraude y el cumplimiento regulatorio de los servicios financieros, como responsable independiente conforme a su propia política de privacidad (stripe.com/privacy). Sus servidores pueden encontrarse fuera de tu país, incluido Estados Unidos.',
             'Conservación: los registros de reservas y pagos se mantienen durante el plazo que exija la legislación fiscal y contable aplicable, incluso si eliminas tu ficha o tu cuenta. En ese caso se desvinculan de tu cuenta y solo se conserva lo necesario para esa obligación.',
-            'Medición de los espacios patrocinados: contamos impresiones y clics como totales diarios, sin cookies, sin identificadores de visitante y respetando las señales DNT y GPC. Los anunciantes ven únicamente esos totales; nunca quién vio o abrió su anuncio, quién guardó su ficha ni datos de tu cuenta.',
+            'Medición de los espacios patrocinados: contamos impresiones, clics, visitas a la ficha desde el espacio, clics a su sitio y visitas a las páginas donde se muestran como totales diarios, sin cookies, sin identificadores de visitante y respetando las señales DNT y GPC. Si tienes sesión iniciada y abres el formulario de contacto de una ficha desde su espacio patrocinado, guardamos ese hecho junto a tu cuenta un máximo de 7 días para contar tu solicitud, si la envías, en los resultados de ese espacio; lo borramos al enviarla o al vencer. Los anunciantes ven únicamente totales; nunca quién vio o abrió su anuncio, quién guardó su ficha ni datos de tu cuenta.',
           ],
         },
         {
@@ -71,8 +82,8 @@ export const legal = {
           id: 'telemetria',
           title: 'Auditoría, telemetría y cambios a esta política',
           paragraphs: [
-            'Desplegamos instrumentación telemétrica para garantizar el rendimiento, prevenir abusos (rate limiting) y generar métricas de visibilidad para los fundadores. Este procesamiento utiliza contadores efímeros y funciones hash irreversibles. No construimos perfiles individuales ni empleamos cookies de rastreo transversal.',
-            'Esta política puede actualizarse. Cuando los cambios sean materiales, lo comunicaremos con al menos 15 días de anticipación a los suscriptores activos del newsletter. La versión vigente siempre estará disponible en shwcs.site/privacidad con la fecha de última actualización. Última revisión: octubre de 2026.',
+            'Desplegamos instrumentación telemétrica para garantizar el rendimiento, prevenir abusos (rate limiting) y generar métricas de visibilidad para los fundadores. Este procesamiento utiliza contadores efímeros y funciones hash irreversibles. Fuera de la analítica opcional descrita en «Analítica de producto y errores», no construimos perfiles individuales ni empleamos cookies de rastreo entre sitios.',
+            'Esta política puede actualizarse. Cuando los cambios sean materiales, lo comunicaremos con al menos 15 días de anticipación a los suscriptores activos del newsletter. La versión vigente siempre estará disponible en shwcs.site/privacidad con la fecha de última actualización. Última revisión: noviembre de 2026.',
           ],
         },
       ],
@@ -130,6 +141,8 @@ export const legal = {
             'Una reseña debe describir tu propia experiencia con la solución. No se permite reseñar una solución propia, la de tu empleador o la de un competidor directo, ni publicar reseñas a cambio de pagos, descuentos u otros beneficios que dependan de lo que digas.',
             'Quien publica la solución puede responder en público, pero no puede editar ni borrar reseñas. shwcs puede ocultar una reseña que incumpla estas reglas, contenga datos personales de terceros o sea ofensiva; quien la escribió verá el motivo y puede corregirla.',
             'Las reseñas influyen en el orden del catálogo según reglas publicadas en /criterios. Ningún pago cambia una reseña, su visibilidad ni su peso.',
+            'Quien publica una solución puede invitar a sus clientes con el enlace de invitación de su ficha. Debe invitar sin filtrar por la opinión que espera (no solo a los clientes contentos) y no puede ofrecer nada que dependa del sentido de la reseña; cualquier beneficio por reseñar debe ser igual sea la reseña buena o mala. Las reseñas que llegan por ese enlace se marcan «Invitada por el proyecto» y pesan la mitad en el orden. shwcs también invita a reseñar a quien contactó a un proyecto desde shwcs; esas reseñas muestran «Contactó vía shwcs», sin revelar nada de la conversación.',
+            'Las preguntas públicas en una ficha siguen las mismas reglas que los comentarios: se publican con el nombre que escribas, solo las responde quien publica la solución, y solo shwcs puede ocultarlas, con un motivo que verá quien preguntó.',
           ],
         },
         {
@@ -170,7 +183,7 @@ export const legal = {
     cookies: {
       title: 'Cookies y medición',
       intro:
-        'shwcs usa exclusivamente cookies técnicas necesarias para el funcionamiento seguro de la sesión. No empleamos cookies analíticas de terceros ni rastreo publicitario.',
+        'shwcs usa cookies técnicas necesarias para el funcionamiento seguro de la sesión y, solo si lo aceptas, cookies de analítica de PostHog. No usamos cookies publicitarias ni rastreo entre sitios.',
       sections: [
         {
           id: 'sesion',
@@ -180,10 +193,19 @@ export const legal = {
           ],
         },
         {
+          id: 'analitica',
+          title: 'Analítica opcional (PostHog)',
+          paragraphs: [
+            'Si aceptas en el aviso de cookies, PostHog guarda en tu navegador una cookie y una entrada de almacenamiento local, con nombres que empiezan por «ph_», que contienen un identificador aleatorio y los datos de la visita en curso. Sirven para que una visita y sus pasos se cuenten una sola vez. Solo son válidas en shwcs.site y no se comparten con otros sitios. Qué se mide y con qué base legal se explica en la política de privacidad, sección «Analítica de producto y errores».',
+            'Tu decisión se guarda durante seis meses en la cookie técnica «shwcs-analytics»; después volvemos a preguntarte. Si rechazas, PostHog no se carga y no se crea ninguna de sus cookies. Puedes cambiar de opinión desde «Preferencias de cookies», al pie de cada página. Al retirar el consentimiento borramos las cookies y el almacenamiento de PostHog de tu navegador.',
+          ],
+        },
+        {
           id: 'metricas',
           title: 'Métricas agregadas sin identificación',
           paragraphs: [
-            'El contador de visitas y clics de fichas funciona mediante hashes irreversibles del lado del servidor. No crea cookies analíticas, no genera un identificador de visitante permanente y no construye un perfil de comportamiento. Los contadores respetan señales DNT y GPC. Pueden omitir eventos por bloqueadores de contenido o limitaciones técnicas.',
+            'El contador de visitas y clics de fichas funciona mediante hashes irreversibles del lado del servidor. No crea cookies analíticas, no genera un identificador de visitante permanente y no construye un perfil de comportamiento. Los contadores respetan señales DNT y GPC. Pueden omitir eventos por bloqueadores de contenido o limitaciones técnicas. Es independiente de PostHog y funciona igual aceptes o no la analítica opcional.',
+            'Las búsquedas del catálogo se cuentan igual: guardamos por día las palabras buscadas, cuántas veces se buscaron, si encontraron algo y si terminaron en una ficha, sin cuenta, dirección ni identificador. Nunca guardamos una búsqueda que parezca un correo, un teléfono o una dirección web, y borramos los conteos a los 400 días. Con DNT o GPC no se cuenta nada. Nos sirven para saber qué buscan las empresas y a qué proyectos invitar.',
           ],
         },
         {
@@ -191,7 +213,8 @@ export const legal = {
           title: 'Servicios externos',
           paragraphs: [
             'Los sitios, demos y redes sociales que abras desde shwcs tienen sus propias políticas de cookies y son responsables de su tratamiento. shwcs no controla, comparte datos con, ni es responsable de las cookies de esos terceros.',
-            'Al pagar un espacio patrocinado, el pago ocurre en la página de Stripe, que puede usar sus propias cookies necesarias para el pago y la prevención de fraude conforme a su política.',
+            'Para que cada proyecto sepa que la visita viene de shwcs, los enlaces de una ficha a su sitio, demo y redes añaden «utm_source=shwcs» y tu navegador envía como origen solo la dirección de shwcs (https://shwcs.site), nunca la página exacta. No incluyen tu cuenta, tu correo ni ningún identificador tuyo.',
+            'Al pagar un espacio patrocinado, el formulario de pago de Stripe incrustado en esa página puede usar sus propias cookies necesarias para el pago y la prevención de fraude conforme a su política. Solo esa página carga código de Stripe.',
           ],
         },
         {

@@ -31,10 +31,60 @@ con NEXT_PUBLIC_SHOW_DEMO_PROJECTS=true y siguen sin ser proyectos contratables.
 - /account/settings/security permite solicitar verificación. /verify-email recibe
   el token en fragmento y requiere confirmación explícita. Token aleatorio, solo
   hash en BD, 30 minutos, ligado a cuenta/correo y consumido una sola vez.
-- No se verifica retrospectivamente a nadie por tener una cuenta. El registro no
-  envía correo automáticamente: el usuario lo solicita desde Seguridad.
-- El correo transaccional está desactivado por defecto. Activarlo exige correo
-  verificado; el worker vuelve a comprobar las preferencias antes de enviar.
+- No se verifica retrospectivamente a nadie por tener una cuenta. El registro manda
+  el enlace de verificación al crear una cuenta nueva (SHCWS-27, con `after()`, sin
+  cambiar la respuesta); Inicio y Seguridad permiten reenviarlo.
+- Avisos por correo de solicitudes de contacto: encendidos salvo que la persona los
+  apague (SHCWS-13, `db/contact-alerts-default.sql`). Los de fichas también, desde
+  `db/listing-notices.sql` (SHCWS-18/20). Un `false` guardado sigue siendo `false`.
+  Siempre exigen correo verificado y el worker vuelve a comprobar las
+  preferencias antes de enviar. Crear o responder una solicitud corre el worker en ese
+  momento para esa conversación; el cron diario queda como reintento. El aviso de una
+  solicitud nueva lleva lo que el comprador aceptó compartir y va también al correo
+  privado de contacto de la ficha.
+- Avisos de fichas (`category='solution'`, `src/lib/notifications/listing-email.ts`):
+  - decisión editorial (recibida, publicada, cambios, rechazo, retiro), con el
+    comentario del equipo si lo hay;
+  - al publicarse, el kit de lanzamiento: enlace público, compartir en LinkedIn, X y
+    WhatsApp, insignia para el sitio y enlace para pedir reseñas;
+  - comentario nuevo (autor y texto), reporte (solo el motivo, nunca quién lo envió)
+    y reseña pública nueva (estrellas y título);
+  - espacios patrocinados: pago confirmado, pausa, disputa, cancelación, reembolso
+    (trigger en `ad_campaigns`), y «empieza mañana» y «terminó, con impresiones y
+    clics» (fechas: `src/lib/ads/notices.ts`, los crea el cron de correo antes de
+    enviar y mira dos días atrás por si un cron falló).
+  - Comentarios y reportes se envían al momento con `after()`. Las decisiones de ops,
+    cuando ops llama a `/api/internal/catalog-revalidate` tras decidir. El resto, con el
+    cron diario.
+- «Tu semana en shwcs» (SHCWS-21, `src/lib/notifications/weekly.ts`, `db/weekly-digest.sql`):
+  - a fundadores con ficha publicada y correo verificado, desde la primera corrida diaria
+    del cron de correo de cada semana; resume los 7 días anteriores al lunes;
+  - visitas y clics contra la semana anterior; guardados solo desde 3 cuentas distintas;
+    reseñas y comentarios nuevos; oportunidades sin responder; el siguiente bloque de la
+    guía de completitud; posición aproximada en su primera categoría;
+  - no sale si la semana fue cero en todo; uno por cuenta y semana; si falla, el cron del
+    día siguiente lo reintenta;
+  - encendido por defecto (`weekly_email`), interruptor en Preferencias de avisos, baja con
+    enlace firmado y `List-Unsubscribe` de un clic (RFC 8058);
+  - mide envíos y clics agregados por semana (`/api/weekly/click`, solo rutas internas);
+    las aperturas no se miden porque requieren un píxel, que la política de privacidad
+    descarta. En español hasta SHCWS-25.
+- Alertas de búsqueda guardada (SHCWS-47, `db/search-alerts.sql`, categoría `alert`):
+  - «Avísame cuando haya algo nuevo» en `/buscar` y en `/explorar`, `/industria` y
+    `/colecciones` con sus filtros y palabras; requiere cuenta. Se administran en
+    `/account/alerts` (enlazada desde Guardados y Preferencias de avisos). 20 por cuenta;
+    la misma búsqueda es la misma alerta.
+  - Coincide exactamente con los resultados principales de esa página: mismo buscador y
+    mismas reglas de filtros (`src/lib/search/catalog-filter.ts`, espejo de
+    `CategoryPageLayout`). «También podrían servir» no cuenta. Nunca avisa al dueño de la
+    ficha. Lo que ya coincidía al crearla queda como visto.
+  - Se revisa justo después de que ops publica (`/api/internal/catalog-revalidate`) y en
+    el cron diario de correo. Un aviso por alerta junta las fichas nuevas; el correo sale
+    al momento la primera vez y después **como máximo una vez cada 7 días por alerta**:
+    lo que llega entre tanto se acumula en el siguiente.
+  - Correo encendido por defecto (`alert_email`, la alerta ya es la petición), exige correo
+    verificado y se apaga en Preferencias de avisos. Borrar la alerta cancela su correo
+    pendiente.
 - AUTH_REQUIRE_VERIFIED_EMAIL=true exige verificación al crear solicitudes nuevas.
   Activar en producción después de comprobar entrega, no antes sin salida para usuarios.
 
