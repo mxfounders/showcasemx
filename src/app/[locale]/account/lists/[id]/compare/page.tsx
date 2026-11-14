@@ -6,6 +6,8 @@ import { isSolutionId, safeSolutionUrl } from '@/lib/solutions/model';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import { localizedOfferingOptions, localizedCategoryDisplayLabel } from '@/lib/taxonomy';
 import { getDictionary } from '@/i18n/get-dictionary';
+import { formatPriceFrom, priceBandLabel, pricingModelLabels } from '@/lib/solutions/pricing';
+import { Fragment } from 'react';
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const dictionary = await getDictionary((await params).locale);
   return {
@@ -57,6 +59,15 @@ export default async function ComparePage(props: {
       </section>
     );
   const projects = await resolveProjects(keys);
+  // Only what each project declared, in its own currency: no conversion, no estimate.
+  const priceRows: { label: string; value: (project: BuyerProject) => string | null }[] = [
+    { label: t.price.from, value: project => formatPriceFrom(project, params.locale) },
+    {
+      label: t.price.model,
+      value: project => pricingModelLabels(project, params.locale).join(' · ') || null,
+    },
+    { label: t.price.band, value: project => priceBandLabel(project.priceBand, params.locale) },
+  ];
   return (
     <section className="account-page">
       <Link href={back} className="text-sm text-[#365DC4]">
@@ -112,19 +123,44 @@ export default async function ComparePage(props: {
           </thead>
           <tbody>
             {fields.map(field => (
-              <tr key={field}>
-                <th scope="row" className="border-b border-stone-200 p-4 align-top font-medium">
-                  {t.fields[field]}
-                </th>
-                {keys.map(key => (
-                  <td
-                    key={key}
-                    className="whitespace-pre-wrap break-words border-b border-stone-200 p-4 align-top leading-relaxed text-stone-600"
-                  >
-                    {projects[key]?.[field] || t.missing}
-                  </td>
-                ))}
-              </tr>
+              <Fragment key={field}>
+                {/* The declared price (SHCWS-51) right before the founder's own words on it. */}
+                {field === 'pricing' &&
+                  priceRows.map(row => (
+                    <tr key={row.label}>
+                      <th
+                        scope="row"
+                        className="border-b border-stone-200 p-4 align-top font-medium"
+                      >
+                        {row.label}
+                      </th>
+                      {keys.map(key => {
+                        const project = projects[key];
+                        return (
+                          <td
+                            key={key}
+                            className="break-words border-b border-stone-200 p-4 align-top leading-relaxed text-stone-600"
+                          >
+                            {(project && row.value(project)) || t.missing}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                <tr>
+                  <th scope="row" className="border-b border-stone-200 p-4 align-top font-medium">
+                    {t.fields[field]}
+                  </th>
+                  {keys.map(key => (
+                    <td
+                      key={key}
+                      className="whitespace-pre-wrap break-words border-b border-stone-200 p-4 align-top leading-relaxed text-stone-600"
+                    >
+                      {projects[key]?.[field] || t.missing}
+                    </td>
+                  ))}
+                </tr>
+              </Fragment>
             ))}
             <tr>
               <th scope="row" className="border-b border-stone-200 p-4 align-top font-medium">

@@ -49,6 +49,10 @@ export const solution = {
   otherTab: '(opens in a new tab)',
   previewBanner: "Private preview of the saved draft. It doesn't replace the approved listing yet.",
   priceBand: 'Price range',
+  /** SHCWS-51: the declared «Desde» price and pricing models in the key-data row. */
+  priceFrom: 'Price',
+  pricingModel: 'Pricing model',
+  priceCurrencyNote: "Declared by the project in {currency}; we don't convert it.",
   publishedUpdated: 'Listing updated on',
   reportThis: 'Report this listing',
   scopeFallback: "The project hasn't detailed its scope yet. Ask what's included before you hire.",

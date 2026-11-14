@@ -7,6 +7,7 @@ export const catalog = {
     companySize: 'Company size',
     integrations: 'Integrates with',
     priceBand: 'Price range',
+    pricingModel: 'Pricing model',
     setupTime: 'Setup time',
     compliance: 'Compliance',
     format: 'Format',

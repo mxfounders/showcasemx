@@ -53,10 +53,44 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
   };
 }
 
+/** UN/CEFACT codes for the «Desde» units that are a period of time. */
+const priceUnitCodes: Record<string, string> = {
+  'suscripcion-mensual': 'MON',
+  'suscripcion-anual': 'ANN',
+  'por-hora': 'HUR',
+};
+
+/**
+ * The declared «Desde» price (SHCWS-51) as the lowest price of the listing's offers, in
+ * the project's own currency. Nothing when the amount or its currency is missing.
+ */
+function priceOffer(data: Omit<SolutionData, 'contactEmail'>, url: string) {
+  const { priceFrom, priceCurrency, priceUnit } = data;
+  if (priceFrom === undefined || !priceCurrency) return null;
+  const unitCode = priceUnit ? priceUnitCodes[priceUnit] : undefined;
+  return {
+    '@type': 'AggregateOffer',
+    lowPrice: priceFrom,
+    priceCurrency,
+    url,
+    ...(unitCode
+      ? {
+          priceSpecification: {
+            '@type': 'UnitPriceSpecification',
+            price: priceFrom,
+            priceCurrency,
+            unitCode,
+          },
+        }
+      : {}),
+  };
+}
+
 /**
  * A listing: SoftwareApplication (also typed Product, so a rating can show as a review
  * snippet without inventing a price) or Service for agencies and services. The rating
- * is the public one; with no public reviews there is no rating at all.
+ * is the public one; with no public reviews there is no rating at all. An offer only
+ * when the project declared a «Desde» price with its currency.
  */
 export function solutionJsonLd({
   id,
@@ -77,6 +111,7 @@ export function solutionJsonLd({
   );
   const website = safeSolutionUrl(data.website);
   const software = data.kind === 'Software';
+  const offer = priceOffer(data, url);
   return {
     '@type': software ? ['SoftwareApplication', 'Product'] : 'Service',
     '@id': url,
@@ -88,6 +123,7 @@ export function solutionJsonLd({
       : { serviceType: categories.join(', ') }),
     ...(website ? { sameAs: [website] } : {}),
     ...(publishedAt ? { dateModified: new Date(publishedAt).toISOString() } : {}),
+    ...(offer ? { offers: offer } : {}),
     ...(reviews.count > 0 && reviews.average != null
       ? {
           aggregateRating: {

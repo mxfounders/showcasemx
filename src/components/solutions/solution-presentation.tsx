@@ -28,6 +28,7 @@ import {
 import { solutionSlides } from '@/lib/solutions/gallery';
 import { outboundRel, outboundUrl, type OutboundMedium } from '@/lib/solutions/outbound';
 import { solutionChecklist } from '@/lib/solutions/completeness';
+import { formatPriceFrom, pricingModelLabels } from '@/lib/solutions/pricing';
 import { actionButtonStyle, brandColors, solutionCategoryTones } from '@/lib/brand-colors';
 import {
   industries as industryOptions,
@@ -143,6 +144,9 @@ export function SolutionPresentation({
   const integrationLabels = Object.fromEntries(
     localizedIntegrationOptions(locale).map(item => [item.value, item.label]),
   );
+  // The declared «Desde» price and pricing models (SHCWS-51), only what the project said.
+  const priceFrom = formatPriceFrom(data, locale);
+  const pricingModels = pricingModelLabels(data, locale);
   const priceBandLabels = Object.fromEntries(
     localizedPriceBandOptions(locale).map(item => [item.value, item.label]),
   );
@@ -262,8 +266,30 @@ export function SolutionPresentation({
         <p className="mt-10 text-sm text-stone-500">{dict.noImages}</p>
       )}
 
-      {(data.priceBand || data.setupTime || data.integrationKeys !== undefined) && (
+      {(priceFrom ||
+        pricingModels.length > 0 ||
+        data.priceBand ||
+        data.setupTime ||
+        data.integrationKeys !== undefined) && (
         <dl className="mt-6 flex flex-wrap gap-6 border-t border-stone-200 pt-6 text-sm">
+          {priceFrom && (
+            <div>
+              <dt className="text-xs text-stone-400">{dict.priceFrom}</dt>
+              <dd className="mt-1 font-medium text-stone-800">{priceFrom}</dd>
+              {/* Never converted: there is no exchange-rate source (SHCWS-51). */}
+              {data.priceFrom !== 0 && data.priceCurrency && (
+                <dd className="mt-0.5 text-xs text-stone-400">
+                  {dict.priceCurrencyNote.replace('{currency}', data.priceCurrency)}
+                </dd>
+              )}
+            </div>
+          )}
+          {pricingModels.length > 0 && (
+            <div>
+              <dt className="text-xs text-stone-400">{dict.pricingModel}</dt>
+              <dd className="mt-1 font-medium text-stone-800">{pricingModels.join(' · ')}</dd>
+            </div>
+          )}
           {data.priceBand && (
             <div>
               <dt className="text-xs text-stone-400">{dict.priceBand}</dt>

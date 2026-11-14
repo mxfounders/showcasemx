@@ -49,6 +49,10 @@ export const solution = {
   previewBanner:
     'Vista previa privada del borrador guardado. Todavía no sustituye la ficha aprobada.',
   priceBand: 'Rango de precio',
+  /** SHCWS-51: the declared «Desde» price and pricing models in the key-data row. */
+  priceFrom: 'Precio',
+  pricingModel: 'Modelo de contratación',
+  priceCurrencyNote: 'Precio declarado por el proyecto en {currency}; no lo convertimos.',
   publishedUpdated: 'Publicación actualizada el',
   reportThis: 'Reportar esta ficha',
   scopeFallback:

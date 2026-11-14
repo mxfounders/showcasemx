@@ -90,6 +90,8 @@ const fetchPublishedRows = unstable_cache(
   s.published_data->'industries' AS industries,s.published_data->'companySizes' AS company_sizes,
   s.published_data->'capabilities' AS capabilities,s.published_data->'integrationKeys' AS integration_keys,
   s.published_data->'pricingModel' AS pricing_model,s.published_data->>'priceBand' AS price_band,
+  s.published_data->'priceFrom' AS price_from,s.published_data->>'priceCurrency' AS price_currency,
+  s.published_data->>'priceUnit' AS price_unit,
   s.published_data->>'setupTime' AS setup_time,s.published_data->'compliance' AS compliance,
   s.published_data->>'scope' AS scope,s.published_at,
   s.published_data->>'problem' AS problem,s.published_data->>'audience' AS audience,
@@ -191,6 +193,10 @@ export async function publicProducts(): Promise<PublishedProduct[]> {
           ? (row.pricing_model as string[])
           : undefined,
         priceBand: row.price_band ? String(row.price_band) : undefined,
+        // A jsonb number arrives as a number; anything else was never a valid price.
+        priceFrom: typeof row.price_from === 'number' ? row.price_from : undefined,
+        priceCurrency: row.price_currency ? String(row.price_currency) : undefined,
+        priceUnit: row.price_unit ? String(row.price_unit) : undefined,
         setupTime: row.setup_time ? String(row.setup_time) : undefined,
         compliance: Array.isArray(row.compliance) ? (row.compliance as string[]) : undefined,
         scope: row.scope ? String(row.scope) : undefined,

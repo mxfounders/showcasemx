@@ -11,6 +11,7 @@ import {
   localizedIntegrationOptions,
   localizedOfferingOptions,
   localizedPriceBandOptions,
+  localizedPricingModelOptions,
   localizedSetupTimeOptions,
   matchesCollection,
   offerings,
@@ -23,6 +24,7 @@ import {
   solutionIndustries,
   solutionIntegrations,
   solutionPriceBands,
+  solutionPricingModels,
   solutionSetupTimes,
 } from '@/lib/solutions/model';
 import { isRealMatch, matchIndustry } from '@/lib/search/facets';
@@ -74,6 +76,7 @@ const legalValues: Record<FilterAxis, readonly string[]> = {
   tamano: companySizes,
   integracion: solutionIntegrations,
   precio: solutionPriceBands,
+  contratacion: solutionPricingModels,
   arranque: solutionSetupTimes,
   cumplimiento: solutionCompliance,
   modelo: offerings,
@@ -198,6 +201,8 @@ function filterValueLabel(axis: FilterAxis, value: string, locale: string, fastR
       return option(localizedIntegrationOptions(locale));
     case 'precio':
       return option(localizedPriceBandOptions(locale));
+    case 'contratacion':
+      return option(localizedPricingModelOptions(locale));
     case 'arranque':
       return option(localizedSetupTimeOptions(locale));
     case 'cumplimiento':

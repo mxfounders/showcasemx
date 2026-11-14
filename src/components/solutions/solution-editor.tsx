@@ -26,6 +26,8 @@ import { FoundersEditor, PublicLinksEditor, solutionInput as input } from './pro
 import type { PublicLink } from '@/lib/solutions/profile';
 import { Chips, Suggestions } from './editor/chips';
 import { ListingPreview } from './editor/listing-preview';
+import { PriceFields } from './editor/price-fields';
+import { priceSummary } from '@/lib/solutions/pricing';
 import { actionButtonStyle, solutionCategoryTones } from '@/lib/brand-colors';
 import {
   solutionCategories,
@@ -52,8 +54,6 @@ import {
   localizedCompanySizes,
   localizedCapabilityLabel,
   localizedIntegrationOptions,
-  localizedPricingModelOptions,
-  localizedPriceBandOptions,
   localizedSetupTimeOptions,
   localizedComplianceOptions,
   localizedOfferingOptions,
@@ -61,6 +61,7 @@ import {
 } from '@/lib/taxonomy';
 import { suggestCapabilityIds, suggestCategories, suggestIndustries } from '@/lib/search/suggest';
 import type { SiteImageFailure } from '@/lib/solutions/site-image';
+import type { CurrencyOptions } from '@/lib/currencies';
 import type { Dictionary } from '@/i18n/dictionary';
 
 type EditorDict = Dictionary['solutionEditor'];
@@ -111,10 +112,13 @@ export function SolutionEditor({
   hasSiteImage,
   siteImageFailure,
   hasUnpublishedChanges,
+  currencies,
 }: {
   solution: FounderSolution;
   locale: string;
   dict: EditorDict;
+  /** ISO currencies for the «Desde» price, built on the server (src/lib/currencies.ts). */
+  currencies: CurrencyOptions;
   hasSiteImage: boolean;
   siteImageFailure?: string | null;
   /** Published listings only: whether the saved draft differs from what is public. */
@@ -872,23 +876,13 @@ export function SolutionEditor({
       case 'pricing':
         return (
           <>
-            <Chips
-              name="pricing-model"
-              legend={text.pricingModelLegend}
-              options={localizedPricingModelOptions(locale)}
-              selected={data.pricingModel ?? []}
-              onToggle={value => update({ pricingModel: toggled(data.pricingModel, value) })}
-            />
-            <Chips
-              name="price-band"
-              legend={text.priceBandLegend}
-              multi={false}
-              tone="sage"
-              options={localizedPriceBandOptions(locale)}
-              selected={data.priceBand ? [data.priceBand] : []}
-              onToggle={value =>
-                update({ priceBand: data.priceBand === value ? undefined : value })
-              }
+            <PriceFields
+              data={data}
+              locale={locale}
+              currencies={currencies}
+              modelLegend={text.pricingModelLegend}
+              dict={text.price}
+              update={update}
             />
             {evaluation('pricing')}
           </>
@@ -1191,6 +1185,7 @@ export function SolutionEditor({
             cover={cover}
             icon={hasIcon ? `/api/solutions/${solution.id}/site-icon?v=${iconVersion}` : null}
             categories={categories.map(value => ({ value, label: categoryLabel(value) }))}
+            price={priceSummary(data, locale)}
             reading={reading}
             coverAlt={dict.siteImage.imageAlt}
             namePlaceholder={text.previewNamePlaceholder}
