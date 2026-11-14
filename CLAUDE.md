@@ -3707,10 +3707,12 @@ SHCWS-177. Contrato completo en docs/listings.md («Logo automático desde el si
   íconos también después del `<head>`, donde los ponen los sitios con metadatos en
   streaming. Linear, Stripe, GitHub, Vercel y HubSpot no daban portada; ahora dan
   portada y logo.
-- Migración `db/solution-site-icons.sql` (orden 50): aplicada solo en `neondb`. **Falta en
-  `shwcs_production`**: esta sesión no tuvo permiso para aplicarla. El código funciona
-  sin ella (los logos de sitio simplemente no aparecen hasta aplicarla); comprobado
-  renombrando la tabla en desarrollo.
+- Migración `db/solution-site-icons.sql` (orden 50): aplicada en `neondb` y, el 14 de
+  noviembre por pedido del propietario, en `shwcs_production` junto con
+  `db/contact-reminders.sql` (orden 51). Verificado ahí: tabla, índice, triggers y permisos
+  del rol `shwcs_app_production`; datos sin cambios. El código también funciona sin la
+  tabla (los logos de sitio simplemente no aparecen); comprobado renombrándola en
+  desarrollo.
 
 ## 83. Comunidad desde el inicio — 14 noviembre 2026
 
