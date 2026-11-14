@@ -22,7 +22,12 @@ export const solutionQuestions = [
   // Optional sections, opened from the review screen.
   { id: 'screenshots', phase: 2, fields: ['screenshots'], optional: true },
   { id: 'demo', phase: 2, fields: ['demoUrl'], optional: true },
-  { id: 'pricing', phase: 2, fields: ['pricingModel', 'priceBand', 'pricing'], optional: true },
+  {
+    id: 'pricing',
+    phase: 2,
+    fields: ['pricingModel', 'priceFrom', 'priceCurrency', 'priceUnit', 'priceBand', 'pricing'],
+    optional: true,
+  },
   { id: 'delivery', phase: 2, fields: ['setupTime', 'implementation', 'support'], optional: true },
   { id: 'integrations', phase: 2, fields: ['integrationKeys', 'integrations'], optional: true },
   { id: 'compliance', phase: 2, fields: ['compliance'], optional: true },
@@ -101,7 +106,12 @@ export function sectionFilled(data: SolutionData, id: SolutionQuestion) {
     case 'demo':
       return !!data.demoUrl;
     case 'pricing':
-      return !!(data.pricingModel?.length || data.priceBand || data.pricing);
+      return !!(
+        data.pricingModel?.length ||
+        data.priceFrom !== undefined ||
+        data.priceBand ||
+        data.pricing
+      );
     case 'delivery':
       return !!(data.setupTime || data.implementation || data.support);
     case 'integrations':

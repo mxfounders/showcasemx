@@ -15,6 +15,7 @@ export function ListingPreview({
   host,
   cover,
   categories,
+  price,
   reading,
   coverAlt,
   namePlaceholder,
@@ -28,6 +29,8 @@ export function ListingPreview({
   /** A URL we serve (screenshot or the site's cover), or null for the lettered cover. */
   cover: string | null;
   categories: { value: string; label: string }[];
+  /** The declared price line (src/lib/solutions/pricing.ts), shown where the card shows it. */
+  price?: string | null;
   /** While the site is being read: the card shows a shimmer instead of stale text. */
   reading: boolean;
   coverAlt: string;
@@ -112,7 +115,11 @@ export function ListingPreview({
               </span>
             );
           })}
-          {host && <span className="ml-auto truncate text-[11px] text-stone-400">{host}</span>}
+          {price ? (
+            <span className="ml-auto truncate text-[11px] font-medium text-stone-700">{price}</span>
+          ) : (
+            host && <span className="ml-auto truncate text-[11px] text-stone-400">{host}</span>
+          )}
         </div>
       </div>
     </figure>

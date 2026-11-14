@@ -100,6 +100,9 @@ la sugerencia nunca marca nada por sí sola, solo ofrece un chip de un clic.
 `[]`, una respuesta real). `pricingModel`/`priceBand`/`setupTime`/`compliance`
 no tienen ninguna forma de "cualquiera": ausente y `[]` significan lo mismo,
 así que no hay nada que distinguir ahí. Detalle completo en CLAUDE.md §59.
+La sección «Precio» suma el precio de entrada «Desde» en la moneda del fundador
+(`priceFrom`/`priceCurrency`/`priceUnit`) y bandas por proyecto junto a las mensuales;
+ver [listings](listings.md#precio-que-sirve-para-decidir-shcws-51--noviembre-2026).
 
 ## Información de Cord/Flouvia
 

@@ -11,9 +11,9 @@ import {
   localizedLinkKind,
   localizedOfferingOptions,
   localizedPriceBandOptions,
-  localizedPricingModelOptions,
   localizedSetupTimeOptions,
 } from '@/lib/taxonomy';
+import { formatPriceFrom, pricingModelLabels } from '@/lib/solutions/pricing';
 
 /**
  * Plain-text views of shwcs for assistants and crawlers (/llms.txt and
@@ -119,8 +119,9 @@ export function solutionMarkdown({
   section(
     'Precio',
     [
-      data.pricingModel?.length &&
-        `- Modelo: ${data.pricingModel.map(value => labelOf(localizedPricingModelOptions('es'), value)).join(', ')}`,
+      formatPriceFrom(data, 'es') && `- Precio de entrada: ${formatPriceFrom(data, 'es')}`,
+      pricingModelLabels(data, 'es').length > 0 &&
+        `- Modelo: ${pricingModelLabels(data, 'es').join(', ')}`,
       data.priceBand && `- Rango: ${labelOf(localizedPriceBandOptions('es'), data.priceBand)}`,
       text(data.pricing),
     ],

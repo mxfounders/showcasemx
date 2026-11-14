@@ -92,7 +92,11 @@ export function solutionChecklist(data: SolutionData, locale?: string) {
       label: 'Precio e implementación',
       hint: 'Indica condiciones y cómo empezar.',
       step: 2,
-      done: !!data.priceBand && !!data.pricing?.trim() && !!data.implementation?.trim(),
+      // A band or a «Desde» price (SHCWS-51) both answer «how much».
+      done:
+        (!!data.priceBand || data.priceFrom !== undefined) &&
+        !!data.pricing?.trim() &&
+        !!data.implementation?.trim(),
     },
     {
       key: 'readiness',

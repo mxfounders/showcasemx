@@ -49,6 +49,12 @@ export type BuyerProject = {
   solutionId?: string;
   image?: string;
   pricing?: string;
+  /** Declared price (SHCWS-51), from the published snapshot like every other field. */
+  priceFrom?: number;
+  priceCurrency?: string;
+  priceUnit?: string;
+  priceBand?: string;
+  pricingModel?: string[];
   scope?: string;
   implementation?: string;
   audience?: string;

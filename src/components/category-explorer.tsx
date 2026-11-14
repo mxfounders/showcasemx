@@ -22,6 +22,7 @@ import {
 } from '@/lib/catalog-preview';
 import { localizedCategoryDisplayLabel, localizedOfferingOptions } from '@/lib/taxonomy';
 import { contactBriefHref } from '@/lib/contact-inquiry';
+import { priceSummary } from '@/lib/solutions/pricing';
 import type { Dictionary } from '@/i18n/dictionary';
 import { ProjectMark } from '@/components/project-mark';
 import { VerifiedMark } from '@/components/recognition/verified-mark';
@@ -294,6 +295,7 @@ export function CategoryExplorer({
             >
               {products.map((product, index) => {
                 const key = product.detailUrl ?? `${category.id}-${product.name}`;
+                const price = priceSummary(product, locale);
                 const label = `${product.website ? dict.seeSolution : dict.seeExample}: ${product.name}`;
                 const className =
                   'group flex h-[328px] min-w-0 flex-col rounded-[20px] border border-stone-200/80 bg-white p-3.5 text-left shadow-[0_2px_6px_rgba(0,0,0,0.015)] transition-[box-shadow,border-color] duration-300 hover:border-stone-300 hover:shadow-[0_12px_28px_-12px_rgba(0,0,0,0.16)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800 sm:h-[340px]';
@@ -359,9 +361,16 @@ export function CategoryExplorer({
                       className="px-1 pt-2 text-[11px] text-stone-500"
                     />
                     <div className="mt-auto flex items-center justify-between gap-2 px-1 pt-3 text-[11px] text-stone-400">
-                      <span className="truncate">
-                        {product.website ? `${dict.byLabel} ${product.provider}` : product.feature}
-                      </span>
+                      {/* The declared price (SHCWS-51) is worth more here than the byline. */}
+                      {price ? (
+                        <span className="truncate font-medium text-stone-700">{price}</span>
+                      ) : (
+                        <span className="truncate">
+                          {product.website
+                            ? `${dict.byLabel} ${product.provider}`
+                            : product.feature}
+                        </span>
+                      )}
                       {product.detailUrl ? (
                         <span className="shrink-0 text-stone-600">{dict.seeSolution}</span>
                       ) : (

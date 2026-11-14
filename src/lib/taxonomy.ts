@@ -20,6 +20,7 @@ import {
   integrationEn,
   pricingModelEn,
   priceBandEn,
+  priceUnitEn,
   setupTimeEn,
   complianceEn,
   collectionEn,
@@ -498,7 +499,23 @@ const priceBandLabels: Record<string, string> = {
   'de-5000-a-20000': '$250–$1,000 USD/mes',
   'de-20000-a-50000': '$1,000–$2,500 USD/mes',
   'mas-50000': 'Más de $2,500 USD/mes',
+  'proyecto-menos-1000': 'Menos de $1,000 USD por proyecto',
+  'proyecto-1000-a-5000': '$1,000–$5,000 USD por proyecto',
+  'proyecto-5000-a-20000': '$5,000–$20,000 USD por proyecto',
+  'proyecto-20000-a-50000': '$20,000–$50,000 USD por proyecto',
+  'proyecto-mas-50000': 'Más de $50,000 USD por proyecto',
   'depende-alcance': 'Depende del alcance',
+};
+
+// What follows the amount in «Desde $29 USD/mes» (src/lib/solutions/pricing.ts). Each
+// suffix carries its own joining character: a slash glues, words take a space or comma.
+const priceUnitLabels: Record<string, string> = {
+  'suscripcion-mensual': '/mes',
+  'suscripcion-anual': '/año',
+  'pago-unico': ', pago único',
+  'por-uso': ' por uso',
+  'por-proyecto': ' por proyecto',
+  'por-hora': '/hora',
 };
 
 const setupTimeLabels: Record<string, string> = {
@@ -666,6 +683,10 @@ export function localizedPriceBandOptions(locale?: string) {
         ? (priceBandEn[id] ?? priceBandLabels[id] ?? id)
         : (priceBandLabels[id] ?? id),
   }));
+}
+/** What a «Desde» amount pays for, as the text right after it («/mes», « por proyecto»). */
+export function localizedPriceUnitSuffix(unit: string, locale?: string): string {
+  return (locale === 'en' ? priceUnitEn[unit] : undefined) ?? priceUnitLabels[unit] ?? '';
 }
 export function localizedSetupTimeOptions(locale?: string) {
   return solutionSetupTimes.map(id => ({

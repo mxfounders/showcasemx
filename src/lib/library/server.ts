@@ -48,7 +48,7 @@ export async function resolveProjects(keys: string[]): Promise<Record<string, Bu
   if (ids.length || catalogKeys.length) {
     const sql = solutionsSql();
     const rows =
-      await sql`SELECT id,catalog_key,published_data->'screenshots'->0->>'id' AS cover_id,published_data->>'name' AS name,published_data->>'problem' AS description,published_data->>'kind' AS kind,published_data->>'category' AS category,published_data->'categories' AS categories,published_data->'industries' AS industries,published_data->'companySizes' AS company_sizes,published_data->>'pricing' AS pricing,published_data->>'scope' AS scope,published_data->>'implementation' AS implementation,published_data->>'audience' AS audience,published_data->>'integrations' AS integrations,published_data->>'support' AS support,published_data->>'evidence' AS evidence,published_data->>'evidenceUrl' AS evidence_url,EXISTS(SELECT 1 FROM solution_site_image_ready r WHERE r.solution_id=founder_solutions.id) AS has_site_image FROM founder_solutions WHERE (id=ANY(${ids}::uuid[]) OR catalog_key=ANY(${catalogKeys}::text[])) AND published_data IS NOT NULL`;
+      await sql`SELECT id,catalog_key,published_data->'screenshots'->0->>'id' AS cover_id,published_data->>'name' AS name,published_data->>'problem' AS description,published_data->>'kind' AS kind,published_data->>'category' AS category,published_data->'categories' AS categories,published_data->'industries' AS industries,published_data->'companySizes' AS company_sizes,published_data->>'pricing' AS pricing,published_data->'priceFrom' AS price_from,published_data->>'priceCurrency' AS price_currency,published_data->>'priceUnit' AS price_unit,published_data->>'priceBand' AS price_band,published_data->'pricingModel' AS pricing_model,published_data->>'scope' AS scope,published_data->>'implementation' AS implementation,published_data->>'audience' AS audience,published_data->>'integrations' AS integrations,published_data->>'support' AS support,published_data->>'evidence' AS evidence,published_data->>'evidenceUrl' AS evidence_url,EXISTS(SELECT 1 FROM solution_site_image_ready r WHERE r.solution_id=founder_solutions.id) AS has_site_image FROM founder_solutions WHERE (id=ANY(${ids}::uuid[]) OR catalog_key=ANY(${catalogKeys}::text[])) AND published_data IS NOT NULL`;
     for (const key of catalogKeys)
       if (!rows.some(row => row.catalog_key === key)) delete result['catalog:' + key];
     for (const row of rows) {
@@ -79,6 +79,13 @@ export async function resolveProjects(keys: string[]): Promise<Record<string, Bu
             staticArt: result[key]?.image,
           }),
           pricing: row.pricing ? String(row.pricing) : undefined,
+          priceFrom: typeof row.price_from === 'number' ? row.price_from : undefined,
+          priceCurrency: row.price_currency ? String(row.price_currency) : undefined,
+          priceUnit: row.price_unit ? String(row.price_unit) : undefined,
+          priceBand: row.price_band ? String(row.price_band) : undefined,
+          pricingModel: Array.isArray(row.pricing_model)
+            ? (row.pricing_model as string[])
+            : undefined,
           scope: row.scope ? String(row.scope) : undefined,
           implementation: row.implementation ? String(row.implementation) : undefined,
           audience: row.audience ? String(row.audience) : undefined,

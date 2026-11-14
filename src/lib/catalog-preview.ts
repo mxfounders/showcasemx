@@ -46,6 +46,10 @@ export type PreviewProduct = {
   integrationKeys?: string[];
   pricingModel?: string[];
   priceBand?: string;
+  /** The declared «Desde» price (SHCWS-51): amount, ISO currency and what it pays for. */
+  priceFrom?: number;
+  priceCurrency?: string;
+  priceUnit?: string;
   setupTime?: string;
   compliance?: string[];
   scope?: string;
