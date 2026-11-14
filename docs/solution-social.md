@@ -87,9 +87,21 @@ el código — mismo patrón que `db/community-social.sql`.
 
 ## Límites pendientes
 
-Igual que la comunidad de listas (CLAUDE.md §23): sin reputación ponderada,
-sin decaimiento temporal del puntaje, sin defensa sólida ante multicuentas.
-El backoffice de ops modera comentarios de fichas.
+Igual que la comunidad de listas (CLAUDE.md §23): sin reputación ponderada.
+El backoffice de ops modera comentarios de fichas. (El decaimiento llegó con
+§55; la defensa ante multicuentas, abajo.)
+
+## Cuentas marcadas como sospechosas (SHCWS-141)
+
+Ops (`/panel/fraude`, docs/ops.md) puede marcar una cuenta como sospechosa. Desde ese
+momento sus me gusta, guardados, comentarios y reseñas dejan de sumar en el orden del
+catálogo (`account_flagged()` en las CTE de `src/lib/solutions/public.ts`), en «Top de la
+semana» (`src/lib/recognition/server.ts`) y en «Populares» de comunidad
+(`src/lib/library/community.ts`). Igual que una cuenta sin verificar (§55): **se ve pero
+no cuenta**. Los contadores visibles, el promedio de estrellas y la propia reseña no
+cambian; si una reseña engaña, ops la oculta aparte. Un reconocimiento semanal ya
+calculado no se recalcula: se revoca en Destacados. Quitar la marca devuelve su peso.
+Migración `db/account-flags.sql`.
 
 ## Reportes de comentarios (SHCWS-140)
 

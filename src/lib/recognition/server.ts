@@ -108,7 +108,8 @@ export async function runWeeklyRecognition(now = new Date()) {
     SELECT e.solution_id, sum(e.points)::float AS score, count(DISTINCT e.actor)::int AS accounts,
       l.published_at, l.categories
     FROM events e JOIN live l ON l.id = e.solution_id JOIN auth_accounts a ON a.id = e.actor
-    WHERE a.email_verified_at IS NOT NULL AND e.actor <> l.owner_id
+    -- Accounts marked as suspicious in ops (SHCWS-141) never move an award.
+    WHERE a.email_verified_at IS NOT NULL AND NOT account_flagged(a.id) AND e.actor <> l.owner_id
     GROUP BY e.solution_id, l.published_at, l.categories`;
 
   const { competitors, places } = rankWeekly(
