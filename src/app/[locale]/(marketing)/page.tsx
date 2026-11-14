@@ -7,6 +7,8 @@ import { LandingStackingCards } from '@/components/landing-stacking-cards';
 import { LandingBentoBlogs } from '@/components/landing-bento-blogs';
 import { FounderInvitation } from '@/components/founder-invitation';
 import { NewThisWeekStrip } from '@/components/new-this-week';
+import { CommunityStrip } from '@/components/community/community-strip';
+import { getPublicCollections } from '@/lib/library/community';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { localeAlternates } from '@/lib/seo';
 import { sponsoredProducts } from '@/lib/ads/sponsored';
@@ -28,10 +30,14 @@ export async function generateMetadata(props: {
 export default async function Home(props: { params: Promise<{ locale: string }> }) {
   const params = await props.params;
   const { locale } = params;
-  const [published, dictionary, sponsored] = await Promise.all([
+  const [published, dictionary, sponsored, lists] = await Promise.all([
     publicProducts(),
     getDictionary(locale),
     sponsoredProducts('home'),
+    // The home's way into Comunidad; the home still renders when it cannot be read.
+    getPublicCollections({ sort: 'popular' })
+      .then(result => result.collections.slice(0, 3))
+      .catch(() => []),
   ]);
 
   return (
@@ -62,6 +68,7 @@ export default async function Home(props: { params: Promise<{ locale: string }> 
         explorerDict={dictionary.categoryExplorer}
       />
       <LandingStackingCards products={published} dict={dictionary.landing} />
+      <CommunityStrip collections={lists} dict={dictionary.community} />
       <LandingBentoBlogs dict={dictionary.bentoBlogs} locale={locale} />
       <FounderInvitation dict={dictionary.landing} />
     </div>

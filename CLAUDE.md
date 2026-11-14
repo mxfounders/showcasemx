@@ -3711,3 +3711,13 @@ SHCWS-177. Contrato completo en docs/listings.md («Logo automático desde el si
   `shwcs_production`**: esta sesión no tuvo permiso para aplicarla. El código funciona
   sin ella (los logos de sitio simplemente no aparecen hasta aplicarla); comprobado
   renombrando la tabla en desarrollo.
+
+## 83. Comunidad desde el inicio — 14 noviembre 2026
+
+SHCWS-114. La navbar («Comunidad» junto al globo) y el footer («Listas de la comunidad»)
+ya enlazaban desde §75. Ahora el inicio tiene la franja «Listas de la comunidad»
+(`src/components/community/community-strip.tsx`), debajo de las tarjetas animadas: hasta
+tres listas públicas, las más populares, con la misma tarjeta que /comunidad y «Ver todas
+las listas». Solo listas reales que ya cumplen el mínimo de tres fichas (SHCWS-116); sin
+listas públicas no se dibuja nada. Si la consulta falla, el inicio carga igual. Las listas
+editoriales firmadas por shwcs siguen en SHCWS-113.
