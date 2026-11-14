@@ -143,6 +143,30 @@ Atribución propia, sin cookies ni píxeles:
   correo si los avisos de fichas están activos) ahora suma visitas y solicitudes y enlaza
   al reporte.
 
+## Media kit: `/anunciate` (SHCWS-73, 14 noviembre 2026)
+
+Página pública es/en para anunciantes, enlazada desde el footer («Anúnciate», donde
+antes estaba el «Sponsor» oculto). Se alimenta sola de `src/lib/ads/media-kit.ts`, leído a
+lo más una vez por hora:
+
+- **Audiencia por ubicación**: visitas de los últimos 30 días (hoy excluido) de
+  `ad_placement_daily_views`, la misma fuente que el alcance de «Promocionar» (SHCWS-72).
+  Muestra las fechas exactas y las categorías más vistas. Con cero visitas dice «Aún sin
+  visitas medidas». Son visitas de página por pestaña, no personas únicas, sin contar DNT
+  ni GPC.
+- **Quién usa shwcs**: cuentas registradas (sin suspendidas) por perfil declarado y
+  suscriptores activos del newsletter. Por debajo de 100 solo dice «Menos de 100» y no da
+  desglose, porque un porcentaje podría señalar a alguien.
+- **Ubicaciones**: estado (disponible o cerrada), espacios por día y precio por día en USD
+  y MXN desde `ad_rates`, con código de moneda y antes de impuestos, más un ejemplo del
+  espacio con su etiqueta «Patrocinado».
+- **Reglas** (las de arriba, en lenguaje de anunciante) con enlace a
+  `/terminos#publicidad`, y dos acciones: «Promocionar mi ficha» (`/account/solutions`) y
+  «Hablar con nosotros» (`/contacto?motivo=partnership`).
+
+Pendiente: los suscriptores por segmento cuando el newsletter envíe (SHCWS-124), y
+deduplicar las visitas por visitante y día con `VIEW_HASH_SECRET` (SHCWS-112).
+
 ## Cancelación, retiros y reembolsos
 
 Política comparada con Meta, LinkedIn, X, Reddit, Google, Product Hunt, BuySellAds e

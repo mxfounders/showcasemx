@@ -33,6 +33,7 @@ export function staticPages(): SitemapPage[] {
     { path: '/blog' },
     { path: '/newsletter' },
     { path: '/contacto' },
+    { path: '/anunciate' },
     ...infoSlugs
       .filter(slug => !noindexInfoSlugs.includes(slug))
       .map(slug => ({ path: `/${slug}` })),
