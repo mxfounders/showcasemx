@@ -9,6 +9,7 @@ import {
   type RemovableBooking,
 } from '../ops/src/lib/ads';
 import { refundRequest } from '../ops/src/lib/stripe';
+import { removalSummary } from '../ops/src/lib/ad-removal';
 import {
   firstRefundableDay as productFirstRefundableDay,
   refundAmount as productRefundAmount,
@@ -129,4 +130,16 @@ test('ops refunds reuse the product idempotency key and repeat the original reas
   assert.equal(removal.body, 'payment_intent=pi_1&amount=500&metadata%5Bbooking_id%5D=b1');
   const retry = refundRequest({ ...base, customerRequested: true });
   assert.match(retry.body, /reason=requested_by_customer/);
+});
+
+test('a withdrawn listing tells ops what happened to its sponsored slots (SHCWS-81)', () => {
+  assert.equal(removalSummary({ stopped: 0, refunded: 0, pending: 0 }), '');
+  assert.equal(
+    removalSummary({ stopped: 1, refunded: 1, pending: 0 }),
+    'Se detuvo 1 espacio patrocinado y se envió 1 reembolso a Stripe.',
+  );
+  assert.equal(
+    removalSummary({ stopped: 2, refunded: 0, pending: 2 }),
+    'Se detuvieron 2 espacios patrocinados. 2 reembolsos quedaron pendientes: usa «Reintentar reembolso» en Anuncios.',
+  );
 });

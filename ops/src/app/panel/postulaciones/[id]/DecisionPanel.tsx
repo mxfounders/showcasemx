@@ -20,9 +20,7 @@ const TEMPLATES: Record<Action, string[]> = {
     'Agrega al menos una captura real del producto y el rango de precio o cómo cotizan.',
     'El sitio web no carga o no corresponde al proyecto. Revisa el enlace y vuelve a enviar.',
   ],
-  reject: [
-    'Por ahora el proyecto no encaja con el catálogo de soluciones B2B para empresas mexicanas.',
-  ],
+  reject: ['Por ahora el proyecto no encaja con el catálogo de soluciones B2B para empresas.'],
   withdraw: ['Retiramos la publicación mientras se corrige información que ya no es vigente.'],
 };
 
@@ -49,6 +47,8 @@ export function DecisionPanel({
   const [busy, setBusy] = useState<Action | null>(null);
   const [error, setError] = useState('');
   const [confirm, setConfirm] = useState<Action | null>(null);
+  // Decides how its sponsored days are refunded (SHCWS-81): a breach, from tomorrow.
+  const [breach, setBreach] = useState(false);
   const reviewable = status === 'pending' || status === 'changes_requested';
   const published = status === 'published';
   const valid = message.trim().length >= 5;
@@ -66,8 +66,15 @@ export function DecisionPanel({
     setBusy(action);
     setError('');
     try {
-      await api('/api/review', { body: { solutionId, action, message: message.trim(), version } });
-      toast(`Ficha ${LABEL[action]}`, 'success', 'El fundador verá tu mensaje en su historial.');
+      const result = await api<{ message?: string }>('/api/review', {
+        body: { solutionId, action, message: message.trim(), version, breach },
+      });
+      toast(
+        `Ficha ${LABEL[action]}`,
+        'success',
+        result.message ?? 'El fundador verá tu mensaje en su historial.',
+      );
+      setBreach(false);
       setConfirm(null);
       setMessage('');
       if (nextHref && action !== 'withdraw') router.push(nextHref);
@@ -195,6 +202,23 @@ export function DecisionPanel({
         <blockquote className="rounded-xl border border-line bg-surface-2 px-3.5 py-2.5 text-[13px] text-fg-2">
           «{message.trim()}»
         </blockquote>
+        {confirm === 'withdraw' && (
+          <label className="mt-3 flex items-start gap-2.5 text-[13px] text-fg-2">
+            <input
+              type="checkbox"
+              checked={breach}
+              onChange={event => setBreach(event.target.checked)}
+              className="mt-0.5"
+            />
+            <span>
+              Se retira por incumplimiento de las reglas.{' '}
+              <span className="text-muted">
+                Si tiene espacios patrocinados, se detienen y se reembolsan solos: desde mañana si
+                hubo incumplimiento, desde hoy si no.
+              </span>
+            </span>
+          </label>
+        )}
       </Dialog>
     </div>
   );

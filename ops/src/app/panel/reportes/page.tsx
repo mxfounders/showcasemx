@@ -253,7 +253,7 @@ export default async function ReportesPage({
                           success="Ficha retirada del catálogo"
                           confirm={decisionConfirm(
                             'Retirar la ficha del catálogo',
-                            'Deja de ser pública de inmediato; el borrador y las capturas se conservan.',
+                            'Deja de ser pública de inmediato; el borrador y las capturas se conservan. Si tiene espacios patrocinados, se detienen y se reembolsan desde mañana.',
                             true,
                           )}
                         />

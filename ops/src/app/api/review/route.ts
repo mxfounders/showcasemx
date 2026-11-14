@@ -1,6 +1,7 @@
 import { opsRoute } from '@/lib/api';
 import { failure, isUuid, ok } from '@/lib/http';
 import { triggerCatalogRevalidate } from '@/lib/catalog';
+import { removalSummary, stopListingBookings } from '@/lib/ad-removal';
 
 export const runtime = 'nodejs';
 
@@ -23,7 +24,7 @@ const NEW_STATUS: Record<string, string> = {
 // Every decision is still attributed by actor_id in solution_events and written
 // to the audit log in the same statement as the change itself.
 export const POST = opsRoute({ limit: ['review', 120, 600] }, async ({ body, user, sql, ip }) => {
-  const { solutionId, action, message, version } = body;
+  const { solutionId, action, message, version, breach } = body;
   if (!isUuid(solutionId)) return failure('ID inválido.', 400);
   if (typeof action !== 'string' || !(action in ALLOWED_FROM))
     return failure('Acción inválida.', 400);
@@ -68,5 +69,22 @@ export const POST = opsRoute({ limit: ['review', 120, 600] }, async ({ body, use
   // Only publish/withdraw change what the catalog reads.
   if (isPublishing || isWithdrawing) await triggerCatalogRevalidate();
 
-  return ok({ newStatus: String(rows[0].status), version: Number(rows[0].version) });
+  // Its sponsored days can't serve without it: stop and refund them under the terms
+  // (SHCWS-81). A breach refunds from tomorrow, any other withdrawal from today.
+  const ads = isWithdrawing
+    ? await stopListingBookings(
+        sql,
+        [solutionId],
+        breach === true ? 'policyRemoval' : 'platformRemoval',
+        user,
+        text,
+        ip,
+      )
+    : null;
+
+  return ok({
+    newStatus: String(rows[0].status),
+    version: Number(rows[0].version),
+    ...(ads?.stopped ? { message: removalSummary(ads) } : {}),
+  });
 });

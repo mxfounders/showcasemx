@@ -2,6 +2,7 @@ import { opsRoute } from '@/lib/api';
 import { failure, intParam, isUuid, ok, oneOf } from '@/lib/http';
 import { listSolutionReports, REPORT_STATUSES } from '@/lib/data/reports';
 import { triggerCatalogRevalidate } from '@/lib/catalog';
+import { removalSummary, stopListingBookings } from '@/lib/ad-removal';
 
 export const runtime = 'nodejs';
 const DECISIONS = ['resolve', 'dismiss', 'withdraw'] as const;
@@ -59,7 +60,17 @@ export const POST = opsRoute(
         'El reporte cambió, no existe o lo presentaste tú. Recarga e intenta de nuevo.',
         409,
       );
-    if (Number(rows[0].withdrawn) > 0) await triggerCatalogRevalidate();
-    return ok({});
+    if (Number(rows[0].withdrawn) === 0) return ok({});
+    await triggerCatalogRevalidate();
+    // An upheld report is a breach: its sponsored days stop and refund from tomorrow (SHCWS-81).
+    const ads = await stopListingBookings(
+      sql,
+      [String(rows[0].solution_id)],
+      'policyRemoval',
+      user,
+      text,
+      ip,
+    );
+    return ok(ads.stopped ? { message: removalSummary(ads) } : {});
   },
 );

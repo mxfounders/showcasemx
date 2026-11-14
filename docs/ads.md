@@ -167,6 +167,18 @@ IAB (investigación del 9 de octubre de 2026). Implementada en `firstRefundableD
 - `POST /api/account/delete` cancela y reembolsa antes de borrar; si un reembolso
   falla, la cuenta no se elimina. Los registros de pago sobreviven
   (`owner_id`/`solution_id` con `ON DELETE SET NULL`).
+- **Ficha retirada (SHCWS-81)**: si el fundador la despublica, sus reservas se cancelan
+  como las de cualquier anunciante (SHCWS-32). Si la retira ops, `stopListingBookings`
+  (`ops/src/lib/ad-removal.ts`) detiene sus reservas pagadas con días por delante y
+  reembolsa sin intervención: «decisión de shwcs» desde hoy, «incumplimiento» desde
+  mañana, con la misma regla y la misma clave de idempotencia que un retiro manual.
+  - Retiro desde la revisión: el diálogo tiene la casilla «Se retira por
+    incumplimiento» (por defecto, decisión de shwcs).
+  - Reporte aceptado con «Retirar la ficha»: incumplimiento.
+  - «Despublicar todo» de una cuenta: decisión de shwcs.
+  El retiro de la ficha nunca espera a Stripe: si un reembolso no se confirma, queda
+  registrado y ops lo termina con «Reintentar reembolso»; el mensaje del panel lo dice.
+  Cada parada y cada reembolso quedan en la bitácora con `automatic: true`.
 
 ## Webhook
 
@@ -303,10 +315,8 @@ Cada pago y cada reembolso encolan su documento fiscal (CFDI o nota de crédito)
 
 ## Pendiente
 
-- Panel de ops para ver, pausar y retirar reservas (hoy: Stripe Dashboard + SQL).
-- Reembolso automático cuando una ficha pierde la publicación durante una reserva
-  (los términos lo prometen tras revisión manual).
-- Detección automática de caídas (regla de 4 h) y días de reposición.
+- Detección automática de caídas (regla de 4 h) y días de reposición (SHCWS-179):
+  necesita un monitor externo, porque el cron vive en el mismo despliegue que se cae.
 - CFDI para clientes mexicanos: construido con Cord ([billing.md](billing.md)); falta
   `CORD_API_KEY` de la cuenta emisora en Vercel.
 - Envío del newsletter con menciones patrocinadas.
