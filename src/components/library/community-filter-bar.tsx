@@ -23,6 +23,13 @@ import { commonText } from '@/i18n/common';
 // change — pagination and the result count live in SQL — so a client
 // router.push would only add state that can drift from the URL. Works with no
 // JS; ExpandingSearch is already a native GET form here.
+//
+// Every filter combination is its own server-rendered URL, so crawlers must not walk
+// them (nofollow, plus robots.txt and noindex on the page) and the browser must not
+// prefetch them: each visible tab would otherwise cost a function call per visit
+// (CLAUDE.md §79).
+const filterLink = { rel: 'nofollow', prefetch: false } as const;
+
 export function CommunityFilterBar({
   filters,
   total,
@@ -53,6 +60,7 @@ export function CommunityFilterBar({
       <nav aria-label={dict.filters.categoriesLabel} className="selector-tabs">
         <Link
           href={communityHref(filters, { categories: [] })}
+          {...filterLink}
           aria-current={filters.categories.length === 0 ? 'page' : undefined}
           className="selector-tab"
         >
@@ -62,6 +70,7 @@ export function CommunityFilterBar({
           <Link
             key={item}
             href={communityHref(filters, { categories: toggleAxis(filters.categories, item) })}
+            {...filterLink}
             aria-pressed={filters.categories.includes(item)}
             className="selector-tab"
           >
@@ -93,6 +102,7 @@ export function CommunityFilterBar({
           {canFilterSaved && (
             <Link
               href={communityHref(filters, { savedOnly: !filters.savedOnly })}
+              {...filterLink}
               aria-pressed={filters.savedOnly}
               className="selector-tab inline-flex items-center gap-2"
             >
@@ -103,6 +113,7 @@ export function CommunityFilterBar({
           {communityHasFilters(filters) && (
             <Link
               href="/comunidad"
+              prefetch={false}
               className="ml-2 flex shrink-0 items-center gap-1.5 px-2 py-1 text-[12px] font-medium text-stone-400 transition-colors hover:text-stone-900"
             >
               <SlidersHorizontalIcon className="size-3.5" />

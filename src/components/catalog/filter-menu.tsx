@@ -6,7 +6,8 @@ import { CheckIcon, ChevronDownIcon } from '@/components/icons/gota';
 //  - controlled ({open, onOpenChange, onChange}) for the client catalog bar;
 //  - navigational ({href, clearHref}) for the community bar, a Server
 //    Component — renders <Link>s and an uncontrolled <details>, so it works
-//    with no JS and needs no 'use client'.
+//    with no JS and needs no 'use client'. Those links are nofollow and never
+//    prefetched: each one is a filter URL rendered on the server (§73).
 // Multi-select is just `values` being longer than one: every selected option
 // keeps its Check, and the trigger label shows a count.
 
@@ -82,6 +83,8 @@ export function FilterMenu(props: ControlledProps | NavigationalProps) {
           (navigational ? (
             <Link
               href={props.clearHref}
+              rel="nofollow"
+              prefetch={false}
               aria-current={cleared ? 'true' : undefined}
               className={rowClass(cleared)}
             >
@@ -114,6 +117,8 @@ export function FilterMenu(props: ControlledProps | NavigationalProps) {
             <Link
               key={option.value}
               href={props.href(option.value)}
+              rel="nofollow"
+              prefetch={false}
               aria-current={active ? 'true' : undefined}
               className={rowClass(active)}
             >

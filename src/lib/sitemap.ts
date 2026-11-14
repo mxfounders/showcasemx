@@ -7,15 +7,19 @@ import { categories, collections, industries } from '@/lib/taxonomy';
 
 export type SitemapPage = { path: string; lastModified?: string | null };
 
-/** Every page exists under each locale; each URL lists its translations. */
+/** Every page exists under each locale; each URL lists its translations and x-default. */
 export function localized({ path, lastModified }: SitemapPage): MetadataRoute.Sitemap {
-  const languages = Object.fromEntries(
-    i18n.locales.map(locale => [locale, `${siteOrigin}/${locale}${path}`]),
-  );
+  const languages = {
+    ...Object.fromEntries(i18n.locales.map(locale => [locale, `${siteOrigin}/${locale}${path}`])),
+    'x-default': `${siteOrigin}/${i18n.defaultLocale}${path}`,
+  };
+  // Only real dates: a page without one (or with text the driver produced that doesn't
+  // parse) says nothing rather than "today".
+  const date = lastModified ? new Date(lastModified) : null;
+  const valid = date && !Number.isNaN(date.getTime()) ? date : null;
   return i18n.locales.map(locale => ({
     url: `${siteOrigin}/${locale}${path}`,
-    // Only real dates: a page without one says nothing rather than "today".
-    ...(lastModified ? { lastModified: new Date(lastModified) } : {}),
+    ...(valid ? { lastModified: valid } : {}),
     alternates: { languages },
   }));
 }

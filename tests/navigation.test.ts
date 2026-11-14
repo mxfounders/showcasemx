@@ -85,6 +85,10 @@ test('the sitemap lists only real, indexable public pages, each with its transla
   assert.equal(entries.length, pages.length * i18n.locales.length);
   for (const entry of entries) {
     assert.ok(entry.url.startsWith('https://shwcs.site/'));
-    assert.deepEqual(Object.keys(entry.alternates?.languages ?? {}).sort(), ['en', 'es']);
+    assert.deepEqual(Object.keys(entry.alternates?.languages ?? {}).sort(), [
+      'en',
+      'es',
+      'x-default',
+    ]);
   }
 });
