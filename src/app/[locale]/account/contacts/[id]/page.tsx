@@ -19,6 +19,7 @@ export default async function ContactPage(props: {
       dict={dictionary.contacts}
       threadDict={dictionary.contactThread}
       similarDict={dictionary.solution}
+      groupDict={dictionary.contactBatch}
     />
   );
 }

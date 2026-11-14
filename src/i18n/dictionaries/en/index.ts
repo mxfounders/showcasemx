@@ -40,6 +40,7 @@ import { consent } from './consent';
 import { recognition } from './recognition';
 import { questions } from './questions';
 import { contactThread } from './contactThread';
+import { contactBatch } from './contactBatch';
 import { alerts } from './alerts';
 import { follows } from './follows';
 
@@ -85,6 +86,7 @@ export const en = {
   recognition,
   questions,
   contactThread,
+  contactBatch,
   alerts,
   follows,
 } satisfies Dictionary;

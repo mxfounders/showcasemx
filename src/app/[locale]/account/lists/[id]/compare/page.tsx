@@ -68,6 +68,7 @@ export default async function ComparePage(props: {
     },
     { label: t.price.band, value: project => priceBandLabel(project.priceBand, params.locale) },
   ];
+  const contactable = keys.filter(key => projects[key]?.solutionId);
   return (
     <section className="account-page">
       <Link href={back} className="text-sm text-[#365DC4]">
@@ -224,6 +225,24 @@ export default async function ComparePage(props: {
           </tbody>
         </table>
       </div>
+      {contactable.length >= 2 && (
+        // One form for all of them (SHCWS-62); the proposal page checks each recipient again.
+        <section aria-labelledby="compare-propose" className="mt-10 max-w-2xl">
+          <h2 id="compare-propose" className="text-xl font-medium">
+            {t.proposeTitle}
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-stone-500">{t.proposeBody}</p>
+          <Link
+            href={`/account/lists/${list.id}/proposal?${new URLSearchParams(
+              contactable.map(key => ['project', key]),
+            )}`}
+            style={actionButtonStyle}
+            className="action-button mt-5 inline-flex rounded-full px-5 py-3 text-sm font-medium"
+          >
+            {t.propose.replace('{count}', String(contactable.length))}
+          </Link>
+        </section>
+      )}
     </section>
   );
 }

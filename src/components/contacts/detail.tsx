@@ -22,6 +22,7 @@ import { actionButtonStyle, brandColors } from '@/lib/brand-colors';
 import { contactAlternatives } from '@/lib/contacts/alternatives';
 import { publicProducts } from '@/lib/solutions/public';
 import { SimilarSolutions, type SimilarSection } from '@/components/solutions/similar-solutions';
+import { ContactGroupLink } from '@/components/contacts/groups';
 import type { Dictionary } from '@/i18n/dictionary';
 export async function ContactDetail({
   id,
@@ -30,6 +31,7 @@ export async function ContactDetail({
   dict: t,
   threadDict,
   similarDict,
+  groupDict,
 }: {
   id: string;
   incoming?: boolean;
@@ -38,6 +40,8 @@ export async function ContactDetail({
   threadDict: Dictionary['contactThread'];
   /** «Otras soluciones» from the listing page, reused for a request with no reply. */
   similarDict: Dictionary['solution'];
+  /** Buyer only: links back to the proposal to several projects it was part of (SHCWS-62). */
+  groupDict?: Dictionary['contactBatch'];
 }) {
   if (!isSolutionId(id)) notFound();
   const base = incoming ? '/account/opportunities' : '/account/contacts';
@@ -116,6 +120,9 @@ export async function ContactDetail({
           {actor === 'buyer' ? t.detail.deliveredBuyer : t.detail.deliveredRecipient}{' '}
           {t.detail.onlyParticipants}
         </p>
+        {actor === 'buyer' && groupDict && (
+          <ContactGroupLink requestId={request.id} account={account.id} dict={groupDict} />
+        )}
       </header>
       <div className="grid items-start gap-12 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0">
