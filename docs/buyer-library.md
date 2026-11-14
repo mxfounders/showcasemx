@@ -6,7 +6,7 @@ Etapa de evaluación del comprador, implementada el 30 de agosto de 2026. Una mi
 
 ## Recorrido
 
-- Guardar desde la ficha del catálogo o desde /soluciones/[id]. Los ejemplos ficticios no tienen este botón.
+- Guardar desde la ficha del catálogo o desde /soluciones/[slug]. Los ejemplos ficticios no tienen este botón.
 - Sin sesión, el acceso y registro conservan el proyecto pendiente. Al entrar se presenta para confirmar Guardar; un GET nunca modifica datos.
 - /account/saved reúne proyectos sin duplicarlos por categoría.
 - /account/lists permite crear listas con nombre y propósito; /account/lists/[id] permite editar, añadir proyectos guardados y escribir notas privadas por proyecto/lista.

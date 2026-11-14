@@ -59,9 +59,10 @@ export function similarity(
   };
 }
 
-export function pickSimilar<Product extends SimilarityFacets & { detailUrl?: string }>(
+export function pickSimilar<Product extends SimilarityFacets & { solutionId?: string }>(
   current: SimilarityFacets,
-  currentUrl: string,
+  /** The listing being shown, by UUID: never similar to itself. */
+  currentId: string,
   catalog: Product[],
   limit = 3,
 ): Array<{ product: Product; match: SimilarityMatch }> {
@@ -69,7 +70,7 @@ export function pickSimilar<Product extends SimilarityFacets & { detailUrl?: str
     .map((product, index) => ({ product, match: similarity(current, product), index }))
     .filter(
       ({ product, match }) =>
-        product.detailUrl !== currentUrl && (match.capabilities.length || match.categories.length),
+        product.solutionId !== currentId && (match.capabilities.length || match.categories.length),
     )
     .sort((a, b) => b.match.score - a.match.score || a.index - b.index)
     .slice(0, limit)

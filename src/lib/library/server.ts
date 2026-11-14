@@ -5,6 +5,7 @@ import { solutionsSql } from '@/lib/solutions/server';
 import { previewCategories } from '@/lib/catalog-preview';
 import { getSolutionCategories, isSolutionId } from '@/lib/solutions/model';
 import { solutionCover } from '@/lib/solutions/gallery';
+import { solutionPath } from '@/lib/solutions/slug';
 import {
   projectKey,
   validProjectKey,
@@ -48,7 +49,7 @@ export async function resolveProjects(keys: string[]): Promise<Record<string, Bu
   if (ids.length || catalogKeys.length) {
     const sql = solutionsSql();
     const rows =
-      await sql`SELECT id,catalog_key,published_data->'screenshots'->0->>'id' AS cover_id,published_data->>'name' AS name,published_data->>'problem' AS description,published_data->>'kind' AS kind,published_data->>'category' AS category,published_data->'categories' AS categories,published_data->'industries' AS industries,published_data->'companySizes' AS company_sizes,published_data->>'pricing' AS pricing,published_data->'priceFrom' AS price_from,published_data->>'priceCurrency' AS price_currency,published_data->>'priceUnit' AS price_unit,published_data->>'priceBand' AS price_band,published_data->'pricingModel' AS pricing_model,published_data->>'scope' AS scope,published_data->>'implementation' AS implementation,published_data->>'audience' AS audience,published_data->>'integrations' AS integrations,published_data->>'support' AS support,published_data->>'evidence' AS evidence,published_data->>'evidenceUrl' AS evidence_url,EXISTS(SELECT 1 FROM solution_site_image_ready r WHERE r.solution_id=founder_solutions.id) AS has_site_image FROM founder_solutions WHERE (id=ANY(${ids}::uuid[]) OR catalog_key=ANY(${catalogKeys}::text[])) AND published_data IS NOT NULL`;
+      await sql`SELECT id,slug,catalog_key,published_data->'screenshots'->0->>'id' AS cover_id,published_data->>'name' AS name,published_data->>'problem' AS description,published_data->>'kind' AS kind,published_data->>'category' AS category,published_data->'categories' AS categories,published_data->'industries' AS industries,published_data->'companySizes' AS company_sizes,published_data->>'pricing' AS pricing,published_data->'priceFrom' AS price_from,published_data->>'priceCurrency' AS price_currency,published_data->>'priceUnit' AS price_unit,published_data->>'priceBand' AS price_band,published_data->'pricingModel' AS pricing_model,published_data->>'scope' AS scope,published_data->>'implementation' AS implementation,published_data->>'audience' AS audience,published_data->>'integrations' AS integrations,published_data->>'support' AS support,published_data->>'evidence' AS evidence,published_data->>'evidenceUrl' AS evidence_url,EXISTS(SELECT 1 FROM solution_site_image_ready r WHERE r.solution_id=founder_solutions.id) AS has_site_image FROM founder_solutions WHERE (id=ANY(${ids}::uuid[]) OR catalog_key=ANY(${catalogKeys}::text[])) AND published_data IS NOT NULL`;
     for (const key of catalogKeys)
       if (!rows.some(row => row.catalog_key === key)) delete result['catalog:' + key];
     for (const row of rows) {
@@ -70,7 +71,7 @@ export async function resolveProjects(keys: string[]): Promise<Record<string, Bu
           companySizes: Array.isArray(row.company_sizes)
             ? (row.company_sizes as string[])
             : undefined,
-          href: `/soluciones/${row.id}`,
+          href: solutionPath({ id: String(row.id), slug: row.slug as string | null }),
           external: false,
           solutionId: String(row.id),
           image: solutionCover(String(row.id), {

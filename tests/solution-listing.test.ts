@@ -39,6 +39,7 @@ test('outbound links tag the visit as shwcs traffic and keep the referrer (SHCWS
 });
 
 const listing = (id: string, facets: Record<string, string[] | undefined>) => ({
+  solutionId: id,
   detailUrl: `/soluciones/${id}`,
   name: id,
   ...facets,
@@ -71,13 +72,11 @@ test('similar listings weigh shared capabilities over categories over industry a
     listing('both', { categories: ['Ventas'], capabilities: ['cotizaciones-propuestas'] }),
     listing('category-2', { categories: ['Ventas'] }),
   ];
-  const picked = pickSimilar(current, '/soluciones/self', catalog).map(
-    ({ product }) => product.name,
-  );
+  const picked = pickSimilar(current, 'self', catalog).map(({ product }) => product.name);
   // Never itself; sharing only a size is not «similar»; ties keep the catalogue order.
   assert.deepEqual(picked, ['both', 'capability', 'category']);
   assert.deepEqual(
-    pickSimilar(current, '/soluciones/self', catalog, 5).map(({ product }) => product.name),
+    pickSimilar(current, 'self', catalog, 5).map(({ product }) => product.name),
     ['both', 'capability', 'category', 'category-2'],
   );
 });

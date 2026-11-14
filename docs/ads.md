@@ -125,7 +125,7 @@ reserva en Promocionar tiene «Ver reporte» y ya muestra CTR, visitas y solicit
 
 Atribución propia, sin cookies ni píxeles:
 
-- El espacio enlaza a `/soluciones/<id>?from=sponsored&ad=<reserva>`. En la ficha,
+- El espacio enlaza a `/soluciones/<slug>?from=sponsored&ad=<reserva>`. En la ficha,
   `SponsoredVisit` cuenta una visita por pestaña y cada clic al sitio oficial
   (`/api/ads/events`, `visit` y `site`), en `ad_campaign_daily_metrics`. Cuentan desde el
   primer día hasta 7 días después del último servido (`attributionDays`), solo en la
