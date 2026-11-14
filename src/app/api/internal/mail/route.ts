@@ -7,6 +7,7 @@ import { createContactReviewInvitations } from '@/lib/reviews/invitations';
 import { sendWeeklyDigests } from '@/lib/notifications/weekly';
 import { reviewAlertsEnabled, reviewQueueDigest } from '@/lib/review-queue/alerts';
 import { matchSearchAlerts } from '@/lib/alerts/server';
+import { runContactReminders } from '@/lib/contacts/reminders';
 export const maxDuration = 300;
 export async function GET(request: NextRequest) {
   if (!authorizedCron(request.headers.get('authorization')))
@@ -21,6 +22,9 @@ export async function GET(request: NextRequest) {
     await createContactReviewInvitations().catch(() => console.error('Review invitations failed.'));
     // Saved-search alerts (SHCWS-47): catches anything the publish-time run missed.
     await matchSearchAlerts().catch(() => console.error('Search alerts failed.'));
+    // Unanswered contact requests (SHCWS-61): reminders at 48 h and 5 days, «sin
+    // respuesta» at 7. Daily, so each step lands on the first run after it is due.
+    await runContactReminders().catch(() => console.error('Contact reminders failed.'));
     const result = await deliverNotifications();
     // «Tu semana en shwcs» (SHCWS-21): the first daily run of each week sends it.
     await sendWeeklyDigests().catch(() => console.error('Weekly digest failed.'));

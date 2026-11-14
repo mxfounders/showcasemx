@@ -116,7 +116,7 @@ seguridad comprueba los marcadores en JSON y en el HTML/RSC renderizado.
 | `/panel/reportes` | Reportes de fichas y de comunidad con decisión obligatoria |
 | `/panel/dominios` | Pruebas TXT: verificadas, pendientes, vencidas, por revalidar (+90 días) |
 | `/panel/cuentas`, `/panel/cuentas/[id]` | Filtros, orden, exportación; identidad, seguridad (sesiones del producto por dispositivo, 2FA, tokens vivos, membresía ops), publicaciones, biblioteca (solo conteos), contactos (metadatos), comunidad, avisos y bitácora |
-| `/panel/contactos` | Solicitudes comprador → fundador, tasa de respuesta, serie diaria y línea de tiempo de estados |
+| `/panel/contactos` | Solicitudes comprador → fundador, tasa de respuesta, serie diaria y línea de tiempo de estados; solicitudes sin respuesta con su etapa de recordatorio (SHCWS-61) |
 | `/panel/comunidad` | Listas públicas, comentarios en listas y en fichas, moderación |
 | `/panel/mensajes` | Bandeja del formulario de contacto, responder por correo, atender/reabrir |
 | `/panel/correo` | Estado de los avisos transaccionales, reintentos |
@@ -173,3 +173,31 @@ con una baliza en `/buscar`, el buscador del inicio y las páginas de categoría
 día y consulta normalizada, sin cuenta, dirección ni identificador; nada con DNT/GPC; nunca
 guarda algo que parezca correo, teléfono o URL (`src/lib/search/demand.ts`). Retención de
 400 días en el mantenimiento diario. Sin la tabla, la página lo dice.
+
+### Alertas activas por tema (SHCWS-175)
+
+Sección de solo lectura en `/panel/demanda`, junto a las búsquedas: las alertas de
+búsqueda guardadas por los compradores (`search_alerts`, SHCWS-47) agrupadas por tema
+(dónde se crearon —búsqueda, categoría, industria o colección—, su slug y su etiqueta
+legible, que ya lleva palabras y filtros, p. ej. «Nómina · Retail»). Por tema: número de
+alertas, cuentas distintas, coincidencias en 30 días (fichas distintas anunciadas, nunca
+las que ya existían al crear la alerta) y última coincidencia. Arriba: alertas, cuentas,
+temas y temas sin coincidencias en 30 días, que es a quién invitar. Ordena por alertas
+(por defecto), cuentas, coincidencias o última coincidencia, en ambos sentidos
+(`?orden=&dir=`), máximo 100 temas. Solo conteos: la consulta (`alertTopics`,
+`ops/src/lib/data/demand.ts`) nunca devuelve `owner_id`, correos ni identificadores de
+alerta; las cuentas suspendidas no cuentan. Sin la tabla, la sección lo dice y el resto de
+la página sigue. Prueba: `tests/integration/ops-reminders-alerts.cjs`.
+
+## Solicitudes sin respuesta — 14 noviembre 2026 (SHCWS-61)
+
+`/panel/contactos` gana la tarjeta «Sin respuesta del fundador»: solicitudes abiertas que
+el destinatario no ha tocado en más de 48 h y las marcadas «sin respuesta» a los 7 días
+(`contact_requests.unanswered_at`, docs/contacts.md), la espera más larga primero (50).
+Por fila: proyecto, fundador (destinatario), estado, etapa (más de 48 h, recordatorio de
+48 h, de 5 días o «sin respuesta», según los avisos que escribió el cron), días sin
+respuesta, fecha y la línea de tiempo de estados. Arriba: cuántas siguen sin respuesta,
+cuántas se marcaron en 30 días y cuántas se respondieron después de marcarse. Solo
+metadatos, como el resto de Contactos: nunca `details`, mensajes ni el comprador
+(`awaitingReply`, `ops/src/lib/data/contacts.ts`). Sin `db/contact-reminders.sql`, la
+tarjeta lo dice y la página carga.

@@ -194,6 +194,15 @@ export const contacts = {
       withdrawn: 'The buyer withdrew the request.',
     },
   },
+  /** Seven days without a reply (SHCWS-61). Not a status: the request stays «New». */
+  unanswered: {
+    label: 'No reply',
+    buyerNote:
+      "{project} hasn't replied in 7 days. You can keep waiting, withdraw the request or look at similar options.",
+    recipientNote:
+      "Seven days went by without a reply: we marked it «no reply» and it counts in your listing's response signal. You can still answer or close it with a reason.",
+    alternativesTitle: 'Meanwhile, similar options',
+  },
   errors: {
     origin: 'Use your shwcs account.',
     signIn: 'Sign in to continue.',

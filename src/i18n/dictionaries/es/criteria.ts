@@ -46,7 +46,7 @@ export const criteria = {
     'Las listas de Comunidad ordenadas por «Populares» siguen las mismas reglas: cuentan los likes, guardados y comentarios de cuentas con correo verificado, nunca los de quien hizo la lista, y pierden peso con el tiempo.',
   /** SHCWS-52: the response signal (src/lib/solutions/response-model.ts). */
   responseNote:
-    'Cuando un proyecto recibió al menos 3 solicitudes de contacto de cuentas con correo verificado en los últimos 90 días, su ficha y sus tarjetas dicen cuánto suele tardar en responder (la mediana hasta la primera respuesta) y cuántas respondió. «Responde rápido» marca a quien responde al menos 8 de cada 10 con esa mediana en 48 h o menos. No cuentan las solicitudes de las últimas 72 horas que aún esperan respuesta ni las que el comprador retiró antes de recibirla.',
+    'Cuando un proyecto recibió al menos 3 solicitudes de contacto de cuentas con correo verificado en los últimos 90 días, su ficha y sus tarjetas dicen cuánto suele tardar en responder (la mediana hasta la primera respuesta) y cuántas respondió. «Responde rápido» marca a quien responde al menos 8 de cada 10 con esa mediana en 48 h o menos. No cuentan las solicitudes de las últimas 72 horas que aún esperan respuesta ni las que el comprador retiró antes de recibirla, salvo que ya llevaran 7 días sin respuesta: a esas las marcamos «sin respuesta» y cuentan siempre.',
   weights: {
     review: {
       label: 'Reseña',

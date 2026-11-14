@@ -17,6 +17,12 @@ import type { Dictionary } from '@/i18n/dictionary';
 import { RefreshContacts } from './forms';
 import { LocalTime } from './local-time';
 
+/** «Sin respuesta» after 7 days without a reply (SHCWS-61), next to the status. */
+const unansweredTone = {
+  backgroundColor: brandColors.terracotta.soft,
+  color: brandColors.terracotta.solid,
+};
+
 const signalTone: Record<BuyerSignal, { backgroundColor: string; color: string }> = {
   work: { backgroundColor: brandColors.sage.soft, color: brandColors.sage.solid },
   email: { backgroundColor: brandColors.blue.soft, color: brandColors.blue.solid },
@@ -74,6 +80,11 @@ function OpportunityCard({
           <span style={signalTone[signal]} className="rounded-full px-2.5 py-1 font-medium">
             {t.inbox.signals[signal]}
           </span>
+          {row.unanswered && (
+            <span style={unansweredTone} className="rounded-full px-2.5 py-1 font-medium">
+              {t.unanswered.label}
+            </span>
+          )}
           <span>
             {t.inbox.received}{' '}
             <LocalTime
@@ -177,6 +188,14 @@ export async function ContactsInbox({
                 <div className="min-w-0">
                   <h2 className="break-words text-xl font-medium">{row.project_name}</h2>
                   <p className="mt-2 break-words text-sm text-stone-500">{row.company}</p>
+                  {row.unanswered && (
+                    <span
+                      style={unansweredTone}
+                      className="mt-3 inline-block rounded-full px-2.5 py-1 text-xs font-medium"
+                    >
+                      {t.unanswered.label}
+                    </span>
+                  )}
                   <p className="mt-3 text-xs text-stone-400">
                     {t.inbox.updated}{' '}
                     <LocalTime

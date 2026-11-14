@@ -9,6 +9,8 @@ import { contactNotificationEmail } from '@/lib/notifications/contact-email';
 import { reviewRequestEmail } from '@/lib/notifications/review-request-email';
 import { loadSearchAlertEmail } from '@/lib/notifications/alert-email';
 import { loadFollowDigestEmail } from '@/lib/notifications/follow-email';
+import { loadContactReminderEmail } from '@/lib/notifications/contact-reminder-email';
+import { readContactReminderKey } from '@/lib/contacts/reminder-model';
 import { getDictionary } from '@/i18n/get-dictionary';
 export async function notificationPreferences(owner: string) {
   const sql = authSql();
@@ -312,6 +314,32 @@ export async function deliverNotifications({
           email = { ...built, button: built.button.label };
           buttonHref = built.button.href;
         }
+      }
+      if (row.category === 'contact' && readContactReminderKey(String(row.source_key))) {
+        // Reminders and «sin respuesta» (SHCWS-61, src/lib/contacts/reminders.ts). Built
+        // now, not when the pass ran: a recipient who answered since gets nothing, and
+        // the buyer's alternatives come from today's catalogue.
+        const built = await loadContactReminderEmail({
+          title,
+          sourceKey: String(row.source_key),
+          owner: String(row.owner_id),
+          origin: config.origin,
+          catalog: publicProducts,
+        });
+        if (built.skip) {
+          await sql`UPDATE account_notifications SET email_state='skipped',locked_at=NULL WHERE id=${row.id}`;
+          skipped++;
+          continue;
+        }
+        email = {
+          subject: built.subject,
+          heading: built.heading,
+          button: built.button.label,
+          paragraphs: built.paragraphs,
+          text: built.text,
+        };
+        buttonHref = built.button.href;
+        to = [...to, ...built.extraTo.filter(address => !to.includes(address))];
       }
       const [event] =
         row.category === 'contact' && contactLabels

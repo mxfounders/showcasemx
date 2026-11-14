@@ -1,9 +1,19 @@
 import type { Metadata } from 'next';
 import { CursorClickIcon, SearchIcon, SearchXIcon } from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
-import { searchDemand, type DemandRow } from '@/lib/data/demand';
+import {
+  ALERT_TOPIC_SORTS,
+  alertTopics,
+  searchDemand,
+  type AlertTopicRow,
+  type AlertTopicSort,
+  type DemandRow,
+} from '@/lib/data/demand';
 import { fmtNumber, fmtPercent } from '@/lib/format';
+import { choice, hrefWith, type SearchParams } from '@/lib/url';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Badge } from '@/components/ui/Badge';
+import { RelativeTime } from '@/components/ui/RelativeTime';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { Stat } from '@/components/ui/Stat';
 import { Table, THead, TH, TBody, TR, TD, EmptyRow } from '@/components/ui/Table';
@@ -42,20 +52,145 @@ function QueryTable({ rows, empty }: { rows: DemandRow[]; empty: string }) {
   );
 }
 
-export default async function DemandaPage() {
+const SCOPE_LABEL: Record<AlertTopicRow['scope'], string> = {
+  search: 'Búsqueda',
+  explorar: 'Categoría',
+  industria: 'Industria',
+  colecciones: 'Colección',
+};
+
+/**
+ * Saved-search alerts by topic (SHCWS-175): how many alerts, from how many accounts, and
+ * whether the catalogue has given them anything lately. Counts only, never who.
+ */
+function AlertTopicsCard({
+  data,
+  params,
+  sort,
+  dir,
+}: {
+  data: Awaited<ReturnType<typeof alertTopics>>;
+  params: SearchParams;
+  sort: AlertTopicSort;
+  dir: 'asc' | 'desc';
+}) {
+  // Clicking the active column flips the direction; another column starts descending.
+  const header = (key: AlertTopicSort) => ({
+    href: hrefWith('/panel/demanda', params, {
+      orden: key === 'alerts' ? null : key,
+      dir: sort === key && dir === 'desc' ? 'asc' : null,
+    }),
+    active: sort === key,
+    direction: dir,
+  });
+  return (
+    <Card className="mb-6">
+      <CardHeader
+        title="Alertas activas por tema"
+        description="Lo que los compradores pidieron que les avisemos: alertas, cuántas cuentas distintas y si el catálogo les trajo algo en los últimos 30 días. Un tema sin coincidencias dice a quién invitar. Solo conteos: nunca qué cuenta creó cada alerta."
+      />
+      <CardBody className="space-y-4">
+        {!data.available ? (
+          <p className="text-[13px] text-muted">
+            Sin datos: falta aplicar db/search-alerts.sql en esta base.
+          </p>
+        ) : (
+          <>
+            <ul className="flex flex-wrap gap-x-8 gap-y-2 text-[13px]">
+              <li>
+                <span className="num font-semibold">{fmtNumber(data.totals.alerts)}</span>{' '}
+                <span className="text-muted">alertas activas</span>
+              </li>
+              <li>
+                <span className="num font-semibold">{fmtNumber(data.totals.accounts)}</span>{' '}
+                <span className="text-muted">cuentas</span>
+              </li>
+              <li>
+                <span className="num font-semibold">{fmtNumber(data.totals.topics)}</span>{' '}
+                <span className="text-muted">temas</span>
+              </li>
+              <li>
+                <span className="num font-semibold">{fmtNumber(data.totals.unserved)}</span>{' '}
+                <span className="text-muted">temas sin coincidencias en 30 días</span>
+              </li>
+            </ul>
+            <Table label="Alertas activas por tema">
+              <THead>
+                <TH>Tema</TH>
+                <TH>Dónde</TH>
+                <TH align="right" sort={header('alerts')}>
+                  Alertas
+                </TH>
+                <TH align="right" sort={header('accounts')}>
+                  Cuentas
+                </TH>
+                <TH align="right" sort={header('matches')}>
+                  Coincidencias en 30 días
+                </TH>
+                <TH sort={header('last')}>Última coincidencia</TH>
+              </THead>
+              <TBody>
+                {data.rows.length === 0 ? (
+                  <EmptyRow colSpan={6}>
+                    <p className="py-6 text-center text-[13px] text-muted">
+                      Nadie ha creado una alerta todavía.
+                    </p>
+                  </EmptyRow>
+                ) : (
+                  data.rows.map(row => (
+                    <TR key={`${row.scope}:${row.topic ?? ''}:${row.label}`}>
+                      <TD className="font-medium text-fg">{row.label}</TD>
+                      <TD>
+                        <Badge>{SCOPE_LABEL[row.scope] ?? row.scope}</Badge>
+                      </TD>
+                      <TD align="right">{fmtNumber(row.alerts)}</TD>
+                      <TD align="right">{fmtNumber(row.accounts)}</TD>
+                      <TD align="right">{fmtNumber(row.matches30d)}</TD>
+                      <TD className="whitespace-nowrap text-[13px] text-muted">
+                        {row.lastMatchAt ? <RelativeTime value={row.lastMatchAt} /> : 'Nunca'}
+                      </TD>
+                    </TR>
+                  ))
+                )}
+              </TBody>
+            </Table>
+            {data.totals.topics > data.rows.length && (
+              <p className="text-[12.5px] text-muted">
+                Se muestran {fmtNumber(data.rows.length)} de {fmtNumber(data.totals.topics)} temas.
+              </p>
+            )}
+          </>
+        )}
+      </CardBody>
+    </Card>
+  );
+}
+
+export default async function DemandaPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
   await requireOps();
-  const data = await searchDemand();
+  const params = await searchParams;
+  const sort = choice(params, 'orden', ALERT_TOPIC_SORTS, 'alerts');
+  const dir = choice(params, 'dir', ['asc', 'desc'] as const, 'desc');
+  const [data, alerts] = await Promise.all([searchDemand(), alertTopics(sort, dir)]);
+  const alertsCard = <AlertTopicsCard data={alerts} params={params} sort={sort} dir={dir} />;
   return (
     <>
       <PageHeader
         title="Demanda"
-        description="Lo que la gente busca en el catálogo, agregado por día: sin cuenta, dirección ni identificador. Las búsquedas sin resultados dicen a quién invitar y qué categorías faltan. Con DNT/GPC no se cuenta nada."
+        description="Lo que la gente busca en el catálogo, agregado por día: sin cuenta, dirección ni identificador. Las búsquedas sin resultados y las alertas sin coincidencias dicen a quién invitar y qué categorías faltan. Con DNT/GPC no se cuenta nada."
       />
       {!data.available ? (
-        <EmptyState
-          title="Aún no hay registro de búsquedas"
-          description="Falta aplicar db/search-demand.sql en esta base."
-        />
+        <>
+          <EmptyState
+            title="Aún no hay registro de búsquedas"
+            description="Falta aplicar db/search-demand.sql en esta base."
+          />
+          <div className="mt-6">{alertsCard}</div>
+        </>
       ) : (
         <>
           <section className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -101,6 +236,7 @@ export default async function DemandaPage() {
               </CardBody>
             </Card>
           </div>
+          {alertsCard}
           <Card>
             <CardHeader
               title="Tendencia semanal"

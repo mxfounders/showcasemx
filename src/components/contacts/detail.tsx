@@ -18,7 +18,10 @@ import {
   OutcomeForm,
   RefreshContacts,
 } from '@/components/contacts/forms';
-import { actionButtonStyle } from '@/lib/brand-colors';
+import { actionButtonStyle, brandColors } from '@/lib/brand-colors';
+import { contactAlternatives } from '@/lib/contacts/alternatives';
+import { publicProducts } from '@/lib/solutions/public';
+import { SimilarSolutions, type SimilarSection } from '@/components/solutions/similar-solutions';
 import type { Dictionary } from '@/i18n/dictionary';
 export async function ContactDetail({
   id,
@@ -26,12 +29,15 @@ export async function ContactDetail({
   locale,
   dict: t,
   threadDict,
+  similarDict,
 }: {
   id: string;
   incoming?: boolean;
   locale: string;
   dict: Dictionary['contacts'];
   threadDict: Dictionary['contactThread'];
+  /** «Otras soluciones» from the listing page, reused for a request with no reply. */
+  similarDict: Dictionary['solution'];
 }) {
   if (!isSolutionId(id)) notFound();
   const base = incoming ? '/account/opportunities' : '/account/contacts';
@@ -52,6 +58,21 @@ export async function ContactDetail({
     request.buyer_email +
     '?subject=' +
     encodeURIComponent(t.detail.emailSubject.replace('{project}', () => request.project_name));
+  // Seven days without a reply (SHCWS-61): the buyer sees similar listings from the
+  // organic catalogue, never this one, a draft or one already contacted, and the brief
+  // to ask shwcs for help when there are fewer than three.
+  let alternatives: SimilarSection | null = null;
+  if (actor === 'buyer' && request.unanswered) {
+    try {
+      const items = await contactAlternatives(
+        { solutionId: request.solution_id, buyerId: account.id },
+        await publicProducts(),
+      );
+      alternatives = { items, exits: items.length < 3 ? [{ kind: 'brief' }] : [] };
+    } catch {
+      alternatives = { items: [], exits: [{ kind: 'brief' }] };
+    }
+  }
   return (
     <section className="account-page">
       {actor === 'recipient' && request.unread && <MarkContactRead id={request.id} />}
@@ -68,9 +89,29 @@ export async function ContactDetail({
           </h1>
           <RefreshContacts dict={t} />
         </div>
-        <p className="mt-4 inline-block rounded-full bg-white px-4 py-2 text-sm">
-          {t.statuses[request.status]}
-        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <p className="inline-block rounded-full bg-white px-4 py-2 text-sm">
+            {t.statuses[request.status]}
+          </p>
+          {request.unanswered && (
+            <p
+              style={{
+                backgroundColor: brandColors.terracotta.soft,
+                color: brandColors.terracotta.solid,
+              }}
+              className="inline-block rounded-full px-4 py-2 text-sm font-medium"
+            >
+              {t.unanswered.label}
+            </p>
+          )}
+        </div>
+        {request.unanswered && (
+          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-stone-600">
+            {actor === 'buyer'
+              ? t.unanswered.buyerNote.replace('{project}', () => request.project_name)
+              : t.unanswered.recipientNote}
+          </p>
+        )}
         <p className="mt-4 text-sm text-stone-500">
           {actor === 'buyer' ? t.detail.deliveredBuyer : t.detail.deliveredRecipient}{' '}
           {t.detail.onlyParticipants}
@@ -166,6 +207,14 @@ export async function ContactDetail({
           )}
         </section>
       </div>
+      {alternatives && (
+        <SimilarSolutions
+          similar={alternatives}
+          solutionName={request.project_name}
+          dict={{ ...similarDict, similarTitle: t.unanswered.alternativesTitle }}
+          locale={locale}
+        />
+      )}
     </section>
   );
 }
