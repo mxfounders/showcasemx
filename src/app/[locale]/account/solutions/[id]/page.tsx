@@ -29,6 +29,7 @@ import { getOwnerReviewDigest } from '@/lib/reviews/server';
 import { OwnerReviewDigest } from '@/components/reviews/owner-review-digest';
 import { getRecognition } from '@/lib/recognition/server';
 import { RecognitionCard } from '@/components/recognition/recognition-card';
+import { currencyOptions } from '@/lib/currencies';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const dictionary = await getDictionary((await params).locale);
@@ -321,6 +322,7 @@ export default async function SolutionPage(props: {
             hasSiteImage={Boolean(solution.has_site_image)}
             siteImageFailure={solution.site_image_failure}
             hasUnpublishedChanges={hasUnpublishedChanges}
+            currencies={currencyOptions(locale)}
           />
         </div>
         {published && (

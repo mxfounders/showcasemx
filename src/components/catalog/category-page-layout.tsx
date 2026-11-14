@@ -17,6 +17,7 @@ import {
   localizedCapabilitiesByCategory,
   localizedIntegrationOptions,
   localizedPriceBandOptions,
+  localizedPricingModelOptions,
   localizedSetupTimeOptions,
   localizedComplianceOptions,
   localizedCategoryDisplayLabel,
@@ -30,7 +31,8 @@ import { isFastResponder } from '@/lib/solutions/response-model';
 import { CatalogCard } from './catalog-card';
 import { SearchAlertButton } from '@/components/alerts/search-alert-button';
 import { alertScopes, readAlertCriteria } from '@/lib/alerts/model';
-import { filterAxes } from '@/lib/search/catalog-filter';
+import { filterAxes, multiValueAxes } from '@/lib/search/catalog-filter';
+import { effectivePriceBand, matchesPricingModel } from '@/lib/solutions/pricing';
 
 type Product = PublishedProduct;
 
@@ -63,17 +65,10 @@ function capabilityFilterOptions(categoryLabels: string[], locale?: string) {
 }
 const allCategoryLabels = [...new Set(categories.map(item => item.label))];
 
-// Category, industry, capacity, integration, compliance and size all accept
-// several values at once (OR within the axis); price band, setup time,
-// format and sort stay single.
-const MULTI = new Set([
-  'problema',
-  'industria',
-  'capacidad',
-  'integracion',
-  'cumplimiento',
-  'tamano',
-]);
+// Category, industry, capacity, integration, compliance, size and pricing model all
+// accept several values at once (OR within the axis); price band, setup time, format and
+// sort stay single. Same list as the alert rules (src/lib/search/catalog-filter.ts).
+const MULTI = multiValueAxes;
 
 function readValues(raw: string | null): string[] {
   return raw
@@ -217,11 +212,18 @@ export function CategoryPageLayout({
     const precio = {
       id: 'precio',
       label: dict.filters.priceBand,
+      // The declared band, or the one a USD «Desde» price falls in (SHCWS-51); both
+      // families (monthly, per project) share the axis because their labels say which.
       options: deriveOptions(
         localizedPriceBandOptions(locale),
         products,
-        (p, v) => p.priceBand === v,
+        (p, v) => effectivePriceBand(p) === v,
       ),
+    };
+    const contratacion = {
+      id: 'contratacion',
+      label: dict.filters.pricingModel,
+      options: deriveOptions(localizedPricingModelOptions(locale), products, matchesPricingModel),
     };
     const arranque = {
       id: 'arranque',
@@ -281,13 +283,24 @@ export function CategoryPageLayout({
             tamano,
             integracion,
             precio,
+            contratacion,
             arranque,
             cumplimiento,
             modelo,
           ]
         : basePath === '/industria'
-          ? [problema, capacidad, respuesta, tamano, integracion, precio, arranque, modelo]
-          : [problema, capacidad, respuesta, tamano, modelo];
+          ? [
+              problema,
+              capacidad,
+              respuesta,
+              tamano,
+              integracion,
+              precio,
+              contratacion,
+              arranque,
+              modelo,
+            ]
+          : [problema, capacidad, respuesta, tamano, precio, contratacion, modelo];
 
     return byRoute.filter(filter => filter.options.length > 0);
   }, [basePath, products, capabilityOptions, locale, dict]);
@@ -313,7 +326,7 @@ export function CategoryPageLayout({
 
   // Each axis compares against the real declared field, not substrings in
   // free-text copy. Hard axes (problema, integración, cumplimiento, precio,
-  // arranque, modelo) are a strict AND across axes, OR within each axis — a
+  // contratación, arranque, modelo) are a strict AND across axes, OR within each axis — a
   // real mismatch on any of them excludes the product outright. Industry,
   // capability and size are "soft": [] ("fits any", industry/size only) or a
   // declared match keeps a product in the main grid; a product that never
@@ -330,6 +343,7 @@ export function CategoryPageLayout({
     const integracion = selections.integracion ?? [];
     const cumplimiento = selections.cumplimiento ?? [];
     const precio = selections.precio?.[0];
+    const contratacion = selections.contratacion ?? [];
     const arranque = selections.arranque?.[0];
     const modelo = selections.modelo?.[0];
     const respuesta = selections.respuesta?.[0];
@@ -347,7 +361,9 @@ export function CategoryPageLayout({
         return false;
       if (cumplimiento.length && !cumplimiento.some(value => product.compliance?.includes(value)))
         return false;
-      if (precio && product.priceBand !== precio) return false;
+      if (precio && effectivePriceBand(product) !== precio) return false;
+      if (contratacion.length && !contratacion.some(value => matchesPricingModel(product, value)))
+        return false;
       if (arranque && product.setupTime !== arranque) return false;
       if (modelo && product.offering !== modelo) return false;
       if (respuesta === 'rapido' && !isFastResponder(product.response)) return false;

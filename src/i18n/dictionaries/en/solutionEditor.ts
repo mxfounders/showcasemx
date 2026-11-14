@@ -132,6 +132,8 @@ export const solutionEditor = {
       "Add each person's name and valid HTTP(S) links, or remove the fields you won't use.",
     projectLinksInvalid:
       'Complete the project links with HTTP(S) URLs without credentials, or remove the empty ones.',
+    priceIncomplete:
+      'To show your entry price, choose its currency and what it pays for: per month, per project…',
   },
   questions: {
     basics: {
@@ -194,7 +196,7 @@ export const solutionEditor = {
   sections: {
     screenshots: 'Show what it looks like inside.',
     demo: 'Let people see it in action.',
-    pricing: 'Model, range and terms.',
+    pricing: 'Starting price, pricing model and range.',
     delivery: 'Setup time and support.',
     integrations: 'What it connects to.',
     compliance: 'Standards you can back up.',
@@ -314,7 +316,26 @@ export const solutionEditor = {
     projectLinksLabel: 'Project profiles and links',
     demoLabel: 'Link to the demo or walkthrough',
     pricingModelLegend: 'Pricing model · you can choose several',
-    priceBandLegend: 'Price range',
+    price: {
+      fromLegend: 'Entry price',
+      fromHint:
+        'The least it takes to buy it, in your currency. It shows as “From” on your listing, in the catalog and in the comparison. If you have a free plan, enter 0.',
+      amountLabel: 'From',
+      amountInvalid: 'Enter a number of 0 or more, without symbols.',
+      currencyLabel: 'Currency',
+      currencyPlaceholder: 'Choose the currency',
+      currencyFrequent: 'Most used',
+      currencyAll: 'All',
+      unitLabel: 'What it pays for',
+      unitPlaceholder: 'Choose how it is billed',
+      previewLabel: 'It will read:',
+      previewEmpty: 'Without an entry price, the listing shows your pricing model or range.',
+      noConversion:
+        'We show it in the currency you choose and never convert it. That is why the range below is in US dollars: it lets buyers filter across currencies.',
+      monthlyBands: 'Monthly range in US dollars (USD)',
+      projectBands: 'Budget per project in US dollars (USD)',
+      bandSuggestion: 'Based on your price in dollars',
+    },
     setupTimeLegend: 'Setup time',
     integrationsLegend: 'Tools',
     noIntegrations: 'It doesn’t connect to other tools',

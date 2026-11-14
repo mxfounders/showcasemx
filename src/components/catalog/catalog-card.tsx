@@ -5,6 +5,7 @@ import { ProductVisual } from '@/components/product-visual';
 import { ProjectMark } from '@/components/project-mark';
 import { VerifiedMark } from '@/components/recognition/verified-mark';
 import { localizedOfferingOptions } from '@/lib/taxonomy';
+import { priceSummary } from '@/lib/solutions/pricing';
 import type { PreviewProduct } from '@/lib/catalog-preview';
 import type { Dictionary } from '@/i18n/dictionary';
 import { ResponseSignalNote } from './response-signal';
@@ -27,6 +28,8 @@ export function CatalogCard({
   locale: string;
   dict: Pick<Dictionary['catalog'], 'ratingLabel' | 'viewSolution'>;
 }) {
+  // Only what the listing declared (SHCWS-51): «Desde», a band or its pricing model.
+  const price = priceSummary(product, locale);
   return (
     <Link
       href={product.detailUrl || '#'}
@@ -88,6 +91,7 @@ export function CatalogCard({
         <p className="line-clamp-2 pt-3 text-[13px] leading-relaxed text-stone-500">
           {product.description}
         </p>
+        {price && <p className="pt-2 text-[12px] font-medium text-stone-700">{price}</p>}
         <ResponseSignalNote
           signal={product.response}
           locale={locale}

@@ -229,3 +229,37 @@ catálogo real.
   Ciudad de México, hasta 12 semanas). El home muestra hasta cuatro en un bloque que no se
   renderiza si no hay ninguna. Lógica en `src/lib/solutions/new-this-week.ts`.
 
+
+## Precio que sirve para decidir (SHCWS-51) — noviembre 2026
+
+El precio sigue siendo **opcional para publicar** (decisión del propietario, 14 de
+noviembre). Lo que el proyecto declara se muestra igual en la tarjeta, la ficha, el
+comparador, `/soluciones/<id>.md` y el JSON-LD; nada se inventa ni se convierte.
+
+- **Campos** (`SolutionData`, en el `jsonb`, sin migración): `priceFrom` (número ≥ 0,
+  redondeado a centavos, máximo 10 000 000 000), `priceCurrency` (código ISO 4217 de
+  `Intl.supportedValuesOf`, cualquier mercado; `src/lib/currencies.ts`) y `priceUnit`
+  (qué paga: un modelo con monto — mensual, anual, pago único, por uso, por proyecto, por
+  hora; `solutionPriceUnits`). `0` es «Plan gratuito». Para enviar a revisión, un monto
+  mayor que cero exige moneda y modalidad (`priceIncomplete`).
+- **Formato** (`src/lib/solutions/pricing.ts`): «Desde $29 USD/mes», «Desde $90,000 MXN por
+  proyecto», «From €9.50 EUR, one-time». El código de la moneda siempre se ve, porque «$»
+  solo es ambiguo. Sin moneda no se muestra un número suelto.
+- **Bandas en dólares**, para filtrar entre monedas: las cinco mensuales de siempre (sus
+  ids conservan el nombre con el que se guardaron) y cinco nuevas de presupuesto por
+  proyecto (`proyecto-menos-1000` … `proyecto-mas-50000`), más «Depende del alcance». El
+  editor ofrece la familia que corresponde al modelo declarado (suscripción y uso: mensual;
+  proyecto, hora y pago único: por proyecto; sin modelo: ambas). Si el precio está en USD,
+  el editor sugiere la banda con un clic y el filtro la usa cuando no hay una declarada
+  (`effectivePriceBand`; un precio anual se divide entre doce). Otras monedas no derivan
+  banda: no hay fuente de tipo de cambio.
+- **Tarjetas**: `priceSummary` muestra el «Desde», o la banda, o los modelos
+  («Por proyecto · Solo a cotizar»), o nada. En el explorador del home ocupa el lugar de
+  «Por {proveedor}» para no cambiar la altura fija de la tarjeta.
+- **Filtros**: «Rango de precio» (las dos familias en el mismo eje) y «Modelo de
+  contratación» (`contratacion`, varios valores con O), también en las alertas guardadas.
+- **Comparador**: filas «Precio de entrada», «Modelo de contratación» y «Rango de precio»
+  antes del texto libre del fundador.
+- **Pendiente**: mostrar al comprador una conversión a su moneda. Requiere una fuente de
+  tipo de cambio que hoy no existe; hasta entonces la ficha dice que el precio está en la
+  moneda del proyecto y que no se convierte.

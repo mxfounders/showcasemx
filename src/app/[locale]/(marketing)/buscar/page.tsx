@@ -11,6 +11,7 @@ import { localizedCategoryDisplayLabel } from '@/lib/taxonomy';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { SearchAlertButton } from '@/components/alerts/search-alert-button';
 import { readAlertCriteria } from '@/lib/alerts/model';
+import { priceSummary } from '@/lib/solutions/pricing';
 
 // One page for the whole site's search (SHCWS-44): listings, public lists, articles and
 // topic pages for the same words. Query URLs are kept out of crawling by robots.ts; a
@@ -131,34 +132,42 @@ export default async function SearchPage(props: Props) {
             {t.solutions} <span className="text-stone-400">{results.solutions.length}</span>
           </h2>
           <ul className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {results.solutions.map(product => (
-              <li key={product.detailUrl ?? product.name}>
-                <Link
-                  href={product.detailUrl ?? '/#catalogo'}
-                  className="flex h-full gap-4 rounded-2xl border border-stone-200 bg-white p-5 transition-shadow hover:shadow-md"
-                >
-                  <ProjectMark
-                    name={product.name}
-                    favicon={product.favicon}
-                    size={44}
-                    className="size-11 shrink-0 overflow-hidden rounded-xl border border-stone-200"
-                    imageClassName="object-contain bg-white"
-                    fallbackClassName="flex items-center justify-center bg-stone-100 text-sm font-semibold text-stone-700"
-                  />
-                  <span className="min-w-0">
-                    <span className="block font-medium text-stone-900">{product.name}</span>
-                    <span className="mt-1 line-clamp-2 block text-sm leading-relaxed text-stone-500">
-                      {product.description}
+            {results.solutions.map(product => {
+              const price = priceSummary(product, locale);
+              return (
+                <li key={product.detailUrl ?? product.name}>
+                  <Link
+                    href={product.detailUrl ?? '/#catalogo'}
+                    className="flex h-full gap-4 rounded-2xl border border-stone-200 bg-white p-5 transition-shadow hover:shadow-md"
+                  >
+                    <ProjectMark
+                      name={product.name}
+                      favicon={product.favicon}
+                      size={44}
+                      className="size-11 shrink-0 overflow-hidden rounded-xl border border-stone-200"
+                      imageClassName="object-contain bg-white"
+                      fallbackClassName="flex items-center justify-center bg-stone-100 text-sm font-semibold text-stone-700"
+                    />
+                    <span className="min-w-0">
+                      <span className="block font-medium text-stone-900">{product.name}</span>
+                      <span className="mt-1 line-clamp-2 block text-sm leading-relaxed text-stone-500">
+                        {product.description}
+                      </span>
+                      {price && (
+                        <span className="mt-2 block text-xs font-medium text-stone-700">
+                          {price}
+                        </span>
+                      )}
+                      <span className="mt-2 block text-xs text-stone-400">
+                        {product.categories
+                          .map(category => localizedCategoryDisplayLabel(category, locale))
+                          .join(' · ')}
+                      </span>
                     </span>
-                    <span className="mt-2 block text-xs text-stone-400">
-                      {product.categories
-                        .map(category => localizedCategoryDisplayLabel(category, locale))
-                        .join(' · ')}
-                    </span>
-                  </span>
-                </Link>
-              </li>
-            ))}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}

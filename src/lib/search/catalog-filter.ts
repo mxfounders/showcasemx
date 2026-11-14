@@ -1,4 +1,5 @@
 import { isFastResponder, type ResponseSignal } from '@/lib/solutions/response-model';
+import { effectivePriceBand, matchesPricingModel, type PriceFields } from '@/lib/solutions/pricing';
 import {
   isRealMatch,
   matchCapability,
@@ -12,20 +13,21 @@ import {
  * ask «would this listing show in the main grid of that page with those filters?» on the
  * server. Same rules as CategoryPageLayout (src/components/catalog/category-page-layout.tsx):
  *
- * - hard axes (problema, integración, cumplimiento, precio, arranque, modelo, respuesta)
- *   are AND across axes and OR within one; a mismatch excludes the listing;
+ * - hard axes (problema, integración, cumplimiento, precio, contratación, arranque, modelo,
+ *   respuesta) are AND across axes and OR within one; a mismatch excludes the listing.
+ *   «precio» compares the band the listing declared or, without one, the band its USD
+ *   «Desde» price falls in (src/lib/solutions/pricing.ts);
  * - soft axes (industria, capacidad, tamaño): a declared match or «fits any» keeps it in
  *   the grid; a value only inferred from its text, or a size never declared, sends it to
  *   «También podrían servir»; a declared mismatch excludes it.
  *
  * Keep both in step: a change here belongs in the layout too, and the other way round.
  */
-export interface FilterableProduct extends FacetSubject {
+export interface FilterableProduct extends FacetSubject, PriceFields {
   category?: string;
   categories?: string[];
   integrationKeys?: string[];
   compliance?: string[];
-  priceBand?: string;
   setupTime?: string;
   offering?: string;
   response?: ResponseSignal | null;
@@ -44,6 +46,7 @@ export const multiValueAxes = new Set([
   'integracion',
   'cumplimiento',
   'tamano',
+  'contratacion',
 ]);
 /** Every axis a catalog page can filter by; `sort` orders and never filters. */
 export const filterAxes = [
@@ -54,6 +57,7 @@ export const filterAxes = [
   'tamano',
   'integracion',
   'precio',
+  'contratacion',
   'arranque',
   'cumplimiento',
   'modelo',
@@ -65,6 +69,7 @@ function passesHard(product: FilterableProduct, selections: CatalogSelections) {
     integracion = selections.integracion ?? [],
     cumplimiento = selections.cumplimiento ?? [],
     precio = selections.precio?.[0],
+    contratacion = selections.contratacion ?? [],
     arranque = selections.arranque?.[0],
     modelo = selections.modelo?.[0],
     respuesta = selections.respuesta?.[0];
@@ -77,7 +82,9 @@ function passesHard(product: FilterableProduct, selections: CatalogSelections) {
     return false;
   if (cumplimiento.length && !cumplimiento.some(value => product.compliance?.includes(value)))
     return false;
-  if (precio && product.priceBand !== precio) return false;
+  if (precio && effectivePriceBand(product) !== precio) return false;
+  if (contratacion.length && !contratacion.some(value => matchesPricingModel(product, value)))
+    return false;
   if (arranque && product.setupTime !== arranque) return false;
   if (modelo && product.offering !== modelo) return false;
   if (respuesta === 'rapido' && !isFastResponder(product.response)) return false;

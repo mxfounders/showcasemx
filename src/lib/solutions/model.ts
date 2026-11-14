@@ -1,4 +1,5 @@
 import { readPublicLinks, readFounders, type PublicLink, type SolutionFounder } from './profile';
+import { isCurrencyCode } from '@/lib/currencies';
 export type SolutionScreenshot = { id: string; caption: string };
 // hideSiteImage: the founder's opt-out of showing the auto-fetched og:image of
 // their own site as a ficha slide. Absent/false = shown, so no existing ficha
@@ -32,6 +33,15 @@ export type SolutionData = {
   integrationKeys?: string[];
   pricingModel?: string[];
   priceBand?: string;
+  /**
+   * The entry price («Desde», SHCWS-51) in the founder's own currency: an amount, its ISO
+   * 4217 code and what it pays for (one of `solutionPriceUnits`). Optional to publish; the
+   * three only show once the amount and currency are there. 0 means a free plan. Never
+   * converted: there is no exchange-rate source, so a buyer sees the declared currency.
+   */
+  priceFrom?: number;
+  priceCurrency?: string;
+  priceUnit?: string;
   setupTime?: string;
   compliance?: string[];
   /**
@@ -247,12 +257,43 @@ export const solutionPricingModels = [
   'comision',
   'solo-cotizar',
 ] as const;
-export const solutionPriceBands = [
+/**
+ * What a «Desde» price pays for: the pricing models a single amount can describe.
+ * «Comisión» (a percentage) and «Solo a cotizar» (no public price) have no amount.
+ */
+export const solutionPriceUnits = [
+  'suscripcion-mensual',
+  'suscripcion-anual',
+  'pago-unico',
+  'por-uso',
+  'por-proyecto',
+  'por-hora',
+] as const satisfies readonly (typeof solutionPricingModels)[number][];
+/** Upper bound of a declared amount: room for currencies with large numbers (COP, IDR). */
+export const maxPriceFrom = 10_000_000_000;
+/**
+ * Price bands, in US dollars so listings in any currency can be filtered together
+ * (SHCWS-51). Two families: a recurring monthly cost for software, and a budget per
+ * project for agencies and services. The monthly ids keep the names they were stored
+ * with (they once counted pesos); their labels say what they mean today.
+ */
+export const monthlyPriceBands = [
   'menos-1000',
   'de-1000-a-5000',
   'de-5000-a-20000',
   'de-20000-a-50000',
   'mas-50000',
+] as const;
+export const projectPriceBands = [
+  'proyecto-menos-1000',
+  'proyecto-1000-a-5000',
+  'proyecto-5000-a-20000',
+  'proyecto-20000-a-50000',
+  'proyecto-mas-50000',
+] as const;
+export const solutionPriceBands = [
+  ...monthlyPriceBands,
+  ...projectPriceBands,
   'depende-alcance',
 ] as const;
 export const solutionSetupTimes = [
@@ -506,6 +547,29 @@ export function readSolutionData(value: unknown): SolutionData | null {
       return null;
     result.priceBand = input.priceBand;
   }
+  if (input.priceFrom !== undefined) {
+    if (
+      typeof input.priceFrom !== 'number' ||
+      !Number.isFinite(input.priceFrom) ||
+      input.priceFrom < 0 ||
+      input.priceFrom > maxPriceFrom
+    )
+      return null;
+    // Cents at most: a price list never needs more, and it keeps formatting exact.
+    result.priceFrom = Math.round(input.priceFrom * 100) / 100;
+  }
+  if (input.priceCurrency !== undefined) {
+    if (!isCurrencyCode(input.priceCurrency)) return null;
+    result.priceCurrency = input.priceCurrency;
+  }
+  if (input.priceUnit !== undefined) {
+    if (
+      typeof input.priceUnit !== 'string' ||
+      !solutionPriceUnits.some(unit => unit === input.priceUnit)
+    )
+      return null;
+    result.priceUnit = input.priceUnit;
+  }
   if (input.setupTime !== undefined) {
     if (
       typeof input.setupTime !== 'string' ||
@@ -547,7 +611,8 @@ export type SolutionErrorCode =
   | 'demoUrlInvalid'
   | 'screenshotCaptionsTooShort'
   | 'foundersInvalid'
-  | 'projectLinksInvalid';
+  | 'projectLinksInvalid'
+  | 'priceIncomplete';
 export function solutionErrors(data: SolutionData, step?: number) {
   const errors: Partial<Record<keyof SolutionData, SolutionErrorCode>> = {};
   if (step === undefined || step === 0) {
@@ -587,6 +652,15 @@ export function solutionErrors(data: SolutionData, step?: number) {
   }
   if ((step === undefined || step === 2) && data.evidenceUrl && !safeSolutionUrl(data.evidenceUrl))
     errors.evidenceUrl = 'evidenceUrlInvalid';
+  // A price above zero needs its currency and what it pays for, or «Desde 500» would
+  // reach a buyer without saying 500 of what, or per what. A free plan (0) needs neither.
+  if (
+    (step === undefined || step === 2) &&
+    data.priceFrom !== undefined &&
+    data.priceFrom > 0 &&
+    (!data.priceCurrency || !data.priceUnit)
+  )
+    errors.priceFrom = 'priceIncomplete';
   if ((step === undefined || step === 1) && data.demoUrl && !safeSolutionUrl(data.demoUrl))
     errors.demoUrl = 'demoUrlInvalid';
   if (

@@ -36,7 +36,15 @@ import {
 } from '@/lib/recognition';
 import { Alert } from '@/components/ui/Field';
 import { daysSince, fmtBytes, fmtDate, fmtDateTime, fmtNumber, fmtPercent } from '@/lib/format';
-import { FIELD_LABELS, asList, asText, checklist, humanize, safeHref } from '@/lib/solution-fields';
+import {
+  FIELD_LABELS,
+  asList,
+  asText,
+  checklist,
+  humanize,
+  priceFromText,
+  safeHref,
+} from '@/lib/solution-fields';
 import { fieldChanges, wordDiff, type FieldChange } from '@/lib/diff';
 import { SOLUTION_REPORT_REASON, solutionStatus } from '@/lib/labels';
 import { choice, param, type SearchParams } from '@/lib/url';
@@ -223,6 +231,7 @@ function FichaTab({
             { label: 'Alcance', value: <Prose value={d.scope} />, wide: true },
             { label: 'Precio', value: <Prose value={d.pricing} />, wide: true },
             { label: 'Modelo de precio', value: <Chips values={asList(d.pricingModel)} /> },
+            { label: 'Precio de entrada', value: priceFromText(d) },
             {
               label: 'Rango de precio',
               value: asText(d.priceBand) ? humanize(asText(d.priceBand)) : null,

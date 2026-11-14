@@ -224,6 +224,12 @@ export const library = {
       evidence: 'Evidencia declarada',
     },
     missing: 'Sin información publicada.',
+    /** SHCWS-51: structured price rows, shown before the free-text price. */
+    price: {
+      from: 'Precio de entrada',
+      model: 'Modelo de contratación',
+      band: 'Rango de precio',
+    },
     demo: 'Demo o caso',
     viewEvidence: 'Ver evidencia ↗',
     noLink: 'Sin enlace publicado.',

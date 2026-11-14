@@ -5,6 +5,7 @@ export const catalog = {
     companySize: 'Tamaño de empresa',
     integrations: 'Se integra con',
     priceBand: 'Rango de precio',
+    pricingModel: 'Modelo de contratación',
     setupTime: 'Tiempo de arranque',
     compliance: 'Cumplimiento',
     format: 'Formato',

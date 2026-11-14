@@ -30,6 +30,9 @@ export const FIELD_LABELS: Record<string, string> = {
   integrationKeys: 'Integraciones declaradas',
   pricingModel: 'Modelo de precio',
   priceBand: 'Rango de precio',
+  priceFrom: 'Precio de entrada (monto)',
+  priceCurrency: 'Moneda del precio',
+  priceUnit: 'Qué paga el precio',
   setupTime: 'Tiempo de arranque',
   compliance: 'Cumplimiento',
 };
@@ -39,12 +42,24 @@ const VALUE_LABELS: Record<string, string> = {
   pyme: 'PyME (11–50)',
   mediana: 'Mediana (51–250)',
   corporativo: 'Corporativo (250+)',
-  'menos-1000': 'Menos de $1,000 MXN/mes',
-  'de-1000-a-5000': '$1,000–5,000 MXN/mes',
-  'de-5000-a-20000': '$5,000–20,000 MXN/mes',
-  'de-20000-a-50000': '$20,000–50,000 MXN/mes',
-  'mas-50000': 'Más de $50,000 MXN/mes',
+  // Same labels as the product (src/lib/taxonomy.ts): the bands are in US dollars.
+  'menos-1000': 'Menos de $50 USD/mes',
+  'de-1000-a-5000': '$50–$250 USD/mes',
+  'de-5000-a-20000': '$250–$1,000 USD/mes',
+  'de-20000-a-50000': '$1,000–$2,500 USD/mes',
+  'mas-50000': 'Más de $2,500 USD/mes',
+  'proyecto-menos-1000': 'Menos de $1,000 USD por proyecto',
+  'proyecto-1000-a-5000': '$1,000–$5,000 USD por proyecto',
+  'proyecto-5000-a-20000': '$5,000–$20,000 USD por proyecto',
+  'proyecto-20000-a-50000': '$20,000–$50,000 USD por proyecto',
+  'proyecto-mas-50000': 'Más de $50,000 USD por proyecto',
   'depende-alcance': 'Depende del alcance',
+  'suscripcion-mensual': 'Suscripción mensual',
+  'suscripcion-anual': 'Suscripción anual',
+  'pago-unico': 'Pago único',
+  'por-uso': 'Por uso o transacción',
+  comision: 'Comisión sobre operación',
+  'solo-cotizar': 'Solo a cotizar',
   'mismo-dia': 'El mismo día',
   'menos-semana': 'Menos de una semana',
   'una-a-cuatro-semanas': '1 a 4 semanas',
@@ -119,7 +134,11 @@ export function checklist(data: Record<string, unknown>): ChecklistItem[] {
     { label: 'Alcance y cuándo no encaja', done: has('scope') && has('notFor'), required: false },
     {
       label: 'Precio',
-      done: has('pricing') || asList(data.pricingModel).length > 0 || has('priceBand'),
+      done:
+        has('pricing') ||
+        asList(data.pricingModel).length > 0 ||
+        has('priceBand') ||
+        typeof data.priceFrom === 'number',
       required: false,
     },
     {
@@ -139,4 +158,16 @@ export function checklist(data: Record<string, unknown>): ChecklistItem[] {
       required: false,
     },
   ];
+}
+
+/**
+ * The declared «Desde» price as the founder entered it (SHCWS-51): amount, ISO currency
+ * and unit, never converted. Null when there is no amount.
+ */
+export function priceFromText(data: Record<string, unknown>): string | null {
+  if (typeof data.priceFrom !== 'number') return null;
+  if (data.priceFrom === 0) return 'Plan gratuito (0)';
+  const currency = asText(data.priceCurrency) || 'sin moneda';
+  const unit = asText(data.priceUnit) ? humanize(asText(data.priceUnit)) : 'sin modalidad';
+  return `${data.priceFrom.toLocaleString('es-MX')} ${currency} · ${unit}`;
 }

@@ -17,4 +17,8 @@ export const common = {
   domainVerified: 'Dominio verificado · {date}',
   domainVerifiedHint:
     'Probó con un registro TXT que controla el dominio de su sitio. No es una verificación de identidad legal ni del producto.',
+  /** SHCWS-51: the entry price on cards, the listing and the comparator ({price} = «$29 USD/mes»). */
+  priceFrom: 'Desde {price}',
+  /** A declared entry price of 0. */
+  priceFree: 'Plan gratuito',
 } as const;

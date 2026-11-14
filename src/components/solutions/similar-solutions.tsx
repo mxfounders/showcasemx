@@ -12,6 +12,7 @@ import {
 } from '@/lib/taxonomy';
 import { ProjectMark } from '@/components/project-mark';
 import { VerifiedMark } from '@/components/recognition/verified-mark';
+import { priceSummary } from '@/lib/solutions/pricing';
 
 export type SimilarSection = {
   items: Array<{ product: PublishedProduct; match: SimilarityMatch }>;
@@ -61,6 +62,7 @@ export function SimilarSolutions({
             ...match.categories.map(value => localizedCategoryDisplayLabel(value, locale)),
             ...match.industries.map(value => industryLabels[value] ?? value),
           ].slice(0, 2);
+          const price = priceSummary(product, locale);
           return (
             <Link
               key={product.detailUrl || product.name}
@@ -84,6 +86,7 @@ export function SimilarSolutions({
                 <p className="mt-3 line-clamp-2 text-[13px] leading-relaxed text-stone-500">
                   {product.description}
                 </p>
+                {price && <p className="mt-2 text-xs font-medium text-stone-700">{price}</p>}
                 {!!common.length && (
                   <p className="mt-3 text-xs text-stone-400">
                     {dict.similarCommon} {common.join(', ')}

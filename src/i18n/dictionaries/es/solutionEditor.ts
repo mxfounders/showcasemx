@@ -147,6 +147,8 @@ export const solutionEditor = {
       'Añade el nombre de cada persona y enlaces HTTP(S) válidos, o elimina los campos que no usarás.',
     projectLinksInvalid:
       'Completa los enlaces del proyecto con URLs HTTP(S) sin credenciales, o elimina los vacíos.',
+    priceIncomplete:
+      'Para mostrar tu precio de entrada, elige su moneda y qué paga: por mes, por proyecto…',
   },
   /** Keyed by `solutionQuestions[].id` (src/lib/solutions/questions.ts). */
   questions: {
@@ -211,7 +213,7 @@ export const solutionEditor = {
   sections: {
     screenshots: 'Muestra cómo se ve por dentro.',
     demo: 'Deja que lo vean en acción.',
-    pricing: 'Modelo, rango y condiciones.',
+    pricing: 'Desde cuánto, cómo se contrata y rango.',
     delivery: 'Tiempo de arranque y acompañamiento.',
     integrations: 'Con qué se conecta.',
     compliance: 'Normas que puedes sostener.',
@@ -333,7 +335,27 @@ export const solutionEditor = {
     projectLinksLabel: 'Redes y enlaces del proyecto',
     demoLabel: 'Enlace a la demo o recorrido',
     pricingModelLegend: 'Modelo de contratación · puedes elegir varios',
-    priceBandLegend: 'Rango de precio',
+    /** SHCWS-51: the «Desde» price and the USD bands of src/components/solutions/editor/price-fields.tsx. */
+    price: {
+      fromLegend: 'Precio de entrada',
+      fromHint:
+        'Lo mínimo con lo que se puede contratar, en tu moneda. Aparece como «Desde» en tu ficha, en el catálogo y en el comparador. Si tienes plan gratuito, escribe 0.',
+      amountLabel: 'Desde',
+      amountInvalid: 'Escribe un número mayor o igual a 0, sin símbolos.',
+      currencyLabel: 'Moneda',
+      currencyPlaceholder: 'Elige la moneda',
+      currencyFrequent: 'Más usadas',
+      currencyAll: 'Todas',
+      unitLabel: 'Qué paga',
+      unitPlaceholder: 'Elige la modalidad',
+      previewLabel: 'Así se verá:',
+      previewEmpty: 'Sin precio de entrada, la ficha muestra tu modelo o tu rango.',
+      noConversion:
+        'Lo mostramos en la moneda que elijas, sin convertirlo a otras. Por eso el rango de abajo va en dólares: sirve para filtrar entre monedas.',
+      monthlyBands: 'Rango mensual en dólares (USD)',
+      projectBands: 'Presupuesto por proyecto en dólares (USD)',
+      bandSuggestion: 'Según tu precio en dólares',
+    },
     setupTimeLegend: 'Tiempo de arranque',
     integrationsLegend: 'Herramientas',
     noIntegrations: 'No se conecta con otras herramientas',

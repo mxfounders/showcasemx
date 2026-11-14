@@ -352,7 +352,22 @@ export const priceBandEn: Record<string, string> = {
   'de-5000-a-20000': '$250–$1,000 USD/month',
   'de-20000-a-50000': '$1,000–$2,500 USD/month',
   'mas-50000': 'Over $2,500 USD/month',
+  'proyecto-menos-1000': 'Under $1,000 USD per project',
+  'proyecto-1000-a-5000': '$1,000–$5,000 USD per project',
+  'proyecto-5000-a-20000': '$5,000–$20,000 USD per project',
+  'proyecto-20000-a-50000': '$20,000–$50,000 USD per project',
+  'proyecto-mas-50000': 'Over $50,000 USD per project',
   'depende-alcance': 'Depends on scope',
+};
+
+// Same joining rule as the Spanish suffixes in taxonomy.ts: the leading character is kept.
+export const priceUnitEn: Record<string, string> = {
+  'suscripcion-mensual': '/month',
+  'suscripcion-anual': '/year',
+  'pago-unico': ', one-time',
+  'por-uso': ' per use',
+  'por-proyecto': ' per project',
+  'por-hora': '/hour',
 };
 
 export const setupTimeEn: Record<string, string> = {
