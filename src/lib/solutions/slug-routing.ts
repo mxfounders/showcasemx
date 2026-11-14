@@ -15,9 +15,11 @@ import { isSolutionSlug } from './slug';
 //
 // The middleware runs on every request, so it never queries per request: it keeps every
 // published slug in memory (a few bytes per listing) and reloads them at most once a
-// minute, or at most once a second while it meets slugs it does not know yet (a listing
-// published a moment ago). Only published listings are kept, so an unpublished slug is
-// unknown like any other.
+// minute, or at most every 15 seconds while it meets slugs it does not know yet (a listing
+// published a moment ago). Not faster: bots probing made-up paths would otherwise keep the
+// database awake (CLAUDE.md §79), and a listing that 404s for a few seconds after its
+// approval is the lesser cost. Only published listings are kept, so an unpublished slug
+// is unknown like any other.
 
 export type ListingRoute =
   { kind: 'page' } | { kind: 'redirect'; slug: string } | { kind: 'missing' };
@@ -62,7 +64,7 @@ export function routeListing(segment: string, snapshot: SlugSnapshot): ListingRo
 }
 
 const freshFor = 60_000;
-const missRetryAfter = 1_000;
+const missRetryAfter = 15_000;
 let state: { snapshot: SlugSnapshot | null; at: number } = { snapshot: null, at: 0 };
 let loading: Promise<SlugSnapshot | null> | null = null;
 

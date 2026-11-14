@@ -292,8 +292,9 @@ solo nombra la página: el UUID sigue siendo la identidad en guardados (`solutio
   al actual, conservando idioma, query (`?from=sponsored&ad=…`) y el sufijo de transporte de
   Next (`.rsc`); slug desconocido → **404** pequeño; sin idioma → 307 directo a
   `/<locale>/soluciones/<slug>`. Guarda en memoria los slugs publicados y los recarga como
-  mucho cada minuto, o cada segundo mientras ve slugs que no conoce (una ficha recién
-  publicada o renombrada). Ante cualquier duda (sin base, lectura fallida, UUID sin slug)
+  mucho cada minuto, o cada 15 segundos mientras ve slugs que no conoce (una ficha recién
+  publicada o renombrada; no más seguido para que los bots que prueban rutas inventadas no
+  mantengan despierta la base, §79). Ante cualquier duda (sin base, lectura fallida, UUID sin slug)
   deja pasar a la página, que también encuentra la ficha por UUID o slug anterior y
   redirige ella (redirección suave, bajo el `loading.tsx`).
 - **Dónde aparece el slug**: tarjetas del catálogo (`detailUrl`), canonical, hreflang,
