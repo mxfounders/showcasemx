@@ -1,5 +1,5 @@
 import { getSolutionCategories, safeSolutionUrl, type SolutionData } from './model';
-// English overrides for the public ficha's "Qué falta por declarar" disclosure
+// English overrides for the "Qué falta por declarar" disclosure (private preview only)
 // (the only place this renders outside the Spanish-only founder editor). Keyed
 // by `key`, same fallback-to-Spanish convention as src/lib/taxonomy-en.ts.
 const checklistEn: Record<string, { label: string; hint: string }> = {

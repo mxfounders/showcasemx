@@ -31,6 +31,7 @@ import { metrics } from './metrics';
 import { notifications } from './notifications';
 import { meta } from './meta';
 import { ads } from './ads';
+import { mediaKit } from './mediaKit';
 import { common } from './common';
 import { billing } from './billing';
 import { reviews } from './reviews';
@@ -78,6 +79,7 @@ export const es = {
   notifications,
   meta,
   ads,
+  mediaKit,
   common,
   billing,
   reviews,

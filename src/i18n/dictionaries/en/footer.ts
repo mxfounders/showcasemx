@@ -158,8 +158,8 @@ export const footer = {
               icon: 'mail',
             },
             {
-              label: 'Sponsor',
-              href: '/sponsor',
+              label: 'Advertise',
+              href: '/anunciate',
               icon: 'bolt',
             },
           ],

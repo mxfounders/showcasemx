@@ -304,3 +304,10 @@ solo nombra la página: el UUID sigue siendo la identidad en guardados (`solutio
   el UUID nunca caduca: correos y avisos, enlaces internos de reseñas, preguntas, contactos y
   alertas, y los `next=` de acceso.
 - Nunca derivar una identidad de `detailUrl`: los productos publicados llevan `solutionId`.
+
+## «Qué falta por declarar» solo dentro de la app — 14 noviembre 2026
+
+Decisión del propietario: la lista de lo que le falta a una ficha es tarea del fundador y
+ya no aparece en la ficha pública (antes se mostraba a cualquiera, §53). Se ve en la vista
+previa privada (`/account/solutions/<id>/preview`), en la guía del editor y en Inicio.
+`SolutionPresentation` solo la calcula con `preview`.
