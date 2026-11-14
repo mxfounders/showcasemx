@@ -135,6 +135,11 @@ export function CategoryExplorer({
   // Only real projects (SHCWS-38): a category with few of them ends with one card that
   // asks what the buyer needs, never with empty «available space» placeholders.
   const showBrief = results === null && products.length < 3;
+  // The editorial grid keeps nine places while browsing (§24): after the real projects
+  // (and the «Cuéntanos qué necesitas» card), the rest are «Espacio disponible» cards
+  // that invite founders to apply. Search results never show them.
+  const availableSlots =
+    results === null ? Math.max(0, 9 - products.length - (showBrief ? 1 : 0)) : 0;
 
   useEffect(() => {
     const grid = gridRef.current;
@@ -415,6 +420,36 @@ export function CategoryExplorer({
                   </span>
                 </Link>
               )}
+              {Array.from({ length: availableSlots }, (_, index) => {
+                const slot = products.length + (showBrief ? 1 : 0) + index + 1;
+                return (
+                  <Link
+                    key={`available-${category.id}-${index}`}
+                    href="/account/solutions/new"
+                    aria-label={dict.applySpaceLabel
+                      .replace('{category}', categoryLabel)
+                      .replace('{slot}', String(slot))}
+                    className="group flex h-[328px] min-w-0 flex-col justify-between rounded-[20px] border border-dashed border-stone-300 bg-stone-200/45 p-5 text-left transition-[background-color,border-color,transform] duration-300 hover:-translate-y-0.5 hover:border-stone-400 hover:bg-stone-200/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800 motion-reduce:transform-none sm:h-[340px]"
+                  >
+                    <span className="flex items-center justify-between text-[11px] uppercase tracking-[0.12em] text-stone-400">
+                      <span>{dict.availableSpace}</span>
+                      <span className="tabular-nums">{String(slot).padStart(2, '0')}</span>
+                    </span>
+                    <span>
+                      <span className="block max-w-[14rem] text-xl font-medium tracking-[-0.03em] text-stone-500">
+                        {dict.applySpaceTitle}
+                      </span>
+                      <span className="mt-4 inline-flex items-center gap-2 text-sm text-stone-500 transition-colors group-hover:text-stone-900">
+                        {dict.applySpaceBtn} {categoryLabel}
+                        <PlusIcon
+                          aria-hidden="true"
+                          className="size-4 transition-transform duration-300 group-hover:rotate-90 motion-reduce:transform-none"
+                        />
+                      </span>
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -429,6 +464,13 @@ export function CategoryExplorer({
                 </span>{' '}
                 {realCount}{' '}
                 {realCount === 1 ? dict.realSolutionsCount : dict.realSolutionsCountPlural}
+              </>
+            )}
+            {availableSlots > 0 && (
+              <>
+                {' '}
+                · {availableSlots}{' '}
+                {availableSlots === 1 ? dict.availableSlotsCount : dict.availableSlotsCountPlural}
               </>
             )}
           </span>

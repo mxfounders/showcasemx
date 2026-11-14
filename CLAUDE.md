@@ -3521,7 +3521,8 @@ El detalle de cada uno está en su issue y en docs/.
   oportunidad, métricas del fundador, revisión visible y despublicar la propia ficha.
 - Ficha pública (19, 50, 54, 55, 140): `utm` en enlaces de salida, «Pedir propuesta» como
   acción principal, compartir, parecidas por capacidades y reportar comentarios.
-- Catálogo (38, 41, 52, 131, 134): sin «Espacio disponible» en el home (sustituye §24),
+- Catálogo (38, 41, 52, 131, 134): tarjeta «Cuéntanos qué necesitas» para compradores. Los
+  «Espacio disponible» se quitaron y el propietario pidió volverlos (14 nov): siguen como en §24,
   búsqueda por raíz y temas, señal de respuesta del fundador, changelog real y dominio
   verificado en tarjetas. SHCWS-125 tiene la página `/nuevo`; falta el correo (SHCWS-124).
 - Ops (69, 96, 142, 162, y la parte de ops de 57 y 140): acciones sobre espacios

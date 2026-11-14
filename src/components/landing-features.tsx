@@ -92,10 +92,11 @@ export function LandingFeatures({
       conceptCategories[activeTab.id]?.some(category => p.categories?.includes(category)),
     )
     .slice(0, 16);
-  // Only real projects (SHCWS-38). A tab with few of them ends with one card asking what
-  // the buyer needs; the grid keeps its fixed, fading height only when it is full.
+  // Real projects first; a tab with few of them adds one card asking what the buyer needs
+  // (SHCWS-38), and the rest of the 16 places are «Espacio disponible» cards inviting
+  // founders to apply (§24, kept by the owner's decision).
   const showBrief = categoryProducts.length < 4;
-  const full = categoryProducts.length > 8;
+  const availableSlots = Math.max(0, 16 - categoryProducts.length - (showBrief ? 1 : 0));
 
   return (
     <section className="py-24 sm:py-32 overflow-hidden bg-transparent">
@@ -159,15 +160,11 @@ export function LandingFeatures({
           />
 
           <div
-            className={`relative z-10 w-full pointer-events-auto ${full ? 'h-[600px] sm:h-[750px] overflow-hidden' : ''}`}
-            style={
-              full
-                ? {
-                    maskImage: 'linear-gradient(to bottom, black 65%, transparent 100%)',
-                    WebkitMaskImage: 'linear-gradient(to bottom, black 65%, transparent 100%)',
-                  }
-                : undefined
-            }
+            className="relative z-10 h-[600px] sm:h-[750px] w-full overflow-hidden pointer-events-auto"
+            style={{
+              maskImage: 'linear-gradient(to bottom, black 65%, transparent 100%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, black 65%, transparent 100%)',
+            }}
           >
             <AnimatePresence mode="wait">
               <motion.div
@@ -176,9 +173,7 @@ export function LandingFeatures({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                className={
-                  full ? 'absolute inset-0 px-4 sm:px-12 pb-24' : 'relative px-4 pb-16 sm:px-12'
-                }
+                className="absolute inset-0 px-4 sm:px-12 pb-24"
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                   {categoryProducts.map((product, i) => (
@@ -285,6 +280,36 @@ export function LandingFeatures({
                       </span>
                     </Link>
                   )}
+                  {Array.from({ length: availableSlots }, (_, index) => {
+                    const slot = categoryProducts.length + (showBrief ? 1 : 0) + index + 1;
+                    return (
+                      <Link
+                        key={`empty-${slot}`}
+                        href="/account/solutions/new"
+                        aria-label={explorerDict.applySpaceLabel
+                          .replace('{category}', dict.features.tabs[activeTab.id])
+                          .replace('{slot}', String(slot))}
+                        className="rounded-3xl p-6 flex flex-col h-48 sm:h-52 bg-white/60 border border-dashed border-stone-300 backdrop-blur-md transition-all hover:bg-white hover:shadow-sm group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800"
+                      >
+                        <div className="flex justify-between text-[10px] font-bold text-stone-400 tracking-widest uppercase mb-auto">
+                          <span>{explorerDict.availableSpace}</span>
+                          <span>{String(slot).padStart(2, '0')}</span>
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-medium text-stone-600 mb-4 leading-tight group-hover:text-stone-900 transition-colors">
+                            {explorerDict.applySpaceTitle}
+                          </h4>
+                          <div
+                            className="text-[11px] font-bold flex items-center gap-1.5 transition-colors opacity-80 group-hover:opacity-100 uppercase tracking-wide"
+                            style={{ color: activeTab.color.solid }}
+                          >
+                            {explorerDict.applySpaceBtn} {dict.features.tabs[activeTab.id]}{' '}
+                            <span className="text-base font-medium leading-none mb-0.5">+</span>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
               </motion.div>
             </AnimatePresence>

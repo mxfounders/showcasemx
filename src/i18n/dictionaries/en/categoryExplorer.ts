@@ -11,6 +11,12 @@ export const categoryExplorer = {
   briefCardFew:
     "Don't see what you need in {category}? Tell us: a person on the shwcs team reads it.",
   briefPrefill: 'I am looking for a {category} solution:',
+  availableSpace: 'Available space',
+  applySpaceTitle: 'Your solution could be here',
+  applySpaceBtn: 'Apply in',
+  applySpaceLabel: 'Apply with a solution for {category}, slot {slot}',
+  availableSlotsCount: 'available slot',
+  availableSlotsCountPlural: 'available slots',
   briefCardCta: 'Describe what you need',
   solutionFor: 'for',
   clearBtn: 'Clear search',

@@ -20,6 +20,7 @@ export const changelog = {
     account: 'Cuenta',
   },
   months: {
+    november: 'Noviembre de 2026',
     october: 'Octubre de 2026',
     september: 'Septiembre de 2026',
     august: 'Agosto de 2026',
@@ -29,6 +30,54 @@ export const changelog = {
    * main, dated by the day it shipped. Work still on a branch stays out.
    */
   releases: {
+    conversations: {
+      date: '14 de noviembre de 2026',
+      label: 'Contactos',
+      title: 'Conversaciones con los proyectos',
+      summary:
+        'Después de pedir una propuesta, tú y el proyecto pueden escribirse dentro de shwcs sin perder el hilo.',
+      items: [
+        'Los dos lados escriben mensajes y arriba se ve a quién le toca responder.',
+        'Cada mensaje avisa a la otra parte en su cuenta y por correo.',
+        'Los proyectos ven qué oportunidades no han leído.',
+      ],
+    },
+    listings: {
+      date: '14 de noviembre de 2026',
+      label: 'Fichas',
+      title: 'Publica tu proyecto en minutos',
+      summary:
+        'Pegas el enlace de tu sitio y la ficha se llena con su nombre, descripción, portada y redes. Después son tres pasos para enviarla a revisión.',
+      items: [
+        '14 categorías y 15 industrias, y «¿No ves tu categoría?» para decirnos qué falta.',
+        '«Verificado por shwcs»: el equipo revisa el proyecto y la ficha lo muestra, sin pedirte el RFC.',
+        'Reconocimientos: Top de la semana por actividad verificada y Selección shwcs, elegida por el equipo.',
+        'Insignias para poner en tu sitio, en claro u oscuro y en los dos idiomas.',
+      ],
+    },
+    reviewInvites: {
+      date: '14 de noviembre de 2026',
+      label: 'Reseñas',
+      title: 'Más reseñas y preguntas en cada ficha',
+      summary:
+        'Los proyectos pueden invitar a sus clientes a reseñar, y cualquiera puede hacer una pregunta en la ficha.',
+      items: [
+        'Una reseña por invitación dice «Invitada por el proyecto» y pesa la mitad en el orden del catálogo.',
+        '«Contactó vía shwcs» marca la reseña de quien habló con el proyecto aquí, sin mostrar la conversación.',
+        'Preguntas públicas con la respuesta del proyecto.',
+      ],
+    },
+    alerts: {
+      date: '14 de noviembre de 2026',
+      label: 'Descubrimiento',
+      title: 'Avisos de lo que te interesa',
+      summary: 'Guarda una búsqueda y te avisamos cuando se publique algo que encaje.',
+      items: [
+        '«Avísame» en la búsqueda y en cada categoría; las administras en Mis alertas.',
+        'Sigue listas de la comunidad y a quienes las firman.',
+        'Cada lunes, los proyectos reciben «Tu semana en shwcs» con sus visitas, clics y lo que tienen pendiente.',
+      ],
+    },
     gota: {
       date: '23 de octubre de 2026',
       label: 'Diseño',

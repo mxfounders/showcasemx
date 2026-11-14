@@ -11,6 +11,13 @@ export const categoryExplorer = {
     '¿No ves lo que buscas en {category}? Escríbenos qué necesitas: lo lee una persona del equipo de shwcs.',
   briefPrefill: 'Busco una solución de {category}:',
   briefCardCta: 'Escribir mi necesidad',
+  /** «Espacio disponible» cards that fill the grid up to its fixed size (§24). */
+  availableSpace: 'Espacio disponible',
+  applySpaceTitle: 'Tu solución puede estar aquí',
+  applySpaceBtn: 'Postular en',
+  applySpaceLabel: 'Postular una solución para {category}, espacio {slot}',
+  availableSlotsCount: 'espacio disponible',
+  availableSlotsCountPlural: 'espacios disponibles',
   solutionFor: 'para',
   clearBtn: 'Limpiar búsqueda',
   option: 'opción',

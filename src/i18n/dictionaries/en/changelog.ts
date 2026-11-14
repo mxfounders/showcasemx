@@ -22,11 +22,60 @@ export const changelog = {
     account: 'Account',
   },
   months: {
+    november: 'November 2026',
     october: 'October 2026',
     september: 'September 2026',
     august: 'August 2026',
   },
   releases: {
+    conversations: {
+      date: 'November 14, 2026',
+      label: 'Contacts',
+      title: 'Conversations with projects',
+      summary:
+        'After you request a proposal, you and the project can write to each other inside shwcs without losing the thread.',
+      items: [
+        'Both sides write messages, and the top shows whose turn it is to reply.',
+        'Each message notifies the other side in their account and by email.',
+        'Projects see which opportunities they have not read yet.',
+      ],
+    },
+    listings: {
+      date: 'November 14, 2026',
+      label: 'Listings',
+      title: 'List your project in minutes',
+      summary:
+        'Paste your site’s link and the listing fills in its name, description, cover and social links. Then it takes three steps to send it for review.',
+      items: [
+        '14 categories and 15 industries, plus «Don’t see your category?» to tell us what is missing.',
+        '«Verified by shwcs»: the team reviews the project and the listing shows it, without asking for a tax ID.',
+        'Recognition: Top of the week, from verified activity, and the shwcs Pick, chosen by the team.',
+        'Badges for your site, light or dark, in both languages.',
+      ],
+    },
+    reviewInvites: {
+      date: 'November 14, 2026',
+      label: 'Reviews',
+      title: 'More reviews and questions on every listing',
+      summary:
+        'Projects can invite their customers to review them, and anyone can ask a question on the listing.',
+      items: [
+        'An invited review says «Invited by the project» and counts half in the catalog order.',
+        '«Contacted via shwcs» marks the review of someone who talked to the project here, without showing the conversation.',
+        'Public questions with the project’s answer.',
+      ],
+    },
+    alerts: {
+      date: 'November 14, 2026',
+      label: 'Discovery',
+      title: 'Alerts for what you care about',
+      summary: 'Save a search and we let you know when something that fits is published.',
+      items: [
+        '«Notify me» on search and on every category; manage them in My alerts.',
+        'Follow community lists and the people who sign them.',
+        'Every Monday, projects get «Your week on shwcs» with their visits, clicks and what is pending.',
+      ],
+    },
     gota: {
       date: 'October 23, 2026',
       label: 'Design',

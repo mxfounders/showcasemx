@@ -5,6 +5,7 @@ import Link from '@/i18n/navigation';
 import {
   ArrowRightIcon,
   BalanceScaleIcon,
+  BellIcon,
   BookOpenIcon,
   ChartComboIcon,
   CommentIcon,
@@ -18,6 +19,7 @@ import {
   ShieldIcon,
   SparklesIcon,
   StarIcon,
+  VerifiedIcon,
   ViewCarouselIcon,
   type GotaIcon,
 } from '@/components/icons/gota';
@@ -40,6 +42,22 @@ type Release = {
 
 // Newest first. Only releases that are live (SHCWS-131).
 const releases: readonly Release[] = [
+  {
+    id: 'conversations',
+    month: 'november',
+    category: 'panel',
+    accent: '#365DC4',
+    icon: CommentIcon,
+  },
+  { id: 'listings', month: 'november', category: 'panel', accent: '#416B50', icon: VerifiedIcon },
+  {
+    id: 'reviewInvites',
+    month: 'november',
+    category: 'community',
+    accent: '#88631B',
+    icon: StarIcon,
+  },
+  { id: 'alerts', month: 'november', category: 'product', accent: '#7753A5', icon: BellIcon },
   { id: 'gota', month: 'october', category: 'product', accent: '#365DC4', icon: SparklesIcon },
   { id: 'reviews', month: 'october', category: 'community', accent: '#88631B', icon: StarIcon },
   {
@@ -112,7 +130,7 @@ const releases: readonly Release[] = [
 ];
 
 // Month groups, newest first; the newest one gets the large, single-column cards.
-const releaseMonths: readonly ReleaseMonth[] = ['october', 'september', 'august'];
+const releaseMonths: readonly ReleaseMonth[] = ['november', 'october', 'september', 'august'];
 
 const releaseCategories: readonly CategoryId[] = [
   'all',
