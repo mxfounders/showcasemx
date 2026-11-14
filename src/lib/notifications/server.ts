@@ -1,6 +1,7 @@
 import { authSql } from '@/lib/auth/security';
 import { recoveryConfig } from '@/lib/auth/recovery';
-import { escapeHtml, renderEmailHtml } from '@/lib/notifications/email-template';
+import { composeNotice } from '@/lib/notifications/compose';
+import { securityNotice } from '@/lib/notifications/account-emails';
 import { welcomeEmail } from '@/lib/notifications/welcome-email';
 import { listingNotificationEmail, type ListingEvent } from '@/lib/notifications/listing-email';
 import { publicProducts } from '@/lib/solutions/public';
@@ -110,8 +111,7 @@ export async function deliverNotifications({
         continue;
       }
       const title = String(row.title),
-        href = `${config.origin}${row.href}`,
-        prefs = `${config.origin}/account/settings/notifications`;
+        href = `${config.origin}${row.href}`;
       let to: string[] = [String(recipient.email)];
       let email = {
         subject: title,
@@ -123,7 +123,8 @@ export async function deliverNotifications({
         text: `${title}.\n\nAbre tu cuenta para consultar los detalles.`,
       };
       let buttonHref = href,
-        footerNote = 'Puedes ajustar qué avisos te llegan por correo desde Preferencias de avisos.';
+        // The footer links to Preferencias de avisos (compose.ts); a note only says why.
+        footerNote = '';
       if (row.category === 'account' && String(row.source_key).startsWith('welcome:')) {
         // Only catalog pages that have listings today, busiest first.
         const counts = new Map<string, number>();
@@ -152,24 +153,7 @@ export async function deliverNotifications({
         footerNote = 'Te escribimos una sola vez, al terminar de crear tu cuenta.';
       }
       if (row.category === 'security') {
-        // What happened and on which device are in the title; this adds when. «No fui yo»
-        // leads to choosing a new password, which closes every open session
-        // (consumeReset); a GET link must never change anything by itself (CLAUDE.md §5).
-        const when = new Date(String(row.created_at)).toLocaleString('es-MX', {
-          dateStyle: 'long',
-          timeStyle: 'short',
-          timeZone: 'America/Mexico_City',
-        });
-        email = {
-          subject: title,
-          heading: title,
-          button: 'No fui yo',
-          paragraphs: [
-            `<strong>Cuándo:</strong> ${escapeHtml(when)} (hora del centro de México).`,
-            'Si fuiste tú, no tienes que hacer nada. Si no, elige una contraseña nueva ahora: eso cierra todas las sesiones abiertas de tu cuenta.',
-          ],
-          text: `${title}.\nCuándo: ${when} (hora del centro de México).\n\nSi no fuiste tú, elige una contraseña nueva: eso cierra todas las sesiones abiertas.`,
-        };
+        email = securityNotice(title, String(row.created_at));
         buttonHref = `${config.origin}/es/forgot-password`;
         footerNote = 'Los avisos de seguridad siempre se envían; no se pueden desactivar.';
       }
@@ -376,20 +360,23 @@ export async function deliverNotifications({
         )
           to = [...to, listing];
       }
-      const html = renderEmailHtml({
+      // Logo, «Preferencias de avisos» and, for what can be turned off, the one-click
+      // unsubscribe headers (SHCWS-161, compose.ts).
+      const message = composeNotice({
         origin: config.origin,
-        preheader: email.subject,
-        heading: email.heading,
-        paragraphs: email.paragraphs,
-        button: { label: email.button, href: buttonHref },
+        email,
+        buttonHref,
         footerNote,
+        category: String(row.category),
+        accountId: String(row.owner_id),
       });
       const provider = await sendEmail({
         to,
         subject: email.subject,
-        text: `${email.text}\n\n${email.button}: ${buttonHref}\n\nPreferencias de avisos: ${prefs}`,
-        html,
+        text: message.text,
+        html: message.html,
         idempotencyKey: String(row.id),
+        ...(message.headers ? { headers: message.headers } : {}),
       });
       await sql`UPDATE account_notifications SET email_state='sent',provider_id=${provider},locked_at=NULL WHERE id=${row.id}`;
       sent++;

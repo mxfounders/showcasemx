@@ -24,3 +24,6 @@ db/
 ops/.vercel/
 skills-lock.json
 *.tsbuildinfo
+
+# Golden HTML of each email (tests/email-notices.test.ts): compared byte for byte.
+tests/snapshots/
