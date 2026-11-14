@@ -7,11 +7,13 @@ export function validProjectKey(value: unknown): value is string {
       (value.startsWith('solution:') && isSolutionId(value.slice(9))))
   );
 }
-export function projectKey(product: { catalogId?: string; detailUrl?: string }) {
+// A published listing is saved by its UUID (solution:<uuid>), never by the slug in its
+// public URL: the slug can change, the saved project must not (SHCWS-101).
+export function projectKey(product: { catalogId?: string; solutionId?: string }) {
   if (product.catalogId && staticProjectIds.some(id => id === product.catalogId))
     return `catalog:${product.catalogId}`;
-  if (product.detailUrl?.startsWith('/soluciones/')) {
-    const key = `solution:${product.detailUrl.slice(12)}`;
+  if (product.solutionId) {
+    const key = `solution:${product.solutionId}`;
     if (validProjectKey(key)) return key;
   }
   const key = `catalog:${product.catalogId}`;

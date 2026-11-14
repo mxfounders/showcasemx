@@ -8,7 +8,7 @@ import { i18n, isLocale, localeHeader } from '@/i18n/config';
 import { getDictionary } from '@/i18n/get-dictionary';
 import type { Metadata } from 'next';
 
-// Some routes with data-driven notFound() (an arbitrary /soluciones/[id] or
+// Some routes with data-driven notFound() (an arbitrary /soluciones/[slug] or
 // /comunidad/[id] that doesn't exist) can't set a real 404 status code — a
 // Next.js limitation, not something fixable here: a loading.tsx on the route
 // streams a 200 shell before this boundary's own status could take effect

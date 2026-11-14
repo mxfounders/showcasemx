@@ -21,14 +21,14 @@ const data = {
 
 test('a listing is described with its public data and only a real rating', () => {
   const rated = solutionJsonLd({
-    id: 'abc',
+    path: '/soluciones/cord',
     locale: 'es',
     data,
     publishedAt: '2026-09-03 10:00:00+00',
     reviews: { count: 3, average: 4.666 },
   });
   assert.deepEqual(rated['@type'], ['SoftwareApplication', 'Product']);
-  assert.equal(rated.url, 'https://shwcs.site/es/soluciones/abc');
+  assert.equal(rated.url, 'https://shwcs.site/es/soluciones/cord');
   // Software carries category; a Service carries serviceType instead.
   assert.equal('category' in rated ? rated.category : undefined, 'Ventas, Cobros');
   assert.deepEqual(rated.aggregateRating, {
@@ -40,7 +40,7 @@ test('a listing is described with its public data and only a real rating', () =>
   });
   // No reviews: no rating at all, never a made-up one; no price is invented either.
   const unrated = solutionJsonLd({
-    id: 'abc',
+    path: '/soluciones/cord',
     locale: 'es',
     data,
     publishedAt: null,
@@ -52,7 +52,7 @@ test('a listing is described with its public data and only a real rating', () =>
   // Agencies and services are a Service.
   assert.equal(
     solutionJsonLd({
-      id: 'x',
+      path: '/soluciones/x',
       locale: 'en',
       data: { ...data, kind: 'Agencia' },
       publishedAt: null,

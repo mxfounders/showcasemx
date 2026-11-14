@@ -90,6 +90,7 @@ migración a object storage:
 49. db/community-follows.sql — seguir listas y curadores: `community_list_follows`, `community_curator_follows`, `community_list_announcements` y sus triggers (SHCWS-121); después de community-notices.sql
 50. db/solution-site-icons.sql — el logo que declara el sitio de cada ficha, copiado a Blob como WebP de 128 px, con sus triggers de recolección (SHCWS-177); después de media-storage.sql. El código funciona sin ella (sin logos de sitio). Aplicada en `neondb` y en `shwcs_production` (14 nov 2026)
 51. db/contact-reminders.sql — recordatorios a las 48 h y 5 días y «sin respuesta» a los 7: `contact_requests.unanswered_at` y dos índices parciales (SHCWS-61); después de contact-messages.sql y contact-outcomes.sql. `getContact`/`listContacts` y la señal de respuesta del catálogo leen la columna: aplicar antes de desplegar. Aplicada en `neondb` y en `shwcs_production` (14 nov 2026)
+52. db/solution-slugs.sql — URLs con nombre para las fichas (SHCWS-101): `founder_solutions.slug` (única, CHECK de forma), `solution_slug_history` y el trigger que guarda el slug anterior; rellena el de las fichas publicadas (Cord y Flouvia toman `cord`/`flouvia`). El catálogo, la ficha y el middleware leen la columna: aplicar antes de desplegar. Aplicada en `neondb` (14 nov 2026)
 
 db/solution-applications.sql es el intake anónimo retirado: no aplicarlo.
 Newsletter es independiente; segments depende de subscribers.
@@ -104,6 +105,8 @@ producción `shwcs_production`) se registra en CLAUDE.md al aplicarlas.
 - Solo published_data alimenta catálogo, ficha y comparador; nunca el borrador.
 - Categorías múltiples están en JSON; category conserva compatibilidad.
 - Guardados apuntan a catalog:cord, catalog:flouvia o solution:UUID, sin copiar ficha.
+- La ficha pública vive en /soluciones/<slug> (SHCWS-101); el slug solo nombra la página.
+  Guardados, contactos, métricas, anuncios e imágenes siguen identificando la ficha por UUID.
 - Consultas de biblioteca y solicitudes acotadas a la sesión; SQL sin caché para
   información actual. No compartir notas con el dueño del proyecto.
 - Reseñas: públicas solo con estado `published` y correo del autor verificado; el nivel

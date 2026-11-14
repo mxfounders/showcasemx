@@ -1,4 +1,5 @@
 import { getSolutionCategories, isSolutionId, type SolutionData } from '@/lib/solutions/model';
+import { isSolutionSlug } from '@/lib/solutions/slug';
 import { solutionsSql } from '@/lib/solutions/server';
 import { solutionCategoryTones } from '@/lib/brand-colors';
 import { localizedCategoryDisplayLabel } from '@/lib/taxonomy';
@@ -13,18 +14,24 @@ export const alt = 'shwcs';
 export default async function Image({
   params,
 }: {
-  params: Promise<{ id: string; locale: string }>;
+  params: Promise<{ slug: string; locale: string }>;
 }) {
-  const { id, locale } = await params;
+  const { slug, locale } = await params;
   const en = locale === 'en';
-  const [row] = isSolutionId(id)
-    ? await solutionsSql()`SELECT s.published_data - 'contactEmail' AS data,
+  // By slug, or by a UUID or old slug the middleware did not redirect (SHCWS-101).
+  const id = isSolutionId(slug) ? slug : null;
+  const [row] =
+    id || isSolutionSlug(slug)
+      ? await solutionsSql()`SELECT s.published_data - 'contactEmail' AS data,
         (SELECT count(*)::int FROM solution_reviews r JOIN auth_accounts a ON a.id=r.author_id
           WHERE r.solution_id=s.id AND r.status='published' AND a.email_verified_at IS NOT NULL AND r.author_id<>s.owner_id) AS reviews,
         (SELECT avg(r.rating)::float FROM solution_reviews r JOIN auth_accounts a ON a.id=r.author_id
           WHERE r.solution_id=s.id AND r.status='published' AND a.email_verified_at IS NOT NULL AND r.author_id<>s.owner_id) AS rating
-        FROM founder_solutions s WHERE s.id=${id} AND s.published_data IS NOT NULL`.catch(() => [])
-    : [];
+        FROM founder_solutions s WHERE s.published_data IS NOT NULL AND (s.id=${id}::uuid OR s.slug=${slug}
+          OR s.id=(SELECT h.solution_id FROM solution_slug_history h WHERE h.slug=${slug}))`.catch(
+          () => [],
+        )
+      : [];
   if (!row) return ogCard({ eyebrow: 'shwcs', title: 'shwcs' });
   const data = row.data as SolutionData;
   const categories = getSolutionCategories(data);

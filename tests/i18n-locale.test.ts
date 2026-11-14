@@ -45,8 +45,8 @@ test('requestLocale follows the page that issued the request before the browser 
   assert.equal(requestLocale(request({})), 'es');
 });
 
-test('middleware prefixes the locale and keeps the query string', () => {
-  const response = middleware(
+test('middleware prefixes the locale and keeps the query string', async () => {
+  const response = await middleware(
     new NextRequest('http://localhost:3000/sign-in?next=%2Faccount%2Fsaved', {
       headers: { 'accept-language': 'en' },
     }),
@@ -58,8 +58,8 @@ test('middleware prefixes the locale and keeps the query string', () => {
   );
 });
 
-test('middleware keeps the language of the page a bare internal link came from', () => {
-  const response = middleware(
+test('middleware keeps the language of the page a bare internal link came from', async () => {
+  const response = await middleware(
     new NextRequest('http://localhost:3000/account/saved', {
       headers: { referer: 'http://localhost:3000/en/account', 'accept-language': 'es' },
     }),
@@ -67,22 +67,22 @@ test('middleware keeps the language of the page a bare internal link came from',
   assert.equal(response.headers.get('location'), 'http://localhost:3000/en/account/saved');
 });
 
-test('middleware gives pages a single URL without a trailing slash', () => {
-  const localized = middleware(new NextRequest('http://localhost:3000/en/blog/?page=2'));
+test('middleware gives pages a single URL without a trailing slash', async () => {
+  const localized = await middleware(new NextRequest('http://localhost:3000/en/blog/?page=2'));
   assert.equal(localized.status, 308);
   assert.equal(localized.headers.get('location'), 'http://localhost:3000/en/blog?page=2');
-  const bare = middleware(
+  const bare = await middleware(
     new NextRequest('http://localhost:3000/account/', { headers: { 'accept-language': 'en' } }),
   );
   assert.equal(bare.headers.get('location'), 'http://localhost:3000/en/account');
-  const root = middleware(
+  const root = await middleware(
     new NextRequest('http://localhost:3000/', { headers: { 'accept-language': 'en' } }),
   );
   assert.equal(root.headers.get('location'), 'http://localhost:3000/en');
 });
 
-test('middleware forwards the route locale to the page as a request header', () => {
-  const response = middleware(new NextRequest('http://localhost:3000/en/blog'));
+test('middleware forwards the route locale to the page as a request header', async () => {
+  const response = await middleware(new NextRequest('http://localhost:3000/en/blog'));
   assert.equal(response.headers.get('x-middleware-request-x-locale'), 'en');
 });
 
