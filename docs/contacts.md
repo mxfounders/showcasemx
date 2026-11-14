@@ -13,6 +13,47 @@
 > documento dice «no hay chat» o «no hay mensajes fuera de transiciones», manda este
 > párrafo.
 
+> **Vigente desde el 14 de noviembre de 2026 (SHCWS-61): recordatorios y «sin
+> respuesta».** Una solicitud sin respuesta es la que el destinatario nunca tocó: ni un
+> mensaje ni un cambio de estado (siempre sigue «nueva»). El cron diario de correo
+> (`/api/internal/mail`, sin cron nuevo) ejecuta `runContactReminders()`
+> (`src/lib/contacts/reminders.ts`; reglas puras en `reminder-model.ts`):
+>
+> - **48 h**: aviso al destinatario «Recordatorio: {empresa} espera tu respuesta sobre
+>   {proyecto}» (`contact-reminder:<id>:48h`).
+> - **5 días**: segundo aviso, que dice qué pasa a los 7 (`contact-reminder:<id>:5d`).
+> - **7 días**: `contact_requests.unanswered_at` y aviso al comprador «{proyecto} no
+>   respondió a tu solicitud» (`contact-unanswered:<id>`), con hasta tres soluciones
+>   parecidas (`pickSimilar` sobre el catálogo orgánico, nunca la misma ficha, una propia
+>   del comprador ni una que ya contactó) y siempre el enlace a
+>   `/contacto?motivo=find&necesidad=Busco algo parecido a {proyecto}`; sin parecidas,
+>   ese enlace es el botón. La necesidad del comprador nunca viaja en la URL.
+>
+> Como el cron corre una vez al día, «48 h» es la primera ejecución después de las 48 h
+> (hasta un día más tarde). Cada ejecución solo actúa sobre el último paso vencido: si
+> faltó una semana, no manda el aviso de 48 h al quinto día. El aviso al comprador solo se
+> escribe si el paso venció hace menos de una semana; una solicitud más vieja (primera
+> ejecución en un entorno nuevo) se marca en silencio. Es idempotente: `source_key` es
+> único y `unanswered_at` solo se escribe si sigue vacío, así que repetir no envía nada
+> dos veces. Es *best-effort*: si falla, el cron lo registra y sigue. Los avisos usan la
+> categoría `contact`: siguen la preferencia de correo de contacto y solo llegan a
+> correos verificados; el destinatario suspendido no recibe recordatorios. El correo se
+> arma al enviarse: si el destinatario ya respondió, se marca `skipped`. Los
+> recordatorios del fundador van también a la dirección privada de la ficha, como la
+> solicitud original.
+>
+> «Sin respuesta» **no es un estado**: la solicitud sigue «nueva», el destinatario puede
+> responder y el comprador retirarla. Ambos ven la etiqueta en la bandeja y en el detalle
+> mientras el destinatario no haya escrito; el comprador ve además las alternativas
+> («Mientras tanto, alternativas parecidas»). Una respuesta tardía quita la etiqueta;
+> `unanswered_at` se queda como registro. En la señal de respuesta del proyecto, una
+> solicitud marcada cuenta como no respondida aunque el comprador la retire después
+> (antes, retirar la sacaba del cálculo); una respuesta tardía cuenta como respondida, con
+> su tiempo lento en la mediana. Ops la ve en `/panel/contactos` (solo metadatos).
+> Migración `db/contact-reminders.sql`. Pruebas: `tests/contact-reminders.test.ts` y
+> `RUN_CONTACT_REMINDERS_INTEGRATION=1 npx tsx --env-file=<repo>/.env.local
+> tests/integration/contact-reminders.ts` (opcional `APP_ORIGIN` y `RESEND_TEST_EMAILS=1`).
+
 > Actualización vigente, 31 agosto 2026: [launch.md](launch.md) incorpora avisos y
 > verificación de correo, OAuth Google preparado, TXT de dominio, reportes/retirada
 > y métricas. La migración launch-foundation.sql está aplicada a la base configurada.

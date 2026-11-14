@@ -138,6 +138,11 @@ export type ContactRequest = {
   outcome_value: OutcomeValue | null;
   /** Recipient-only: whether the buyer did something the recipient has not opened yet. */
   unread: boolean;
+  /**
+   * Marked «sin respuesta» after 7 days without a reply and still unanswered (SHCWS-61).
+   * Both sides see it; a late reply removes it.
+   */
+  unanswered: boolean;
 };
 /**
  * What came of a closed opportunity (SHCWS-22). Private to the recipient: never shown to

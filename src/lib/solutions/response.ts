@@ -36,7 +36,8 @@ export async function responseSignals(solutionId?: string): Promise<Map<string, 
     WHERE r.created_at>now()-make_interval(days=>${responseWindowDays})
       AND r.buyer_id<>r.recipient_id
       AND (${solutionId ?? null}::uuid IS NULL OR r.solution_id=${solutionId ?? null}::uuid)
-      AND (f.first_at IS NOT NULL OR (r.status<>'withdrawn' AND r.created_at<now()-interval '72 hours'))
+      AND (f.first_at IS NOT NULL OR r.unanswered_at IS NOT NULL
+        OR (r.status<>'withdrawn' AND r.created_at<now()-interval '72 hours'))
     GROUP BY r.solution_id`.catch(() => []);
   const signals = new Map<string, ResponseSignal>();
   for (const row of rows) {

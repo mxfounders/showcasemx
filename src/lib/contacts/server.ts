@@ -17,6 +17,11 @@ import {
  * last opened or answered it. `r` must alias contact_requests (SHCWS-14).
  */
 const unreadSql = `EXISTS(SELECT 1 FROM contact_events e WHERE e.request_id=r.id AND e.actor_id=r.buyer_id AND e.created_at>coalesce(r.recipient_read_at,'-infinity'::timestamptz))`;
+/**
+ * Marked «sin respuesta» by the reminder pass (SHCWS-61) and still without a word from
+ * the recipient: a late reply removes the label. `r` must alias contact_requests.
+ */
+const unansweredSql = `(r.unanswered_at IS NOT NULL AND NOT EXISTS(SELECT 1 FROM contact_events e WHERE e.request_id=r.id AND e.actor_id=r.recipient_id))`;
 
 export async function contactTarget(solutionId: string) {
   const sql = solutionsSql();
@@ -34,7 +39,8 @@ export async function getContact(id: string, account: string) {
       a.email AS buyer_account_email,a.email_verified_at::text AS buyer_email_verified_at,
       CASE WHEN r.recipient_id=$2 THEN r.outcome END AS outcome,
       CASE WHEN r.recipient_id=$2 THEN r.outcome_value END AS outcome_value,
-      (r.recipient_id=$2 AND ${unreadSql}) AS unread
+      (r.recipient_id=$2 AND ${unreadSql}) AS unread,
+      ${unansweredSql} AS unanswered
     FROM contact_requests r LEFT JOIN auth_accounts a ON a.id=r.buyer_id
     WHERE r.id=$1 AND (r.buyer_id=$2 OR r.recipient_id=$2)`,
     [id, account],
@@ -68,6 +74,8 @@ export type ContactRow = {
   buyer_email_verified_at: string | null;
   /** Incoming only: whether the buyer did something the recipient has not opened. */
   unread: boolean;
+  /** Marked «sin respuesta» and still unanswered (SHCWS-61). */
+  unanswered: boolean;
 };
 /**
  * One page of a person's requests. Incoming adds the read state, an «unread» filter and
@@ -97,7 +105,7 @@ export async function listContacts(
       coalesce(r.details->>'size','') AS size,coalesce(r.details->>'timeline','') AS timeline,
       coalesce(r.details->>'budget','') AS budget,left(coalesce(r.details->>'need',''),400) AS need,
       r.buyer_email,a.email AS buyer_account_email,a.email_verified_at::text AS buyer_email_verified_at,
-      ${unread} AS unread
+      ${unread} AS unread,${unansweredSql} AS unanswered
     FROM contact_requests r LEFT JOIN auth_accounts a ON a.id=r.buyer_id
     WHERE ${owner}=$1 AND ${filter}
     ORDER BY ${incoming ? 'unread DESC,' : ''}r.updated_at DESC,r.id LIMIT 21 OFFSET $2`,

@@ -12,6 +12,10 @@ import { commonText } from '@/i18n/common';
  *   carries a reply the buyer sees, CLAUDE.md §9).
  * - Not counted yet: a request still unanswered within its first 72 hours (too early to
  *   call it unanswered), and one the buyer withdrew before any reply.
+ * - Except: a request marked «sin respuesta» after 7 days (SHCWS-61,
+ *   contact_requests.unanswered_at) always counts as unanswered, even if the buyer gave
+ *   up and withdrew it afterwards. A late reply still turns it into an answered one, with
+ *   its slow time in the median.
  */
 export interface ResponseSignal {
   /** Median hours from the request to the first reply; null when none was answered. */

@@ -19,6 +19,7 @@ export default async function OpportunityPage(props: {
       locale={params.locale}
       dict={dictionary.contacts}
       threadDict={dictionary.contactThread}
+      similarDict={dictionary.solution}
     />
   );
 }

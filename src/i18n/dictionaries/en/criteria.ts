@@ -47,7 +47,7 @@ export const criteria = {
   communityOrder:
     "Community lists sorted by «Popular» follow the same rules: likes, saves and comments count only from accounts with a verified email, never from the list's maker, and they lose weight over time.",
   responseNote:
-    "Once a project has received at least 3 contact requests from accounts with a verified email in the last 90 days, its listing and cards say how long it usually takes to reply (the median time to the first reply) and how many it answered. «Replies fast» marks those who answer at least 8 in 10 with that median at 48 h or less. Requests from the last 72 hours still waiting for a reply don't count, nor those the buyer withdrew before getting one.",
+    "Once a project has received at least 3 contact requests from accounts with a verified email in the last 90 days, its listing and cards say how long it usually takes to reply (the median time to the first reply) and how many it answered. «Replies fast» marks those who answer at least 8 in 10 with that median at 48 h or less. Requests from the last 72 hours still waiting for a reply don't count, nor those the buyer withdrew before getting one, unless they had already gone 7 days without a reply: those are marked «no reply» and always count.",
   weights: {
     review: {
       label: 'Review',

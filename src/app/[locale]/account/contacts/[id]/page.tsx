@@ -18,6 +18,7 @@ export default async function ContactPage(props: {
       locale={params.locale}
       dict={dictionary.contacts}
       threadDict={dictionary.contactThread}
+      similarDict={dictionary.solution}
     />
   );
 }
