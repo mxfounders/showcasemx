@@ -28,6 +28,11 @@ export function siteImageKey(solutionId: string, fetchId: string): string {
   return `solutions/${solutionId}/site/${fetchId}.webp`;
 }
 
+// The site's logo (SHCWS-177): like the cover, a fresh id per (re-)read.
+export function siteIconKey(solutionId: string, fetchId: string): string {
+  return `solutions/${solutionId}/icon/${fetchId}.webp`;
+}
+
 export function avatarKey(accountId: string, uploadId: string): string {
   return `accounts/${accountId}/avatar/${uploadId}.webp`;
 }

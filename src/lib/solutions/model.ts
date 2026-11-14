@@ -303,6 +303,8 @@ export type FounderSolution = {
   editor_question?: string | null;
   has_site_image?: boolean;
   site_image_failure?: string | null;
+  /** The logo read from the same site is stored (SHCWS-177, src/lib/solutions/site-icon.ts). */
+  has_site_icon?: boolean;
   /** Approved at some point, even if unpublished since: never deletable (SHCWS-32). */
   was_published?: boolean;
 };

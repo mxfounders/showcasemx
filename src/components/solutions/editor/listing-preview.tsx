@@ -14,6 +14,7 @@ export function ListingPreview({
   kind,
   host,
   cover,
+  icon,
   categories,
   reading,
   coverAlt,
@@ -27,6 +28,8 @@ export function ListingPreview({
   host: string;
   /** A URL we serve (screenshot or the site's cover), or null for the lettered cover. */
   cover: string | null;
+  /** The logo read from the site, served by us; null shows the initial. */
+  icon: string | null;
   categories: { value: string; label: string }[];
   /** While the site is being read: the card shows a shimmer instead of stale text. */
   reading: boolean;
@@ -75,12 +78,23 @@ export function ListingPreview({
           )}
         </div>
         <div className="flex items-center gap-2.5 px-1 pt-4">
-          <span
-            className="flex size-8 shrink-0 items-center justify-center rounded-[9px] text-sm font-semibold text-white"
-            style={{ backgroundColor: tone.solid }}
-          >
-            {shown.slice(0, 1)}
-          </span>
+          {icon ? (
+            <Image
+              src={icon}
+              alt=""
+              width={32}
+              height={32}
+              unoptimized
+              className="size-8 shrink-0 rounded-[9px] object-contain"
+            />
+          ) : (
+            <span
+              className="flex size-8 shrink-0 items-center justify-center rounded-[9px] text-sm font-semibold text-white"
+              style={{ backgroundColor: tone.solid }}
+            >
+              {shown.slice(0, 1)}
+            </span>
+          )}
           <span
             className={`truncate text-[20px] font-semibold tracking-[-0.03em] ${name.trim() ? 'text-stone-900' : 'text-stone-300'}`}
           >

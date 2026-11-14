@@ -62,6 +62,12 @@ export async function GET(request: NextRequest) {
            OR EXISTS (SELECT 1 FROM solution_media_files f WHERE f.storage_key = o.key)
            OR EXISTS (SELECT 1 FROM solution_site_images i WHERE i.storage_key = o.key)
            OR EXISTS (SELECT 1 FROM auth_accounts a        WHERE a.avatar_key  = o.key)`;
+      // Site logos (db/solution-site-icons.sql) in their own statement: a database
+      // without that migration has no logo keys to protect, and must still sweep.
+      await sweepSql`DELETE FROM storage_orphans o
+        WHERE EXISTS (SELECT 1 FROM solution_site_icons c WHERE c.storage_key = o.key)`.catch(
+        () => undefined,
+      );
       // Lease a batch. attempts increments at lease time, so a run that dies
       // mid-batch still burns an attempt and cannot loop forever.
       const leased = await sweepSql`UPDATE storage_orphans SET attempts = attempts + 1,

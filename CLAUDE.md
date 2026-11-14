@@ -3688,3 +3688,26 @@ build y la misma prueba en vivo en verde.
   alertas.
 - Pendiente: favicon automático para cualquier ficha (leerlo del sitio como la og:image,
   §50). Hoy solo Cord y Flouvia tienen logo propio; las demás muestran su inicial.
+
+## 82. Logo automático de cada ficha — 14 noviembre 2026
+
+SHCWS-177. Contrato completo en docs/listings.md («Logo automático desde el sitio»).
+
+- La misma lectura que toma la portada (`POST /api/solutions/[id]/site-image`) lee
+  también el logo que declara el sitio: PNG cerca de 192 px, apple-touch-icon, SVG,
+  PNG pequeño o `favicon.ico`, con `/apple-touch-icon.png` y `/favicon.ico` como
+  respaldo. Sharp lo deja en WebP de hasta 128 px (`src/lib/solutions/site-icon.ts`),
+  se guarda en Blob y en `solution_site_icons`, y se sirve desde shwcs
+  (`/api/solutions/[id]/site-icon`). Por privacidad, el navegador nunca lo pide al sitio
+  ajeno (§62).
+- El catálogo, el inicio, la búsqueda y la vista previa del editor muestran ese logo. El
+  arte local de Cord y Flouvia sigue primero; sin logo, la inicial.
+- La protección contra SSRF quedó compartida en `src/lib/net/guarded-fetch.ts`. Además,
+  la lectura del sitio ahora acepta páginas de hasta 2 MB y busca la `og:image` y los
+  íconos también después del `<head>`, donde los ponen los sitios con metadatos en
+  streaming. Linear, Stripe, GitHub, Vercel y HubSpot no daban portada; ahora dan
+  portada y logo.
+- Migración `db/solution-site-icons.sql` (orden 50): aplicada solo en `neondb`. **Falta en
+  `shwcs_production`**: esta sesión no tuvo permiso para aplicarla. El código funciona
+  sin ella (los logos de sitio simplemente no aparecen hasta aplicarla); comprobado
+  renombrando la tabla en desarrollo.

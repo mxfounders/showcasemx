@@ -88,6 +88,7 @@ migración a object storage:
 47. db/ad-self-serve.sql — compra de espacios en una pantalla: códigos promocionales y descuento, lista de espera, alcance por ubicación y atribución de visitas y solicitudes desde un espacio patrocinado (SHCWS-70/72/75/77/150); después de contact-requests.sql y listing-notices.sql
 48. db/search-alerts.sql — alertas de búsqueda guardada: categoría de aviso `alert`, preferencia `alert_email`, `search_alerts` y `search_alert_matches` (SHCWS-47); después de community-notices.sql. `deliverNotifications` lee `alert_email`: aplicar antes de desplegar
 49. db/community-follows.sql — seguir listas y curadores: `community_list_follows`, `community_curator_follows`, `community_list_announcements` y sus triggers (SHCWS-121); después de community-notices.sql
+50. db/solution-site-icons.sql — el logo que declara el sitio de cada ficha, copiado a Blob como WebP de 128 px, con sus triggers de recolección (SHCWS-177); después de media-storage.sql. El catálogo y las fichas del dueño lo consultan: aplicar antes de desplegar
 
 db/solution-applications.sql es el intake anónimo retirado: no aplicarlo.
 Newsletter es independiente; segments depende de subscribers.

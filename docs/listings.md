@@ -109,10 +109,13 @@ cada salto se valida en `src/lib/solutions/site-image.ts`:
   `169.254.169.254`, la de metadatos de nube), CGNAT y las equivalentes IPv6,
   incluidas las direcciones IPv4 mapeadas.
 - Redirecciones seguidas a mano, máximo tres, revalidando el host en cada salto.
-- Tiempos de espera de 6 s (HTML) y 8 s (imagen); topes de 512 KB de HTML y 5 MB
-  de imagen, cortando el flujo al superarlos.
-- Solo se leen `og:image`, sus variantes y `twitter:image`, y únicamente dentro
-  del `<head>`.
+- Tiempos de espera de 6 s (HTML) y 8 s (imagen); topes de 2 MB de HTML (lo que
+  sobra se corta, no se rechaza la página) y 5 MB de imagen.
+- Solo se leen `og:image`, sus variantes y `twitter:image`: primero en el `<head>` y,
+  si no están ahí, en el resto de la página, donde los ponen los sitios que mandan los
+  metadatos en streaming (React 19, Next.js). Las del `<head>` siempre ganan.
+  `<title>` solo cuenta dentro del `<head>`: en el cuerpo suele ser la etiqueta de
+  un SVG.
 
 **Límite conocido y no disimulado**: la comprobación de DNS ocurre antes de la
 petición, y un nombre podría resolver a otra dirección entre la comprobación y la
@@ -120,6 +123,40 @@ conexión (TOCTOU). Cerrarlo del todo exige conectar contra la IP ya validada co
 la cabecera Host correcta; no está hecho. El riesgo queda acotado por el resto de
 guardas y porque la respuesta nunca se devuelve al cliente: solo se guarda una
 imagen reencodificada.
+
+## Logo automático desde el sitio — 14 noviembre 2026 (SHCWS-177)
+
+La misma lectura que toma la portada lee también el logo que declara el sitio, así
+que cada ficha muestra su marca en el catálogo, el inicio, la búsqueda y la vista
+previa del editor, en vez de su inicial.
+
+- Candidatos del `<head>`, de mejor a peor: un PNG declarado cerca de 192 px (un
+  `apple-touch-icon` cuenta como 180), luego SVG, luego PNG pequeños y `favicon.ico`.
+  Después, `/apple-touch-icon.png` y `/favicon.ico` aunque no estén declarados.
+  `mask-icon` se ignora: es una silueta de un color. Como mucho tres descargas.
+- `src/lib/solutions/site-icon.ts`: Sharp lo normaliza a un WebP cuadrado de hasta
+  128 px, con fondo transparente y como máximo 64 KB. Un SVG se rasteriza (nunca se
+  sirve como SVG); una animación queda en su primer cuadro; un `.ico` se abre a mano,
+  porque Sharp no lo lee (PNG interno o mapas de bits de 24/32 bits). Menos de 32 px se
+  descarta: el navegador lo convertiría en un borrón y la inicial se ve mejor.
+- Se guarda en Blob con clave nueva en cada lectura (`solutions/{id}/icon/{uuid}.webp`)
+  y una fila en `solution_site_icons`. Sus triggers encolan el blob anterior en
+  `storage_orphans` al reemplazarlo o al borrar la ficha o la cuenta. El borrado de
+  cuenta no lo elimina en línea como la portada: lo recoge el barrido diario.
+- Si una lectura no encuentra logo, se conserva el anterior, salvo que la ficha ahora
+  apunte a otro sitio; en ese caso se borra, porque ya no es su logo.
+- `GET /api/solutions/[id]/site-icon` sigue las reglas de la portada: público con la
+  ficha publicada, solo el dueño en borrador y 404 vacío en cualquier otro caso. No es
+  `immutable`, porque el dueño puede volver a leer el sitio.
+- El arte local de Cord y Flouvia sigue teniendo prioridad (`staticArtFor()`).
+
+Páginas largas: muchos sitios mandan más de 512 KB de HTML con CSS y JS en línea, y
+los que hacen streaming de metadatos ponen la `og:image` y los íconos después del
+`<head>` (en linear.app, a unos 960 KB del inicio). Antes eso daba `pageTooLarge`, o se
+ignoraban esas etiquetas, y la ficha se quedaba sin portada ni logo. Ahora se leen los
+primeros 2 MB y se busca primero en el `<head>` y después en el resto de la página.
+Comprobado el 14 de noviembre con cordhq.app, flouvia.com, linear.app, stripe.com,
+github.com, notion.so, vercel.com y hubspot.com: los ocho dan portada y logo.
 
 ## Carrusel de la ficha y portadas — 3 septiembre 2026
 

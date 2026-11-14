@@ -27,13 +27,17 @@ export async function getOwnedSolutions(owner: string) {
 // ops backoffice (ops.shwcs.site), which queries the database with its own session.
 export async function getSolution(id: string, owner: string) {
   const sql = solutionsSql();
-  const rows =
-    await sql`SELECT s.id,s.owner_id,s.data,s.status,s.step,s.version,s.published_data,s.published_at::text,s.editor_question,s.updated_at::text,
+  const [rows, icon] = await Promise.all([
+    sql`SELECT s.id,s.owner_id,s.data,s.status,s.step,s.version,s.published_data,s.published_at::text,s.editor_question,s.updated_at::text,
  EXISTS(SELECT 1 FROM solution_site_image_ready r WHERE r.solution_id=s.id) AS has_site_image,i.failure AS site_image_failure,
  (s.published_data IS NOT NULL OR s.catalog_key IS NOT NULL OR EXISTS(SELECT 1 FROM solution_events e WHERE e.solution_id=s.id AND e.status='published')) AS was_published
  FROM founder_solutions s LEFT JOIN solution_site_images i ON i.solution_id=s.id
- WHERE s.id=${id} AND s.owner_id=${owner}`;
-  return (rows[0] as FounderSolution | undefined) ?? null;
+ WHERE s.id=${id} AND s.owner_id=${owner}`,
+    // Its own query: a database without db/solution-site-icons.sql only loses the logo.
+    sql`SELECT 1 FROM solution_site_icons WHERE solution_id=${id}`.catch(() => []),
+  ]);
+  const solution = (rows[0] as FounderSolution | undefined) ?? null;
+  return solution && { ...solution, has_site_icon: icon.length > 0 };
 }
 export async function getEvents(id: string) {
   const sql = solutionsSql();

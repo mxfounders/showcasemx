@@ -6,8 +6,9 @@ import { solutionsSql } from '@/lib/solutions/server';
 import { isSolutionId, safeSolutionUrl, type SolutionData } from '@/lib/solutions/model';
 import { failure } from '@/lib/solutions/http';
 import { fetchSiteImage } from '@/lib/solutions/site-image';
+import type { SiteIcon } from '@/lib/solutions/site-icon';
 import { storageEnabled, putObject, getObject } from '@/lib/storage/blob';
-import { siteImageKey } from '@/lib/storage/keys';
+import { siteIconKey, siteImageKey } from '@/lib/storage/keys';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { requestLocale } from '@/i18n/negotiate';
 export const runtime = 'nodejs';
@@ -84,6 +85,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
     if (!website) return failure(t.addWebsiteFirst, 400);
 
     const result = await fetchSiteImage(website);
+    const icon = await storeIcon(sql, params.id, website, result.icon);
     if (!result.ok) {
       // The failure branch never touches storage_key: the AFTER UPDATE OF
       // storage_key trigger does not fire, so a working cover is not orphaned
@@ -92,7 +94,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
         VALUES (${params.id}, ${website}, NULL, NULL, NULL, ${result.failure}, now())
         ON CONFLICT (solution_id) DO UPDATE SET source_url = EXCLUDED.source_url, failure = EXCLUDED.failure, fetched_at = now()`;
       return NextResponse.json(
-        { ok: false, failure: result.failure, meta: result.meta ?? null },
+        { ok: false, failure: result.failure, meta: result.meta ?? null, icon },
         { status: 200, headers: { 'Cache-Control': 'no-store' } },
       );
     }
@@ -117,10 +119,50 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
       return failure(t.coverSaveFailed, 503);
     }
     return NextResponse.json(
-      { ok: true, imageUrl, width, height, meta: result.meta },
+      { ok: true, imageUrl, width, height, meta: result.meta, icon },
       { headers: { 'Cache-Control': 'no-store' } },
     );
   } catch {
     return failure(t.coverReadFailed, 503);
+  }
+}
+
+/**
+ * Keeps the site's logo next to its cover (SHCWS-177) and says whether the listing has
+ * one now. Best-effort: nothing here fails the read. A read that finds no logo keeps
+ * the previous one, unless the listing now points at another site, whose logo it is not.
+ */
+async function storeIcon(
+  sql: ReturnType<typeof solutionsSql>,
+  solutionId: string,
+  website: string,
+  icon: SiteIcon | null | undefined,
+): Promise<boolean> {
+  try {
+    if (!icon) {
+      await sql`DELETE FROM solution_site_icons WHERE solution_id = ${solutionId} AND source_url <> ${website}`;
+      const [kept] = await sql`SELECT 1 FROM solution_site_icons WHERE solution_id = ${solutionId}`;
+      return Boolean(kept);
+    }
+    // A fresh key per read: the UPSERT changes storage_key and the trigger orphans the
+    // previous blob (same rule as the cover above).
+    const key = siteIconKey(solutionId, randomUUID());
+    const checksum = createHash('sha256').update(icon.buffer).digest('hex');
+    await putObject(key, icon.buffer);
+    try {
+      await sql`INSERT INTO solution_site_icons (solution_id, source_url, icon_url, storage_key, bytes, checksum, size, fetched_at)
+        VALUES (${solutionId}, ${website}, ${icon.iconUrl}, ${key}, ${icon.buffer.length}, ${checksum}, ${icon.size}, now())
+        ON CONFLICT (solution_id) DO UPDATE SET source_url = EXCLUDED.source_url, icon_url = EXCLUDED.icon_url,
+          storage_key = EXCLUDED.storage_key, bytes = EXCLUDED.bytes, checksum = EXCLUDED.checksum,
+          size = EXCLUDED.size, fetched_at = now()`;
+      return true;
+    } catch {
+      try {
+        await sql`INSERT INTO storage_orphans(key) VALUES(${key}) ON CONFLICT(key) DO NOTHING`;
+      } catch {}
+      return false;
+    }
+  } catch {
+    return false;
   }
 }

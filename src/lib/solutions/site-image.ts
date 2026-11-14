@@ -1,7 +1,10 @@
-import { lookup } from 'node:dns/promises';
-import { isIP } from 'node:net';
 import sharp from 'sharp';
 import type { PublicLink } from './profile';
+import { fetchSiteIcon, type SiteIcon } from './site-icon';
+import { guardedFetch, readCapped } from '@/lib/net/guarded-fetch';
+import { headOf, metadataScopes } from './page-scopes';
+
+export { isPrivateAddress } from '@/lib/net/guarded-fetch';
 
 /**
  * Reads the og:image of a project's own website so a ficha has a cover from the
@@ -12,20 +15,17 @@ import type { PublicLink } from './profile';
  * server, which is exactly the kind of external pixel the privacy notice says the
  * site does not embed.
  *
- * Fetching a URL a person supplied is server-side request forgery territory, so
- * every hop is checked: only http(s), no credentials, no private or loopback
- * address, a hard redirect limit, short timeouts and byte caps. The DNS check
- * happens before the request and a name could in theory change between the check
- * and the connection; that residual race is documented in docs/listings.md rather
- * than papered over.
+ * Fetching a URL a person supplied is server-side request forgery territory: every
+ * request goes through src/lib/net/guarded-fetch.ts, which validates each hop.
  */
 
-const HTML_LIMIT = 512 * 1024; // enough for any reasonable <head>
+// Pages that stream their metadata put the og:image and icon tags after the head,
+// sometimes a megabyte in (linear.app: ~960 KB); longer pages are cut, not refused.
+const HTML_LIMIT = 2 * 1024 * 1024;
 const IMAGE_LIMIT = 5 * 1024 * 1024;
 const HTML_TIMEOUT = 6000;
 const IMAGE_TIMEOUT = 8000;
-const MAX_REDIRECTS = 3;
-const AGENT = 'shwcs/1.0 (+https://shwcs.site; lee og:image del sitio declarado)';
+const AGENT = 'shwcs/1.0 (+https://shwcs.site; lee la portada y el logo del sitio declarado)';
 
 export type SiteImage = { imageUrl: string; buffer: Buffer; width: number; height: number };
 /**
@@ -49,122 +49,27 @@ export type SiteImageFailure =
  * prefill an empty draft: the founder sees and edits it before anything is submitted.
  */
 export type SiteMeta = { name: string; description: string; links: PublicLink[] };
+/** `icon` is the site's own logo, read from the same page; independent of the cover. */
 export type SiteImageResult =
-  | { ok: true; image: SiteImage; meta: SiteMeta }
-  | { ok: false; failure: SiteImageFailure; meta?: SiteMeta };
+  | { ok: true; image: SiteImage; meta: SiteMeta; icon: SiteIcon | null }
+  | { ok: false; failure: SiteImageFailure; meta?: SiteMeta; icon?: SiteIcon | null };
 
-/** Blocks loopback, private, link-local, carrier-grade NAT and unique-local ranges. */
-export function isPrivateAddress(address: string): boolean {
-  const family = isIP(address);
-  if (family === 4) {
-    const [a, b] = address.split('.').map(Number);
-    if (a === 10 || a === 127 || a === 0) return true;
-    if (a === 169 && b === 254) return true; // link-local, covers cloud metadata
-    if (a === 172 && b >= 16 && b <= 31) return true;
-    if (a === 192 && b === 168) return true;
-    if (a === 100 && b >= 64 && b <= 127) return true;
-    return false;
-  }
-  if (family === 6) {
-    const value = address.toLowerCase();
-    if (value === '::1' || value === '::') return true;
-    if (value.startsWith('fe80') || value.startsWith('fc') || value.startsWith('fd')) return true;
-    // IPv4-mapped addresses reach the same networks through a different notation.
-    const mapped = value.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
-    if (mapped) return isPrivateAddress(mapped[1]);
-    return false;
-  }
-  return true;
-}
-
-async function safeUrl(raw: string): Promise<URL | null> {
-  let url: URL;
-  try {
-    url = new URL(raw);
-  } catch {
-    return null;
-  }
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
-  if (url.username || url.password) return null;
-  const host = url.hostname.replace(/^\[|\]$/g, '');
-  try {
-    const addresses = isIP(host)
-      ? [{ address: host }]
-      : await lookup(host, { all: true, verbatim: true });
-    if (!addresses.length) return null;
-    if (addresses.some(entry => isPrivateAddress(entry.address))) return null;
-  } catch {
-    return null;
-  }
-  return url;
-}
-
-/** Follows redirects by hand so every intermediate host is validated too. */
-async function guardedFetch(
-  raw: string,
-  accept: string,
-  timeout: number,
-): Promise<Response | null> {
-  let target = raw;
-  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-    const url = await safeUrl(target);
-    if (!url) return null;
-    let response: Response;
-    try {
-      response = await fetch(url, {
-        redirect: 'manual',
-        signal: AbortSignal.timeout(timeout),
-        headers: { accept, 'user-agent': AGENT },
-      });
-    } catch {
-      return null;
-    }
-    if (response.status >= 300 && response.status < 400) {
-      const location = response.headers.get('location');
-      if (!location) return null;
-      try {
-        target = new URL(location, url).toString();
-      } catch {
-        return null;
-      }
-      continue;
-    }
-    return response.ok ? response : null;
-  }
-  return null;
-}
-
-async function readCapped(response: Response, limit: number): Promise<Buffer | null> {
-  const declared = Number(response.headers.get('content-length') ?? 0);
-  if (declared > limit) return null;
-  const reader = response.body?.getReader();
-  if (!reader) return null;
-  const chunks: Uint8Array[] = [];
-  let size = 0;
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    size += value.byteLength;
-    if (size > limit) {
-      await reader.cancel();
-      return null;
-    }
-    chunks.push(value);
-  }
-  return Buffer.concat(chunks);
-}
-
-function headOf(html: string) {
-  return html.slice(0, html.toLowerCase().indexOf('</head>') + 1 || html.length);
-}
-
-/** `content` of the first matching <meta>, quotes handled either way round. */
-function metaContent(head: string, property: string) {
-  const tag = head.match(
+/** `content` of the first matching <meta> in one part of the page. */
+function metaIn(scope: string, property: string) {
+  const tag = scope.match(
     new RegExp(`<meta[^>]+(?:property|name)\\s*=\\s*["']${property}["'][^>]*>`, 'i'),
   )?.[0];
   const match = tag?.match(/content\s*=\s*(?:"([^"]*)"|'([^']*)')/i);
   return match ? (match[1] ?? match[2] ?? '').trim() : '';
+}
+
+/** `content` of the first matching <meta>, the head before the body. */
+function metaContent(html: string, property: string) {
+  for (const scope of metadataScopes(html)) {
+    const content = metaIn(scope, property);
+    if (content) return content;
+  }
+  return '';
 }
 
 const entities: Record<string, string> = {
@@ -201,19 +106,19 @@ const clean = (value: string, limit: number) =>
  * og:description, else the meta description. Text only — markup is stripped.
  */
 export function readSiteMeta(html: string): SiteMeta {
-  const head = headOf(html);
-  const title = clean(head.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? '', 300);
+  // <title> only from the head: in the body it is usually an inline SVG's label.
+  const title = clean(headOf(html).match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? '', 300);
   const siteName = clean(
-    metaContent(head, 'og:site_name') || metaContent(head, 'application-name'),
+    metaContent(html, 'og:site_name') || metaContent(html, 'application-name'),
     100,
   );
-  const ogTitle = clean(metaContent(head, 'og:title'), 300);
+  const ogTitle = clean(metaContent(html, 'og:title'), 300);
   const firstSegment = (value: string) => value.split(/\s+[|·—–:-]\s+/)[0]?.trim() ?? '';
   const name = (siteName || firstSegment(ogTitle) || firstSegment(title)).slice(0, 100);
   const description = clean(
-    metaContent(head, 'og:description') ||
-      metaContent(head, 'description') ||
-      metaContent(head, 'twitter:description'),
+    metaContent(html, 'og:description') ||
+      metaContent(html, 'description') ||
+      metaContent(html, 'twitter:description'),
     1500,
   );
   return { name, description, links: readSiteLinks(html) };
@@ -283,7 +188,6 @@ export function readSiteLinks(html: string): PublicLink[] {
 
 /** og:image first, then Twitter's equivalent; both are what sites already publish. */
 export function readImageMeta(html: string, pageUrl: string): string | null {
-  const head = headOf(html);
   const properties = [
     'og:image:secure_url',
     'og:image:url',
@@ -291,41 +195,60 @@ export function readImageMeta(html: string, pageUrl: string): string | null {
     'twitter:image:src',
     'twitter:image',
   ];
-  for (const property of properties) {
-    const pattern = new RegExp(
-      `<meta[^>]+(?:property|name)\\s*=\\s*["']${property}["'][^>]*>`,
-      'i',
-    );
-    const tag = head.match(pattern)?.[0];
-    const match = tag?.match(/content\s*=\s*(?:"([^"]*)"|'([^']*)')/i);
-    const content = match ? (match[1] ?? match[2]) : '';
-    if (!content?.trim()) continue;
-    try {
-      return new URL(content.trim(), pageUrl).toString();
-    } catch {
-      continue;
+  // Every property in the head before any in the streamed rest of the page.
+  for (const scope of metadataScopes(html))
+    for (const property of properties) {
+      const content = metaIn(scope, property);
+      if (!content) continue;
+      try {
+        return new URL(content, pageUrl).toString();
+      } catch {
+        continue;
+      }
     }
-  }
   return null;
 }
 
 export async function fetchSiteImage(website: string): Promise<SiteImageResult> {
-  const page = await guardedFetch(website, 'text/html,application/xhtml+xml', HTML_TIMEOUT);
-  if (!page) return { ok: false, failure: 'unreachable' };
+  const fetched = await guardedFetch(
+    website,
+    'text/html,application/xhtml+xml',
+    HTML_TIMEOUT,
+    AGENT,
+  );
+  if (!fetched) return { ok: false, failure: 'unreachable' };
+  const page = fetched.response;
   if (!(page.headers.get('content-type') ?? '').includes('html'))
     return { ok: false, failure: 'notHtml' };
-  const html = await readCapped(page, HTML_LIMIT);
+  const html = await readCapped(page, HTML_LIMIT, { truncate: true });
   if (!html) return { ok: false, failure: 'pageTooLarge' };
 
   const text = html.toString('utf8');
+  const pageUrl = fetched.url;
+  // The logo is read from the same page, alongside the cover: one never waits on or
+  // fails the other.
+  const [cover, icon] = await Promise.all([
+    readCover(text, pageUrl),
+    fetchSiteIcon(text, pageUrl, AGENT).catch(() => null),
+  ]);
+  return { ...cover, icon };
+}
+
+async function readCover(
+  text: string,
+  pageUrl: string,
+): Promise<
+  | { ok: true; image: SiteImage; meta: SiteMeta }
+  | { ok: false; failure: SiteImageFailure; meta: SiteMeta }
+> {
   const meta = readSiteMeta(text);
-  const imageUrl = readImageMeta(text, page.url || website);
+  const imageUrl = readImageMeta(text, pageUrl);
   if (!imageUrl) return { ok: false, failure: 'noImageMeta', meta };
   if (imageUrl.length > 1000) return { ok: false, failure: 'imageUrlTooLong', meta };
 
-  const file = await guardedFetch(imageUrl, 'image/*', IMAGE_TIMEOUT);
+  const file = await guardedFetch(imageUrl, 'image/*', IMAGE_TIMEOUT, AGENT);
   if (!file) return { ok: false, failure: 'imageUnreachable', meta };
-  const bytes = await readCapped(file, IMAGE_LIMIT);
+  const bytes = await readCapped(file.response, IMAGE_LIMIT);
   if (!bytes) return { ok: false, failure: 'imageTooLarge', meta };
 
   try {

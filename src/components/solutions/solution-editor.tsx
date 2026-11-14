@@ -144,6 +144,8 @@ export function SolutionEditor({
     ),
     [hasCover, setHasCover] = useState(hasSiteImage),
     [coverVersion, setCoverVersion] = useState(0),
+    [hasIcon, setHasIcon] = useState(Boolean(solution.has_site_icon)),
+    [iconVersion, setIconVersion] = useState(0),
     [fromSite, setFromSite] = useState<{ name?: boolean; problem?: boolean }>({}),
     [siteOffer, setSiteOffer] = useState<Partial<SiteMeta>>({}),
     [showOther, setShowOther] = useState(!!solution.data.otherCategory);
@@ -306,6 +308,8 @@ export function SolutionEditor({
         failure?: string;
         error?: string;
         meta?: SiteMeta | null;
+        /** Whether the listing has a logo read from its site now (SHCWS-177). */
+        icon?: boolean;
       };
       if (!response.ok) throw new Error(result.error || dict.siteImage.readError);
       const meta = result.meta;
@@ -331,6 +335,10 @@ export function SolutionEditor({
         if (Object.keys(patch).length) update(patch);
         setFromSite(filled);
         setSiteOffer(offer);
+      }
+      if (typeof result.icon === 'boolean') {
+        setHasIcon(result.icon);
+        if (result.icon) setIconVersion(value => value + 1);
       }
       if (result.ok) {
         setHasCover(true);
@@ -1181,6 +1189,7 @@ export function SolutionEditor({
             kind={offeringOptions.find(item => item.value === data.kind)?.label ?? ''}
             host={host}
             cover={cover}
+            icon={hasIcon ? `/api/solutions/${solution.id}/site-icon?v=${iconVersion}` : null}
             categories={categories.map(value => ({ value, label: categoryLabel(value) }))}
             reading={reading}
             coverAlt={dict.siteImage.imageAlt}

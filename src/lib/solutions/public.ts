@@ -127,13 +127,27 @@ const fetchResponseSignals = unstable_cache(
   ['public-response-signals'],
   { tags: ['catalog'], revalidate: 300 },
 );
+// Listings with a logo read from their own site (SHCWS-177). Its own query, so a
+// database without db/solution-site-icons.sql only goes without logos.
+const fetchSiteIconIds = unstable_cache(
+  async () => {
+    const url = getDatabaseUrl();
+    if (!url) return [];
+    const rows = await neon(url)`SELECT solution_id::text AS id FROM solution_site_icons`;
+    return rows.map(row => String(row.id));
+  },
+  ['public-site-icons'],
+  { tags: ['catalog'], revalidate: 300 },
+);
 export async function publicProducts(): Promise<PublishedProduct[]> {
   try {
-    const [rows, responseEntries] = await Promise.all([
+    const [rows, responseEntries, iconIds] = await Promise.all([
       fetchPublishedRows(),
       fetchResponseSignals().catch(() => []),
+      fetchSiteIconIds().catch(() => [] as string[]),
     ]);
     const responses = new Map(responseEntries);
+    const icons = new Set(iconIds);
     const products = rows.map(row => {
       const response = responses.get(String(row.id)) ?? null;
       const staticProduct = staticArtFor(row.catalog_key, row.website);
@@ -148,6 +162,11 @@ export async function publicProducts(): Promise<PublishedProduct[]> {
         ...staticProduct,
         ogImage,
         catalogId: row.catalog_key ? String(row.catalog_key) : undefined,
+        // The art shipped for Cord/Flouvia, else the logo read from the listing's own
+        // site (SHCWS-177), else none and the card shows the initial.
+        favicon:
+          staticProduct?.favicon ??
+          (icons.has(String(row.id)) ? `/api/solutions/${row.id}/site-icon` : undefined),
         name: String(row.name),
         description: String(row.problem),
         feature: String(row.audience),
