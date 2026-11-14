@@ -37,7 +37,8 @@ export type PublishedProduct = PreviewProduct & {
 // `decayed`, the sum used only for `score`/ORDER BY. `decayed` zeroes out
 // any row from an unverified account or from the ficha's own owner, so that
 // activity is visible everywhere but never moves the order — the plan's
-// "se ve pero no cuenta". One pass over each table instead of a correlated
+// "se ve pero no cuenta". Accounts ops marked as suspicious (account_flagged(),
+// SHCWS-141) are zeroed the same way. One pass over each table instead of a correlated
 // subquery per row (still true, from Fase 1). `revalidateTag('catalog')`
 // invalidates this after a like/comment/save/publish; see callers of that tag.
 const fetchPublishedRows = unstable_cache(
@@ -47,13 +48,13 @@ const fetchPublishedRows = unstable_cache(
     const sql = neon(url);
     return await sql`WITH likes AS (
   SELECT sl.solution_id,count(*)::int AS n,
-   sum(CASE WHEN a.email_verified_at IS NOT NULL AND sl.owner_id<>s.owner_id
+   sum(CASE WHEN a.email_verified_at IS NOT NULL AND sl.owner_id<>s.owner_id AND NOT account_flagged(a.id)
     THEN exp(-ln(2)*extract(epoch FROM now()-sl.created_at)/${rankingHalfLifeDays * 86400}) ELSE 0 END) AS decayed
    FROM solution_likes sl JOIN auth_accounts a ON a.id=sl.owner_id JOIN founder_solutions s ON s.id=sl.solution_id
    GROUP BY sl.solution_id),
  comments AS (
   SELECT sc.solution_id,count(*)::int AS n,
-   sum(CASE WHEN a.email_verified_at IS NOT NULL AND sc.author_id<>s.owner_id
+   sum(CASE WHEN a.email_verified_at IS NOT NULL AND sc.author_id<>s.owner_id AND NOT account_flagged(a.id)
     THEN exp(-ln(2)*extract(epoch FROM now()-sc.created_at)/${rankingHalfLifeDays * 86400}) ELSE 0 END) AS decayed
    FROM solution_comments sc JOIN auth_accounts a ON a.id=sc.author_id JOIN founder_solutions s ON s.id=sc.solution_id
    WHERE sc.hidden_at IS NULL
@@ -73,13 +74,15 @@ const fetchPublishedRows = unstable_cache(
      WHEN split_part(a.email,'@',2)<>ALL(${freeEmailDomains as readonly string[]}::text[])
      AND split_part(a.email,'@',2)!~${freeEmailPattern} THEN ${reviewWeights.work}::float ELSE ${reviewWeights.email}::float END
     *CASE WHEN review_invited(r.author_id,r.solution_id) THEN ${reviewInvitedFactor}::float ELSE 1 END
+    -- Marked as suspicious in ops (SHCWS-141, db/account-flags.sql): shown, never ranked.
+    *CASE WHEN account_flagged(a.id) THEN 0 ELSE 1 END
     *exp(-ln(2)*extract(epoch FROM now()-r.created_at)/${rankingHalfLifeDays * 86400})) AS decayed
    FROM solution_reviews r JOIN auth_accounts a ON a.id=r.author_id JOIN founder_solutions s ON s.id=r.solution_id
    WHERE r.status='published' AND a.email_verified_at IS NOT NULL AND r.author_id<>s.owner_id
    GROUP BY r.solution_id),
  saves AS (
   SELECT s.id AS solution_id,count(*)::int AS n,
-   sum(CASE WHEN a.email_verified_at IS NOT NULL AND b.owner_id<>s.owner_id
+   sum(CASE WHEN a.email_verified_at IS NOT NULL AND b.owner_id<>s.owner_id AND NOT account_flagged(a.id)
     THEN exp(-ln(2)*extract(epoch FROM now()-b.created_at)/${rankingHalfLifeDays * 86400}) ELSE 0 END) AS decayed
    FROM founder_solutions s JOIN buyer_saved_projects b
     ON b.project_key='solution:'||s.id::text OR (s.catalog_key IS NOT NULL AND b.project_key='catalog:'||s.catalog_key)

@@ -87,6 +87,11 @@ de cinco estrellas con correo de empresa pesa 7.5, más que un comentario (3). U
 baja suma poco y **nunca resta**: un competidor no puede hundir una ficha dejando una
 estrella, solo dejar de subirla. La fórmula está publicada en `/criterios`.
 
+Una reseña de una cuenta que ops marcó como sospechosa (SHCWS-141, docs/ops.md) pesa 0 en
+el orden y en «Top de la semana», pero sigue publicada y cuenta en el número de reseñas y
+el promedio que se muestran: lo que se ve no cambia por la marca. Si la reseña en sí es
+falsa, ops la oculta con el flujo de moderación de siempre.
+
 ## Datos
 
 `db/solution-reviews.sql`:

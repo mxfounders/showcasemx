@@ -82,17 +82,18 @@ export async function getPublicCollections({
     szs = [...sizes];
   const rows = await sql`WITH matched AS (
   SELECT l.id,l.owner_id,l.name,l.public_description,l.curator_name,l.categories,l.created_at,
-   -- «Populares» (communityRank in community-model.ts): only verified accounts, never the
-   -- list's owner, each interaction decayed by its age. Counters shown stay raw.
+   -- «Populares» (communityRank in community-model.ts): only verified accounts not marked
+   -- as suspicious in ops (SHCWS-141), never the list's owner, each interaction decayed by
+   -- its age. Counters shown stay raw.
    ((SELECT COALESCE(sum(exp(-ln(2)*extract(epoch FROM now()-x.created_at)/${halfLifeSeconds})),0)
       FROM community_list_likes x JOIN auth_accounts a ON a.id=x.owner_id
-      WHERE x.list_id=l.id AND a.email_verified_at IS NOT NULL AND x.owner_id<>l.owner_id)*${communityWeights.like}
+      WHERE x.list_id=l.id AND a.email_verified_at IS NOT NULL AND NOT account_flagged(a.id) AND x.owner_id<>l.owner_id)*${communityWeights.like}
     +(SELECT COALESCE(sum(exp(-ln(2)*extract(epoch FROM now()-x.created_at)/${halfLifeSeconds})),0)
       FROM community_saved_lists x JOIN auth_accounts a ON a.id=x.owner_id
-      WHERE x.list_id=l.id AND a.email_verified_at IS NOT NULL AND x.owner_id<>l.owner_id)*${communityWeights.save}
+      WHERE x.list_id=l.id AND a.email_verified_at IS NOT NULL AND NOT account_flagged(a.id) AND x.owner_id<>l.owner_id)*${communityWeights.save}
     +(SELECT COALESCE(sum(exp(-ln(2)*extract(epoch FROM now()-x.created_at)/${halfLifeSeconds})),0)
       FROM community_list_comments x JOIN auth_accounts a ON a.id=x.author_id
-      WHERE x.list_id=l.id AND a.email_verified_at IS NOT NULL AND x.author_id<>l.owner_id)*${communityWeights.comment}) AS rank_score
+      WHERE x.list_id=l.id AND a.email_verified_at IS NOT NULL AND NOT account_flagged(a.id) AND x.author_id<>l.owner_id)*${communityWeights.comment}) AS rank_score
   FROM buyer_lists l
   WHERE l.visibility='public'
    -- Hidden while it has fewer available projects than a public list needs (SHCWS-116).

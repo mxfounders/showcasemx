@@ -5,9 +5,11 @@ import {
   BlockIcon,
   EyeOffIcon,
   FingerprintIcon,
+  FlagIcon,
   LogOutIcon,
   MailCheckIcon,
   PersonIcon,
+  ShieldAlertIcon,
   ShieldIcon,
   UndoIcon,
   VerifiedIcon,
@@ -15,6 +17,7 @@ import {
 import { requireOps } from '@/lib/auth';
 import { isUuid } from '@/lib/http';
 import { accountDetail, type AccountDetail } from '@/lib/data/accounts';
+import { accountFlags } from '@/lib/data/fraud';
 import { daysSince, fmtDate, fmtDateTime, fmtNumber } from '@/lib/format';
 import { LEVEL, PROFILE, ROLE } from '@/lib/labels';
 import { choice, type SearchParams } from '@/lib/url';
@@ -234,7 +237,7 @@ export default async function AccountPage({
   const user = await requireOps();
   const { id } = await params;
   if (!isUuid(id)) notFound();
-  const d = await accountDetail(id);
+  const [d, flags] = await Promise.all([accountDetail(id), accountFlags(id)]);
   if (!d) notFound();
   const query = await searchParams;
   const tab = choice(query, 'tab', TABS, 'resumen');
@@ -271,6 +274,11 @@ export default async function AccountPage({
               {a.suspendedAt && (
                 <Badge tone="terracotta" icon={BlockIcon}>
                   Suspendida
+                </Badge>
+              )}
+              {flags.active && (
+                <Badge tone="terracotta" icon={ShieldAlertIcon}>
+                  Marcada como sospechosa
                 </Badge>
               )}
               {a.emailVerifiedAt ? (
@@ -363,6 +371,38 @@ export default async function AccountPage({
                 }}
               />
             ))}
+          {admin &&
+            !self &&
+            flags.available &&
+            (flags.active ? (
+              <ActionButton
+                label="Quitar marca"
+                icon={<UndoIcon />}
+                endpoint="/api/fraud"
+                payload={{ action: 'unflag', accountId: a.id }}
+                success="Marca retirada"
+                confirm={{
+                  title: 'Quitar la marca de sospechosa',
+                  description: 'Su actividad vuelve a contar en el orden.',
+                  confirmLabel: 'Quitar marca',
+                }}
+              />
+            ) : (
+              <ActionButton
+                label="Marcar sospechosa"
+                icon={<FlagIcon />}
+                endpoint="/api/fraud"
+                payload={{ action: 'flag', accountIds: [a.id] }}
+                success="Cuenta marcada como sospechosa"
+                confirm={{
+                  title: 'Marcar la cuenta como sospechosa',
+                  description:
+                    'Sus me gusta, guardados, comentarios y reseñas dejan de contar en el orden del catálogo, en Top de la semana y en Populares de comunidad. Lo que hizo sigue visible y no recibe aviso. Las señales están en Fraude.',
+                  destructive: true,
+                  confirmLabel: 'Marcar',
+                }}
+              />
+            ))}
           {admin && !self && (
             <ActionButton
               label="Despublicar todo"
@@ -390,6 +430,19 @@ export default async function AccountPage({
           className="mb-5"
         >
           {a.suspendedReason ?? 'Sin motivo registrado.'}
+        </Alert>
+      )}
+
+      {flags.active && (
+        <Alert
+          tone="amber"
+          title={`Marcada como sospechosa ${fmtDateTime(flags.active.flaggedAt)}${flags.active.flaggedBy ? ` por ${flags.active.flaggedBy}` : ''}`}
+          className="mb-5"
+        >
+          {flags.active.reason} Su actividad no cuenta en el orden.{' '}
+          <Link href="/panel/fraude?tab=marcadas" className="font-medium underline">
+            Ver en Fraude
+          </Link>
         </Alert>
       )}
 
