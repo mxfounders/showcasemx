@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
-import { ViewColumnsIcon } from '@/components/icons/gota';
+import { SendIcon, ViewColumnsIcon } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import { libraryButton } from './client';
 import type { Dictionary } from '@/i18n/dictionary';
@@ -35,7 +35,11 @@ export function ComparisonPicker({
             }
             const query = new URLSearchParams();
             valid.forEach(key => query.append('project', key));
-            router.push(`/account/lists/${listId}/compare?${query}`);
+            // The same selection opens the comparator or one form for a proposal to all
+            // of them (SHCWS-62); the server checks the selection again on either page.
+            const submitter = (event.nativeEvent as SubmitEvent).submitter;
+            const page = submitter?.getAttribute('value') === 'proposal' ? 'proposal' : 'compare';
+            router.push(`/account/lists/${listId}/${page}?${query}`);
           }}
         >
           <div className="flex flex-wrap gap-3">
@@ -62,10 +66,16 @@ export function ComparisonPicker({
               </label>
             ))}
           </div>
-          <button style={actionButtonStyle} className={`${libraryButton} mt-5`}>
-            <ViewColumnsIcon className="size-4" aria-hidden="true" />
-            {t.submit.replace('{count}', String(selected.length))}
-          </button>
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <button value="compare" style={actionButtonStyle} className={libraryButton}>
+              <ViewColumnsIcon className="size-4" aria-hidden="true" />
+              {t.submit.replace('{count}', String(selected.length))}
+            </button>
+            <button value="proposal" style={actionButtonStyle} className={libraryButton}>
+              <SendIcon className="size-4" aria-hidden="true" />
+              {t.propose.replace('{count}', String(selected.length))}
+            </button>
+          </div>
           {error && (
             <p role="alert" className="mt-3 text-sm text-[#A94E35]">
               {error}

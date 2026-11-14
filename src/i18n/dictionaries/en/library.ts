@@ -113,10 +113,11 @@ export const library = {
     cancel: 'Cancel',
   },
   comparisonPicker: {
-    summary: 'Compare projects · pick 2 or 3',
+    summary: 'Compare or request proposals · pick 2 or 3',
     needTwo: 'Add at least two available projects to this list.',
     selectTwo: 'Select at least two projects.',
     submit: 'Compare selection ({count}/3)',
+    propose: 'Request proposals ({count}/3)',
   },
   summary: {
     unavailableTitle: 'Project not available',
@@ -234,6 +235,10 @@ export const library = {
     requestContact: 'Request contact →',
     externalContact: "Contact through its official site; it doesn't take requests here yet.",
     gone: 'This listing is no longer available.',
+    proposeTitle: 'Interested in more than one?',
+    proposeBody:
+      'Request a proposal from the ones that take requests on shwcs with a single form. Each gets its own request and does not know who else you wrote to.',
+    propose: 'Request proposals from these {count}',
   },
   communitySaved: {
     metaTitle: 'Saved lists',

@@ -18,6 +18,7 @@ import {
   OutcomeForm,
   RefreshContacts,
 } from '@/components/contacts/forms';
+import { ContactGroupLink } from '@/components/contacts/groups';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
 export async function ContactDetail({
@@ -26,12 +27,15 @@ export async function ContactDetail({
   locale,
   dict: t,
   threadDict,
+  groupDict,
 }: {
   id: string;
   incoming?: boolean;
   locale: string;
   dict: Dictionary['contacts'];
   threadDict: Dictionary['contactThread'];
+  /** Buyer only: links back to the proposal to several projects it was part of (SHCWS-62). */
+  groupDict?: Dictionary['contactBatch'];
 }) {
   if (!isSolutionId(id)) notFound();
   const base = incoming ? '/account/opportunities' : '/account/contacts';
@@ -75,6 +79,9 @@ export async function ContactDetail({
           {actor === 'buyer' ? t.detail.deliveredBuyer : t.detail.deliveredRecipient}{' '}
           {t.detail.onlyParticipants}
         </p>
+        {actor === 'buyer' && groupDict && (
+          <ContactGroupLink requestId={request.id} account={account.id} dict={groupDict} />
+        )}
       </header>
       <div className="grid items-start gap-12 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0">

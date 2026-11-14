@@ -112,10 +112,12 @@ export const library = {
     cancel: 'Cancelar',
   },
   comparisonPicker: {
-    summary: 'Comparar proyectos · elige 2 o 3',
+    summary: 'Comparar o pedir propuesta · elige 2 o 3',
     needTwo: 'Añade al menos dos proyectos disponibles a esta lista.',
     selectTwo: 'Selecciona al menos dos proyectos.',
     submit: 'Comparar selección ({count}/3)',
+    /** Opens one form for a proposal to the selected projects (SHCWS-62). */
+    propose: 'Pedir propuesta ({count}/3)',
   },
   summary: {
     unavailableTitle: 'Proyecto no disponible',
@@ -233,6 +235,10 @@ export const library = {
     requestContact: 'Solicitar contacto →',
     externalContact: 'Contacto desde su sitio oficial; aún no recibe solicitudes aquí.',
     gone: 'La ficha ya no está disponible.',
+    proposeTitle: '¿Te interesan varios?',
+    proposeBody:
+      'Pide propuesta a los que reciben solicitudes en shwcs con un solo formulario. Cada uno recibe su propia solicitud y no sabe a quién más escribiste.',
+    propose: 'Pedir propuesta a estos {count}',
   },
   communitySaved: {
     metaTitle: 'Listas guardadas',

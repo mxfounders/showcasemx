@@ -9,15 +9,20 @@ if (process.env.RUN_CONTACT_INTEGRATION !== '1') {
   );
   process.exit(0);
 }
+// APP_ORIGIN points it at an isolated server (CLAUDE.md §13); a database given through
+// `node --env-file=…` is used instead of reading .env.local from the working directory.
 const root = process.cwd(),
   { neon } = require(root + '/node_modules/@neondatabase/serverless'),
-  env = require(root + '/node_modules/dotenv').parse(
-    fs.readFileSync(path.join(root, '.env.local')),
-  );
+  env =
+    process.env.NEON_DATABASE_URL || process.env.DATABASE_URL || process.env.POSTGRES_URL
+      ? process.env
+      : require(root + '/node_modules/dotenv').parse(
+          fs.readFileSync(path.join(root, '.env.local')),
+        );
 const sql = neon(env.NEON_DATABASE_URL || env.DATABASE_URL || env.POSTGRES_URL, {
   fetchOptions: { cache: 'no-store' },
 });
-const origin = 'http://localhost:3000',
+const origin = process.env.APP_ORIGIN || 'http://localhost:3000',
   tag = randomUUID(),
   emails = ['contact-buyer', 'contact-founder', 'contact-intruder'].map(
     role => role + '-' + tag + '@example.invalid',

@@ -13,6 +13,12 @@
 > documento dice «no hay chat» o «no hay mensajes fuera de transiciones», manda este
 > párrafo.
 
+> **Vigente desde el 14 de noviembre de 2026 (SHCWS-62): propuesta a varios proyectos
+> con un solo formulario.** Detalle en la sección «Propuesta a varios proyectos» más
+> abajo. Cada proyecto sigue recibiendo una solicitud normal, una por comprador y
+> proyecto; lo nuevo es el formulario único, el consentimiento por destinatario y la
+> vista de respuestas juntas.
+
 > Actualización vigente, 31 agosto 2026: [launch.md](launch.md) incorpora avisos y
 > verificación de correo, OAuth Google preparado, TXT de dominio, reportes/retirada
 > y métricas. La migración launch-foundation.sql está aplicada a la base configurada.
@@ -55,6 +61,82 @@ al destinatario. El consentimiento contact-v1 se registra con fecha. No comparte
 listas, notas, guardados ni inscribe al newsletter. No se enviaron correos a personas
 reales en esta entrega.
 
+## Propuesta a varios proyectos (SHCWS-62)
+
+Hacer una lista corta de tres proveedores obligaba a llenar tres formularios. Ahora:
+
+1. **Entrada.** Desde una lista, el selector «Comparar o pedir propuesta» toma 2–3
+   proyectos y ofrece «Comparar» o «Pedir propuesta». Desde el comparador, «Pedir
+   propuesta a estos N» aparece si al menos dos de los comparados reciben solicitudes.
+   Ambas abren `/account/lists/[id]/proposal?project=…&project=…`, que valida la
+   selección igual que el comparador (`comparisonKeys`: lista propia, 2–3, sin
+   duplicados, miembros de la lista).
+2. **Quién recibe.** Cada proyecto se resuelve con `resolveProjects` (solo
+   `published_data`; Cord/Flouvia por `catalog_key`, nunca recortando la clave) y
+   `contactTarget`. Se excluyen con su motivo: el propio proyecto, el que ya no está
+   publicado y el que solo tiene sitio oficial. Si el comprador ya le había escrito a uno,
+   no se le envía otra solicitud: aparece como «Ya le escribiste» con enlace a esa
+   conversación y entra al grupo.
+3. **Formulario único.** Los mismos campos que la solicitud individual (nombre, empresa,
+   tamaño, plazo, necesidad, presupuesto) y, opcional, «Pide a todos lo mismo»: precio,
+   implementación, facturación con los requisitos fiscales del país, integraciones y
+   soporte. Las preguntas marcadas se añaden al final de la necesidad
+   (`composeNeed`), así que el contrato de `details` no cambia y el comprador revisa el
+   texto exacto.
+4. **Revisión y consentimiento por destinatario.** «Esto recibirá cada proyecto» muestra
+   el resumen exacto (el mismo para todos) y una casilla por proyecto, sin marcar,
+   con su nombre. Solo se envía a los proyectos autorizados; cada solicitud guarda su
+   propio `consent_version=contact-v1` y `consent_at`. Se aclara que cada proyecto recibe
+   solo su solicitud, no sabe a quién más se escribió y no ve listas, guardados ni notas.
+5. **Envío.** `POST /api/contacts/batch` (mismo origen, sesión, cuerpo ≤32 KB, correo
+   verificado si `AUTH_REQUIRE_VERIFIED_EMAIL=true`). Cuerpo: `id` del grupo, `listId`,
+   los datos de la solicitud, `consentVersion` y `recipients` (1–3) con `id` de la
+   solicitud generado por el navegador, `solutionId`, `recipientId` y `consent`.
+   Cada proyecto pasa por `createContact`, la misma función de la solicitud individual:
+   correo de la sesión, destinatario comprobado contra el dueño, solo publicado, nunca el
+   propio, cuota de 1000 con bloqueo de la fila del comprador y `UNIQUE(buyer_id,
+   solution_id)`. Un proyecto con solicitud previa solo se enlaza (`consent:false`, sin
+   destinatario); uno sin solicitud previa y sin consentimiento rechaza todo el envío.
+6. **Resultado por proyecto.** La respuesta es 200 con `results` por proyecto
+   (`sent`, `existing`, `failed` con el motivo en el idioma de la página) siempre que se
+   llegó a enviar, aunque falle alguno. La página dice exactamente a quién se envió y a
+   quién no, con «Reintentar lo que falló». Reintentar reenvía el mismo cuerpo con los
+   mismos ids: lo enviado vuelve como `sent` (no se duplica) y solo se intenta lo que
+   faltó. Si no hubo fallos, se abre la vista de respuestas juntas.
+7. **Límite de creación.** Cada solicitud que el grupo intenta crear cuenta como un
+   intento del límite de 20 por hora del formulario individual (`contact-create`): un grupo
+   de tres cuenta tres. Se comprueba antes de escribir nada: si el grupo no cabe, responde
+   429 y no se envía ninguna. Los ya escritos y los reintentos de una solicitud de este
+   mismo grupo no cuentan.
+8. **Respuestas juntas.** `/account/contacts/groups/[id]` muestra, lado a lado, cada
+   proyecto con su estado, de quién es el turno, su última respuesta (mensaje o motivo de
+   un cambio de estado) y el enlace a su conversación, más «Lo que enviaste a todos».
+   «Mis contactos» lista arriba los grupos recientes («N de M respondieron») y el
+   seguimiento de una solicitud del grupo enlaza a esa vista. Solo el comprador la abre;
+   para cualquier otra cuenta es 404.
+
+**Datos.** `db/contact-batches.sql`: `contact_batches` (id del navegador, comprador,
+lista de origen con `ON DELETE SET NULL`) y `contact_batch_items` (solicitud, posición
+0–2, `created` = la creó este grupo o ya existía). Claves compuestas por `buyer_id`
+(el patrón de la biblioteca, §8): un grupo no puede contener solicitudes ni listas de
+otra cuenta; para eso se añadió el índice único `contact_requests(buyer_id,id)`.
+El grupo se escribe después de las solicitudes; si falla, las solicitudes ya están en
+«Mis contactos», la página lo dice y reintentar lo agrupa. El destinatario nunca ve el
+grupo: sus consultas no leen estas tablas y su solicitud es idéntica a una individual.
+Borrar la cuenta del comprador borra sus grupos; borrar una solicitud la quita del grupo.
+
+**Avisos y analítica.** Cada solicitud creada avisa a su destinatario igual que una
+individual (trigger de `contact_events` y `deliverNotifications` inmediato).
+`contact_batch_created` solo lleva conteos (`sent`, `existing`, `failed`).
+
+**Pruebas.** `tests/contact-batch.test.ts` (lectura del cuerpo, plan sin duplicados ni
+envíos sin consentimiento, preguntas comunes, origen y sesión) y
+`RUN_CONTACT_BATCH_INTEGRATION=1 node tests/integration/contact-batches.cjs` (acepta
+`APP_ORIGIN` y `node --env-file=…`; se niega a correr contra una base de producción):
+cuentas temporales, fallo parcial con destinatario cambiado, reintento sin duplicados,
+envíos simultáneos, proyecto propio y retirado, límite antes de escribir, privacidad del
+destinatario, respuesta visible en el grupo, 404 para terceros y claves compuestas.
+
 ## API y permisos
 
 POST /api/contacts:
@@ -63,6 +145,8 @@ POST /api/contacts:
   esperado. Rechaza auto-contacto y borradores.
 - update: id, status, version, message. Solo el participante autorizado puede
   ejecutar la transición; el comprador no puede responder como fundador.
+
+POST /api/contacts/batch: propuesta a varios proyectos; ver la sección anterior.
 
 Modelo en src/lib/contacts/model.ts; servicio en server.ts; HTTP en route.ts.
 Cuerpo máximo 32768 bytes; errores propios; mismo origen y sesión obligatorios.
@@ -108,7 +192,9 @@ Bandejas con filtros y páginas de 20; Actualizar vuelve a consultar servidor.
 
 - npx tsx --test tests/*.test.ts: 32 pruebas.
 - RUN_CONTACT_INTEGRATION=1 node tests/integration/contacts.cjs: servidor en
-  localhost:3000, tablas aplicadas y .env.local. Crea tres cuentas de prueba
+  localhost:3000 (o `APP_ORIGIN`), tablas aplicadas y .env.local (o la base que pase
+  `node --env-file=…`). Guarda `catalog:cord` y `catalog:flouvia`, así que necesita que
+  la base tenga esas fichas publicadas con `catalog_key`. Crea tres cuentas de prueba
   @example.invalid; limpia cuentas/datos y contadores propios en finally.
 - Cubre comparación privada, aislamiento de borrador, consentimiento, identidad,
   destinatario, auto-contacto, duplicados, concurrencia, bandejas/detalle ajenos,

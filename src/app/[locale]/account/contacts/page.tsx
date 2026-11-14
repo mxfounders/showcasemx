@@ -19,6 +19,7 @@ export default async function ContactsPage(props: {
       searchParams={searchParams}
       locale={locale}
       dict={dictionary.contacts}
+      groupsDict={dictionary.contactBatch}
     />
   );
 }

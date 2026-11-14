@@ -16,6 +16,7 @@ import { actionButtonStyle, brandColors } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
 import { RefreshContacts } from './forms';
 import { LocalTime } from './local-time';
+import { ContactGroups } from './groups';
 
 const signalTone: Record<BuyerSignal, { backgroundColor: string; color: string }> = {
   work: { backgroundColor: brandColors.sage.soft, color: brandColors.sage.solid },
@@ -109,11 +110,14 @@ export async function ContactsInbox({
   searchParams,
   locale,
   dict: t,
+  groupsDict,
 }: {
   incoming: boolean;
   searchParams: { status?: string; page?: string };
   locale: string;
   dict: Dictionary['contacts'];
+  /** Outgoing only: shows the buyer's proposals to several projects (SHCWS-62). */
+  groupsDict?: Dictionary['contactBatch'];
 }) {
   const base = incoming ? '/account/opportunities' : '/account/contacts';
   const account = await requireBuyer(base),
@@ -151,6 +155,9 @@ export async function ContactsInbox({
           {incoming ? t.inbox.noteIncoming : t.inbox.noteOutgoing}
         </p>
       </header>
+      {!incoming && groupsDict && !status && page === 1 && (
+        <ContactGroups account={account.id} dateLocale={t.dateLocale} dict={groupsDict} />
+      )}
       <nav aria-label={t.inbox.filterAria} className="selector-tabs mb-8">
         {tabs.map(([key, label]) => (
           <Link
