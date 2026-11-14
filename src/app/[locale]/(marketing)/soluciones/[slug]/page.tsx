@@ -186,9 +186,7 @@ export default async function PublicSolution(props: {
     // Public questions and the founder's answers (SHCWS-57).
     getSolutionQuestions(id, viewer),
     // Whether the viewer's review will show «Contactó vía shwcs» (SHCWS-135).
-    viewer && viewer !== String(row.owner_id)
-      ? contactBacked(viewer, id)
-      : Promise.resolve(false),
+    viewer && viewer !== String(row.owner_id) ? contactBacked(viewer, id) : Promise.resolve(false),
     // Dated updates and whether the viewer follows the listing (SHCWS-24).
     getSolutionUpdates(id, viewer),
   ]);
