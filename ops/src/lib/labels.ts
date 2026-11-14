@@ -164,6 +164,11 @@ export const AUDIT_ACTIONS: Record<string, ActionLabel> = {
   solution_withdraw: { label: 'Retiró una publicación', tone: 'terracotta', group: 'editorial' },
   solution_verify: { label: 'Verificó una ficha', tone: 'blue', group: 'editorial' },
   solution_unverify: { label: 'Retiró una verificación', tone: 'amber', group: 'editorial' },
+  solution_slug_change: {
+    label: 'Cambió la dirección de una ficha',
+    tone: 'lavender',
+    group: 'editorial',
+  },
   tax_identity_save: { label: 'Registró identidad fiscal', tone: 'lavender', group: 'editorial' },
   tax_identity_delete: { label: 'Borró identidad fiscal', tone: 'amber', group: 'editorial' },
   award_editorial_create: { label: 'Eligió una Selección shwcs', tone: 'sage', group: 'editorial' },

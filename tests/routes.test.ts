@@ -7,6 +7,7 @@ import * as staticInfo from 'next/dist/build/analysis/get-page-static-info';
 import { getBlogSlugs } from '../src/lib/blog';
 import { infoSlugs } from '../src/lib/info-pages';
 import { isPagePath } from '../src/lib/routes';
+import { primeListingSlugs } from '../src/lib/solutions/slug-routing';
 import { categories, collections, industries } from '../src/lib/taxonomy';
 import { config, middleware } from '../src/middleware';
 
@@ -48,7 +49,9 @@ function samplePaths(file: string): string[][] {
               ? industries.map(item => item.slug)
               : parent === 'colecciones'
                 ? collections.map(item => item.slug)
-                : getBlogSlugs()
+                : parent === 'soluciones'
+                  ? ['cord', uuid]
+                  : getBlogSlugs()
           : segment === '[id]'
             ? [uuid]
             : segment === '[token]'
@@ -77,7 +80,12 @@ test('paths no page can serve are rejected', () => {
     ['admin'],
     ['explorar'],
     ['explorar', 'cobros', 'extra'],
-    ['soluciones', 'not-a-uuid'],
+    ['soluciones', 'Not_A_Slug'],
+    ['soluciones', 'cord', 'extra'],
+    ['soluciones', 'a--b'],
+    ['soluciones', '-cord'],
+    ['soluciones', 'x'.repeat(61)],
+    ['soluciones', 'opengraph-image'],
     ['comunidad', uuid, 'x'],
     ['blog', 'Not_A_Slug'],
     ['blog', 'no-existe'],
@@ -99,7 +107,7 @@ test('middleware answers impossible paths with a small real 404 in the right lan
     ['/wp-login.php', 'es', 'Página no encontrada'],
     ['/.env', 'en', 'Page not found'],
     ['/es/wp-admin', 'en', 'Página no encontrada'],
-    ['/en/soluciones/not-a-uuid', 'es', 'Page not found'],
+    ['/en/soluciones/Not_A_Slug', 'es', 'Page not found'],
   ]) {
     const response = await middleware(request(path, language));
     assert.equal(response.status, 404, path);
@@ -110,8 +118,9 @@ test('middleware answers impossible paths with a small real 404 in the right lan
   }
 });
 
-test('middleware still redirects real unprefixed pages and passes real ones through', () => {
-  const redirect = middleware(request('/terminos'));
+test('middleware still redirects real unprefixed pages and passes real ones through', async () => {
+  primeListingSlugs([]);
+  const redirect = await middleware(request('/terminos'));
   assert.equal(redirect.status, 307);
   assert.equal(redirect.headers.get('location'), 'http://localhost:3000/es/terminos');
 
@@ -124,7 +133,7 @@ test('middleware still redirects real unprefixed pages and passes real ones thro
     '/es/comunidad.prefetch.rsc',
     '/es/comunidad.segments/_tree.segment.rsc',
   ]) {
-    const response = middleware(request(path));
+    const response = await middleware(request(path));
     assert.equal(response.status, 200, path);
     assert.ok(response.headers.get('x-middleware-request-x-locale'), path);
   }

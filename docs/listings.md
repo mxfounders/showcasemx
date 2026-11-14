@@ -263,3 +263,44 @@ comparador, `/soluciones/<id>.md` y el JSON-LD; nada se inventa ni se convierte.
 - **Pendiente**: mostrar al comprador una conversión a su moneda. Requiere una fuente de
   tipo de cambio que hoy no existe; hasta entonces la ficha dice que el precio está en la
   moneda del proyecto y que no se convierte.
+
+## URLs con nombre — 14 noviembre 2026 (SHCWS-101)
+
+La ficha pública vive en `/<locale>/soluciones/<slug>` (`/es/soluciones/cord`). El slug
+solo nombra la página: el UUID sigue siendo la identidad en guardados (`solution:<uuid>`,
+`catalog:cord`), contactos, métricas, anuncios, imágenes y APIs. `catalog_key` no cambia.
+
+- **Columna y forma** (`db/solution-slugs.sql`): `founder_solutions.slug`, única;
+  minúsculas ASCII, dígitos y guiones entre palabras, hasta 60 caracteres, nunca con forma
+  de UUID ni `opengraph-image…`. `isSolutionSlug` (`src/lib/solutions/slug.ts`) comprueba lo
+  mismo que el CHECK.
+- **Asignación**: la primera aprobación en ops (`POST /api/review`, `publish`) la deriva
+  del nombre aprobado (`solutionSlugCandidates`: sin acentos, `cord`, `cord-2`…) y toma la
+  primera libre: ni el slug actual de otra ficha ni uno que otra usó antes. Se conserva al
+  actualizar, retirar y volver a publicar. Si las 50 candidatas estuvieran ocupadas, la
+  ficha sigue funcionando por UUID. La bitácora del `publish` guarda el slug.
+- **Cambio por ops**: solo admin, en la tarjeta «Dirección pública» de la postulación
+  (`POST /api/solutions/<id>/slug`, motivo obligatorio). Una sentencia escribe el cambio, la
+  bitácora (`solution_slug_change`, anterior → nuevo) y, si la ficha está publicada, un aviso
+  al dueño (categoría `account`). No acepta el slug que otra ficha usa o usó.
+- **Historial**: un trigger guarda cada slug anterior en `solution_slug_history`. Un slug
+  está en un solo sitio: actual de una ficha o anterior de una. Por eso un enlace viejo
+  nunca termina en otra ficha.
+- **Redirecciones reales**: el middleware decide antes de renderizar
+  (`src/lib/solutions/slug-routing.ts`), así que los códigos son HTTP de verdad (una página
+  bajo `loading.tsx` solo puede responder 200, CLAUDE.md §53): UUID o slug anterior → **301**
+  al actual, conservando idioma, query (`?from=sponsored&ad=…`) y el sufijo de transporte de
+  Next (`.rsc`); slug desconocido → **404** pequeño; sin idioma → 307 directo a
+  `/<locale>/soluciones/<slug>`. Guarda en memoria los slugs publicados y los recarga como
+  mucho cada minuto, o cada 15 segundos mientras ve slugs que no conoce (una ficha recién
+  publicada o renombrada; no más seguido para que los bots que prueban rutas inventadas no
+  mantengan despierta la base, §79). Ante cualquier duda (sin base, lectura fallida, UUID sin slug)
+  deja pasar a la página, que también encuentra la ficha por UUID o slug anterior y
+  redirige ella (redirección suave, bajo el `loading.tsx`).
+- **Dónde aparece el slug**: tarjetas del catálogo (`detailUrl`), canonical, hreflang,
+  Open Graph, JSON-LD, sitemap, `/llms.txt`, `/soluciones/<slug>.md` (por UUID responde 301
+  al slug), compartir, insignia que se copia desde la cuenta, «Ver ficha pública» de la
+  cuenta y de ops, Guardados y listas. **Siguen con UUID**, porque el 301 los lleva al slug y
+  el UUID nunca caduca: correos y avisos, enlaces internos de reseñas, preguntas, contactos y
+  alertas, y los `next=` de acceso.
+- Nunca derivar una identidad de `detailUrl`: los productos publicados llevan `solutionId`.

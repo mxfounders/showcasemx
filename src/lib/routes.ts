@@ -1,6 +1,7 @@
 import { getBlogSlugs } from './blog';
 import { infoSlugs } from './info-pages';
 import { categories, collections, industries } from './taxonomy';
+import { isSolutionSlug } from './solutions/slug';
 
 // What a path under /[locale] can be, checked by the middleware before anything
 // renders. Bots and vulnerability scanners probe thousands of paths a day
@@ -8,6 +9,8 @@ import { categories, collections, industries } from './taxonomy';
 // page and answered 200 (CLAUDE.md §79). Deeper checks that need the database (does
 // this UUID exist?) stay in the pages; the closed slug sets below are checked here,
 // because a page-level notFound() under a loading.tsx can only answer 200 (§53).
+// Listing slugs (/soluciones/cord) are checked here by shape only; which ones exist is
+// src/lib/solutions/slug-routing.ts, also run by the middleware.
 // tests/routes.test.ts walks src/app/[locale] so a new route cannot be left out.
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -41,7 +44,8 @@ const routes = new Map<string, Rest>([
   ['reset-password', leaf],
   ['sign-in', leaf],
   ['sign-up', leaf],
-  ['soluciones', idPage],
+  // A listing by its slug (SHCWS-101) or by its UUID, which redirects to the slug.
+  ['soluciones', rest => idPage(rest) || (rest.length === 1 && isSolutionSlug(rest[0]))],
   ['verify-email', leaf],
   ['weekly', rest => rest.length === 1 && rest[0] === 'unsubscribe'],
 ]);

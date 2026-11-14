@@ -1,7 +1,8 @@
 import { cookies } from 'next/headers';
 import { verificationDomain } from '@/lib/trust/domain';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { isSolutionId, getSolutionCategories, type SolutionData } from '@/lib/solutions/model';
+import { isSolutionSlug, solutionPath } from '@/lib/solutions/slug';
 import { solutionsSql } from '@/lib/solutions/server';
 import { getSession, sessionCookie } from '@/lib/auth/session';
 import { getSolutionSocial, getSolutionComments } from '@/lib/solutions/social';
@@ -30,7 +31,7 @@ import { ComplianceNote } from '@/components/compliance/compliance-note';
 import { solutionResponseSignal } from '@/lib/solutions/response';
 import { ResponseSignalNote } from '@/components/catalog/response-signal';
 import { getDictionary } from '@/i18n/get-dictionary';
-import { localeAlternates } from '@/lib/seo';
+import { localeAlternates, siteOrigin } from '@/lib/seo';
 import { solutionMarkdownUrl } from '@/lib/machine-readable';
 import { JsonLd } from '@/components/json-ld';
 import { breadcrumbJsonLd, solutionJsonLd, solutionQuestionsJsonLd } from '@/lib/structured-data';
@@ -41,18 +42,34 @@ import { categories as taxonomyCategories, localizedCategoryDisplayLabel } from 
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * The segment is the listing's slug (SHCWS-101). A UUID or a slug it used before still
+ * finds it: the middleware answers those with a 301 to the current slug, so the page
+ * only meets them when the middleware could not tell (src/lib/solutions/slug-routing.ts).
+ */
+function listingRef(segment: string) {
+  return isSolutionId(segment)
+    ? { id: segment, slug: segment }
+    : isSolutionSlug(segment)
+      ? { id: null, slug: segment }
+      : null;
+}
+
 export async function generateMetadata(props: {
-  params: Promise<{ id: string; locale: string }>;
+  params: Promise<{ slug: string; locale: string }>;
 }): Promise<Metadata> {
   const params = await props.params;
-  if (!isSolutionId(params.id)) return {};
+  const ref = listingRef(params.slug);
+  if (!ref) return {};
   const { meta } = await getDictionary(params.locale);
   const sql = solutionsSql();
-  const [row] = await sql`SELECT published_data,
-    EXISTS(SELECT 1 FROM solution_site_image_ready r WHERE r.solution_id=founder_solutions.id) AS has_site_image
-    FROM founder_solutions WHERE id=${params.id} AND published_data IS NOT NULL`;
+  const [row] = await sql`SELECT id::text AS id,slug,published_data
+    FROM founder_solutions WHERE published_data IS NOT NULL AND (id=${ref.id}::uuid OR slug=${ref.slug}
+      OR id=(SELECT h.solution_id FROM solution_slug_history h WHERE h.slug=${ref.slug}))`;
   if (!row) return {};
   const data = row.published_data as SolutionData;
+  // Canonical, hreflang and Open Graph name the slug, whatever URL reached the page.
+  const path = solutionPath({ id: String(row.id), slug: row.slug as string | null });
   const title = `${data.name} | shwcs`;
   const description = data.problem
     ? data.problem.length > 150
@@ -64,14 +81,14 @@ export async function generateMetadata(props: {
     title,
     description,
     alternates: {
-      ...localeAlternates(params.locale, `/soluciones/${params.id}`),
+      ...localeAlternates(params.locale, path),
       // The same listing as Markdown, for assistants (SHCWS-106).
-      types: { 'text/markdown': solutionMarkdownUrl(params.id) },
+      types: { 'text/markdown': solutionMarkdownUrl(path) },
     },
     openGraph: {
       title,
       description,
-      url: `https://shwcs.site/${params.locale}/soluciones/${params.id}`,
+      url: `${siteOrigin}/${params.locale}${path}`,
       siteName: 'shwcs',
       locale: meta.site.ogLocale,
       type: 'website',
@@ -85,7 +102,7 @@ export async function generateMetadata(props: {
 }
 
 export default async function PublicSolution(props: {
-  params: Promise<{ id: string; locale: string }>;
+  params: Promise<{ slug: string; locale: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await props.params;
@@ -97,17 +114,31 @@ export default async function PublicSolution(props: {
   const adParam = searchParams[sponsoredBookingParam];
   const sponsoredBooking =
     medium === 'sponsored' && typeof adParam === 'string' && isSolutionId(adParam) ? adParam : null;
-  if (!isSolutionId(params.id)) notFound();
+  const ref = listingRef(params.slug);
+  if (!ref) notFound();
   const dict = await getDictionary(params.locale);
   const sql = solutionsSql();
   const [row] =
-    await sql`SELECT owner_id,catalog_key,published_data - 'contactEmail' - 'otherCategory' AS published_data,published_at::text,
+    await sql`SELECT id::text AS id,slug,owner_id,catalog_key,published_data - 'contactEmail' - 'otherCategory' AS published_data,published_at::text,
   EXISTS(SELECT 1 FROM solution_site_image_ready r WHERE r.solution_id=founder_solutions.id) AS has_site_image
-  FROM founder_solutions WHERE id=${params.id} AND published_data IS NOT NULL`;
+  FROM founder_solutions WHERE published_data IS NOT NULL AND (id=${ref.id}::uuid OR slug=${ref.slug}
+    OR id=(SELECT h.solution_id FROM solution_slug_history h WHERE h.slug=${ref.slug}))`;
   if (!row) notFound();
+  // The UUID stays the identity for everything below; the slug only names the page.
+  const id = String(row.id);
+  const path = solutionPath({ id, slug: row.slug as string | null });
+  if (path !== `/soluciones/${params.slug}`) {
+    // Normally the middleware's 301 got here first; this covers a listing it did not know
+    // yet (published or renamed seconds ago). Under the loading boundary it is a soft redirect.
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(searchParams))
+      for (const item of Array.isArray(value) ? value : value === undefined ? [] : [value])
+        query.append(key, item);
+    permanentRedirect(`/${params.locale}${path}${query.size ? `?${query}` : ''}`);
+  }
   const data = row.published_data as SolutionData;
   const [proof] =
-    await sql`SELECT p.domain FROM solution_domain_proofs p JOIN founder_solutions s ON s.id=p.solution_id AND s.owner_id=p.owner_id WHERE p.solution_id=${params.id} AND p.domain=${verificationDomain(data.website)} AND p.verified_at IS NOT NULL AND p.expires_at>now()`;
+    await sql`SELECT p.domain FROM solution_domain_proofs p JOIN founder_solutions s ON s.id=p.solution_id AND s.owner_id=p.owner_id WHERE p.solution_id=${id} AND p.domain=${verificationDomain(data.website)} AND p.verified_at IS NOT NULL AND p.expires_at>now()`;
   // The public ficha still renders when session/social storage is unavailable —
   // only the like/comments block is skipped, never the whole page.
   let viewer = '',
@@ -130,8 +161,8 @@ export default async function PublicSolution(props: {
     reviews: Awaited<ReturnType<typeof getSolutionReviews>> | undefined;
   try {
     [social, comments] = await Promise.all([
-      getSolutionSocial(params.id, viewer),
-      getSolutionComments(params.id, viewer),
+      getSolutionSocial(id, viewer),
+      getSolutionComments(id, viewer),
     ]);
   } catch {
     /* like/comments are optional; the ficha itself must still render */
@@ -147,19 +178,19 @@ export default async function PublicSolution(props: {
     contactedLoad,
     updatesLoad,
   ] = await Promise.allSettled([
-    getSolutionReviews(params.id, viewer),
-    complianceResult(params.id),
-    getRecognition(params.id, data.website),
+    getSolutionReviews(id, viewer),
+    complianceResult(id),
+    getRecognition(id, data.website),
     // How the founder answers contact requests (SHCWS-52); null below 3 requests.
-    solutionResponseSignal(params.id),
+    solutionResponseSignal(id),
     // Public questions and the founder's answers (SHCWS-57).
-    getSolutionQuestions(params.id, viewer),
+    getSolutionQuestions(id, viewer),
     // Whether the viewer's review will show «Contactó vía shwcs» (SHCWS-135).
     viewer && viewer !== String(row.owner_id)
-      ? contactBacked(viewer, params.id)
+      ? contactBacked(viewer, id)
       : Promise.resolve(false),
     // Dated updates and whether the viewer follows the listing (SHCWS-24).
-    getSolutionUpdates(params.id, viewer),
+    getSolutionUpdates(id, viewer),
   ]);
   const updates = updatesLoad.status === 'fulfilled' ? updatesLoad.value : null;
   if (reviewsLoad.status === 'fulfilled') reviews = reviewsLoad.value;
@@ -167,7 +198,7 @@ export default async function PublicSolution(props: {
   const recognition = recognitionLoad.status === 'fulfilled' ? recognitionLoad.value : null;
   const responseSignal = responseLoad.status === 'fulfilled' ? responseLoad.value : null;
   const questions = questionsLoad.status === 'fulfilled' ? questionsLoad.value : null;
-  const faq = questions && solutionQuestionsJsonLd(params.id, params.locale, questions);
+  const faq = questions && solutionQuestionsJsonLd(path, params.locale, questions);
   // Country names resolved here, not in the browser, so the markup matches on hydration.
   const regionNames = new Intl.DisplayNames([params.locale], { type: 'region' });
   const countryNames = Object.fromEntries(
@@ -187,7 +218,7 @@ export default async function PublicSolution(props: {
   };
   let items: SimilarSection['items'] = [];
   try {
-    items = pickSimilar(current, `/soluciones/${params.id}`, await publicProducts());
+    items = pickSimilar(current, id, await publicProducts());
   } catch {
     /* optional: the exits below still give the listing a way out */
   }
@@ -199,7 +230,7 @@ export default async function PublicSolution(props: {
     <>
       <JsonLd
         data={solutionJsonLd({
-          id: params.id,
+          path,
           locale: params.locale,
           data,
           publishedAt: row.published_at as string | null,
@@ -217,7 +248,7 @@ export default async function PublicSolution(props: {
                 },
               ]
             : []),
-          { name: data.name, path: `/${params.locale}/soluciones/${params.id}` },
+          { name: data.name, path: `/${params.locale}${path}` },
         ])}
       />
       {faq && <JsonLd data={faq} />}
@@ -226,20 +257,21 @@ export default async function PublicSolution(props: {
   return (
     <>
       {structured}
-      {sponsoredBooking && <SponsoredVisit bookingId={sponsoredBooking} solutionId={params.id} />}
+      {sponsoredBooking && <SponsoredVisit bookingId={sponsoredBooking} solutionId={id} />}
       <SolutionPresentation
         verified={recognition?.verifiedAt ? { label: dict.recognition.verified } : null}
         recognition={
           recognition && (
             <RecognitionSeals
-              seals={recognitionSeals(params.id, data.name, recognition, params.locale, dict)}
+              seals={recognitionSeals(id, data.name, recognition, params.locale, dict)}
               moreLabel={dict.recognition.howItWorks}
               buttonLabel={dict.recognition.sealButton}
             />
           )
         }
         verifiedDomain={proof ? String(proof.domain) : null}
-        id={params.id}
+        id={id}
+        path={path}
         data={data}
         catalogKey={row.catalog_key as string | null}
         publishedAt={row.published_at as string | null}
@@ -262,7 +294,7 @@ export default async function PublicSolution(props: {
           <>
             {updates && (
               <SolutionUpdates
-                solutionId={params.id}
+                solutionId={id}
                 updates={updates.updates}
                 following={updates.following}
                 signedIn={!!viewer}
@@ -273,7 +305,7 @@ export default async function PublicSolution(props: {
             )}
             {reviews && (
               <ReviewSection
-                solutionId={params.id}
+                solutionId={id}
                 solutionName={data.name}
                 summary={reviews.summary}
                 reviews={reviews.reviews}
@@ -295,7 +327,7 @@ export default async function PublicSolution(props: {
             )}
             {questions && (
               <QuestionSection
-                solutionId={params.id}
+                solutionId={id}
                 solutionName={data.name}
                 questions={questions}
                 viewer={{

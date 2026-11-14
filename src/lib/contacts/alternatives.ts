@@ -18,11 +18,14 @@ export function pickContactAlternatives(
   limit = 3,
 ): Array<{ product: PublishedProduct; match: SimilarityMatch }> {
   if (!current) return [];
-  const open = catalog.filter(product => {
-    const id = /^\/soluciones\/([0-9a-f-]{36})$/.exec(product.detailUrl ?? '')?.[1];
-    return Boolean(id) && id !== solutionId && !excluded.has(id as string);
-  });
-  return pickSimilar(current, `/soluciones/${solutionId}`, open, limit);
+  // By solutionId, never read out of detailUrl: that is the public slug (SHCWS-101).
+  const open = catalog.filter(
+    product =>
+      !!product.solutionId &&
+      product.solutionId !== solutionId &&
+      !excluded.has(product.solutionId),
+  );
+  return pickSimilar(current, solutionId, open, limit);
 }
 
 /**

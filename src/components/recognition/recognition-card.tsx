@@ -13,6 +13,7 @@ import { BadgePicker } from './badge-picker';
  */
 export function RecognitionCard({
   solutionId,
+  path,
   name,
   recognition,
   movedAway,
@@ -21,6 +22,8 @@ export function RecognitionCard({
   dict,
 }: {
   solutionId: string;
+  /** The listing's public path, `/soluciones/<slug>`: the badge links to its name. */
+  path: string;
   name: string;
   recognition: Recognition;
   /** A verification exists but for another host: the site changed since it was checked. */
@@ -114,11 +117,7 @@ export function RecognitionCard({
       <div className="mt-8 border-t border-stone-200 pt-6">
         <h3 className="text-sm font-medium text-stone-800">{text.badgesTitle}</h3>
         <p className="mb-5 mt-1 text-sm leading-relaxed text-stone-500">{text.badgesHint}</p>
-        <BadgePicker
-          options={options}
-          href={`${origin}/${locale}/soluciones/${solutionId}`}
-          dict={text}
-        />
+        <BadgePicker options={options} href={`${origin}/${locale}${path}`} dict={text} />
       </div>
     </section>
   );

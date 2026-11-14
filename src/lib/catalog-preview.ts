@@ -10,6 +10,9 @@ export type PreviewProduct = {
   website?: string;
   provider?: string;
   offering?: 'Software' | 'Agencia' | 'Servicio';
+  /** A published listing's UUID: its identity (saved projects, contacts, ads, metrics). */
+  solutionId?: string;
+  /** Its public page, `/soluciones/<slug>` (SHCWS-101). Never parse an identity out of it. */
   detailUrl?: string;
   ogImage?: string;
   favicon?: string;

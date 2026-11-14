@@ -14,7 +14,7 @@
 - `/account/solutions/[id]`: formulario guiado de 14 preguntas (cuatro fases internas por compatibilidad), guardar y continuar, guardar y salir, estado e historial.
 - `/aplicar` y CTA de landing llevan al nuevo flujo. El destino de postulación se conserva en login/registro mediante una lista cerrada de redirecciones.
 - `/account/review`: cola editorial exclusiva de cuentas incluidas en `solution_reviewers`. No se asigna permiso por perfil, correo ni parámetros enviados por cliente. No se puede revisar una solución propia.
-- `/soluciones/[id]`: ficha pública basada solo en la versión aprobada. El catálogo y buscador incorporan las versiones publicadas por categoría. No incluyen contacto privado, propietario ni comentarios.
+- `/soluciones/[slug]`: ficha pública basada solo en la versión aprobada, con URL por nombre (SHCWS-101; el UUID redirige con 301). El catálogo y buscador incorporan las versiones publicadas por categoría. No incluyen contacto privado, propietario ni comentarios.
 
 ## Estados y versiones
 

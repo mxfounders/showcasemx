@@ -78,7 +78,7 @@ export default async function PromotePage(props: {
   const name = published?.name || solution.data.name;
   // The card exactly as the catalogue serves it; right after approval the cached
   // catalogue may lag a few minutes, so the approved text stands in meanwhile.
-  const listed = products.find(item => item.detailUrl === `/soluciones/${solution.id}`);
+  const listed = products.find(item => item.solutionId === solution.id);
   const card: SponsoredCardContent = listed
     ? {
         name: listed.name,

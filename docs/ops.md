@@ -112,7 +112,7 @@ seguridad comprueba los marcadores en JSON y en el HTML/RSC renderizado.
 | `/panel` | Pendientes, actividad del catálogo, colas, salud, tu acceso anterior e intentos fallidos con tu correo |
 | `/panel/revision` | Cola pendiente, la más antigua primero, con señales (cuenta nueva, sin verificar, actualización, reportes); `j`/`k` |
 | `/panel/postulaciones` | Todas las fichas: estados, categoría, proyecto vinculado, orden, exportación |
-| `/panel/postulaciones/[id]` | Ficha completa, diff palabra por palabra contra lo publicado, capturas, historial, actividad, reportes, comentarios; panel de decisión con plantillas y navegación por la cola |
+| `/panel/postulaciones/[id]` | Ficha completa, diff palabra por palabra contra lo publicado, capturas, historial, actividad, reportes, comentarios; panel de decisión con plantillas y navegación por la cola; «Dirección pública» con el slug, los anteriores y, para admin, el cambio de dirección |
 | `/panel/reportes` | Reportes de fichas y de comunidad con decisión obligatoria |
 | `/panel/dominios` | Pruebas TXT: verificadas, pendientes, vencidas, por revalidar (+90 días) |
 | `/panel/cuentas`, `/panel/cuentas/[id]` | Filtros, orden, exportación; identidad, seguridad (sesiones del producto por dispositivo, 2FA, tokens vivos, membresía ops), publicaciones, biblioteca (solo conteos), contactos (metadatos), comunidad, avisos y bitácora |
@@ -142,6 +142,11 @@ y una paleta validada para daltonismo en ambos temas.
   revisa Bitácora filtrando por el grupo Seguridad y verifica la cadena.
 - **Restringir por red.** Define `OPS_IP_ALLOWLIST` con la IP o rango de la VPN y
   redeploy; cualquier otra red recibe 404 incluso en `/login`.
+- **Cambiar la URL de una ficha** (SHCWS-101). Publicar le da `/soluciones/<slug>` a
+  partir del nombre. Si el proyecto cambia de nombre, un admin la cambia en «Dirección
+  pública» de la postulación con un motivo; la anterior sigue redirigiendo (301) y el
+  dueño recibe un aviso. Un slug que otra ficha usa o usó no se acepta. Detalle en
+  [listings.md](listings.md#urls-con-nombre--14-noviembre-2026-shcws-101).
 
 ## Verificación
 

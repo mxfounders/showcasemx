@@ -16,6 +16,7 @@ import { notFound } from 'next/navigation';
 import { ArrowLeftIcon, ArrowUpRightIcon, MegaphoneIcon } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import { requireFounder, getSolution, getEvents } from '@/lib/solutions/server';
+import { solutionPath } from '@/lib/solutions/slug';
 import { isSolutionId, isSolutionStatus } from '@/lib/solutions/model';
 import { StatusBadge } from '@/components/solutions/status-badge';
 import { SolutionEditor } from '@/components/solutions/solution-editor';
@@ -211,7 +212,7 @@ export default async function SolutionPage(props: {
           {published && (
             <>
               <Link
-                href={`/soluciones/${solution.id}`}
+                href={solutionPath(solution)}
                 target="_blank"
                 className="inline-flex items-center gap-1 text-xs font-medium text-stone-600 hover:text-stone-900"
               >
@@ -254,6 +255,7 @@ export default async function SolutionPage(props: {
         {published && recognition && (
           <RecognitionCard
             solutionId={solution.id}
+            path={solutionPath(solution)}
             name={published.name}
             recognition={recognition}
             movedAway={!!recognition.movedAway}

@@ -22,7 +22,7 @@ export async function sponsoredProducts(placement: AdPlacement, scope = '') {
     if (live.length === 0) return [];
     const products = await publicProducts();
     return live.flatMap(booking => {
-      const product = products.find(item => item.detailUrl === `/soluciones/${booking.solutionId}`);
+      const product = products.find(item => item.solutionId === booking.solutionId);
       return product ? [{ bookingId: booking.bookingId, product }] : [];
     });
   } catch {

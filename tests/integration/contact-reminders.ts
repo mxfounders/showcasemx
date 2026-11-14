@@ -233,6 +233,7 @@ async function main() {
       categories: ['Ventas'],
       capabilities: ['cotizaciones-propuestas'],
       response: null,
+      solutionId: id,
       detailUrl: `/soluciones/${id}`,
     }));
     const build = (key: string, owner: string) =>
