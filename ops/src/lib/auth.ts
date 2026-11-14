@@ -5,7 +5,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getDb } from './db';
 import { failure } from './http';
 import { audit } from './audit';
-import { clientIp } from './net';
+import { clientIp, networkKey } from './net';
 import { readUserAgent } from './device';
 import { decryptSecret } from './crypto';
 import { verifyTotp } from './totp';
@@ -196,9 +196,10 @@ export async function opsLimit(
   return rows.every(row => Number(row.attempts) <= (row.key === global ? globalMaximum : maximum));
 }
 
-/** Network identity for pre-authentication rate limits. */
+/** Network identity for pre-authentication rate limits: IPv4, or the IPv6 /64. */
 export function requestIdentity(requestHeaders: Headers): string {
-  return clientIp(requestHeaders) ?? 'unknown';
+  const ip = clientIp(requestHeaders);
+  return (ip && networkKey(ip)) ?? 'unknown';
 }
 
 export type TotpOutcome = 'ok' | 'invalid' | 'replay' | 'not_enrolled';

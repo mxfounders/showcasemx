@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authSql, securityLimit } from '@/lib/auth/security';
+import { authSql, requestIdentity, securityLimit } from '@/lib/auth/security';
 import { recoveryConfig, issueReset, deliverReset } from '@/lib/auth/recovery';
 import { credentialErrors } from '@/lib/auth/validation';
 import { failure, solutionBody } from '@/lib/solutions/http';
@@ -15,7 +15,16 @@ export async function POST(request: NextRequest) {
     const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
     if (credentialErrors(email, 'unused-password').email)
       return failure(t.recoveryEmailInvalid, 400);
-    if (!(await securityLimit('recovery', email, 3))) return failure(t.recoveryTooMany, 429);
+    // Per network, per email from that network, and (higher) per email (SHCWS-171): three
+    // requests from one network can't block someone else's recovery for an hour, and an
+    // inbox still gets at most ten emails an hour however many networks ask.
+    const network = requestIdentity(request.headers);
+    if (
+      !(await securityLimit('recovery-address', network, 10)) ||
+      !(await securityLimit('recovery-pair', `${email}|${network}`, 3)) ||
+      !(await securityLimit('recovery', email, 10))
+    )
+      return failure(t.recoveryTooMany, 429);
     const sql = authSql();
     const rows = await sql`SELECT id,password_hash FROM auth_accounts WHERE email=${email}`;
     // Consistent response floor covers the bounded mail request, including nonexistent accounts.

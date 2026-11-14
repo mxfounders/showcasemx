@@ -9,7 +9,18 @@ import {
 } from '../src/lib/auth/password';
 import { getSession, cookieOptions } from '../src/lib/auth/session';
 import { POST } from '../src/app/api/auth/[action]/route';
-import { requestIdentity } from '../src/lib/auth/security';
+import {
+  clearGoogleCookies,
+  googleCookieOptions,
+  googleStateCookie,
+  legacyGoogleCookie,
+} from '../src/lib/auth/google';
+import {
+  networkOf,
+  pressureAllowance,
+  requestIdentity,
+  withinLimit,
+} from '../src/lib/auth/security';
 
 test('passwords use random salts, verify correctly and reject corruption', async () => {
   const password = 'a long test passphrase';
@@ -80,9 +91,62 @@ test('rate-limit identity accepts bounded network addresses and rejects arbitrar
     requestIdentity(new Headers({ 'x-forwarded-for': '203.0.113.8, 10.0.0.1' })),
     '203.0.113.8',
   );
-  assert.equal(requestIdentity(new Headers({ 'x-forwarded-for': '2001:db8::1' })), '2001:db8::1');
+  // IPv6 counts by its /64 (SHCWS-171): every address of one connection is one network.
+  assert.equal(
+    requestIdentity(new Headers({ 'x-forwarded-for': '2001:db8::1' })),
+    '2001:db8:0:0::/64',
+  );
   assert.equal(
     requestIdentity(new Headers({ 'x-forwarded-for': 'attacker-controlled value' })),
     'unknown',
   );
+});
+
+test('IPv6 addresses of one /64 share a network; IPv4 stays exact', () => {
+  const same = [
+    '2001:db8:aa:bb:1:2:3:4',
+    '2001:0db8:00aa:00bb:ffff::1',
+    '2001:DB8:AA:BB::',
+    '2001:db8:aa:bb:0:0:1.2.3.4',
+  ].map(networkOf);
+  assert.deepEqual(new Set(same), new Set(['2001:db8:aa:bb::/64']));
+  assert.equal(networkOf('2001:db8:aa:bc::1'), '2001:db8:aa:bc::/64');
+  assert.equal(networkOf('::1'), '0:0:0:0::/64');
+  assert.equal(networkOf('::ffff:203.0.113.8'), '203.0.113.8');
+  assert.equal(networkOf('203.0.113.8'), '203.0.113.8');
+  for (const bad of [
+    '256.1.1.1',
+    '1:2:3:4:5:6:7:8:9',
+    '1::2::3',
+    'g::1',
+    '1:2:3',
+    '',
+    '::ffff:1.2.3',
+  ])
+    assert.equal(networkOf(bad), null, bad);
+});
+
+test('a busy scope narrows each identity instead of refusing everyone', () => {
+  // Calm: the identity's own allowance applies.
+  assert.equal(withinLimit(30, 120, 30, 120), true);
+  assert.equal(withinLimit(31, 1, 30, 120), false);
+  // Under pressure: a newcomer still gets in, a network that kept trying does not.
+  assert.equal(withinLimit(1, 5000, 30, 120), true);
+  assert.equal(withinLimit(8, 5000, 30, 120), true);
+  assert.equal(withinLimit(9, 5000, 30, 120), false);
+  assert.equal(pressureAllowance(3), 1);
+  assert.equal(pressureAllowance(1), 1);
+});
+
+test('the Google state cookie is __Host- when secure, and clearing covers the old name', () => {
+  // A __Host- cookie can't be planted by a sibling subdomain such as ops (SHCWS-174).
+  assert.equal(googleStateCookie(true), '__Host-showcasemx_google_state');
+  assert.equal(googleStateCookie(false), legacyGoogleCookie);
+  assert.equal(googleCookieOptions.path, '/');
+  assert.equal(googleCookieOptions.httpOnly, true);
+  assert.equal('domain' in googleCookieOptions, false);
+  const cleared: Array<[string, number]> = [];
+  clearGoogleCookies({ set: (name, _value, options) => cleared.push([name, options.maxAge]) });
+  assert.ok(cleared.some(([name]) => name === legacyGoogleCookie));
+  assert.ok(cleared.every(([, maxAge]) => maxAge === 0));
 });

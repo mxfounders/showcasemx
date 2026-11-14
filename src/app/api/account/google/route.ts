@@ -3,7 +3,7 @@ import { getSession, readUserAgent, sessionCookie } from '@/lib/auth/session';
 import { securityNotice } from '@/lib/auth/security-notices';
 import { authSql, securityLimit } from '@/lib/auth/security';
 import { verifyPassword, hashToken } from '@/lib/auth/password';
-import { googleCookie, googleConfig, beginGoogle } from '@/lib/auth/google';
+import { googleCookie, googleConfig, beginGoogle, googleCookieOptions } from '@/lib/auth/google';
 import { failure, solutionBody } from '@/lib/solutions/http';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { requestLocale } from '@/i18n/negotiate';
@@ -60,13 +60,7 @@ export async function POST(request: NextRequest) {
       { ok: true, url: result.url },
       { headers: { 'Cache-Control': 'no-store' } },
     );
-    response.cookies.set(googleCookie, result.cookie, {
-      httpOnly: true,
-      secure: config.origin.startsWith('https:'),
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 600,
-    });
+    response.cookies.set(googleCookie, result.cookie, googleCookieOptions);
     return response;
   } catch {
     return failure(t.googleUnavailable, 503);

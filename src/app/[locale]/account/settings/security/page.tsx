@@ -70,7 +70,12 @@ export default async function SecuritySettings(props: { params: Promise<{ locale
             {dict.twoStepLoadError}
           </p>
         ) : (
-          <TwoFactor enabled={twoStep} available={totpConfigured()} dict={dict.twoFactor} />
+          <TwoFactor
+            enabled={twoStep}
+            available={totpConfigured()}
+            emailVerified={prefs.verified}
+            dict={dict.twoFactor}
+          />
         )}
       </div>
 

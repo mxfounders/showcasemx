@@ -51,9 +51,14 @@ export async function POST(request: NextRequest) {
       const invite =
         typeof body.invite === 'string' ? await resolveReviewInvite(body.invite) : null;
       if (!invite) return failure(t.inviteInvalid, 409);
+      // Same shape as recovery (SHCWS-171), plus a cap per invitation link: spraying one
+      // shared link at many inboxes runs out on that link, not on everyone's invitations.
+      const network = requestIdentity(request.headers);
       if (
-        !(await securityLimit('magic-link-address', requestIdentity(request.headers), 10)) ||
-        !(await securityLimit('magic-link', email, 3))
+        !(await securityLimit('magic-link-address', network, 10)) ||
+        !(await securityLimit('magic-link-pair', `${email}|${network}`, 3)) ||
+        !(await securityLimit('magic-link', email, 10)) ||
+        !(await securityLimit('magic-link-invite', String(body.invite), 30))
       )
         return failure(t.magicRateLimited, 429);
       const token = await issueMagicLink(email, invite.solutionId);

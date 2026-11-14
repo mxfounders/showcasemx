@@ -18,9 +18,12 @@ export function AuthForm({
   mode,
   returnTo = '/account',
   googleAvailable = false,
+  awaitingCode = false,
   dict,
 }: {
   googleAvailable?: boolean;
+  /** A sign-in already passed its first step elsewhere (Google) and waits for the code. */
+  awaitingCode?: boolean;
   mode: 'login' | 'register';
   returnTo?: string;
   dict: Dictionary['auth'];
@@ -56,7 +59,7 @@ export function AuthForm({
   const [registered, setRegistered] = useState(false);
   // The password was accepted but the account asks for a second factor. No session
   // exists yet: the server holds a short-lived challenge until the code checks out.
-  const [challenge, setChallenge] = useState(false);
+  const [challenge, setChallenge] = useState(awaitingCode);
   const [code, setCode] = useState('');
   async function submitCode(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

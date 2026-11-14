@@ -112,6 +112,23 @@ export function ipAllowed(ip: string | null, rules: Rule[]): boolean {
   });
 }
 
+/**
+ * The network to count for rate limits: an IPv4 address, or the /64 of an IPv6 one,
+ * because one connection usually owns a whole /64 (SHCWS-171, same rule as the product).
+ */
+export function networkKey(ip: string): string | null {
+  const parsed = parseIp(ip);
+  if (!parsed) return null;
+  if (parsed.family === 4) {
+    const n = parsed.value;
+    return [n >>> 24, (n >>> 16) & 255, (n >>> 8) & 255, n & 255].join('.');
+  }
+  const groups: string[] = [];
+  for (let shift = 112; shift >= 64; shift -= 16)
+    groups.push(((parsed.value >> BigInt(shift)) & BigInt(0xffff)).toString(16));
+  return `${groups.join(':')}::/64`;
+}
+
 /** Platform-provided client address, or null when absent/invalid. */
 export function clientIp(headers: Headers): string | null {
   const candidates = [headers.get('x-real-ip'), headers.get('x-forwarded-for')?.split(',')[0]];

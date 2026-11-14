@@ -12,13 +12,12 @@ import {
 import {
   challengeCookie,
   challengeCookieOptions,
-  challengeSeconds,
   cookieOptions,
   readUserAgent,
   sessionCookie,
   sessionSeconds,
 } from '@/lib/auth/session';
-import { requestIdentity, securityLimit } from '@/lib/auth/security';
+import { requestIdentity, securityLimit, withinLimit } from '@/lib/auth/security';
 import { decryptSecret, hashBackupCode, verifyTotp } from '@/lib/auth/totp';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { requestLocale } from '@/i18n/negotiate';
@@ -28,6 +27,7 @@ import { passwordLeaked } from '@/lib/auth/pwned';
 import { rememberDevice, securityNotice, signInNotice } from '@/lib/auth/security-notices';
 import { existingAccountNotice } from '@/lib/auth/existing-account';
 import { recoveryConfig } from '@/lib/auth/recovery';
+import { issueLoginChallenge } from '@/lib/auth/challenge';
 export const runtime = 'nodejs';
 
 const MAX_CHALLENGE_ATTEMPTS = 5;
@@ -149,7 +149,15 @@ export async function POST(request: NextRequest, props: { params: Promise<{ acti
         const stored = (challenge.backup_codes as string[] | null) ?? [];
         usedBackup = stored.includes(hashBackupCode(code));
       }
-      if (acceptedStep === null && !usedBackup) return fail(t.totpWrong, 401);
+      if (acceptedStep === null && !usedBackup) {
+        // The tenth wrong code of the hour means someone has the password (SHCWS-173). The
+        // counter takes each value once, so the owner hears it once per hour, right away.
+        if (Number(slot?.attempts) === MAX_ACCOUNT_TOTP_FAILURES) {
+          const userAgent = readUserAgent(request.headers);
+          after(() => securityNotice(accountId, 'totp-failures', userAgent).catch(() => undefined));
+        }
+        return fail(t.totpWrong, 401);
+      }
 
       // The code is spent in the same statement that opens the session: a second request
       // with the same code (or the same backup code) finds nothing left to consume.
@@ -218,10 +226,12 @@ export async function POST(request: NextRequest, props: { params: Promise<{ acti
     const credentials = validateCredentials(body);
     if (!credentials) return fail(t.credentialsInvalid, 400);
     // Atomic database counters work across serverless instances; no in-memory limiter.
-    // Every attempt counts against its network address and the global ceiling (they cap
-    // the expensive password work). Guessing an account is limited by FAILED logins only,
-    // per email+address and, higher, per email: someone who knows your email can lock out
-    // their own network, not you on yours (SHCWS-157). Windows are fixed 15-minute buckets.
+    // Every attempt counts against its network (an IPv6 /64) and a shared counter that
+    // bounds the expensive password work: above 120 a minute, only networks that already
+    // made a quarter of their 30 attempts are refused, never everyone (SHCWS-171).
+    // Guessing an account is limited by FAILED logins only, per email+address and, higher,
+    // per email: someone who knows your email can lock out their own network, not you on
+    // yours (SHCWS-157). Windows are fixed 15-minute buckets.
     const identity = requestIdentity(request.headers);
     const addressKey = `auth:address:${hashToken(identity)}`;
     const globalKey = 'auth:global';
@@ -242,8 +252,8 @@ export async function POST(request: NextRequest, props: { params: Promise<{ acti
       ON CONFLICT (key) DO UPDATE SET
         attempts = CASE WHEN auth_rate_limits.window_start = EXCLUDED.window_start THEN auth_rate_limits.attempts + 1 ELSE 1 END,
         window_start = EXCLUDED.window_start RETURNING key, attempts`;
-    if (limits.some(row => Number(row.attempts) > (row.key === globalKey ? 120 : 30)))
-      return tooMany();
+    const counted = (name: string) => Number(limits.find(row => row.key === name)?.attempts ?? 0);
+    if (!withinLimit(counted(addressKey), counted(globalKey), 30, 120)) return tooMany();
     const { email, password } = credentials;
     if (action === 'register') {
       // Known-breached passwords are refused (SHCWS-156); an unreachable service never blocks.
@@ -317,12 +327,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ acti
 
     if (rows[0].totp_confirmed_at) {
       // Password alone stops here. No session exists until the second factor passes.
-      const challengeToken = randomBytes(32).toString('hex');
-      await sql.transaction([
-        sql`DELETE FROM auth_login_challenges WHERE account_id = ${accountId} OR expires_at <= now()`,
-        sql`INSERT INTO auth_login_challenges (token_hash, account_id, password_hash_at_issue, expires_at)
-            VALUES (${hashToken(challengeToken)}, ${accountId}, ${verifiedHash}, now() + ${challengeSeconds} * interval '1 second')`,
-      ]);
+      const challengeToken = await issueLoginChallenge(accountId, verifiedHash);
       const response = NextResponse.json(
         { ok: true, step: 'totp' },
         { headers: { 'Cache-Control': 'no-store' } },

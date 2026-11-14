@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession, sessionCookie, cookieOptions } from '@/lib/auth/session';
 import { verifyPassword } from '@/lib/auth/password';
+import { readSecondFactorCode, spendSecondFactor } from '@/lib/auth/second-factor';
 import { authSql, securityLimit } from '@/lib/auth/security';
 import { failure, solutionBody } from '@/lib/solutions/http';
 import { deleteObjects } from '@/lib/storage/blob';
@@ -20,7 +21,8 @@ async function confirmWords() {
 /**
  * Permanent account deletion (right to erasure).
  *
- * Guarded by the current password plus a typed confirmation, because the effect
+ * Guarded by the current password (and a second-factor code when it's on) plus a typed
+ * confirmation, because the effect
  * reaches beyond this account: every foreign key to `auth_accounts` cascades, so
  * published fichas disappear from the catalogue and contact conversations are
  * removed for the other participant too. The interface states that before asking.
@@ -51,10 +53,18 @@ export async function POST(request: NextRequest) {
       return failure(t.tooManyAttempts, 429);
 
     const sql = authSql();
-    const [row] = await sql`SELECT password_hash FROM auth_accounts WHERE id = ${account.id}`;
+    const [row] =
+      await sql`SELECT password_hash, totp_confirmed_at FROM auth_accounts WHERE id = ${account.id}`;
     if (!row) return failure(t.signInAgain, 401);
     if (!(await verifyPassword(body.password, String(row.password_hash))))
       return failure(t.wrongPassword, 400);
+    // With two-step verification on, a stolen password alone can't delete the account
+    // (SHCWS-173): a code from the app or a backup code is spent here too.
+    if (row.totp_confirmed_at) {
+      const code = readSecondFactorCode(body.code);
+      if (!code) return failure(t.secondFactorMissing, 400);
+      if (!(await spendSecondFactor(account.id, code))) return failure(t.secondFactorWrong, 400);
+    }
 
     // Sponsored bookings are cancelled and refunded first; the account stays if a refund fails.
     if (!(await cancelAccountBookings(account.id))) return failure(t.deleteBookingsPending, 503);

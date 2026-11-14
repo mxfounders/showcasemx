@@ -150,15 +150,18 @@ export const settings = {
         "Two-step verification isn't enabled in this environment yet. The encryption key {key} still needs to be configured on the server.",
       active: 'On',
       activeDesc:
-        "When you sign in, we'll ask for a code from your authenticator app in addition to your password.",
+        "When you sign in, we'll ask for a code from your authenticator app in addition to your password, also when you sign in with Google.",
       regenerate: 'Generate new backup codes',
       disable: 'Turn off',
       previousInvalid: 'Your previous codes no longer work.',
       disableDesc:
-        'Once you turn it off, your account will be protected by your password alone. Confirm with your current password.',
+        'Once you turn it off, your account will be protected by your password alone. Confirm with your current password and a code.',
       regenerateDesc:
-        'Ten new codes will be generated and the previous ones will stop working. Confirm with your current password.',
+        'Ten new codes will be generated and the previous ones will stop working. Confirm with your current password and a code.',
       currentPassword: 'Current password',
+      codeLabel: 'Code from your app or a backup code',
+      verifyEmailFirst:
+        "To turn it on, first confirm your email with the link above. That way nobody can turn it on for an account with an email that isn't theirs.",
       cancel: 'Cancel',
       confirming: 'Confirming…',
       disableSubmit: 'Turn off verification',
@@ -243,6 +246,8 @@ export const settings = {
       genericError: "We couldn't delete the account. Please try again.",
       consequencesTitle: "Here's what will happen",
       currentPassword: 'Current password',
+      codeLabel: 'Two-step verification code',
+      codeHelp: 'The one from your authenticator app or one of your backup codes.',
       confirmLabel: 'Type {word} to confirm',
       confirmWord: 'DELETE',
       cancel: 'Cancel',
@@ -335,5 +340,9 @@ export const settings = {
     totpNotOn: "Two-step verification isn't on.",
     totpAlreadyOff: 'Two-step verification was already off.',
     totpUnavailable: "We couldn't complete the change. Please try again.",
+    totpEmailFirst:
+      'Confirm your email before turning on two-step verification. Ask for the link in Security.',
+    secondFactorMissing: 'Enter the code from your app or a backup code.',
+    secondFactorWrong: 'The code is wrong or was already used.',
   },
 } as const satisfies Dictionary['settings'];

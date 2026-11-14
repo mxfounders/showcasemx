@@ -3,7 +3,29 @@ import { randomBytes, createHash } from 'node:crypto';
 import { authSql } from './security';
 import { hashToken } from './password';
 import { authReturnTo } from './return-to';
-export const googleCookie = 'showcasemx_google_state';
+// Prefixed __Host- in production so a sibling subdomain (ops.shwcs.site) can't plant a
+// state of its own and sign someone into another account (SHCWS-174). The old name is
+// still read for ten minutes' worth of flows started before the rename (§20).
+const secureCookies = process.env.NODE_ENV === 'production';
+export const legacyGoogleCookie = 'showcasemx_google_state';
+export function googleStateCookie(secure: boolean) {
+  return secure ? '__Host-showcasemx_google_state' : legacyGoogleCookie;
+}
+export const googleCookie = googleStateCookie(secureCookies);
+export const googleCookieOptions = {
+  httpOnly: true,
+  secure: secureCookies,
+  sameSite: 'lax' as const,
+  path: '/',
+  maxAge: 600,
+};
+/** Clears the state cookie under both names, with the attributes a __Host- cookie needs. */
+export function clearGoogleCookies(cookies: {
+  set: (name: string, value: string, options: typeof googleCookieOptions) => unknown;
+}) {
+  for (const name of new Set([googleCookie, legacyGoogleCookie]))
+    cookies.set(name, '', { ...googleCookieOptions, maxAge: 0 });
+}
 export function googleConfig() {
   const {
     GOOGLE_CLIENT_ID: clientId,

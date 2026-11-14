@@ -157,19 +157,16 @@ const emails = [email];
     else
       console.log(`google link after verification: ${verified.status} (origin mismatch, skipped)`);
 
-    // Two-step verification on.
+    // Two-step verification on. The enrolment code is the previous step's (inside the
+    // window) so the codes the rest of the test signs in with are newer than it.
     const started = await (
       await post('/api/account/totp', { action: 'start', password }, { cookie: first })
     ).json();
     assert.ok(started.secret && started.backupCodes.length === 10);
+    const enrolment = totp(started.secret, -1);
     assert.equal(
-      (
-        await post(
-          '/api/account/totp',
-          { action: 'confirm', code: totp(started.secret) },
-          { cookie: first },
-        )
-      ).status,
+      (await post('/api/account/totp', { action: 'confirm', code: enrolment }, { cookie: first }))
+        .status,
       200,
     );
     const challenge = async () => {
@@ -205,6 +202,13 @@ const emails = [email];
         .length,
       0,
     );
+
+    // The enrolment code is spent: it can't sign in within its window (SHCWS-173).
+    assert.equal(
+      (await post('/api/auth/totp', { code: enrolment }, { cookie: await challenge() })).status,
+      401,
+    );
+    await resetFailures();
 
     // Fifteen parallel guesses on one challenge: only five are ever checked.
     const guessed = await challenge();
@@ -346,7 +350,7 @@ const emails = [email];
       401,
     );
 
-    // Deleting the account needs the password and the typed word, and removes everything.
+    // Deleting the account needs the password, a code and the typed word, and removes everything.
     const final = await challenge().catch(() => null);
     assert.equal(final, null, 'the old password no longer opens a challenge');
     const login = await post('/api/auth/login', { email, password: newPassword });
@@ -377,11 +381,22 @@ const emails = [email];
       ).status,
       400,
     );
+    // With two-step verification on, the password alone doesn't delete it (SHCWS-173).
     assert.equal(
       (
         await post(
           '/api/account/delete',
           { password: newPassword, confirm: 'ELIMINAR' },
+          { cookie: owner },
+        )
+      ).status,
+      400,
+    );
+    assert.equal(
+      (
+        await post(
+          '/api/account/delete',
+          { password: newPassword, confirm: 'ELIMINAR', code: started.backupCodes[2] },
           { cookie: owner },
         )
       ).status,

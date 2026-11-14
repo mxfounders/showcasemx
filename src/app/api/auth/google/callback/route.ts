@@ -1,15 +1,24 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { NextRequest, NextResponse, after } from 'next/server';
-import { googleCookie, googleConfig, googleIdentity } from '@/lib/auth/google';
+import {
+  clearGoogleCookies,
+  googleConfig,
+  googleCookie,
+  googleIdentity,
+  legacyGoogleCookie,
+} from '@/lib/auth/google';
 import { authSql } from '@/lib/auth/security';
 import { hashPassword, hashToken } from '@/lib/auth/password';
 import {
-  getSession,
-  sessionCookie,
+  challengeCookie,
+  challengeCookieOptions,
   cookieOptions,
-  sessionSeconds,
+  getSession,
   readUserAgent,
+  sessionCookie,
+  sessionSeconds,
 } from '@/lib/auth/session';
+import { issueLoginChallenge } from '@/lib/auth/challenge';
 import { securityNotice, signInNotice } from '@/lib/auth/security-notices';
 import { authReturnTo } from '@/lib/auth/return-to';
 import { getDictionary } from '@/i18n/get-dictionary';
@@ -25,14 +34,17 @@ export async function GET(request: NextRequest) {
       config.origin +
         (link ? '/account/settings/connections?google=error' : '/sign-in?google=error'),
     );
-    response.cookies.set(googleCookie, '', { path: '/', maxAge: 0 });
+    clearGoogleCookies(response.cookies);
     response.headers.set('Cache-Control', 'no-store');
     return response;
   };
   let linking = false;
   try {
     const state = request.nextUrl.searchParams.get('state') ?? '',
-      cookie = request.cookies.get(googleCookie)?.value ?? '',
+      cookie =
+        request.cookies.get(googleCookie)?.value ??
+        request.cookies.get(legacyGoogleCookie)?.value ??
+        '',
       code = request.nextUrl.searchParams.get('code');
     if (
       !/^[a-f0-9]{64}$/.test(state) ||
@@ -99,21 +111,41 @@ export async function GET(request: NextRequest) {
       const linked = accountId;
       after(() => securityNotice(linked, 'google-linked', userAgent).catch(() => undefined));
       const response = NextResponse.redirect(config.origin + '/account/settings/connections');
-      response.cookies.set(googleCookie, '', { path: '/', maxAge: 0 });
+      clearGoogleCookies(response.cookies);
       response.headers.set('Cache-Control', 'no-store');
       return response;
     }
+    const returnTo = authReturnTo(String(flow.return_to));
+    const [account] =
+      await sql`SELECT password_hash, suspended_at, totp_confirmed_at FROM auth_accounts WHERE id=${accountId}`;
+    if (!account || account.suspended_at) return fail();
+    // Two-step verification applies to Google too (SHCWS-172): Google stands in for the
+    // password, and the same five-minute challenge then asks for the code.
+    if (account.totp_confirmed_at) {
+      const challenge = await issueLoginChallenge(accountId, String(account.password_hash));
+      const response = NextResponse.redirect(
+        `${config.origin}/sign-in?step=totp&next=${encodeURIComponent(returnTo)}`,
+      );
+      response.cookies.set(challengeCookie, challenge, challengeCookieOptions);
+      clearGoogleCookies(response.cookies);
+      response.headers.set('Cache-Control', 'no-store');
+      return response;
+    }
+    // Same shape as a password sign-in (SHCWS-174): the session records its device and
+    // replaces this browser's previous one.
     const session = randomBytes(32).toString('hex');
+    const previous = request.cookies.get(sessionCookie)?.value ?? '';
     const result = await sql.transaction([
       sql`SELECT id FROM auth_accounts WHERE id=${accountId} FOR UPDATE`,
-      sql`INSERT INTO auth_sessions(token_hash,account_id,expires_at) SELECT ${hashToken(session)},account_id,now()+${sessionSeconds}*interval '1 second' FROM auth_google_identities WHERE subject=${identity.subject} AND account_id=${accountId} RETURNING account_id`,
+      sql`DELETE FROM auth_sessions WHERE token_hash=${hashToken(previous)} OR (account_id=${accountId} AND expires_at<=now())`,
+      sql`INSERT INTO auth_sessions(token_hash,account_id,expires_at,user_agent) SELECT ${hashToken(session)},g.account_id,now()+${sessionSeconds}*interval '1 second',${userAgent} FROM auth_google_identities g JOIN auth_accounts a ON a.id=g.account_id WHERE g.subject=${identity.subject} AND g.account_id=${accountId} AND a.suspended_at IS NULL AND a.totp_confirmed_at IS NULL RETURNING account_id`,
     ]);
-    if (!result[1].length) return fail();
+    if (!result[2].length) return fail();
     const signedIn = accountId;
     after(() => signInNotice(signedIn, userAgent).catch(() => undefined));
-    const response = NextResponse.redirect(config.origin + authReturnTo(String(flow.return_to)));
+    const response = NextResponse.redirect(config.origin + returnTo);
     response.cookies.set(sessionCookie, session, cookieOptions);
-    response.cookies.set(googleCookie, '', { path: '/', maxAge: 0 });
+    clearGoogleCookies(response.cookies);
     response.headers.set('Cache-Control', 'no-store');
     return response;
   } catch {

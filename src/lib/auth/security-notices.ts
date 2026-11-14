@@ -17,7 +17,8 @@ export type SecurityEvent =
   | 'backup-code'
   | 'google-linked'
   | 'google-unlinked'
-  | 'new-device';
+  | 'new-device'
+  | 'totp-failures';
 
 const titles: Record<SecurityEvent, (device: string) => string> = {
   'password-changed': device => `Se cambió la contraseña de tu cuenta (${device})`,
@@ -28,6 +29,9 @@ const titles: Record<SecurityEvent, (device: string) => string> = {
   'google-linked': device => `Se vinculó una cuenta de Google (${device})`,
   'google-unlinked': device => `Se desvinculó la cuenta de Google (${device})`,
   'new-device': device => `Nuevo acceso a tu cuenta desde ${device}`,
+  // Only reachable after a correct password (or Google): «No fui yo» is the right advice.
+  'totp-failures': device =>
+    `Diez códigos incorrectos en una hora al entrar a tu cuenta (${device})`,
 };
 
 export function securityTitle(event: SecurityEvent, device: string) {

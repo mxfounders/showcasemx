@@ -75,10 +75,13 @@ export function ExportData({ dict }: { dict: Dictionary['settings']['data']['exp
 export function DeleteAccount({
   publications,
   conversations,
+  twoStep,
   dict,
 }: {
   publications: number;
   conversations: number;
+  /** Two-step verification is on: the server also asks for a code (SHCWS-173). */
+  twoStep: boolean;
   dict: Dictionary['settings']['data']['delete'];
 }) {
   const router = useRouter();
@@ -87,6 +90,7 @@ export function DeleteAccount({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
   const [confirm, setConfirm] = useState('');
 
   const consequences = [
@@ -131,7 +135,7 @@ export function DeleteAccount({
             const response = await fetch('/api/account/delete', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ password, confirm }),
+              body: JSON.stringify({ password, confirm, ...(twoStep ? { code } : {}) }),
               signal: AbortSignal.timeout(30000),
             });
             const result = await response.json();
@@ -177,6 +181,27 @@ export function DeleteAccount({
           className={`mt-2 ${field}`}
         />
       </label>
+      {twoStep && (
+        <label className="block text-sm font-medium text-stone-700">
+          {dict.codeLabel}
+          <input
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            required
+            value={code}
+            onChange={event => {
+              setCode(event.target.value.replace(/\D/g, '').slice(0, 8));
+              setError('');
+            }}
+            placeholder="123456"
+            aria-describedby="delete-code-help"
+            className={`mt-2 ${field} max-w-[220px] tracking-[0.2em]`}
+          />
+          <span id="delete-code-help" className="mt-2 block text-xs font-normal text-stone-500">
+            {dict.codeHelp}
+          </span>
+        </label>
+      )}
       <label className="block text-sm font-medium text-stone-700">
         {dict.confirmLabel.replace('{word}', dict.confirmWord)}
         <input
@@ -201,6 +226,7 @@ export function DeleteAccount({
           onClick={() => {
             setOpen(false);
             setPassword('');
+            setCode('');
             setConfirm('');
             setError('');
           }}
