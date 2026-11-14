@@ -25,6 +25,7 @@ const routes = new Map<string, Rest>([
   ...infoSlugs.map((info): [string, Rest] => [info, leaf]),
   // Private tree: its own pages authenticate and send anonymous visitors to sign-in.
   ['account', () => true],
+  ['anunciate', leaf],
   ['blog', rest => leaf(rest) || blogPost(rest)],
   ['buscar', leaf],
   ['colecciones', oneOf(collections.map(item => item.slug))],

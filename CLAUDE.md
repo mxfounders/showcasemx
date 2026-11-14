@@ -3739,3 +3739,11 @@ SHCWS-161. Detalle en docs/launch.md («Presentación y baja en un clic»).
 - El contenido de cada aviso (quién escribe, comentario editorial, reseña, anuncio) ya
   existía desde §78. Falta revisarlos a mano en Gmail, Outlook y Apple Mail, y los
   correos en inglés (SHCWS-25).
+
+## 85. Página «Anúnciate» — 14 noviembre 2026
+
+SHCWS-73. Detalle en docs/ads.md («Media kit»). `/anunciate` (es/en) reemplaza al
+«Sponsor» oculto del footer. Muestra visitas de 30 días por ubicación, precio por día con
+código de moneda, cuentas y suscriptores (sin desglose por debajo de 100), un ejemplo del
+espacio patrocinado y las reglas. Todo sale de `src/lib/ads/media-kit.ts`, que lee la base
+como mucho una vez por hora. Sin migración.

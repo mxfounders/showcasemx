@@ -18,7 +18,6 @@ const pendingDestinations = [
   '/fundadores', // public creator profiles: SHCWS-120
   '/destacados', // «Selección shwcs», today only in ops: SHCWS-165
   '/colecciones', // index of the collections; each /colecciones/[slug] exists
-  '/sponsor', // returns with /anunciate, the media kit: SHCWS-73
 ];
 
 export function availableNavigation(href: string) {
