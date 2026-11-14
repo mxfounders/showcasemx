@@ -1,5 +1,5 @@
 import { authSql } from '@/lib/auth/security';
-import { previewCategories } from '@/lib/catalog-preview';
+import { staticArtFor } from '@/lib/catalog-preview';
 import { getSolutionCategories } from '@/lib/solutions/model';
 import { responseSignals } from '@/lib/solutions/response';
 import type { ResponseSignal } from '@/lib/solutions/response-model';
@@ -35,13 +35,10 @@ export async function alertCandidates(): Promise<AlertCandidate[]> {
       FROM founder_solutions WHERE published_data IS NOT NULL`,
     responseSignals().catch(() => new Map<string, ResponseSignal>()),
   ]);
-  const staticProducts = previewCategories.flatMap(category => category.products);
   return rows.map(row => {
     const data = (row.data ?? {}) as Record<string, unknown>;
     const name = String(data.name ?? '');
-    const staticProduct = row.catalog_key
-      ? staticProducts.find(product => product.catalogId === row.catalog_key)
-      : undefined;
+    const staticProduct = staticArtFor(row.catalog_key, data.website);
     const text = (key: string) => (typeof data[key] === 'string' ? String(data[key]) : undefined);
     return {
       id: String(row.id),

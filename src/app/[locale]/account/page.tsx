@@ -14,7 +14,7 @@ import { getBoards, getSaved, getMemberships, resolveProjects } from '@/lib/libr
 import { BoardCard, CreateBoard } from '@/components/library/board-gallery';
 import { ProjectCover } from '@/components/library/project-cover';
 import { ProjectPin } from '@/components/library/project-pin';
-import { previewCategories } from '@/lib/catalog-preview';
+import { staticArtFor } from '@/lib/catalog-preview';
 import { solutionCover } from '@/lib/solutions/gallery';
 import { isSolutionId } from '@/lib/solutions/model';
 import { actionButtonStyle } from '@/lib/brand-colors';
@@ -174,11 +174,7 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
               {solutions.slice(0, 5).map(solution => {
                 const missing = solutionChecklist(solution.data, locale).find(item => !item.done);
-                const catalog = previewCategories
-                  .flatMap(category => category.products)
-                  .find(
-                    product => !!solution.catalog_key && product.catalogId === solution.catalog_key,
-                  );
+                const catalog = staticArtFor(solution.catalog_key, solution.data.website);
                 const coverId = solution.data.screenshots?.[0]?.id;
                 const image = solutionCover(solution.id, {
                   coverScreenshotId: coverId && isSolutionId(coverId) ? coverId : undefined,

@@ -116,6 +116,26 @@
   }
 }
 
+/* Landing stacking cards: two columns of listings and open slots drifting in opposite
+   directions. Each column renders its cells twice, so moving by half its height loops
+   without a seam. Still under reduced motion. */
+@keyframes mockup-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, -50%, 0);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .mockup-drift {
+    animation: mockup-drift 60s linear infinite;
+  }
+  .mockup-drift-reverse {
+    animation: mockup-drift 60s linear infinite reverse;
+  }
+}
+
 @keyframes contact-step {
   from {
     opacity: 0;

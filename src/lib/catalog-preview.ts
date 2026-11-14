@@ -557,6 +557,30 @@ export function localizedPreviewAction(
   return (locale === 'en' ? previewActionEn[category.id] : undefined) ?? category.action;
 }
 
+/**
+ * The art shipped for a real project (Cord, Flouvia): its favicon, og image and search
+ * keywords. Found by catalog_key, or else by the exact host of the listing's website,
+ * so a published listing shows its own logo even before ops links the catalog_key.
+ * Presentation only: a matching host never grants ownership or merges identities (§2).
+ */
+export function staticArtFor(catalogKey: unknown, website: unknown): PreviewProduct | undefined {
+  const real = previewCategories
+    .flatMap(category => category.products)
+    .filter(product => product.catalogId);
+  if (catalogKey) return real.find(product => product.catalogId === String(catalogKey));
+  const host = siteHost(website);
+  return host ? real.find(product => siteHost(product.website) === host) : undefined;
+}
+
+function siteHost(website: unknown): string | null {
+  if (typeof website !== 'string' || !website) return null;
+  try {
+    return new URL(website).hostname.toLowerCase().replace(/^www\./, '');
+  } catch {
+    return null;
+  }
+}
+
 // Editorial order is explicit, not a trust or quality score.
 export function catalogPriority(product: Pick<PreviewProduct, 'catalogId' | 'website'>) {
   return product.catalogId === 'cord'

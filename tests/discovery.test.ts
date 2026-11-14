@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { searchCatalog } from '../src/lib/catalog-search';
+import { staticArtFor } from '../src/lib/catalog-preview';
 
 test('Spanish intent, accents and deduplication', () => {
   assert.deepEqual(
@@ -48,4 +49,16 @@ test('the hero only suggests categories and searches that lead to results', asyn
     ['quiero cobrar a tiempo'],
   );
   assert.deepEqual(empty, { chips: [], examples: [] });
+});
+
+test('shipped art follows the catalog key, or else the exact host of the website', () => {
+  assert.equal(staticArtFor('cord', undefined)?.favicon, '/images/catalog/cord-favicon.svg');
+  // A published listing without a catalog_key (production's Cord) still gets its logo.
+  assert.equal(staticArtFor(null, 'https://cordhq.app')?.catalogId, 'cord');
+  assert.equal(staticArtFor(null, 'https://www.flouvia.com/casos')?.catalogId, 'flouvia');
+  // A linked key wins over the host, and other hosts get nothing.
+  assert.equal(staticArtFor('flouvia', 'https://cordhq.app/')?.catalogId, 'flouvia');
+  assert.equal(staticArtFor(null, 'https://cordhq.app.example.com'), undefined);
+  assert.equal(staticArtFor(null, 'not a url'), undefined);
+  assert.equal(staticArtFor(null, undefined), undefined);
 });

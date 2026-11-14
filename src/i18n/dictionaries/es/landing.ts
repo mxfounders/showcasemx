@@ -52,6 +52,9 @@ export const landing = {
   },
   stackingCards: {
     secondaryAction: 'Conocer más',
+    slotLabel: 'Espacio disponible',
+    slotTitle: 'Tu solución puede estar aquí',
+    slotAction: 'Postular solución',
     cards: {
       catalog: {
         badge: 'CATÁLOGO',

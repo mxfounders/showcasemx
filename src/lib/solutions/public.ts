@@ -2,7 +2,7 @@ import { getDatabaseUrl } from '@/lib/database-url';
 import { getSolutionCategories, isSolutionId } from './model';
 import { neon } from '@neondatabase/serverless';
 import { unstable_cache } from 'next/cache';
-import { previewCategories, type PreviewProduct } from '@/lib/catalog-preview';
+import { staticArtFor, type PreviewProduct } from '@/lib/catalog-preview';
 import { solutionScore, rankingHalfLifeDays } from './ranking';
 import {
   freeEmailDomains,
@@ -136,9 +136,7 @@ export async function publicProducts(): Promise<PublishedProduct[]> {
     const responses = new Map(responseEntries);
     const products = rows.map(row => {
       const response = responses.get(String(row.id)) ?? null;
-      const staticProduct = previewCategories
-        .flatMap(category => category.products)
-        .find(product => product.catalogId === row.catalog_key);
+      const staticProduct = staticArtFor(row.catalog_key, row.website);
       // See src/lib/solutions/gallery.ts: screenshot the founder curated, then the
       // site's own og:image, then the local art shipped for Cord/Flouvia.
       const ogImage = solutionCover(String(row.id), {

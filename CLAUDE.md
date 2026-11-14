@@ -3672,3 +3672,19 @@ build y la misma prueba en vivo en verde.
 - Firewall de Vercel (acción del propietario en el panel): rulesets administrados Bot
   Protection y AI Bots, y una regla que bloquee `.php`, `/.env`, `/.git` y `/wp-`.
   Vercel no cobra el tráfico que el firewall bloquea.
+
+## 80. Tarjetas del inicio y logo de Cord — 14 noviembre 2026
+
+- La tarjeta «Fichas que responden lo mismo» (y las otras tres) vuelve a tener las dos
+  columnas en movimiento. Muestran las fichas reales, ordenadas por puntuación, y llenan
+  el resto con «Espacio disponible» (§24), sin inventar proyectos. Las columnas usan CSS
+  (`.mockup-drift` en `globals.css`), dan la vuelta sin salto y se quedan quietas con
+  movimiento reducido. Junto a los logos hay cuadritos «+» que llevan a postular
+  (siempre al menos uno, cuatro en total).
+- Cord salía como «C»: en producción su ficha no tiene `catalog_key` (§45), y el favicon
+  local solo se buscaba por esa clave. `staticArtFor()` (`src/lib/catalog-preview.ts`)
+  ahora busca por `catalog_key` o, si falta, por el host exacto del sitio. Solo cambia
+  cómo se ve: no da propiedad ni une identidades (§2). Lo usan el catálogo, Inicio y las
+  alertas.
+- Pendiente: favicon automático para cualquier ficha (leerlo del sitio como la og:image,
+  §50). Hoy solo Cord y Flouvia tienen logo propio; las demás muestran su inicial.
