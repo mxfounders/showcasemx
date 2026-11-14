@@ -216,7 +216,7 @@ export function TwoFactor({
               setError('');
             }}
             placeholder="123456"
-            className={`mt-2 ${field} max-w-[220px] tracking-[0.2em]`}
+            className={`mt-2 block ${field} max-w-[220px] tracking-[0.2em]`}
           />
         </label>
         {error && (

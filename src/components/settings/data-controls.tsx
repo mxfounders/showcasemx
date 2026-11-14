@@ -195,7 +195,7 @@ export function DeleteAccount({
             }}
             placeholder="123456"
             aria-describedby="delete-code-help"
-            className={`mt-2 ${field} max-w-[220px] tracking-[0.2em]`}
+            className={`mt-2 block ${field} max-w-[220px] tracking-[0.2em]`}
           />
           <span id="delete-code-help" className="mt-2 block text-xs font-normal text-stone-500">
             {dict.codeHelp}
