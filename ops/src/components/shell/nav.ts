@@ -18,6 +18,7 @@ import {
   NewspaperIcon,
   PersonGearIcon,
   ShieldIcon,
+  ShieldAlertIcon,
   StarIcon,
   type GotaIcon,
 } from '@/components/icons/gota';
@@ -64,6 +65,13 @@ export const NAV: Array<{ section: string; items: NavItem[] }> = [
         Icon: FlagIcon,
         count: 'reports',
         keywords: 'denuncias moderación',
+      },
+      {
+        href: '/panel/fraude',
+        label: 'Fraude',
+        Icon: ShieldAlertIcon,
+        keywords:
+          'multicuentas cuentas sospechosas señales likes reseñas comentarios manipulación orden',
       },
       {
         href: '/panel/dominios',

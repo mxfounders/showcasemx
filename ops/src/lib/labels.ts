@@ -272,6 +272,12 @@ export const AUDIT_ACTIONS: Record<string, ActionLabel> = {
   reactivate: { label: 'Reactivó una cuenta', tone: 'sage', group: 'accounts' },
   unpublish_all: { label: 'Despublicó todo de una cuenta', tone: 'terracotta', group: 'accounts' },
   revoke_sessions: { label: 'Cerró sesiones de una cuenta', tone: 'amber', group: 'accounts' },
+  account_flag: {
+    label: 'Marcó una cuenta como sospechosa',
+    tone: 'terracotta',
+    group: 'accounts',
+  },
+  account_unflag: { label: 'Quitó la marca de sospechosa', tone: 'sage', group: 'accounts' },
   team_add: { label: 'Dio acceso a ops', tone: 'blue', group: 'team' },
   team_remove: { label: 'Quitó acceso a ops', tone: 'terracotta', group: 'team' },
   team_disable: { label: 'Desactivó a un miembro', tone: 'amber', group: 'team' },
@@ -332,3 +338,46 @@ export const AUDIT_GROUP_LABEL: Record<AuditGroup, string> = {
 export const SECURITY_ACTIONS = Object.entries(AUDIT_ACTIONS)
   .filter(([, value]) => value.group === 'auth' || value.group === 'security')
   .map(([key]) => key);
+
+/** Fraud signals in /panel/fraude (ops/src/lib/fraud.ts). Ops-only wording. */
+export const FRAUD_SIGNAL: Record<string, Label & { hint: string }> = {
+  cohort: {
+    label: 'Creadas juntas',
+    tone: 'terracotta',
+    hint: 'Cuentas registradas con poco tiempo de diferencia que interactúan con lo mismo.',
+  },
+  burst: {
+    label: 'Ráfaga',
+    tone: 'amber',
+    hint: 'Muchas cuentas distintas interactuando con lo mismo en poco tiempo.',
+  },
+  fresh: {
+    label: 'Recién creadas',
+    tone: 'amber',
+    hint: 'La mayoría de quienes interactúan lo hicieron justo después de registrarse.',
+  },
+  shared_ua: {
+    label: 'Mismo navegador',
+    tone: 'lavender',
+    hint: 'Varias cuentas con la misma cadena de navegador. Débil por sí sola: los navegadores populares la comparten.',
+  },
+  disposable: {
+    label: 'Correo desechable',
+    tone: 'terracotta',
+    hint: 'La dirección es de un proveedor de buzones temporales.',
+  },
+  automated_ua: {
+    label: 'Navegador automatizado',
+    tone: 'terracotta',
+    hint: 'Alguna sesión vino de un navegador sin interfaz, una librería HTTP o un bot declarado.',
+  },
+};
+
+export const INTERACTION_KIND: Record<string, string> = {
+  like: 'Me gusta',
+  comment: 'Comentario',
+  review: 'Reseña',
+  list_like: 'Me gusta en lista',
+  list_save: 'Guardó la lista',
+  list_comment: 'Comentario en lista',
+};
