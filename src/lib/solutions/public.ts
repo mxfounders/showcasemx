@@ -11,6 +11,7 @@ import {
   reviewWeights,
 } from '@/lib/reviews/model';
 import { solutionCover } from './gallery';
+import { solutionPath } from './slug';
 import { recognitionHost } from '@/lib/recognition/model';
 import { verificationDomain } from '@/lib/trust/domain';
 import { responseSignals } from './response';
@@ -85,7 +86,7 @@ const fetchPublishedRows = unstable_cache(
     ON b.project_key='solution:'||s.id::text OR (s.catalog_key IS NOT NULL AND b.project_key='catalog:'||s.catalog_key)
    JOIN auth_accounts a ON a.id=b.owner_id
    GROUP BY s.id)
- SELECT s.id,s.catalog_key,s.published_data->>'name' AS name,s.published_data->>'kind' AS kind,
+ SELECT s.id,s.slug,s.catalog_key,s.published_data->>'name' AS name,s.published_data->>'kind' AS kind,
   s.published_data->>'category' AS category,s.published_data->'categories' AS categories,
   s.published_data->'industries' AS industries,s.published_data->'companySizes' AS company_sizes,
   s.published_data->'capabilities' AS capabilities,s.published_data->'integrationKeys' AS integration_keys,
@@ -179,7 +180,9 @@ export async function publicProducts(): Promise<PublishedProduct[]> {
         // The first approval, not the latest: an approved update must not make an old
         // listing «new» again (/nuevo, SHCWS-125).
         firstPublishedAt: row.first_published_at ? String(row.first_published_at) : null,
-        detailUrl: `/soluciones/${row.id}`,
+        // The public page by its slug (SHCWS-101); the UUID stays the identity.
+        solutionId: String(row.id),
+        detailUrl: solutionPath({ id: String(row.id), slug: row.slug as string | null }),
         // Only while the verification is for the host the listing points at today
         // (src/lib/recognition/model.ts): a moved listing loses the check by itself.
         verified:

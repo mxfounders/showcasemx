@@ -9,6 +9,7 @@ import {
   MegaphoneIcon,
 } from '@/components/icons/gota';
 import { requireFounder, getOwnedSolutions } from '@/lib/solutions/server';
+import { solutionPath } from '@/lib/solutions/slug';
 import { getSolutionCategories, type SolutionStatus } from '@/lib/solutions/model';
 import { solutionChecklist } from '@/lib/solutions/completeness';
 import { NewSolutionButton } from '@/components/solutions/new-solution-button';
@@ -277,7 +278,7 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
                         )}
                         {solution.published_data && (
                           <Link
-                            href={`/soluciones/${solution.id}`}
+                            href={solutionPath(solution)}
                             target="_blank"
                             aria-label={text.viewPublicAria.replace('{name}', name)}
                             className="inline-flex size-10 items-center justify-center rounded-full text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"

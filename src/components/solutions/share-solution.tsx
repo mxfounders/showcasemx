@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { CheckIcon, CopyIcon, SendIcon } from '@/components/icons/gota';
 import { LinkedInIcon, WhatsAppIcon, XIcon } from '@/components/icons/social-icons';
 import { localePath } from '@/i18n/paths';
@@ -17,15 +17,17 @@ import type { Dictionary } from '@/i18n/dictionary';
 type Channel = 'native' | 'link' | 'linkedin' | 'whatsapp' | 'x';
 
 export function ShareSolution({
-  id,
+  path,
   name,
   dict,
 }: {
-  id: string;
+  /** The listing's public path, `/soluciones/<slug>`: the shared link names the project. */
+  path: string;
   name: string;
   dict: Dictionary['solution']['share'];
 }) {
   const locale = useLocale();
+  const menuId = useId();
   const [open, setOpen] = useState(false),
     [copied, setCopied] = useState(false),
     [fallback, setFallback] = useState('');
@@ -35,7 +37,7 @@ export function ShareSolution({
   const text = dict.text.replace('{name}', name);
 
   function shareUrl(channel: Channel) {
-    const url = new URL(localePath(`/soluciones/${id}`, locale), window.location.origin);
+    const url = new URL(localePath(path, locale), window.location.origin);
     url.searchParams.set('utm_source', 'share');
     url.searchParams.set('utm_medium', channel);
     return url.href;
@@ -129,7 +131,7 @@ export function ShareSolution({
         ref={trigger}
         type="button"
         aria-expanded={open}
-        aria-controls={open ? `share-${id}` : undefined}
+        aria-controls={open ? menuId : undefined}
         onClick={() => void start()}
         className="flex w-full items-center justify-between gap-2 rounded-full border border-stone-200 bg-white px-5 py-3 text-sm font-medium transition-colors hover:bg-stone-50"
       >
@@ -138,7 +140,7 @@ export function ShareSolution({
       </button>
       {open && (
         <div
-          id={`share-${id}`}
+          id={menuId}
           role="group"
           aria-label={dict.menuLabel}
           className="absolute inset-x-0 top-full z-30 mt-2 rounded-2xl border border-stone-200 bg-white p-1.5 shadow-[0_12px_40px_-12px_rgba(28,25,23,0.25)]"

@@ -56,6 +56,7 @@ const capabilityCategories = Object.fromEntries(
 export function SolutionPresentation({
   data,
   id,
+  path,
   catalogKey,
   publishedAt,
   verifiedDomain,
@@ -82,6 +83,8 @@ export function SolutionPresentation({
 }: {
   data: SolutionData;
   id: string;
+  /** Public listing only: its page, `/soluciones/<slug>` (SHCWS-101), for sharing. */
+  path?: string;
   catalogKey?: string | null;
   publishedAt?: string | null;
   verifiedDomain?: string | null;
@@ -565,7 +568,11 @@ export function SolutionPresentation({
                 </div>
               )}
               <div className="mt-3">
-                <ShareSolution id={id} name={data.name} dict={dict.share} />
+                <ShareSolution
+                  path={path ?? `/soluciones/${id}`}
+                  name={data.name}
+                  dict={dict.share}
+                />
               </div>
             </>
           )}

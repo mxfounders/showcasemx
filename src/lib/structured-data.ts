@@ -59,19 +59,20 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
  * is the public one; with no public reviews there is no rating at all.
  */
 export function solutionJsonLd({
-  id,
+  path,
   locale,
   data,
   publishedAt,
   reviews,
 }: {
-  id: string;
+  /** The listing's public path, `/soluciones/cord` (solutionPath in src/lib/solutions/slug.ts). */
+  path: string;
   locale: string;
   data: Omit<SolutionData, 'contactEmail'>;
   publishedAt: string | null;
   reviews: { count: number; average: number | null };
 }) {
-  const url = `${siteOrigin}/${locale}/soluciones/${id}`;
+  const url = `${siteOrigin}/${locale}${path}`;
   const categories = getSolutionCategories(data).map(category =>
     localizedCategoryDisplayLabel(category, locale),
   );
@@ -109,7 +110,8 @@ export function solutionJsonLd({
  * a few authoritative sites; the markup is for assistants and other readers of the page.
  */
 export function solutionQuestionsJsonLd(
-  id: string,
+  /** The listing's public path, `/soluciones/cord`. */
+  path: string,
   locale: string,
   questions: readonly { body: string; answer: { body: string } | null; hiddenReason?: string }[],
 ) {
@@ -121,8 +123,8 @@ export function solutionQuestionsJsonLd(
   if (!answered.length) return null;
   return {
     ...faqJsonLd(answered),
-    '@id': `${siteOrigin}/${locale}/soluciones/${id}#preguntas`,
-    url: `${siteOrigin}/${locale}/soluciones/${id}`,
+    '@id': `${siteOrigin}/${locale}${path}#preguntas`,
+    url: `${siteOrigin}/${locale}${path}`,
     inLanguage: locale,
   };
 }

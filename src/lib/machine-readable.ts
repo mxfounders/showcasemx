@@ -17,7 +17,7 @@ import {
 
 /**
  * Plain-text views of shwcs for assistants and crawlers (/llms.txt and
- * /soluciones/<id>.md, SHCWS-106). Spanish, the catalog's source language. They
+ * /soluciones/<slug>.md, SHCWS-106). Spanish, the catalog's source language. They
  * only ever see what a visitor sees: published_data without the private email,
  * and they say what the listing did not declare instead of filling it in.
  */
@@ -31,19 +31,21 @@ const labelOf = (options: readonly Option[], value: string) =>
 const day = (value: string | Date) => new Date(value).toISOString().slice(0, 10);
 const text = (value?: string) => (value ?? '').replace(/\r\n/g, '\n').trim();
 
-export function solutionMarkdownUrl(id: string) {
-  return `${siteOrigin}/soluciones/${id}.md`;
+/** `path` is the listing's public path, `/soluciones/cord` (solutionPath, SHCWS-101). */
+export function solutionMarkdownUrl(path: string) {
+  return `${siteOrigin}${path}.md`;
 }
 
 export function solutionMarkdown({
-  id,
+  path,
   data,
   publishedAt,
   domainVerified,
   reviews,
   generatedAt,
 }: {
-  id: string;
+  /** The listing's public path, `/soluciones/cord`. */
+  path: string;
   data: PublicSolutionData;
   publishedAt: string | null;
   domainVerified: boolean;
@@ -72,7 +74,7 @@ export function solutionMarkdown({
   out.push(`# ${text(data.name)}`, '');
   if (text(data.problem)) out.push(`> ${text(data.problem).replace(/\n+/g, ' ')}`, '');
   out.push(
-    `- Ficha en shwcs: ${siteOrigin}/es/soluciones/${id}`,
+    `- Ficha en shwcs: ${siteOrigin}/es${path}`,
     ...(website ? [`- Sitio oficial: ${website}`] : []),
     ...(demo ? [`- Demo: ${demo}`] : []),
     ...(kind ? [`- Tipo: ${kind}`] : []),
@@ -195,7 +197,7 @@ export function llmsText({
   solutions,
   generatedAt,
 }: {
-  solutions: { id: string; name: string; problem: string }[];
+  solutions: { path: string; name: string; problem: string }[];
   generatedAt: Date;
 }) {
   const link = (label: string, url: string, note?: string) =>
@@ -221,7 +223,7 @@ export function llmsText({
     '## Fichas publicadas',
     '',
     ...(solutions.length
-      ? solutions.map(item => link(item.name, solutionMarkdownUrl(item.id), short(item.problem)))
+      ? solutions.map(item => link(item.name, solutionMarkdownUrl(item.path), short(item.problem)))
       : ['Todavía no hay fichas publicadas.']),
     '',
     '## Categorías',

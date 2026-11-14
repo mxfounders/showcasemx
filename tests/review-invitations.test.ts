@@ -93,10 +93,12 @@ test('questions are bounded and an empty answer removes it', () => {
 
 test('only answered, visible questions feed the FAQPage markup', () => {
   assert.equal(
-    solutionQuestionsJsonLd(solution, 'es', [{ body: '¿Tiene app?', answer: null }]),
+    solutionQuestionsJsonLd(`/soluciones/${solution}`, 'es', [
+      { body: '¿Tiene app?', answer: null },
+    ]),
     null,
   );
-  const faq = solutionQuestionsJsonLd(solution, 'es', [
+  const faq = solutionQuestionsJsonLd(`/soluciones/${solution}`, 'es', [
     { body: '¿Tiene app?', answer: { body: 'Sí, iOS y Android.' } },
     { body: '¿Oculta?', answer: { body: 'No debería salir.' }, hiddenReason: 'spam' },
     { body: '¿Sin respuesta?', answer: null },

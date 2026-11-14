@@ -88,6 +88,7 @@ migración a object storage:
 47. db/ad-self-serve.sql — compra de espacios en una pantalla: códigos promocionales y descuento, lista de espera, alcance por ubicación y atribución de visitas y solicitudes desde un espacio patrocinado (SHCWS-70/72/75/77/150); después de contact-requests.sql y listing-notices.sql
 48. db/search-alerts.sql — alertas de búsqueda guardada: categoría de aviso `alert`, preferencia `alert_email`, `search_alerts` y `search_alert_matches` (SHCWS-47); después de community-notices.sql. `deliverNotifications` lee `alert_email`: aplicar antes de desplegar
 49. db/community-follows.sql — seguir listas y curadores: `community_list_follows`, `community_curator_follows`, `community_list_announcements` y sus triggers (SHCWS-121); después de community-notices.sql
+50. db/solution-slugs.sql — URLs con nombre para las fichas (SHCWS-101): `founder_solutions.slug` (única, CHECK de forma), `solution_slug_history` y el trigger que guarda el slug anterior; rellena el de las fichas publicadas (Cord y Flouvia toman `cord`/`flouvia`). El catálogo, la ficha y el middleware leen la columna: aplicar antes de desplegar. Aplicada en `neondb` (14 nov 2026)
 
 db/solution-applications.sql es el intake anónimo retirado: no aplicarlo.
 Newsletter es independiente; segments depende de subscribers.
@@ -102,6 +103,8 @@ producción `shwcs_production`) se registra en CLAUDE.md al aplicarlas.
 - Solo published_data alimenta catálogo, ficha y comparador; nunca el borrador.
 - Categorías múltiples están en JSON; category conserva compatibilidad.
 - Guardados apuntan a catalog:cord, catalog:flouvia o solution:UUID, sin copiar ficha.
+- La ficha pública vive en /soluciones/<slug> (SHCWS-101); el slug solo nombra la página.
+  Guardados, contactos, métricas, anuncios e imágenes siguen identificando la ficha por UUID.
 - Consultas de biblioteca y solicitudes acotadas a la sesión; SQL sin caché para
   información actual. No compartir notas con el dueño del proyecto.
 - Reseñas: públicas solo con estado `published` y correo del autor verificado; el nivel

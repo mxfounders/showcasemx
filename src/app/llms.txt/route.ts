@@ -5,10 +5,13 @@ import { publicProducts } from '@/lib/solutions/public';
 export const revalidate = 3600;
 
 export async function GET() {
-  const solutions = (await publicProducts()).flatMap(product => {
-    const id = product.detailUrl?.split('/').pop();
-    return id ? [{ id, name: product.name, problem: product.description }] : [];
-  });
+  // detailUrl is the listing's public path by slug (/soluciones/cord): its Markdown twin
+  // is the same path plus .md.
+  const solutions = (await publicProducts()).flatMap(product =>
+    product.detailUrl
+      ? [{ path: product.detailUrl, name: product.name, problem: product.description }]
+      : [],
+  );
   return new Response(llmsText({ solutions, generatedAt: new Date() }), {
     headers: {
       'Content-Type': 'text/plain; charset=utf-8',

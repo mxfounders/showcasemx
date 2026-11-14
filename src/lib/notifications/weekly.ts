@@ -177,7 +177,7 @@ export async function sendWeeklyDigests({
       const data = row.data as SolutionData;
       const category = data.categories?.[0] ?? data.category;
       const peers = category ? catalog.filter(p => p.categories.includes(category)) : [];
-      const rank = peers.findIndex(p => p.detailUrl === `/soluciones/${row.id}`) + 1;
+      const rank = peers.findIndex(p => p.solutionId === String(row.id)) + 1;
       const task = solutionChecklist(data).find(item => !item.done) ?? null;
       return {
         id: String(row.id),
