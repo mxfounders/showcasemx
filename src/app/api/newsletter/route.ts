@@ -1,13 +1,19 @@
-import { neon } from '@neondatabase/serverless';
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabaseUrl } from '@/lib/database-url';
 import { validateNewsletter } from '@/lib/newsletter';
+import { requestNewsletterConfirmation } from '@/lib/newsletter/confirm';
 import { requestIdentity, securityLimit } from '@/lib/auth/security';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { requestLocale } from '@/i18n/negotiate';
 
+/**
+ * Newsletter sign-up with double opt-in (SHCWS-124): stores an unconfirmed address and emails
+ * a confirmation link. Nothing is sent to the address until it confirms, and an existing
+ * subscriber is never changed from here (its owner confirms what it asked for).
+ */
 export async function POST(request: NextRequest) {
-  const t = (await getDictionary(requestLocale(request))).newsletter.api;
+  const locale = requestLocale(request);
+  const t = (await getDictionary(locale)).newsletter.api;
   const fail = (error: string, status: number) => NextResponse.json({ error }, { status });
   if (request.headers.get('origin') !== request.nextUrl.origin) return fail(t.useForm, 403);
   if (!request.headers.get('content-type')?.includes('application/json'))
@@ -46,12 +52,15 @@ export async function POST(request: NextRequest) {
       ))
     )
       return fail(t.subscribeTooMany, 429);
-    const sql = neon(url);
-    // Unique email makes retries safe. Never overwrite an existing opt-out.
-    await sql`INSERT INTO newsletter_subscribers (email, profile, role, consent_version) VALUES (${subscription.email}, ${subscription.profile}, ${subscription.role}, 'newsletter-v2') ON CONFLICT (email) DO NOTHING`;
-    // Same response for new/existing addresses; does not expose membership.
-    return NextResponse.json({ ok: true });
   } catch {
     return fail(t.subscribeUnavailable, 503);
+  }
+  try {
+    // Same response whether a confirmation went out or the address was already confirmed:
+    // the form never tells whether an address is on the list.
+    await requestNewsletterConfirmation({ ...subscription, locale });
+    return NextResponse.json({ ok: true });
+  } catch {
+    return fail(t.confirmationUnavailable, 503);
   }
 }

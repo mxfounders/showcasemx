@@ -20,13 +20,17 @@ export default async function NewsletterUnsubscribePage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ token?: string }>;
+  searchParams: Promise<{ token?: string; c?: string }>;
 }) {
-  const [{ locale }, { token }] = await Promise.all([params, searchParams]);
+  const [{ locale }, { token, c }] = await Promise.all([params, searchParams]);
   const dict = (await getDictionary(locale)).newsletter.unsubscribe;
   return (
     <section className="mx-auto max-w-3xl px-6 py-16 sm:py-24">
-      <NewsletterUnsubscribe token={typeof token === 'string' ? token : ''} dict={dict} />
+      <NewsletterUnsubscribe
+        token={typeof token === 'string' ? token : ''}
+        campaign={typeof c === 'string' ? c : undefined}
+        dict={dict}
+      />
     </section>
   );
 }

@@ -33,7 +33,7 @@ export const newsletter = {
   labels: {
     email: 'Your email address',
     purpose:
-      'We will use your email, profile and role to send you relevant news and announcements from shwcs.',
+      "We'll email you to confirm your address: you'll only get the newsletter after confirming. We use your email, profile and role to send you shwcs news; clicks are counted as totals, never per person.",
     consent: 'I want to receive news and announcements from shwcs by email.',
     honeypot: 'Leave this field empty',
   },
@@ -44,10 +44,62 @@ export const newsletter = {
   subscribeBtn: 'Subscribe',
   continueBtn: 'Continue',
   backBtn: 'Back',
-  successTitle: 'Thanks for joining.',
+  successTitle: 'Check your inbox',
   successDesc:
-    "We received your request. If you were already on the list, we won't duplicate your registration.",
+    "We sent you a link to confirm your subscription; it expires in 7 days. We won't send the newsletter until you open it. If you were already subscribed, we won't duplicate your registration.",
   successBtn: 'Explore solutions',
+  confirm: {
+    metaTitle: 'Confirm subscription',
+    title: 'Confirm your subscription',
+    desc: 'One click and you will start getting the shwcs newsletter. You can unsubscribe from any email.',
+    submit: 'Confirm subscription',
+    pending: 'Confirming…',
+    openLink: 'Open the full link we emailed you.',
+    doneTitle: 'Subscription confirmed',
+    doneDesc: "You're on the list. Every email has a one-click unsubscribe link.",
+    back: 'Explore solutions →',
+    error: "We couldn't confirm your subscription.",
+    genericError: "We couldn't confirm your subscription. Please try again.",
+  },
+  mail: {
+    confirm: {
+      subject: 'Confirm your shwcs subscription',
+      heading: 'Confirm your subscription',
+      paragraphs: [
+        'We received a request to subscribe this address to the shwcs newsletter.',
+        "Confirm it with the button. If it wasn't you, ignore this email: we won't send you campaigns.",
+      ],
+      button: 'Confirm subscription',
+      footer: 'The link expires in 7 days and works only once.',
+    },
+    reconfirm: {
+      subject: 'Do you still want the shwcs newsletter?',
+      heading: 'Should we keep writing?',
+      paragraphs: [
+        'You subscribed to the shwcs newsletter. We now ask every address to confirm before we send it campaigns.',
+        "If you'd like to keep getting it, confirm with the button. If not, ignore this email: we won't send you campaigns.",
+      ],
+      button: 'Yes, keep me subscribed',
+      footer: 'The link expires in 7 days and works only once.',
+    },
+    campaign: {
+      footer:
+        'You are receiving this email because you confirmed your subscription to the shwcs newsletter.',
+      unsubscribe: 'Unsubscribe',
+      unsubscribeText: 'Unsubscribe: {url}',
+      testSubject: '[Test v{version}] {subject}',
+      testBanner:
+        "Test send of version {version}. Clicks in this test aren't counted and unsubscribing has no effect.",
+    },
+    weekly: {
+      subjectOne: 'New this week on shwcs: {name}',
+      subjectMany: 'New this week on shwcs: {count} solutions',
+      heading: 'New this week',
+      intro:
+        'These are the listings the team approved in the last seven days, newest first. They are not ranked by votes.',
+      cta: '[See them all in New this week](/en/nuevo)',
+    },
+  },
   unsubscribe: {
     metaTitle: 'Unsubscribe from the newsletter',
     doneTitle: "You've been unsubscribed.",
@@ -81,5 +133,11 @@ export const newsletter = {
     unsubscribeDisabled: "Unsubscribing isn't available right now.",
     unsubscribeTooMany: 'Too many attempts. Wait a moment.',
     unsubscribeUnavailable: "We couldn't register your unsubscribe request. Please try again.",
+    confirmationUnavailable:
+      "We couldn't send you the confirmation email. Your request wasn't lost: please try again in a few minutes.",
+    confirmLinkInvalid:
+      'This link was already used or has expired. Subscribe again to get a new one.',
+    confirmUnavailable: "We couldn't confirm your subscription. Please try again.",
+    confirmTooMany: 'Too many attempts. Wait a moment.',
   },
 } as const satisfies Dictionary['newsletter'];

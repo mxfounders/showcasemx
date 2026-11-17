@@ -8,10 +8,13 @@ import type { Dictionary } from '@/i18n/dictionary';
 
 export function NewsletterUnsubscribe({
   token,
+  campaign,
   dict,
   endpoint = '/api/newsletter/unsubscribe',
 }: {
   token: string;
+  /** The campaign whose link was used: counts the unsubscribe for it (SHCWS-124). */
+  campaign?: string;
   dict: Dictionary['newsletter']['unsubscribe'];
   /** Also used for the weekly summary (SHCWS-21), which posts the same body elsewhere. */
   endpoint?: string;
@@ -30,7 +33,7 @@ export function NewsletterUnsubscribe({
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify(campaign ? { token, campaign } : { token }),
         signal: AbortSignal.timeout(15_000),
       });
       const result = await response.json();

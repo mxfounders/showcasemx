@@ -1,17 +1,19 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
+  MailIcon,
   NewspaperIcon,
   PersonCheckIcon,
   PersonMinusIcon,
   PersonPlusIcon,
 } from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
-import { newsletterOverview, NEWSLETTER_FILTERS } from '@/lib/data/newsletter';
+import { campaignList, newsletterOverview, NEWSLETTER_FILTERS } from '@/lib/data/newsletter';
 import { PROFILE, ROLE } from '@/lib/labels';
+import { UNSUBSCRIBE_REASON } from '@/lib/newsletter';
 import { choice, hrefWith, pageParam, param, type SearchParams } from '@/lib/url';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Segmented } from '@/components/ui/Tabs';
+import { Segmented, Tabs } from '@/components/ui/Tabs';
 import { SearchField } from '@/components/ui/SearchField';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { Table, THead, TH, TBody, TR, TD, EmptyRow } from '@/components/ui/Table';
@@ -23,65 +25,137 @@ import { Stat } from '@/components/ui/Stat';
 import { BarList } from '@/components/charts/BarList';
 import { AreaChart } from '@/components/charts/AreaChart';
 import { ExportButton } from '@/components/actions/ExportButton';
+import { ActionButton } from '@/components/actions/ActionButton';
 
 export const metadata: Metadata = { title: 'Newsletter' };
+
+function Status({
+  item,
+}: {
+  item: Awaited<ReturnType<typeof newsletterOverview>>['items'][number];
+}) {
+  if (item.unsubscribedAt)
+    return (
+      <Badge
+        tone={
+          item.unsubscribeReason === 'bounce' || item.unsubscribeReason === 'complaint'
+            ? 'terracotta'
+            : 'neutral'
+        }
+      >
+        Baja · {UNSUBSCRIBE_REASON[item.unsubscribeReason ?? ''] ?? 'sin motivo registrado'}
+      </Badge>
+    );
+  if (item.confirmedAt) return <Badge tone="sage">Confirmada</Badge>;
+  return (
+    <Badge
+      tone="amber"
+      title={item.confirmSentAt ? 'Se le pidió confirmar' : 'Nunca se le pidió confirmar'}
+    >
+      {item.confirmSentAt ? 'Pendiente' : 'Sin pedir confirmación'}
+    </Badge>
+  );
+}
 
 export default async function NewsletterPage({
   searchParams,
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  await requireOps();
+  const user = await requireOps();
+  const admin = user.level === 'admin';
   const params = await searchParams;
-  const filter = choice(params, 'filtro', NEWSLETTER_FILTERS, 'active');
+  const filter = choice(params, 'filtro', NEWSLETTER_FILTERS, 'confirmed');
   const page = pageParam(params);
-  const data = await newsletterOverview({ filter, q: param(params, 'q'), page });
+  const [data, campaigns] = await Promise.all([
+    newsletterOverview({ filter, q: param(params, 'q'), page }),
+    campaignList(),
+  ]);
   const t = data.totals;
 
   return (
     <>
       <PageHeader
         title="Newsletter"
-        description="Suscripciones con consentimiento explícito. Las campañas todavía no se envían desde aquí; la baja firmada funciona desde cada correo."
-        actions={<ExportButton kind="newsletter" />}
+        description="Solo las suscripciones confirmadas por correo (doble opt-in) reciben campañas. Las anteriores a la confirmación esperan a que alguien les pida confirmar. Bajas, rebotes y quejas dejan de recibir al instante."
+        actions={
+          <div className="flex flex-wrap gap-2">
+            {admin && t.neverAsked > 0 && (
+              <ActionButton
+                label={`Pedir confirmación (${t.neverAsked})`}
+                icon={<MailIcon />}
+                endpoint="/api/newsletter"
+                payload={{ action: 'reconfirm' }}
+                success="Pidiendo confirmación"
+                confirm={{
+                  title: 'Pedir confirmación a las suscripciones anteriores',
+                  description: `Envía un único correo a ${t.neverAsked} ${t.neverAsked === 1 ? 'dirección que nunca confirmó' : 'direcciones que nunca confirmaron'} para que confirmen si quieren seguir recibiendo el newsletter. Quien no confirme no recibe campañas. Fuera de producción solo sale a @resend.dev. Pide modo seguro.`,
+                  field: null,
+                  confirmLabel: 'Enviar',
+                }}
+              />
+            )}
+            <ExportButton kind="newsletter" />
+          </div>
+        }
       />
+      <div className="mb-6">
+        <Tabs
+          label="Secciones del newsletter"
+          items={[
+            { label: 'Suscripciones', href: '/panel/newsletter', active: true, count: t.confirmed },
+            {
+              label: 'Campañas',
+              href: '/panel/newsletter/campanas',
+              active: false,
+              count: campaigns?.length,
+            },
+          ]}
+        />
+      </div>
       <section className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat
-          label="Activas"
-          value={t.active}
+          label="Confirmadas"
+          value={t.confirmed}
           icon={<PersonCheckIcon aria-hidden className="size-4" />}
+          hint={`${t.new30d} confirmaron en 30 días`}
         />
         <Stat
-          label="Altas en 30 días"
-          value={t.new30d}
+          label="Sin confirmar"
+          value={t.pending}
           icon={<PersonPlusIcon aria-hidden className="size-4" />}
+          hint={`${t.neverAsked} nunca recibieron el correo de confirmación`}
         />
         <Stat
           label="Bajas en 30 días"
           value={t.left30d}
           icon={<PersonMinusIcon aria-hidden className="size-4" />}
+          hint={`${t.unsubscribed} en total`}
         />
         <Stat
-          label="Histórico"
-          value={t.all}
+          label="Rebotes y quejas"
+          value={t.bounced + t.complained}
           icon={<NewspaperIcon aria-hidden className="size-4" />}
-          hint={`${t.unsubscribed} se dieron de baja`}
+          hint={`${t.bounced} rebotes · ${t.complained} quejas (avisos de Resend)`}
         />
       </section>
       <div className="mb-6 grid items-start gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-2">
-          <CardHeader title="Suscripciones activas" description="Últimos 90 días." />
+          <CardHeader title="Suscripciones confirmadas" description="Últimos 90 días." />
           <CardBody>
             <AreaChart
-              title="Suscripciones activas por día"
-              series={[{ key: 'active', label: 'Activas', color: 'series-1' }]}
+              title="Suscripciones confirmadas por día"
+              series={[{ key: 'active', label: 'Confirmadas', color: 'series-1' }]}
               data={data.growth}
               height={200}
             />
           </CardBody>
         </Card>
         <Card>
-          <CardHeader title="Segmentos" description="Declarados por cada persona." />
+          <CardHeader
+            title="Segmentos"
+            description="De las confirmadas, declarados por cada persona."
+          />
           <CardBody className="space-y-6">
             <div>
               <p className="label-micro mb-3">Perfil</p>
@@ -106,10 +180,16 @@ export default async function NewsletterPage({
           label="Estado"
           items={[
             {
-              label: 'Activas',
+              label: 'Confirmadas',
               href: hrefWith('/panel/newsletter', params, { filtro: null }),
-              active: filter === 'active',
-              count: t.active,
+              active: filter === 'confirmed',
+              count: t.confirmed,
+            },
+            {
+              label: 'Sin confirmar',
+              href: hrefWith('/panel/newsletter', params, { filtro: 'pending' }),
+              active: filter === 'pending',
+              count: t.pending,
             },
             {
               label: 'Bajas',
@@ -130,15 +210,17 @@ export default async function NewsletterPage({
       <Table label="Suscripciones">
         <THead>
           <TH>Correo</TH>
+          <TH>Estado</TH>
           <TH>Perfil</TH>
           <TH>Rol</TH>
-          <TH>Consentimiento</TH>
+          <TH>Idioma</TH>
           <TH>Alta</TH>
-          <TH>Baja</TH>
+          <TH>Confirmación o baja</TH>
+          {admin && <TH align="right">Acción</TH>}
         </THead>
         <TBody>
           {data.items.length === 0 ? (
-            <EmptyRow colSpan={6}>
+            <EmptyRow colSpan={admin ? 8 : 7}>
               <EmptyState compact icon={NewspaperIcon} title="Sin suscripciones en este filtro" />
             </EmptyRow>
           ) : (
@@ -156,19 +238,50 @@ export default async function NewsletterPage({
                     item.email
                   )}
                 </TD>
+                <TD>
+                  <Status item={item} />
+                </TD>
                 <TD className="text-muted">
                   {item.profile ? (PROFILE[item.profile] ?? item.profile) : '—'}
                 </TD>
                 <TD className="text-muted">{item.role ? (ROLE[item.role] ?? item.role) : '—'}</TD>
-                <TD>
-                  <Badge>{item.consentVersion}</Badge>
+                <TD className="text-muted">
+                  {item.locale === 'en' ? 'Inglés' : item.locale === 'es' ? 'Español' : '—'}
                 </TD>
                 <TD className="text-muted">
                   <RelativeTime value={item.createdAt} />
                 </TD>
                 <TD className="text-muted">
-                  {item.unsubscribedAt ? <RelativeTime value={item.unsubscribedAt} /> : '—'}
+                  {item.unsubscribedAt ? (
+                    <RelativeTime value={item.unsubscribedAt} />
+                  ) : item.confirmedAt ? (
+                    <RelativeTime value={item.confirmedAt} />
+                  ) : (
+                    '—'
+                  )}
                 </TD>
+                {admin && (
+                  <TD align="right">
+                    {!item.unsubscribedAt && (
+                      <ActionButton
+                        label="Dar de baja"
+                        size="xs"
+                        tone="ghost"
+                        endpoint="/api/newsletter"
+                        payload={{ action: 'unsubscribe', email: item.email }}
+                        success="Baja registrada"
+                        confirm={{
+                          title: `Dar de baja ${item.email}`,
+                          description:
+                            'Para solicitudes de baja recibidas por correo. Deja de recibir campañas al instante. Pide modo seguro.',
+                          placeholder: 'Pidió la baja por correo a hola@shwcs.site',
+                          destructive: true,
+                          confirmLabel: 'Dar de baja',
+                        }}
+                      />
+                    )}
+                  </TD>
+                )}
               </TR>
             ))
           )}

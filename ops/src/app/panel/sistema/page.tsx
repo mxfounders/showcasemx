@@ -214,6 +214,15 @@ export default async function SistemaPage() {
                 detail={config.mediaProxy ? 'OPS_MEDIA_SECRET listo' : 'Sin capturas en revisión'}
               />
               <Check
+                ok={config.newsletter}
+                label="Newsletter"
+                detail={
+                  config.newsletter
+                    ? 'OPS_NEWSLETTER_SECRET listo'
+                    : 'Sin vista previa, prueba ni envío de campañas'
+                }
+              />
+              <Check
                 ok={config.catalogRevalidate}
                 label="Revalidación del catálogo"
                 detail={config.catalogRevalidate ? 'Inmediata al publicar' : 'Cae al TTL de 300 s'}

@@ -48,8 +48,20 @@ export function renderEmailHtml(opts: {
   preferencesHref?: string;
   /** The <html lang>; the copy itself is still Spanish until accounts store a language (SHCWS-25). */
   lang?: 'es' | 'en';
+  /**
+   * Trusted HTML placed after the paragraphs, without a <p> wrapper: headings, lists and
+   * listing cards of a newsletter campaign (src/lib/newsletter/content.ts escapes them).
+   */
+  bodyHtml?: string;
+  /** Footer links in place of «Preferencias de avisos», e.g. the newsletter's unsubscribe. */
+  footerLinks?: EmailButton[];
 }): string {
   const { origin, preheader, heading, paragraphs, button, footerNote, preferencesHref } = opts;
+  const footerLinks = opts.footerLinks
+    ? opts.footerLinks.map(link => ({ label: escapeHtml(link.label), href: link.href }))
+    : preferencesHref
+      ? [{ label: 'Preferencias de avisos', href: preferencesHref }]
+      : [];
   const host = origin.replace(/^https?:\/\//, '');
   const footerLink = `color:${MUTED};text-decoration:underline;`;
   return `<!doctype html>
@@ -71,11 +83,11 @@ ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;m
 </td></tr>
 <tr><td style="background:#ffffff;border:1px solid ${BORDER};border-radius:24px;padding:36px 32px;">
 <h1 style="margin:0 0 16px;font-size:21px;line-height:1.35;font-weight:600;letter-spacing:-0.02em;color:${TEXT};">${escapeHtml(heading)}</h1>
-${paragraphs.map(p => `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${TEXT};">${p}</p>`).join('')}
+${paragraphs.map(p => `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${TEXT};">${p}</p>`).join('')}${opts.bodyHtml ?? ''}
 ${button ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 4px;"><tr><td style="border-radius:9999px;background:${BRAND_BLUE_SOFT};"><a href="${button.href}" style="display:inline-block;padding:12px 26px;font-size:14px;font-weight:600;color:${BRAND_BLUE};text-decoration:none;border-radius:9999px;">${escapeHtml(button.label)}</a></td></tr></table>` : ''}
 </td></tr>
 <tr><td style="padding:20px 6px 0;">
-<p style="margin:0;font-size:12px;line-height:1.6;color:${MUTED};">${footerNote ? `${escapeHtml(footerNote)}<br>` : ''}${preferencesHref ? `<a href="${preferencesHref}" style="${footerLink}">Preferencias de avisos</a> · ` : ''}<a href="mailto:${CONTACT_ADDRESS}" style="${footerLink}">${CONTACT_ADDRESS}</a><br>shwcs · <a href="${origin}" style="color:${MUTED};">${host}</a></p>
+<p style="margin:0;font-size:12px;line-height:1.6;color:${MUTED};">${footerNote ? `${escapeHtml(footerNote)}<br>` : ''}${footerLinks.map(link => `<a href="${link.href}" style="${footerLink}">${link.label}</a> · `).join('')}<a href="mailto:${CONTACT_ADDRESS}" style="${footerLink}">${CONTACT_ADDRESS}</a><br>shwcs · <a href="${origin}" style="color:${MUTED};">${host}</a></p>
 </td></tr>
 </table>
 </td></tr>

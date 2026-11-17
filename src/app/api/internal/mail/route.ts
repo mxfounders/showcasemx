@@ -8,6 +8,8 @@ import { sendWeeklyDigests } from '@/lib/notifications/weekly';
 import { reviewAlertsEnabled, reviewQueueDigest } from '@/lib/review-queue/alerts';
 import { matchSearchAlerts } from '@/lib/alerts/server';
 import { runContactReminders } from '@/lib/contacts/reminders';
+import { processNewsletterQueue } from '@/lib/newsletter/send';
+import { createWeeklyNewsletterDraft } from '@/lib/newsletter/weekly-draft';
 export const maxDuration = 300;
 export async function GET(request: NextRequest) {
   if (!authorizedCron(request.headers.get('authorization')))
@@ -28,6 +30,15 @@ export async function GET(request: NextRequest) {
     const result = await deliverNotifications();
     // «Tu semana en shwcs» (SHCWS-21): the first daily run of each week sends it.
     await sendWeeklyDigests().catch(() => console.error('Weekly digest failed.'));
+    // Newsletter (SHCWS-124): whatever a queued campaign still owes; ops starts it right away
+    // and this is the retry. Then this week's «Nuevo esta semana» draft for ops to review
+    // (SHCWS-125): a draft only, nothing is sent without a person.
+    await processNewsletterQueue({ budgetMs: 120_000 }).catch(() =>
+      console.error('Newsletter queue failed.'),
+    );
+    await createWeeklyNewsletterDraft().catch(() =>
+      console.error('Weekly newsletter draft failed.'),
+    );
     // The review team's morning summary (SHCWS-139), best-effort like the ad notices.
     if (reviewAlertsEnabled())
       await reviewQueueDigest().catch(() => console.error('Review digest failed.'));
@@ -38,6 +49,15 @@ export async function GET(request: NextRequest) {
       sql`DELETE FROM auth_password_resets WHERE expires_at<now()`,
       sql`DELETE FROM auth_rate_limits WHERE window_start<now()-interval '2 days'`,
     ]);
+    // Newsletter housekeeping (docs/newsletter.md): spent confirmation tokens, webhook ids past
+    // Resend's retry window and per-recipient delivery rows 12 months after a campaign ended.
+    await sql
+      .transaction([
+        sql`DELETE FROM newsletter_confirmations WHERE expires_at<now()-interval '1 day'`,
+        sql`DELETE FROM resend_webhook_events WHERE received_at<now()-interval '30 days'`,
+        sql`DELETE FROM newsletter_deliveries d USING newsletter_campaigns c WHERE c.id=d.campaign_id AND COALESCE(c.finished_at,c.cancelled_at)<now()-interval '12 months'`,
+      ])
+      .catch(() => console.error('Newsletter cleanup failed.'));
     return NextResponse.json(result, {
       headers: { 'Cache-Control': 'no-store' },
       status: result.available ? 200 : 503,

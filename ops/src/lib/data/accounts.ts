@@ -192,6 +192,7 @@ export async function accountDetail(id: string) {
           COALESCE(cardinality(r.backup_codes), 0) AS ops_backup_codes_left, granter.email AS ops_granted_by,
           np.contact_email AS pref_contact_email, np.solution_email AS pref_solution_email,
           ns.created_at AS newsletter_since, ns.unsubscribed_at AS newsletter_unsubscribed_at,
+          ns.confirmed_at AS newsletter_confirmed_at,
           ns.profile AS newsletter_profile, ns.role AS newsletter_role
         FROM auth_accounts a
         LEFT JOIN auth_accounts suspender ON suspender.id = a.suspended_by
@@ -358,6 +359,7 @@ export async function accountDetail(id: string) {
         ? {
             since: iso(a.newsletter_since),
             unsubscribedAt: iso(a.newsletter_unsubscribed_at),
+            confirmedAt: iso(a.newsletter_confirmed_at),
             profile: a.newsletter_profile ? String(a.newsletter_profile) : null,
             role: a.newsletter_role ? String(a.newsletter_role) : null,
           }
