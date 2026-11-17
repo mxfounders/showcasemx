@@ -27,7 +27,7 @@ export default function robots(): MetadataRoute.Robots {
         '/_next/',
         '/api/solutions/*/site-image',
         '/api/solutions/*/media/',
-        ...perLocale(['/comunidad?page=']),
+        ...perLocale(['/comunidad?page=', '/fundadores?page=']),
       ],
       disallow: [
         '/api/',

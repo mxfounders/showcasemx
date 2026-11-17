@@ -99,7 +99,7 @@ export const POST = opsRoute<{ id: string }>(
     }
 
     // unpublish_all
-    const [solutions, lists] = await sql.transaction([
+    const [solutions, lists, profiles] = await sql.transaction([
       sql`
         WITH changed AS (
           UPDATE founder_solutions SET published_data = NULL, published_at = NULL, status = 'changes_requested',
@@ -113,6 +113,10 @@ export const POST = opsRoute<{ id: string }>(
         SELECT id FROM changed
       `,
       sql`UPDATE buyer_lists SET visibility = 'private', updated_at = now() WHERE owner_id = ${id} AND visibility = 'public' RETURNING id`,
+      // Their public profile too (SHCWS-120): hidden with the same reason, never deleted.
+      sql`UPDATE public_profiles SET hidden_at = now(), hidden_reason = left(${reason}, 500), hidden_by = ${user.id},
+          version = version + 1, updated_at = now()
+        WHERE account_id = ${id} AND hidden_at IS NULL RETURNING account_id`,
     ]);
     const logged = await audit({
       actorId: user.id,
@@ -121,7 +125,7 @@ export const POST = opsRoute<{ id: string }>(
       subjectType: 'account',
       subjectId: id,
       reason,
-      metadata: { solutions: solutions.length, lists: lists.length },
+      metadata: { solutions: solutions.length, lists: lists.length, profile: profiles.length > 0 },
       ip,
     });
     if (solutions.length) await triggerCatalogRevalidate();
@@ -139,7 +143,7 @@ export const POST = opsRoute<{ id: string }>(
     return ok({
       solutionsUnpublished: solutions.length,
       listsHidden: lists.length,
-      message: `${solutions.length} fichas retiradas y ${lists.length} listas ocultas.${adsLine ? ` ${adsLine}` : ''}${logged ? '' : ' No se pudo registrar en la bitácora.'}`,
+      message: `${solutions.length} fichas retiradas y ${lists.length} listas ocultas${profiles.length ? '; perfil público oculto' : ''}.${adsLine ? ` ${adsLine}` : ''}${logged ? '' : ' No se pudo registrar en la bitácora.'}`,
     });
   },
 );
