@@ -14,6 +14,7 @@ export const legal = {
           paragraphs: [
             'shwcs operates under the principles of data minimization and transparency. We process data under four legal bases: explicit consent (recorded digitally together with the version of the clause you accepted), contractual necessity (to provide the platform and the services you buy), compliance with legal obligations (such as tax obligations) and legitimate interest (to ensure the security and availability of the system).',
             'We collect identity and access data through OAuth protocols (such as Google), limited strictly to your email address and a secure unique identifier. We do not store, process or have visibility into external credentials or any other services linked to your identity provider.',
+            "If you add a passkey to sign in without a password, we keep its public key, a technical identifier, the name you give it, whether your password manager syncs it across your devices, and the dates you created it and last used it. The fingerprint, face or PIN you unlock it with never leaves your device: we don't receive or store it. You can remove it at any time in Settings, Security section, and it is deleted along with your account.",
             'At an operational level, we collect the company information, descriptions and digital assets you choose to add to your profile, your saved lists, and metadata about your interaction with the system (declared role, sector, feature usage events).',
           ],
         },
