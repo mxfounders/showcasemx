@@ -18,7 +18,8 @@ export type SecurityEvent =
   | 'google-linked'
   | 'google-unlinked'
   | 'new-device'
-  | 'totp-failures';
+  | 'totp-failures'
+  | 'assistant-token';
 
 const titles: Record<SecurityEvent, (device: string) => string> = {
   'password-changed': device => `Se cambió la contraseña de tu cuenta (${device})`,
@@ -32,6 +33,13 @@ const titles: Record<SecurityEvent, (device: string) => string> = {
   // Only reachable after a correct password (or Google): «No fui yo» is the right advice.
   'totp-failures': device =>
     `Diez códigos incorrectos en una hora al entrar a tu cuenta (${device})`,
+  // SHCWS-152. A new password turns every token off too (assistant_tokens.password_stamp).
+  'assistant-token': device => `Se creó un token para conectar un asistente de IA (${device})`,
+};
+
+/** Where the bell sends the owner; most notices are about Seguridad. */
+const hrefs: Partial<Record<SecurityEvent, string>> = {
+  'assistant-token': '/account/settings/connections',
 };
 
 export function securityTitle(event: SecurityEvent, device: string) {
@@ -50,7 +58,7 @@ export async function securityNotice(
   const sql = authSql();
   const [row] =
     await sql`INSERT INTO account_notifications(owner_id,category,source_key,title,href,email_state)
-    VALUES (${accountId},'security',${`security:${event}:${randomUUID()}`},${securityTitle(event, await device(userAgent))},'/account/settings/security','pending')
+    VALUES (${accountId},'security',${`security:${event}:${randomUUID()}`},${securityTitle(event, await device(userAgent))},${hrefs[event] ?? '/account/settings/security'},'pending')
     RETURNING id::text`;
   if (row) await deliverNotifications({ ids: [String(row.id)] });
 }

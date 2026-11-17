@@ -26,7 +26,12 @@ export function SettingsNav({ dict }: { dict: Dictionary['settings']['nav'] }) {
           <Link
             key={section.href}
             href={section.href}
-            aria-current={path === section.href ? 'page' : undefined}
+            aria-current={
+              path === section.href ||
+              (section.href !== '/account/settings' && path.startsWith(`${section.href}/`))
+                ? 'page'
+                : undefined
+            }
             className="selector-tab whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#365DC4]"
           >
             {dict[section.key]}

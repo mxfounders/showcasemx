@@ -49,6 +49,8 @@ export async function GET(request: NextRequest) {
       alerts,
       followedLists,
       followedCurators,
+      assistantTokens,
+      assistantActivity,
     ] = await Promise.all([
       sql`SELECT id::text, email, name, organization, profile, role, dashboard_mode, created_at::text, email_verified_at::text, (avatar_key IS NOT NULL OR avatar_data IS NOT NULL) AS has_avatar, totp_confirmed_at IS NOT NULL AS two_step_enabled FROM auth_accounts WHERE id = ${account.id}`,
       sql`SELECT id::text, catalog_key, status, step, version, data, published_data, published_at::text, updated_at::text FROM founder_solutions WHERE owner_id = ${account.id} ORDER BY updated_at`,
@@ -74,6 +76,9 @@ export async function GET(request: NextRequest) {
       sql`SELECT id::text, scope, topic, query, filters, created_at::text, last_matched_at::text FROM search_alerts WHERE owner_id = ${account.id} ORDER BY created_at`,
       sql`SELECT f.list_id::text, CASE WHEN l.visibility = 'public' THEN l.name END AS name, f.created_at::text FROM community_list_follows f JOIN buyer_lists l ON l.id = f.list_id WHERE f.follower_id = ${account.id} ORDER BY f.created_at`,
       sql`SELECT curator_name, created_at::text FROM community_curator_follows WHERE follower_id = ${account.id} ORDER BY created_at`,
+      // Tokens for the AI assistant (SHCWS-152): never the hash, only what identifies them.
+      sql`SELECT id::text, name, token_hint, scope, created_at::text, expires_at::text, last_used_at::text, revoked_at::text FROM assistant_tokens WHERE account_id = ${account.id} ORDER BY created_at`,
+      sql`SELECT token_id::text, tool, solution_id::text, outcome, code, created_at::text FROM assistant_token_events WHERE account_id = ${account.id} ORDER BY created_at`,
     ]);
 
     const payload = {
@@ -90,6 +95,7 @@ export async function GET(request: NextRequest) {
       published: { reviews, reviewProofs, solutionComments, listComments, questions },
       alerts,
       following: { lists: followedLists, curators: followedCurators },
+      assistant: { tokens: assistantTokens, activity: assistantActivity },
     };
 
     return new NextResponse(JSON.stringify(payload, null, 2), {

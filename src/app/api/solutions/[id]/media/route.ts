@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import sharp from 'sharp';
-import { randomUUID, createHash } from 'node:crypto';
 import { getSession, sessionCookie } from '@/lib/auth/session';
 import { securityLimit } from '@/lib/auth/security';
 import { solutionsSql } from '@/lib/solutions/server';
 import { isSolutionId } from '@/lib/solutions/model';
 import { failure } from '@/lib/solutions/http';
-import { storageEnabled, putObject } from '@/lib/storage/blob';
-import { mediaKey, renditionKey, RENDITION_WIDTHS } from '@/lib/storage/keys';
+import { storageEnabled } from '@/lib/storage/blob';
+import {
+  SCREENSHOT_FILE_LIMIT,
+  SCREENSHOT_INPUT_LIMIT,
+  prepareScreenshot,
+  screenshotCount,
+  storeScreenshot,
+} from '@/lib/solutions/screenshots';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { requestLocale } from '@/i18n/negotiate';
 export const runtime = 'nodejs';
@@ -51,10 +55,9 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
       return failure(t.unsupportedType, 415);
     if (!storageEnabled()) return failure(t.storageUnavailable, 503);
     // Advisory fail-fast so a founder already at 12 files does not burn a blob
-    // write per attempt. The transaction below re-checks the quota under the lock.
-    const [{ count }] =
-      await sql`SELECT count(*)::int AS count FROM solution_media WHERE solution_id=${params.id}`;
-    if (Number(count) >= 12) return failure(t.fileLimit, 409);
+    // write per attempt. The transaction re-checks the quota under the lock.
+    if ((await screenshotCount(params.id)) >= SCREENSHOT_FILE_LIMIT)
+      return failure(t.fileLimit, 409);
     const reader = request.body?.getReader();
     if (!reader) return failure(t.selectScreenshot, 400);
     let size = 0;
@@ -63,78 +66,29 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
       const { done, value } = await reader.read();
       if (done) break;
       size += value.byteLength;
-      if (size > 2 * 1024 * 1024) {
+      if (size > SCREENSHOT_INPUT_LIMIT) {
         await reader.cancel();
         return failure(t.screenshotTooLarge, 413);
       }
       chunks.push(value);
     }
-    let buffer: Buffer, width: number, height: number;
-    try {
-      const input = sharp(Buffer.concat(chunks), { limitInputPixels: 16000000, failOn: 'warning' }),
-        meta = await input.metadata();
-      if (!['png', 'jpeg', 'webp'].includes(meta.format ?? '') || (meta.pages ?? 1) > 1)
-        return failure(t.staticImageOnly, 400);
-      const result = await input
-        .rotate()
-        .resize({ width: 1600, height: 1200, fit: 'inside', withoutEnlargement: true })
-        .webp({ quality: 80 })
-        .toBuffer({ resolveWithObject: true });
-      buffer = result.data;
-      width = result.info.width;
-      height = result.info.height;
-      if (buffer.length > 400 * 1024) return failure(t.imageTooDetailed, 413);
-    } catch {
-      return failure(t.unreadableImage, 400);
-    }
-    const id = randomUUID(),
-      key = mediaKey(params.id, id),
-      checksum = createHash('sha256').update(buffer).digest('hex');
-    // Blob first, then the FOR UPDATE transaction. If the row does not land (quota
-    // race, ownership, status) the just-uploaded blob is orphaned into the sweep
-    // queue — never a row pointing at a missing blob.
-    await putObject(key, buffer);
-    let results;
-    try {
-      results = await sql.transaction([
-        sql`SELECT id FROM founder_solutions WHERE id=${params.id} AND owner_id=${account.id} FOR UPDATE`,
-        sql`INSERT INTO solution_media(id,solution_id,storage_key,bytes,checksum,width,height) SELECT ${id},id,${key},${buffer.length},${checksum},${width},${height} FROM founder_solutions WHERE id=${params.id} AND owner_id=${account.id} AND status<>'pending' AND (SELECT count(*) FROM solution_media WHERE solution_id=${params.id})<12 RETURNING id,width,height`,
-      ]);
-    } catch {
-      try {
-        await sql`INSERT INTO storage_orphans(key) VALUES(${key}) ON CONFLICT(key) DO NOTHING`;
-      } catch {}
-      return failure(t.uploadUnconfirmed, 503);
-    }
-    if (!results[1].length) {
-      try {
-        await sql`INSERT INTO storage_orphans(key) VALUES(${key}) ON CONFLICT(key) DO NOTHING`;
-      } catch {}
-      return failure(t.uploadConflict, 409);
-    }
-    // Renditions (400/800). Best-effort and after the row lands: if any fails, the
-    // full image still serves and the loader falls back to it. A rendition blob
-    // whose row never lands is orphaned into the sweep queue.
-    for (const w of RENDITION_WIDTHS) {
-      try {
-        const out = await sharp(Buffer.concat(chunks))
-          .rotate()
-          .resize({ width: w, withoutEnlargement: true })
-          .webp({ quality: 80 })
-          .toBuffer();
-        const rkey = renditionKey(params.id, id, w),
-          rsum = createHash('sha256').update(out).digest('hex');
-        await putObject(rkey, out);
-        const ins =
-          await sql`INSERT INTO solution_media_files(storage_key,media_id,width,bytes,checksum) SELECT ${rkey},${id},${w},${out.length},${rsum} WHERE EXISTS(SELECT 1 FROM solution_media WHERE id=${id}) ON CONFLICT DO NOTHING RETURNING storage_key`;
-        if (!ins.length)
-          await sql`INSERT INTO storage_orphans(key) VALUES(${rkey}) ON CONFLICT(key) DO NOTHING`;
-      } catch {
-        /* full image is enough */
-      }
-    }
+    // The same processing and storage the assistant's MCP tool uses
+    // (src/lib/solutions/screenshots.ts).
+    const input = Buffer.concat(chunks);
+    const prepared = await prepareScreenshot(input);
+    if (prepared === 'staticImageOnly') return failure(t.staticImageOnly, 400);
+    if (prepared === 'imageTooDetailed') return failure(t.imageTooDetailed, 413);
+    if (prepared === 'unreadable') return failure(t.unreadableImage, 400);
+    const stored = await storeScreenshot({
+      solutionId: params.id,
+      ownerId: account.id,
+      input,
+      prepared,
+    });
+    if (stored === 'uploadUnconfirmed') return failure(t.uploadUnconfirmed, 503);
+    if (stored === 'uploadConflict') return failure(t.uploadConflict, 409);
     return NextResponse.json(
-      { asset: { ...results[1][0], in_use: false } },
+      { asset: { ...stored, in_use: false } },
       { headers: { 'Cache-Control': 'no-store' } },
     );
   } catch {

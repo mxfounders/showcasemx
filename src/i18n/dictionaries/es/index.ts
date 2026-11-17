@@ -43,6 +43,7 @@ import { contactThread } from './contactThread';
 import { contactBatch } from './contactBatch';
 import { alerts } from './alerts';
 import { follows } from './follows';
+import { assistant } from './assistant';
 
 /** Spanish is the source locale: its shape defines `Dictionary`, which every other locale must satisfy. */
 export const es = {
@@ -91,4 +92,5 @@ export const es = {
   contactBatch,
   alerts,
   follows,
+  assistant,
 } as const;
