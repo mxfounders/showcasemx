@@ -1,6 +1,6 @@
 import Link from '@/i18n/navigation';
 import { ArrowRightIcon, AwardIcon, VerifiedIcon } from '@/components/icons/gota';
-import { badgeOptions, badgeSrc } from '@/lib/recognition/badges';
+import { badgeOptions, badgeSrc, type BadgeReviews } from '@/lib/recognition/badges';
 import { awardPeriod, awardTitle, recognitionDate } from '@/lib/recognition/format';
 import type { Recognition } from '@/lib/recognition/model';
 import type { Dictionary } from '@/i18n/dictionary';
@@ -16,6 +16,7 @@ export function RecognitionCard({
   path,
   name,
   recognition,
+  reviews = null,
   movedAway,
   origin,
   locale,
@@ -26,6 +27,8 @@ export function RecognitionCard({
   path: string;
   name: string;
   recognition: Recognition;
+  /** Public review count and average: the «Publicado en» badge shows them from three up. */
+  reviews?: BadgeReviews | null;
   /** A verification exists but for another host: the site changed since it was checked. */
   movedAway: boolean;
   origin: string;
@@ -33,7 +36,7 @@ export function RecognitionCard({
   dict: Dictionary['recognition'];
 }) {
   const text = dict.founder;
-  const options = badgeOptions(name, recognition, locale, dict).map(option => ({
+  const options = badgeOptions(name, recognition, locale, dict, reviews).map(option => ({
     key: option.key,
     pick: option.pick,
     title: option.title,
@@ -117,7 +120,9 @@ export function RecognitionCard({
       <div className="mt-8 border-t border-stone-200 pt-6">
         <h3 className="text-sm font-medium text-stone-800">{text.badgesTitle}</h3>
         <p className="mb-5 mt-1 text-sm leading-relaxed text-stone-500">{text.badgesHint}</p>
-        <BadgePicker options={options} href={`${origin}/${locale}${path}`} dict={text} />
+        {/* ?ref=badge attributes the visit to the badge; the listing's canonical has no query,
+            and robots.txt lets crawlers follow it, so the link still counts for the listing. */}
+        <BadgePicker options={options} href={`${origin}/${locale}${path}?ref=badge`} dict={text} />
       </div>
     </section>
   );
