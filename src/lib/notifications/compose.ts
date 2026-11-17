@@ -1,5 +1,6 @@
 import { renderEmailHtml } from './email-template';
 import { createNoticeUnsubscribeToken, isUnsubscribable } from './unsubscribe-token';
+import { noticeUrl } from '@/lib/attribution/conventions';
 
 /** What a notice says, before the shared shell: built per kind in server.ts. */
 export type NoticeEmail = {
@@ -34,6 +35,11 @@ export function composeNotice({
   /** Tests pass one; the sender uses NEWSLETTER_UNSUBSCRIBE_SECRET. */
   secret?: string;
 }): { html: string; text: string; headers?: Record<string, string> } {
+  // Links back into shwcs follow the notice convention (utm_medium=email, the category as
+  // campaign), so ops can tell visits from email apart (SHCWS-111). Security notices only
+  // lead to a password reset and stay untagged.
+  if (category !== 'security' && buttonHref.startsWith(`${origin}/`))
+    buttonHref = noticeUrl(buttonHref, category);
   const preferences =
     category === 'security' ? undefined : `${origin}/es/account/settings/notifications`;
   const token = isUnsubscribable(category)

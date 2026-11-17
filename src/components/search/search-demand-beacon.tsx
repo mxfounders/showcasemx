@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef } from 'react';
 import type { DemandSurface } from '@/lib/search/demand';
+import { takeSteps } from '@/lib/attribution/visit';
 
 /**
  * Counts a search once the person stops typing, and a click on a listing while that
@@ -31,7 +32,9 @@ export function SearchDemandBeacon({
       current.current = value;
       if (counted.current === value) return;
       counted.current = value;
-      send({ event: 'search', query: value, surface, results });
+      // The visit's first search is its «browse» funnel step (SHCWS-109); it rides here.
+      const funnel = takeSteps(['browse']);
+      send({ event: 'search', query: value, surface, results, ...(funnel ? { funnel } : {}) });
     }, 1500);
     return () => window.clearTimeout(timer);
   }, [query, results, surface]);
@@ -52,6 +55,7 @@ function send(body: {
   query: string;
   surface: DemandSurface;
   results?: number;
+  funnel?: ReturnType<typeof takeSteps>;
 }) {
   void fetch('/api/search-demand', {
     method: 'POST',

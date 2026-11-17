@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { commonText } from '@/i18n/common';
 import { ConsentBanner } from '@/components/analytics/consent';
+import { VisitTracker } from '@/components/analytics/visit-tracker';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -80,6 +81,7 @@ export default async function RootLayout(
         </a>
         {children}
         <ConsentBanner dict={consent} />
+        <VisitTracker />
         <Analytics />
         <SpeedInsights />
       </body>

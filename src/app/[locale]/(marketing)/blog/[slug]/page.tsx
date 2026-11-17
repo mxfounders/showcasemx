@@ -12,6 +12,7 @@ import { ArticleCatalog } from '@/components/blog/article-catalog';
 import { InlineLinks } from '@/components/blog/inline-links';
 import { articleJsonLd, breadcrumbJsonLd } from '@/lib/structured-data';
 import { localeAlternates, pageOpenGraph } from '@/lib/seo';
+import { shareUrl } from '@/lib/attribution/conventions';
 
 // {locale,slug} pairs, not just slug: same reasoning as explorar/[slug] — this
 // is the innermost dynamic segment under [locale], which has no
@@ -209,7 +210,7 @@ export default async function BlogArticle({
             <ArticleFeedback dict={dict} />
             <div className="flex flex-wrap gap-2">
               <a
-                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://shwcs.site/${locale}/blog/${post.slug}`)}`}
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl(`https://shwcs.site/${locale}/blog/${post.slug}`, 'linkedin', 'article'))}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="action-button flex w-fit items-center gap-2 rounded-full border border-stone-200 bg-white px-5 py-2.5 text-sm font-medium text-stone-600 transition-colors hover:border-black hover:text-black"
@@ -217,7 +218,7 @@ export default async function BlogArticle({
                 {dict.shareOnLinkedIn}
               </a>
               <a
-                href={`https://wa.me/?text=${encodeURIComponent(`${post.title} https://shwcs.site/${locale}/blog/${post.slug}`)}`}
+                href={`https://wa.me/?text=${encodeURIComponent(`${post.title} ${shareUrl(`https://shwcs.site/${locale}/blog/${post.slug}`, 'whatsapp', 'article')}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="action-button flex w-fit items-center gap-2 rounded-full border border-stone-200 bg-white px-5 py-2.5 text-sm font-medium text-stone-600 transition-colors hover:border-black hover:text-black"
@@ -225,7 +226,7 @@ export default async function BlogArticle({
                 {dict.shareOnWhatsApp}
               </a>
               <a
-                href={`https://x.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(`https://shwcs.site/${locale}/blog/${post.slug}`)}`}
+                href={`https://x.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(shareUrl(`https://shwcs.site/${locale}/blog/${post.slug}`, 'x', 'article'))}`}
                 target="_blank"
                 rel="noreferrer"
                 className="action-button flex w-fit items-center gap-2 rounded-full border border-stone-200 bg-white px-5 py-2.5 text-sm font-medium text-stone-600 transition-colors hover:border-black hover:text-black"

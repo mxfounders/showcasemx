@@ -38,6 +38,7 @@ import {
 } from '@/components/domain/StatusBadge';
 import { AuditLine } from '@/components/domain/AuditLine';
 import { ActionButton } from '@/components/actions/ActionButton';
+import { channelLabel } from '@/lib/funnels';
 
 export const metadata: Metadata = { title: 'Cuenta' };
 
@@ -517,6 +518,24 @@ export default async function AccountPage({
                   },
                   { label: 'Foto', value: a.hasAvatar ? 'Subida' : 'Sin foto' },
                   { label: 'Registrada', value: fmtDateTime(a.createdAt) },
+                  {
+                    label: 'Origen de alta',
+                    value: a.signupOrigin
+                      ? [
+                          channelLabel(a.signupOrigin.channel),
+                          a.signupOrigin.source,
+                          a.signupOrigin.campaign,
+                          a.signupOrigin.site,
+                          a.signupOrigin.intent === 'founder'
+                            ? 'para publicar'
+                            : a.signupOrigin.intent === 'buyer'
+                              ? 'para comprar'
+                              : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')
+                      : 'Sin dato',
+                  },
                   {
                     label: 'Correo verificado',
                     value: a.emailVerifiedAt ? fmtDateTime(a.emailVerifiedAt) : 'No',

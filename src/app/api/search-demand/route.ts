@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authSql, requestIdentity, securityLimit } from '@/lib/auth/security';
 import { demandQuery, demandSurfaces, type DemandSurface } from '@/lib/search/demand';
 import { solutionBody } from '@/lib/solutions/http';
+import { countFunnel } from '@/lib/attribution/server';
 
 /**
  * Aggregate search demand (SHCWS-107), like the listing metrics: same origin, DNT/GPC
@@ -32,6 +33,8 @@ export async function POST(request: NextRequest) {
     else
       await sql`UPDATE search_demand SET clicks = clicks + 1
         WHERE day = current_date AND query = ${query} AND surface = ${surface}`;
+    // A visit's first search is its «browse» step of the buyer funnel (SHCWS-109).
+    if (event === 'search' && body?.funnel) await countFunnel(body.funnel, request.headers, sql);
     return quiet();
   } catch {
     return quiet(503);

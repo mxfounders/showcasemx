@@ -3,6 +3,7 @@ import { beginGoogle, googleCookie, googleConfig, googleCookieOptions } from '@/
 import { requestIdentity, securityLimit } from '@/lib/auth/security';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { requestLocale } from '@/i18n/negotiate';
+import { optedOut } from '@/lib/attribution/server';
 export async function GET(request: NextRequest) {
   const t = (await getDictionary(requestLocale(request))).auth.errors;
   const config = googleConfig();
@@ -13,7 +14,9 @@ export async function GET(request: NextRequest) {
     // Per network, not one key for the whole site (SHCWS-171).
     if (!(await securityLimit('google-start', requestIdentity(request.headers), 30)))
       return NextResponse.json({ error: t.googleTryLater }, { status: 429 });
-    const result = await beginGoogle(request.nextUrl.searchParams.get('next'));
+    // A sign-up's origin (SHCWS-111) rides in the state; never with DNT/GPC.
+    const origin = optedOut(request.headers) ? null : request.nextUrl.searchParams.get('origin');
+    const result = await beginGoogle(request.nextUrl.searchParams.get('next'), undefined, origin);
     const response = NextResponse.redirect(result.url);
     response.headers.set('Cache-Control', 'no-store');
     response.cookies.set(googleCookie, result.cookie, googleCookieOptions);

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { CheckIcon, LinkIcon } from '@/components/icons/gota';
 import type { Dictionary } from '@/i18n/dictionary';
+import { shareUrl } from '@/lib/attribution/conventions';
 
 export function ArticleProgress({ color }: { color: string }) {
   const [progress, setProgress] = useState(0);
@@ -37,7 +38,9 @@ export function CopyArticleLink({ dict }: { dict: Dictionary['blog']['article'] 
       className="action-button inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-600"
       onClick={async () => {
         try {
-          await navigator.clipboard.writeText(window.location.href);
+          // The clean address with the share convention, never the tags this visit came with.
+          const { origin, pathname } = window.location;
+          await navigator.clipboard.writeText(shareUrl(origin + pathname, 'link', 'article'));
           setCopied(true);
           window.setTimeout(() => setCopied(false), 1800);
         } catch {

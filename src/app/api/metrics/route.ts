@@ -4,6 +4,7 @@ import { authSql, requestIdentity, securityLimit } from '@/lib/auth/security';
 import { isSolutionId } from '@/lib/solutions/model';
 import { failure, solutionBody } from '@/lib/solutions/http';
 import { visitorHash } from '@/lib/solutions/view-visitor';
+import { countFunnel } from '@/lib/attribution/server';
 export async function POST(request: NextRequest) {
   if (request.headers.get('origin') !== request.nextUrl.origin)
     return failure('Origin rejected', 403);
@@ -46,6 +47,9 @@ export async function POST(request: NextRequest) {
     } else {
       await sql`INSERT INTO solution_daily_metrics(solution_id,views,clicks) SELECT id,${body.event === 'view' ? 1 : 0},${body.event === 'click' ? 1 : 0} FROM founder_solutions WHERE id=${body.solutionId} AND published_data IS NOT NULL ON CONFLICT(solution_id,day) DO UPDATE SET views=solution_daily_metrics.views+EXCLUDED.views,clicks=solution_daily_metrics.clicks+EXCLUDED.clicks`;
     }
+    // The visit's funnel steps ride on the view it already sends (SHCWS-109/111): the
+    // first listing of a visit, and the visit itself when it landed here.
+    if (body.event === 'view' && body.funnel) await countFunnel(body.funnel, request.headers, sql);
     return new NextResponse(null, { status: 204 });
   } catch {
     return new NextResponse(null, { status: 503 });

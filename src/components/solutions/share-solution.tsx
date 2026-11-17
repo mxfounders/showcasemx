@@ -3,6 +3,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { CheckIcon, CopyIcon, SendIcon } from '@/components/icons/gota';
 import { LinkedInIcon, WhatsAppIcon, XIcon } from '@/components/icons/social-icons';
 import { localePath } from '@/i18n/paths';
+import { shareUrl as tagShare } from '@/lib/attribution/conventions';
 import { useLocale } from '@/i18n/use-locale';
 import type { Dictionary } from '@/i18n/dictionary';
 
@@ -10,8 +11,9 @@ import type { Dictionary } from '@/i18n/dictionary';
  * «Compartir» on a listing (SHCWS-54). In B2B whoever finds a tool passes it to the
  * owner or the CFO, usually over WhatsApp. Where the browser has the native share sheet
  * (phones, Safari) it opens that; elsewhere, or if the sheet fails, a small menu offers
- * copy link, LinkedIn, WhatsApp and X. Every link carries `utm_source=share` and the
- * channel as `utm_medium`, so shared visits are recognisable; the card a chat app shows
+ * copy link, LinkedIn, WhatsApp and X. Every link follows the share convention of
+ * src/lib/attribution/conventions.ts — `utm_medium=share`, the platform as `utm_source` and
+ * `utm_campaign=listing` — so shared visits are recognisable; the card a chat app shows
  * comes from the listing's own Open Graph image (opengraph-image.tsx).
  */
 type Channel = 'native' | 'link' | 'linkedin' | 'whatsapp' | 'x';
@@ -37,10 +39,11 @@ export function ShareSolution({
   const text = dict.text.replace('{name}', name);
 
   function shareUrl(channel: Channel) {
-    const url = new URL(localePath(path, locale), window.location.origin);
-    url.searchParams.set('utm_source', 'share');
-    url.searchParams.set('utm_medium', channel);
-    return url.href;
+    return tagShare(
+      new URL(localePath(path, locale), window.location.origin).href,
+      channel,
+      'listing',
+    );
   }
 
   function close(returnFocus: boolean) {

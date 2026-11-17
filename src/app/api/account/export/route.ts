@@ -49,6 +49,7 @@ export async function GET(request: NextRequest) {
       alerts,
       followedLists,
       followedCurators,
+      signupOrigin,
     ] = await Promise.all([
       sql`SELECT id::text, email, name, organization, profile, role, dashboard_mode, created_at::text, email_verified_at::text, (avatar_key IS NOT NULL OR avatar_data IS NOT NULL) AS has_avatar, totp_confirmed_at IS NOT NULL AS two_step_enabled FROM auth_accounts WHERE id = ${account.id}`,
       sql`SELECT id::text, catalog_key, status, step, version, data, published_data, published_at::text, updated_at::text FROM founder_solutions WHERE owner_id = ${account.id} ORDER BY updated_at`,
@@ -74,12 +75,18 @@ export async function GET(request: NextRequest) {
       sql`SELECT id::text, scope, topic, query, filters, created_at::text, last_matched_at::text FROM search_alerts WHERE owner_id = ${account.id} ORDER BY created_at`,
       sql`SELECT f.list_id::text, CASE WHEN l.visibility = 'public' THEN l.name END AS name, f.created_at::text FROM community_list_follows f JOIN buyer_lists l ON l.id = f.list_id WHERE f.follower_id = ${account.id} ORDER BY f.created_at`,
       sql`SELECT curator_name, created_at::text FROM community_curator_follows WHERE follower_id = ${account.id} ORDER BY created_at`,
+      // Where the visit that created the account came from (SHCWS-111). Optional table:
+      // an export never fails because db/traffic-attribution.sql is missing.
+      sql`SELECT channel, source, medium, campaign, site, landing, intent, created_at::text FROM account_signup_origins WHERE account_id = ${account.id}`.catch(
+        () => [],
+      ),
     ]);
 
     const payload = {
       exportedAt: new Date().toISOString(),
       about: t.exportAbout,
       account: profile[0] ?? null,
+      signupOrigin: signupOrigin[0] ?? null,
       solutions,
       taxIdentities,
       library: { saved, lists, listItems },

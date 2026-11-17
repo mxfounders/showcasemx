@@ -2,6 +2,7 @@
 import { useId, useState } from 'react';
 import { CheckIcon, CopyIcon } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
+import { badgeUrl } from '@/lib/attribution/conventions';
 import type { Dictionary } from '@/i18n/dictionary';
 
 export type PickerOption = {
@@ -37,7 +38,9 @@ export function BadgePicker({
   const escape = (value: string) => value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
   const width = layout === 'seal' ? seal.width : option.width,
     height = layout === 'seal' ? seal.height : 56;
-  const code = `<a href="${escape(href)}" target="_blank" rel="noopener"><img src="${escape(option.src[layout][theme])}" alt="${escape(option.title)}" width="${width}" height="${height}" /></a>`;
+  // `ref=badge` and `rel="noopener"` (not noreferrer): the visit says it came from the
+  // badge and from which site (SHCWS-111).
+  const code = `<a href="${escape(badgeUrl(href))}" target="_blank" rel="noopener"><img src="${escape(option.src[layout][theme])}" alt="${escape(option.title)}" width="${width}" height="${height}" /></a>`;
 
   async function copy() {
     try {
