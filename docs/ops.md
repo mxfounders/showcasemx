@@ -57,8 +57,9 @@ certifica la configuración de Vercel ni sustituye una prueba de penetración.
 Un código TOTP nuevo eleva la sesión actual 10 minutos (`POST /api/auth/elevate`).
 Lo exigen: todas las acciones sobre cuentas (verificar correo, cerrar sesiones,
 suspender, reactivar, despublicar todo), todo cambio de Equipo, exportaciones,
-regenerar códigos de respaldo, reintentar todos los correos fallidos y el cierre
-global de sesiones. Una cookie robada sirve para mirar, no para actuar. Cinco
+regenerar códigos de respaldo, reintentar todos los correos fallidos, el cierre
+global de sesiones y, en el newsletter, enviar o cancelar una campaña, pedir
+confirmación a las suscripciones anteriores y dar de baja por solicitud. Una cookie robada sirve para mirar, no para actuar. Cinco
 códigos fallidos en una hora cierran la sesión (`session_revoked_failed_elevation`).
 El cliente abre el diálogo solo cuando una API responde `elevation_required` y
 reintenta la acción una vez.
@@ -121,7 +122,8 @@ seguridad comprueba los marcadores en JSON y en el HTML/RSC renderizado.
 | `/panel/comunidad` | Listas públicas, comentarios en listas y en fichas, moderación |
 | `/panel/mensajes` | Bandeja del formulario de contacto, responder por correo, atender/reabrir |
 | `/panel/correo` | Estado de los avisos transaccionales, reintentos |
-| `/panel/newsletter` | Suscripciones, altas/bajas, segmentos, crecimiento |
+| `/panel/newsletter` | Suscripciones confirmadas, sin confirmar y bajas (con motivo: enlace, un clic, rebote, queja, solicitud), segmentos, crecimiento; pedir confirmación a las anteriores al doble opt-in y dar de baja por solicitud (admin + modo seguro) |
+| `/panel/newsletter/campanas` | Campañas: crear, editar (versiones), vista previa en una pestaña aislada, prueba obligatoria de la misma versión, enviar (admin + modo seguro + motivo), continuar, cancelar; resultados agregados y borrador semanal de «Nuevo esta semana» ([newsletter.md](newsletter.md)) |
 | `/panel/metricas` | Vistas, clics, solicitudes, cuentas, señales sociales, embudo y rendimiento por ficha (7/30/90 días) |
 | `/panel/seguridad` | Tus sesiones, modo seguro, códigos de respaldo; para admin: accesos fallidos, cookies reutilizadas, postura, límites activos, cadena de la bitácora y cierre global de sesiones |
 | `/panel/sistema` | Admin: latencia y tamaño de la base, tablas, Blob, colas, residuos por limpiar, salud del producto, configuración (solo presencia) |
@@ -243,3 +245,27 @@ también trae cuentas nuevas en ráfaga. Nada de esto aparece en el producto ni 
 - Verificado contra `neondb` con cuentas `@example.invalid` y un ops local: el anillo de
   prueba subía su ficha por encima de otra y su lista por encima de otra; al marcarlo,
   ambas bajan, los contadores visibles no cambian y quitar la marca restaura el orden.
+
+## Newsletter — 17 noviembre 2026 (SHCWS-124/125)
+
+Contrato completo en [newsletter.md](newsletter.md). Lo que toca a ops:
+
+- **Ops no envía correos.** Escribe y audita las campañas en su propia base y pide al producto
+  previsualizar, probar y enviar por `POST /api/internal/newsletter` con
+  `Authorization: Bearer OPS_NEWSLETTER_SECRET` (mismo valor en los dos proyectos) y
+  `PRODUCT_APP_ORIGIN`. Sin ellos se escriben borradores, pero no se prueban ni se envían, y
+  Sistema lo marca.
+- **Todo es de admin.** Crear, editar, probar y continuar: admin. Enviar y cancelar: admin +
+  modo seguro + motivo (y escribir ENVIAR en la interfaz). Pedir confirmación a las
+  suscripciones anteriores y dar de baja por solicitud: admin + modo seguro.
+- **Prueba obligatoria.** Cada guardado crea una versión; «Enviar» solo funciona si la última
+  prueba fue de esa misma versión (`tested_version = version`, comprobado en la sentencia).
+- **Bitácora en la misma sentencia** para crear, editar, probar, enviar, cancelar y dar de baja
+  (`newsletter_campaign_*`, `newsletter_unsubscribe`); `newsletter_campaign_resume`,
+  `newsletter_weekly_draft`, `newsletter_weekly_refresh` y `newsletter_reconfirm` se registran
+  justo después de que el producto acepta la petición.
+- **Vista previa** en una pestaña aparte servida por ops con `Content-Security-Policy: sandbox`
+  (sin scripts, origen opaco, imágenes solo por https): una campaña nunca actúa dentro de ops.
+- **Privacidad:** ops ve correos, estado, motivo de baja y totales; nunca quién hizo clic (no se
+  registra). Fuera de producción el producto solo escribe a `@resend.dev` y la vista previa lo
+  dice.
