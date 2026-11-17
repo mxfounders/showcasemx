@@ -34,7 +34,7 @@ export const legal = {
           id: 'subprocesadores',
           title: 'Infrastructure and subprocessors',
           paragraphs: [
-            'All information is processed on enterprise-grade infrastructure. We use hosting and file storage from Vercel (vercel.com), cloud databases (Neon, hosted on AWS us-east-1), the transactional email provider Resend, Stripe (stripe.com) for sponsored-slot payments and, for the analytics and error reporting described in the next section, PostHog (posthog.com). These subprocessors meet encryption standards in transit (TLS 1.2+) and at rest (AES-256).',
+            'All information is processed on enterprise-grade infrastructure. We use hosting and file storage from Vercel (vercel.com), cloud databases (Neon, hosted on AWS us-east-1), the transactional email provider Resend, Stripe (stripe.com) for sponsored-slot payments and, for the analytics and error reporting described in the next section, PostHog (posthog.com). Only when you ask for your listing to be drafted with AI, Anthropic (anthropic.com) receives the public text of the pages of your website and the address you typed in order to write the draft; it receives no data from your account and shwcs does not keep that text. These subprocessors meet encryption standards in transit (TLS 1.2+) and at rest (AES-256).',
             'By using shwcs, you acknowledge that information may be routed, processed or stored on servers that our subprocessors distribute geographically. We require confidentiality agreements and strict security measures from our technology supply chain, but shwcs is not liable for force majeure events or breaches originating in the underlying infrastructure.',
           ],
         },

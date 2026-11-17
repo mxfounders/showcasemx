@@ -30,6 +30,7 @@ import { OwnerReviewDigest } from '@/components/reviews/owner-review-digest';
 import { UpdatesManager } from '@/components/solutions/updates-manager';
 import { getOwnerUpdates, updatesPerWeek } from '@/lib/solutions/updates';
 import { getRecognition } from '@/lib/recognition/server';
+import { getSiteDraftMarks } from '@/lib/solutions/site-draft-server';
 import { RecognitionCard } from '@/components/recognition/recognition-card';
 import { currencyOptions } from '@/lib/currencies';
 
@@ -173,7 +174,7 @@ export default async function SolutionPage(props: {
   const solution = await getSolution(params.id, account.id);
   if (!solution) notFound();
   const published = solution.published_data;
-  const [events, reviewDigest, recognition, bookings, updates] = await Promise.all([
+  const [events, reviewDigest, recognition, bookings, updates, siteDraft] = await Promise.all([
     getEvents(solution.id),
     // Optional: an outage in either hides its card, never the listing page.
     published ? getOwnerReviewDigest(solution.id).catch(() => null) : null,
@@ -182,6 +183,8 @@ export default async function SolutionPage(props: {
     published ? activeListingBookings(account.id, solution.id).catch(() => 0) : 0,
     // Dated updates and the follower count (SHCWS-24); an outage hides only that card.
     getOwnerUpdates(solution.id, account.id).catch(() => null),
+    // Marks for answers the AI draft took from the site; without them the editor still works.
+    getSiteDraftMarks(solution.id, account.id).catch(() => null),
   ]);
   // jsonb returns keys in a canonical order, so the two serialise identically when equal.
   const hasUnpublishedChanges =
@@ -339,6 +342,7 @@ export default async function SolutionPage(props: {
             siteImageFailure={solution.site_image_failure}
             hasUnpublishedChanges={hasUnpublishedChanges}
             currencies={currencyOptions(locale)}
+            siteDraft={siteDraft}
           />
         </div>
         {published && (

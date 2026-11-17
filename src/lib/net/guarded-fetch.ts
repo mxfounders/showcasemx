@@ -10,7 +10,8 @@ import { isIP } from 'node:net';
  * than papered over.
  *
  * Shared by everything that reads the website a founder declared: the cover
- * (og:image), the logo (src/lib/solutions/site-icon.ts) and the page itself.
+ * (og:image), the logo (src/lib/solutions/site-icon.ts), the page itself and the
+ * AI draft reader (src/lib/solutions/site-reader.ts).
  */
 
 const MAX_REDIRECTS = 3;
