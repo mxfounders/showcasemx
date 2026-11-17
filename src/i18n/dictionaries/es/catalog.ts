@@ -13,6 +13,9 @@ export const catalog = {
     /** SHCWS-52: projects that answer 8 of 10 requests, half of them within 48 h. */
     response: 'Respuesta',
     fastResponse: 'Responde rápido',
+    /** SHCWS-56: serves and invoices in the country; support language. */
+    country: 'Atiende y factura en',
+    language: 'Idioma de soporte',
   },
   moreFilters: 'Más filtros',
   clear: 'Limpiar',
@@ -56,6 +59,8 @@ export const catalog = {
   reasonIndustry: 'No declaró esa industria',
   reasonCapability: 'No declaró esa capacidad',
   reasonCompanySize: 'No declaró tamaño de empresa',
+  reasonMarket: 'No declaró dónde atiende o factura',
+  reasonLanguage: 'No declaró idiomas de soporte',
   ratingLabel: '{rating} de 5 estrellas, {count} reseñas',
   viewSolution: 'Conocer solución',
   /** /nuevo and its block on the home (SHCWS-125). Headings without a final period (§37). */

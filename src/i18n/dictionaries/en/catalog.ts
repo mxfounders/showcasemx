@@ -14,6 +14,9 @@ export const catalog = {
     useCase: 'Use case',
     response: 'Response',
     fastResponse: 'Replies fast',
+    /** SHCWS-56: serves and invoices in the country; support language. */
+    country: 'Serves and invoices in',
+    language: 'Support language',
   },
   moreFilters: 'More filters',
   clear: 'Clear',
@@ -57,6 +60,8 @@ export const catalog = {
   reasonIndustry: "Didn't declare that industry",
   reasonCapability: "Didn't declare that capability",
   reasonCompanySize: "Didn't declare a company size",
+  reasonMarket: "Didn't declare where it serves or invoices",
+  reasonLanguage: "Didn't declare support languages",
   ratingLabel: '{rating} out of 5 stars, {count} reviews',
   viewSolution: 'View solution',
   newThisWeek: {

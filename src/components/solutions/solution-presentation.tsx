@@ -29,6 +29,7 @@ import { solutionSlides } from '@/lib/solutions/gallery';
 import { outboundRel, outboundUrl, type OutboundMedium } from '@/lib/solutions/outbound';
 import { solutionChecklist } from '@/lib/solutions/completeness';
 import { formatPriceFrom, pricingModelLabels } from '@/lib/solutions/pricing';
+import { providerRows } from '@/lib/solutions/provider';
 import { actionButtonStyle, brandColors, solutionCategoryTones } from '@/lib/brand-colors';
 import {
   industries as industryOptions,
@@ -162,6 +163,9 @@ export function SolutionPresentation({
   const offeringLabels = Object.fromEntries(
     localizedOfferingOptions(locale).map(item => [item.value, item.label]),
   );
+  // Where it operates and its track record (SHCWS-56): declared rows only.
+  const provider = providerRows(data, locale ?? 'es', dict.provider);
+  const cases = (data.cases ?? []).filter(item => item.client.trim() && item.result.trim());
   // What the listing still lacks is the founder's to-do, so it lives only in the app:
   // the private preview here, and the account's guide (decided by the owner on
   // 14 Nov 2026; it used to show on the public listing). The public page never lists it.
@@ -449,6 +453,24 @@ export function SolutionPresentation({
               )}
             </dl>
           </section>
+          {provider.length > 0 && (
+            <section className="border-t border-stone-200 pt-8" aria-labelledby="provider-title">
+              <h2 id="provider-title" className="text-xl font-medium">
+                {dict.provider.title}
+              </h2>
+              <p className="mt-2 text-xs text-stone-400">{dict.provider.note}</p>
+              <dl className="mt-6 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+                {provider.map(row => (
+                  <div key={row.key}>
+                    <dt className="text-sm font-medium">{row.label}</dt>
+                    <dd className="mt-1.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-stone-500">
+                      {row.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          )}
           <section className="border-t border-stone-200 pt-8">
             <h2 className="text-xl font-medium">{dict.workTitle}</h2>
             <p className="mt-4 whitespace-pre-wrap break-words leading-relaxed text-stone-600">
@@ -467,6 +489,53 @@ export function SolutionPresentation({
               </a>
             )}
           </section>
+          {cases.length > 0 && (
+            <section className="border-t border-stone-200 pt-8" aria-labelledby="cases-title">
+              <h2 id="cases-title" className="text-xl font-medium">
+                {dict.cases.title}
+              </h2>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                {cases.map((item, index) => {
+                  const href = safeSolutionUrl(item.url);
+                  return (
+                    <article
+                      key={index}
+                      className="flex flex-col rounded-2xl border border-stone-200 bg-white p-5"
+                    >
+                      <h3 className="break-words text-base font-medium text-stone-900">
+                        {item.client}
+                      </h3>
+                      <p className="mt-1 text-[11px] leading-relaxed text-stone-400">
+                        {dict.cases.declared}
+                      </p>
+                      {item.problem.trim() && (
+                        <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-relaxed text-stone-500">
+                          <span className="font-medium text-stone-700">{dict.cases.before}: </span>
+                          {item.problem}
+                        </p>
+                      )}
+                      <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-stone-600">
+                        <span className="font-medium text-stone-800">{dict.cases.after}: </span>
+                        {item.result}
+                      </p>
+                      {href && (
+                        <a
+                          href={out(href)}
+                          target="_blank"
+                          rel={outboundRel}
+                          className="mt-auto inline-flex items-center gap-1.5 pt-4 text-sm font-medium text-[#365DC4]"
+                        >
+                          {dict.cases.readMore}
+                          <ArrowUpRightIcon className="size-3.5" aria-hidden="true" />
+                          <span className="sr-only"> {dict.otherTab}</span>
+                        </a>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          )}
           {!!data.founders?.length && (
             <section className="border-t border-stone-200 pt-8">
               <h2 className="text-xl font-medium">{dict.teamTitle}</h2>
