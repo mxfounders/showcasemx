@@ -158,45 +158,160 @@ export function validPasskeyName(value: unknown): boolean {
   return typeof value === 'string' && value.replace(/\s+/g, ' ').trim().length <= 60;
 }
 
-async function storeChallenge(input: {
-  challenge: string;
-  purpose: 'register' | 'sign_in';
-  rpID: string;
-  accountId?: string;
-  sessionHash?: string;
-}) {
-  const sql = authSql();
-  await sql`INSERT INTO auth_passkey_challenges (challenge_hash, purpose, rp_id, account_id, session_hash, expires_at)
-    VALUES (${hashToken(input.challenge)}, ${input.purpose}, ${input.rpID}, ${input.accountId ?? null},
-      ${input.sessionHash ?? null}, now() + ${passkeyChallengeSeconds} * interval '1 second')`;
-}
+export type ChallengePurpose = 'register' | 'sign_in';
 
-type ClaimedChallenge = {
+export type ClaimedChallenge = {
   rpID: string;
   accountId: string | null;
   sessionHash: string | null;
 };
 
+export type StoredPasskey = {
+  id: string;
+  accountId: string;
+  credentialId: string;
+  publicKey: string;
+  counter: number;
+  transports: string[];
+};
+
+export type NewPasskey = {
+  accountId: string;
+  rpID: string;
+  credentialId: string;
+  publicKey: string;
+  counter: number;
+  transports: string[];
+  deviceType: 'singleDevice' | 'multiDevice';
+  backedUp: boolean;
+  aaguid: string | null;
+  name: string;
+};
+
 /**
- * Deletes the challenge's row and returns it while it is still valid. Deleting first is what
- * makes it single-use: a second request with the same signed response finds nothing, and a
- * failed signature has spent its try. An expired row is deleted all the same.
+ * Where challenges, passkeys and sessions live. The database in the app; the unit tests pass
+ * an in-memory one with the same rules, so the ceremony logic is checked without Postgres.
  */
-export async function claimChallenge(
-  challenge: string,
-  purpose: 'register' | 'sign_in',
-): Promise<ClaimedChallenge | null> {
-  const sql = authSql();
-  const [row] = await sql`DELETE FROM auth_passkey_challenges
-    WHERE challenge_hash = ${hashToken(challenge)} AND purpose = ${purpose}
-    RETURNING rp_id, account_id::text, session_hash, expires_at > now() AS live`;
-  if (!row?.live) return null;
-  return {
-    rpID: String(row.rp_id),
-    accountId: row.account_id == null ? null : String(row.account_id),
-    sessionHash: row.session_hash == null ? null : String(row.session_hash),
-  };
-}
+export type PasskeyStore = {
+  saveChallenge(input: {
+    challengeHash: string;
+    purpose: ChallengePurpose;
+    rpID: string;
+    accountId?: string;
+    sessionHash?: string;
+  }): Promise<void>;
+  /**
+   * Deletes the challenge and returns it while still valid. Deleting first is what makes it
+   * single-use: a second request with the same signed response finds nothing, and a failed
+   * signature has spent its try. An expired row is deleted all the same.
+   */
+  claimChallenge(
+    challengeHash: string,
+    purpose: ChallengePurpose,
+  ): Promise<ClaimedChallenge | null>;
+  /** The account's credential ids on this host, and drops its earlier open registrations. */
+  prepareRegistration(
+    accountId: string,
+    rpID: string,
+  ): Promise<{ id: string; transports: string[] }[]>;
+  insertPasskey(passkey: NewPasskey): Promise<{ id: string; name: string } | 'duplicate' | 'limit'>;
+  findPasskey(credentialId: string, rpID: string): Promise<StoredPasskey | null>;
+  /**
+   * Records the new counter (compare-and-set against the value that was checked) and opens a
+   * session for a non-suspended account, in one step. False when either fails.
+   */
+  openSession(input: {
+    passkey: StoredPasskey;
+    newCounter: number;
+    backedUp: boolean;
+    tokenHash: string;
+    previousTokenHash: string;
+    userAgent: string | null;
+  }): Promise<boolean>;
+};
+
+export const databaseStore: PasskeyStore = {
+  async saveChallenge(input) {
+    const sql = authSql();
+    await sql`INSERT INTO auth_passkey_challenges (challenge_hash, purpose, rp_id, account_id, session_hash, expires_at)
+      VALUES (${input.challengeHash}, ${input.purpose}, ${input.rpID}, ${input.accountId ?? null},
+        ${input.sessionHash ?? null}, now() + ${passkeyChallengeSeconds} * interval '1 second')`;
+  },
+  async claimChallenge(challengeHash, purpose) {
+    const sql = authSql();
+    const [row] = await sql`DELETE FROM auth_passkey_challenges
+      WHERE challenge_hash = ${challengeHash} AND purpose = ${purpose}
+      RETURNING rp_id, account_id::text, session_hash, expires_at > now() AS live`;
+    if (!row?.live) return null;
+    return {
+      rpID: String(row.rp_id),
+      accountId: row.account_id == null ? null : String(row.account_id),
+      sessionHash: row.session_hash == null ? null : String(row.session_hash),
+    };
+  },
+  async prepareRegistration(accountId, rpID) {
+    const sql = authSql();
+    // One open registration per account: an earlier one (another tab) stops working.
+    const [, rows] = await sql.transaction([
+      sql`DELETE FROM auth_passkey_challenges WHERE expires_at <= now() OR (purpose = 'register' AND account_id = ${accountId})`,
+      sql`SELECT credential_id, transports FROM auth_passkeys WHERE account_id = ${accountId} AND rp_id = ${rpID}`,
+    ]);
+    return rows.map(row => ({
+      id: String(row.credential_id),
+      transports: (row.transports as string[] | null) ?? [],
+    }));
+  },
+  async insertPasskey(passkey) {
+    const sql = authSql();
+    // The account row is locked first, so two registrations at once can't pass the ceiling.
+    const [, inserted, existing] = await sql.transaction([
+      sql`SELECT id FROM auth_accounts WHERE id = ${passkey.accountId} FOR UPDATE`,
+      sql`INSERT INTO auth_passkeys (account_id, rp_id, credential_id, public_key, counter, transports, device_type, backed_up, aaguid, name)
+        SELECT id, ${passkey.rpID}, ${passkey.credentialId}, ${passkey.publicKey}, ${passkey.counter},
+          ${passkey.transports}, ${passkey.deviceType}, ${passkey.backedUp}, ${passkey.aaguid}, ${passkey.name}
+        FROM auth_accounts WHERE id = ${passkey.accountId} AND suspended_at IS NULL
+          AND (SELECT count(*) FROM auth_passkeys WHERE account_id = ${passkey.accountId}) < ${maxPasskeysPerAccount}
+        ON CONFLICT (credential_id) DO NOTHING
+        RETURNING id::text, name`,
+      sql`SELECT 1 FROM auth_passkeys WHERE credential_id = ${passkey.credentialId}`,
+    ]);
+    if (inserted[0]) return { id: String(inserted[0].id), name: String(inserted[0].name) };
+    return existing.length ? 'duplicate' : 'limit';
+  },
+  async findPasskey(credentialId, rpID) {
+    const sql = authSql();
+    const [row] =
+      await sql`SELECT id::text, account_id::text, credential_id, public_key, counter, transports
+      FROM auth_passkeys WHERE credential_id = ${credentialId} AND rp_id = ${rpID}`;
+    if (!row) return null;
+    return {
+      id: String(row.id),
+      accountId: String(row.account_id),
+      credentialId: String(row.credential_id),
+      publicKey: String(row.public_key),
+      counter: Number(row.counter),
+      transports: (row.transports as string[] | null) ?? [],
+    };
+  },
+  async openSession(input) {
+    const sql = authSql();
+    // Same shape as a password sign-in: the previous cookie's session and the account's
+    // expired ones go, and the new one records its device and the passkey that opened it.
+    const opened = await sql`WITH used AS (
+        UPDATE auth_passkeys SET counter = ${input.newCounter}, backed_up = ${input.backedUp}, last_used_at = now()
+        WHERE id = ${input.passkey.id} AND counter = ${input.passkey.counter}
+        RETURNING account_id
+      ), owner AS (
+        SELECT a.id FROM auth_accounts a JOIN used u ON u.account_id = a.id WHERE a.suspended_at IS NULL
+      ), previous AS (
+        DELETE FROM auth_sessions WHERE EXISTS (SELECT 1 FROM owner)
+          AND (token_hash = ${input.previousTokenHash} OR (account_id = ${input.passkey.accountId} AND expires_at <= now()))
+      ) INSERT INTO auth_sessions (token_hash, account_id, expires_at, user_agent, passkey_id)
+        SELECT ${input.tokenHash}, id, now() + ${sessionSeconds} * interval '1 second', ${input.userAgent}, ${input.passkey.id}
+        FROM owner RETURNING account_id`;
+    return opened.length > 0;
+  },
+};
 
 // ── Registration (Ajustes › Seguridad) ─────────────────────────────────
 
@@ -204,14 +319,15 @@ export async function claimChallenge(
  * Options to create a passkey for a signed-in account whose password (and second factor, when
  * it is on) the caller has just checked. The challenge is tied to the account and the session.
  */
-export async function registrationOptions(input: {
-  party: RelyingParty;
-  account: { id: string; email: string; name: string | null };
-  sessionHash: string;
-}) {
-  const sql = authSql();
-  const existing =
-    await sql`SELECT credential_id, transports FROM auth_passkeys WHERE account_id = ${input.account.id} AND rp_id = ${input.party.rpID}`;
+export async function registrationOptions(
+  input: {
+    party: RelyingParty;
+    account: { id: string; email: string; name: string | null };
+    sessionHash: string;
+  },
+  store: PasskeyStore = databaseStore,
+) {
+  const existing = await store.prepareRegistration(input.account.id, input.party.rpID);
   if (existing.length >= maxPasskeysPerAccount) return { status: 'limit' as const };
   const options = await generateRegistrationOptions({
     rpName,
@@ -221,17 +337,15 @@ export async function registrationOptions(input: {
     userID: userHandle(input.account.id),
     attestationType: 'none',
     // The browser refuses to make a second passkey on a device that already has one here.
-    excludeCredentials: existing.map(row => ({
-      id: String(row.credential_id),
-      transports: (row.transports as AuthenticatorTransport[] | null) ?? [],
+    excludeCredentials: existing.map(item => ({
+      id: item.id,
+      transports: item.transports as AuthenticatorTransport[],
     })),
     authenticatorSelection: { residentKey: 'required', userVerification: 'required' },
     timeout: ceremonyMs,
   });
-  // One open registration per account: an earlier one (another tab) stops working.
-  await sql`DELETE FROM auth_passkey_challenges WHERE expires_at <= now() OR (purpose = 'register' AND account_id = ${input.account.id})`;
-  await storeChallenge({
-    challenge: options.challenge,
+  await store.saveChallenge({
+    challengeHash: hashToken(options.challenge),
     purpose: 'register',
     rpID: input.party.rpID,
     accountId: input.account.id,
@@ -249,16 +363,19 @@ export type RegistrationOutcome =
  * host) and stores its public key. Attestation is not requested: shwcs trusts the person
  * signed in with their password, not a particular authenticator model.
  */
-export async function finishRegistration(input: {
-  party: RelyingParty;
-  accountId: string;
-  sessionHash: string;
-  credential: unknown;
-  name: (aaguid: string | null) => string;
-}): Promise<RegistrationOutcome> {
+export async function finishRegistration(
+  input: {
+    party: RelyingParty;
+    accountId: string;
+    sessionHash: string;
+    credential: unknown;
+    name: (aaguid: string | null) => string;
+  },
+  store: PasskeyStore = databaseStore,
+): Promise<RegistrationOutcome> {
   const challenge = clientChallenge(input.credential);
   if (!challenge || !credentialIdOf(input.credential)) return { status: 'failed' };
-  const claimed = await claimChallenge(challenge, 'register');
+  const claimed = await store.claimChallenge(hashToken(challenge), 'register');
   if (
     !claimed ||
     claimed.rpID !== input.party.rpID ||
@@ -276,46 +393,38 @@ export async function finishRegistration(input: {
   if (!result?.verified) return { status: 'failed' };
   const { credential, credentialDeviceType, credentialBackedUp, aaguid } = result.registrationInfo;
   const provider = aaguid && aaguid !== '00000000-0000-0000-0000-000000000000' ? aaguid : null;
-  const name = input.name(provider);
-  const sql = authSql();
-  // The account row is locked first, so two registrations at once can't pass the ceiling.
-  const [, inserted, existing] = await sql.transaction([
-    sql`SELECT id FROM auth_accounts WHERE id = ${input.accountId} FOR UPDATE`,
-    sql`INSERT INTO auth_passkeys (account_id, rp_id, credential_id, public_key, counter, transports, device_type, backed_up, aaguid, name)
-      SELECT id, ${input.party.rpID}, ${credential.id}, ${Buffer.from(credential.publicKey).toString('base64url')},
-        ${credential.counter}, ${credential.transports ?? []}, ${credentialDeviceType}, ${credentialBackedUp}, ${provider}, ${name}
-      FROM auth_accounts WHERE id = ${input.accountId} AND suspended_at IS NULL
-        AND (SELECT count(*) FROM auth_passkeys WHERE account_id = ${input.accountId}) < ${maxPasskeysPerAccount}
-      ON CONFLICT (credential_id) DO NOTHING
-      RETURNING id::text, name`,
-    sql`SELECT 1 FROM auth_passkeys WHERE credential_id = ${credential.id}`,
-  ]);
-  if (inserted[0])
-    return { status: 'ok', id: String(inserted[0].id), name: String(inserted[0].name) };
-  return existing.length ? { status: 'duplicate' } : { status: 'limit' };
+  const stored = await store.insertPasskey({
+    accountId: input.accountId,
+    rpID: input.party.rpID,
+    credentialId: credential.id,
+    publicKey: Buffer.from(credential.publicKey).toString('base64url'),
+    counter: credential.counter,
+    transports: credential.transports ?? [],
+    deviceType: credentialDeviceType,
+    backedUp: credentialBackedUp,
+    aaguid: provider,
+    name: input.name(provider),
+  });
+  if (stored === 'duplicate' || stored === 'limit') return { status: stored };
+  return { status: 'ok', ...stored };
 }
 
 // ── Sign-in (/sign-in) ─────────────────────────────────────────────────
 
 /** Options for a discoverable passkey: no email typed, the browser offers this site's passkeys. */
-export async function signInOptions(party: RelyingParty) {
+export async function signInOptions(party: RelyingParty, store: PasskeyStore = databaseStore) {
   const options = await generateAuthenticationOptions({
     rpID: party.rpID,
     userVerification: 'required',
     timeout: ceremonyMs,
   });
-  await storeChallenge({ challenge: options.challenge, purpose: 'sign_in', rpID: party.rpID });
+  await store.saveChallenge({
+    challengeHash: hashToken(options.challenge),
+    purpose: 'sign_in',
+    rpID: party.rpID,
+  });
   return options;
 }
-
-export type StoredPasskey = {
-  id: string;
-  accountId: string;
-  credentialId: string;
-  publicKey: string;
-  counter: number;
-  transports: string[];
-};
 
 /**
  * Verifies one signed assertion against a stored passkey, without touching the database. The
@@ -361,35 +470,26 @@ export type SignInOutcome =
 
 /**
  * Signs in with a passkey: claims the challenge, finds the passkey for this host, checks the
- * signature, then in one statement records the new counter (compare-and-set against the value
- * that was checked) and opens the same session a password sign-in does, for a non-suspended
- * account only. `refused` covers a suspended account or a counter that moved in between; the
- * caller answers it like a failed signature.
+ * signature, then records the new counter and opens the same session a password sign-in does.
+ * `refused` covers a suspended account or a counter that moved in between; the caller answers
+ * it like a failed signature.
  */
-export async function signInWithPasskey(input: {
-  party: RelyingParty;
-  credential: unknown;
-  previousSessionToken: string;
-  userAgent: string | null;
-}): Promise<SignInOutcome> {
+export async function signInWithPasskey(
+  input: {
+    party: RelyingParty;
+    credential: unknown;
+    previousSessionToken: string;
+    userAgent: string | null;
+  },
+  store: PasskeyStore = databaseStore,
+): Promise<SignInOutcome> {
   const challenge = clientChallenge(input.credential);
   const credentialId = credentialIdOf(input.credential);
   if (!challenge || !credentialId) return { status: 'failed' };
-  const claimed = await claimChallenge(challenge, 'sign_in');
+  const claimed = await store.claimChallenge(hashToken(challenge), 'sign_in');
   if (!claimed || claimed.rpID !== input.party.rpID) return { status: 'expired' };
-  const sql = authSql();
-  const [row] =
-    await sql`SELECT id::text, account_id::text, credential_id, public_key, counter, transports
-    FROM auth_passkeys WHERE credential_id = ${credentialId} AND rp_id = ${input.party.rpID}`;
-  if (!row) return { status: 'unknown' };
-  const stored: StoredPasskey = {
-    id: String(row.id),
-    accountId: String(row.account_id),
-    credentialId: String(row.credential_id),
-    publicKey: String(row.public_key),
-    counter: Number(row.counter),
-    transports: (row.transports as string[] | null) ?? [],
-  };
+  const stored = await store.findPasskey(credentialId, input.party.rpID);
+  if (!stored) return { status: 'unknown' };
   const verified = await verifyAssertion({
     party: input.party,
     credential: input.credential as AuthenticationResponseJSON,
@@ -398,19 +498,15 @@ export async function signInWithPasskey(input: {
   });
   if (!verified) return { status: 'failed' };
   const token = randomBytes(32).toString('hex');
-  const opened = await sql`WITH used AS (
-      UPDATE auth_passkeys SET counter = ${verified.newCounter}, backed_up = ${verified.backedUp}, last_used_at = now()
-      WHERE id = ${stored.id} AND counter = ${stored.counter}
-      RETURNING account_id
-    ), owner AS (
-      SELECT a.id FROM auth_accounts a JOIN used u ON u.account_id = a.id WHERE a.suspended_at IS NULL
-    ), previous AS (
-      DELETE FROM auth_sessions WHERE EXISTS (SELECT 1 FROM owner)
-        AND (token_hash = ${hashToken(input.previousSessionToken)} OR (account_id = ${stored.accountId} AND expires_at <= now()))
-    ) INSERT INTO auth_sessions (token_hash, account_id, expires_at, user_agent, passkey_id)
-      SELECT ${hashToken(token)}, id, now() + ${sessionSeconds} * interval '1 second', ${input.userAgent}, ${stored.id}
-      FROM owner RETURNING account_id`;
-  if (!opened.length) return { status: 'refused' };
+  const opened = await store.openSession({
+    passkey: stored,
+    newCounter: verified.newCounter,
+    backedUp: verified.backedUp,
+    tokenHash: hashToken(token),
+    previousTokenHash: hashToken(input.previousSessionToken),
+    userAgent: input.userAgent,
+  });
+  if (!opened) return { status: 'refused' };
   return { status: 'ok', accountId: stored.accountId, passkeyId: stored.id, token };
 }
 

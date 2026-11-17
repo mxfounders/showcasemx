@@ -151,6 +151,11 @@ export function AuthForm({
       if (run === autofillRun.current) void runAutofill();
     }
   }
+  // Leaving the form (signed in, or on to the code step) drops whatever ceremony is waiting.
+  function stopPasskeys() {
+    autofillRun.current++;
+    WebAuthnAbortService.cancelCeremony();
+  }
   useEffect(() => {
     if (mode !== 'login' || !passkeysAvailable || challenge) return;
     if (!browserSupportsWebAuthn()) return;
@@ -171,8 +176,7 @@ export function AuthForm({
     return () => {
       live = false;
       window.clearInterval(refresh);
-      autofillRun.current++;
-      WebAuthnAbortService.cancelCeremony();
+      stopPasskeys();
     };
     // Runs once per form shown; the functions it calls only read refs and stable props.
     // eslint-disable-next-line react-hooks/exhaustive-deps
