@@ -263,6 +263,7 @@ export default async function SolutionPage(props: {
             path={solutionPath(solution)}
             name={published.name}
             recognition={recognition}
+            reviews={reviewDigest}
             movedAway={!!recognition.movedAway}
             origin={origin}
             locale={locale}

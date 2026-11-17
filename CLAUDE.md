@@ -3689,6 +3689,25 @@ build y la misma prueba en vivo en verde.
 - Pendiente: favicon automático para cualquier ficha (leerlo del sitio como la og:image,
   §50). Hoy solo Cord y Flouvia tienen logo propio; las demás muestran su inicial.
 
+## 81. Guardados y Mis listas: encabezado limpio y barra que aparece cuando sirve — 14 noviembre 2026
+
+Pedido del propietario: «ese filtro está ahí en medio y no se ve bien… hay dobles líneas, la
+UI debe estar nivel top». Detalle en docs/buyer-library.md («Encabezado y barra»). Sustituye
+la composición de §26, §27 y la variante `.saved-search` de §28 para estas dos páginas.
+
+- Encabezado con resumen («7 proyectos guardados · solo tú los ves», «3 listas · 1 pública»)
+  y la acción a la derecha («Mis alertas», «Crear lista»). Sin conteo repetido ni «Mis listas →».
+- Barra de Guardados según el tamaño de la biblioteca: nada hasta 3, orden y búsqueda desde 4,
+  menús desde 6. Menús cortos con el nombre del eje; un filtro activo siempre visible;
+  «2 de 7 · Limpiar» solo al filtrar. Mis listas: pestañas solo si hay públicas y privadas,
+  búsqueda desde 6.
+- Sin líneas horizontales. `LibraryEmpty` para vacío y sin coincidencias; Mis listas vacía dice
+  «Crea tu primera lista» (antes, «No hay listas con estos filtros» con cero listas).
+- Verificado con cuentas `@example.invalid` en `neondb` y una copia aislada en el puerto 3200:
+  antes/después en escritorio, móvil e inglés, sin desbordamiento horizontal; datos borrados.
+  319 pruebas, lint y tipos en verde. Quedó sin commit en el checkout principal; entró a la
+  rama de integración `claude/linear-issues-fixes-412da8` el 17 de noviembre (396 pruebas).
+
 ## 82. Logo automático de cada ficha — 14 noviembre 2026
 
 SHCWS-177. Contrato completo en docs/listings.md («Logo automático desde el sitio»).

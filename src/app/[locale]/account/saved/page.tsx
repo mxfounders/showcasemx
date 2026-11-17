@@ -1,5 +1,5 @@
 import Link from '@/i18n/navigation';
-import { BellIcon, BookmarkIcon, LockIcon } from '@/components/icons/gota';
+import { ArrowRightIcon, BellIcon, BookmarkIcon, LockIcon } from '@/components/icons/gota';
 import {
   requireBuyer,
   getSaved,
@@ -11,6 +11,7 @@ import { validProjectKey } from '@/lib/library/model';
 import { SaveProjectButton } from '@/components/library/save-project-button';
 import { ProjectSummary } from '@/components/library/project-summary';
 import { SavedGallery } from '@/components/library/saved-gallery';
+import { LibraryEmpty } from '@/components/library/library-empty';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import { getDictionary } from '@/i18n/get-dictionary';
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -51,15 +52,31 @@ export default async function SavedPage(props: {
     requested && !saved.some(item => item.project_key === requested) ? requested : null;
   return (
     <section className="account-page">
-      <header className="mb-9">
-        <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">{t.title}</h1>
-        <p className="mt-4 flex items-center gap-2 text-xs text-stone-400">
-          <LockIcon className="size-3.5" aria-hidden="true" />
-          {t.onlyYou}
-        </p>
+      <header className="mb-10 flex flex-wrap items-end justify-between gap-5">
+        <div>
+          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">{t.title}</h1>
+          {saved.length > 0 && (
+            <p className="mt-4 flex items-center gap-2 text-sm text-stone-500">
+              <LockIcon aria-hidden="true" className="size-3.5 shrink-0 text-stone-400" />
+              {(saved.length === 1 ? t.summarySingular : t.summaryPlural).replace(
+                '{count}',
+                String(saved.length),
+              )}
+            </p>
+          )}
+        </div>
+        {/* Saved-search alerts (SHCWS-47) live next to what the buyer keeps. Mis listas
+            is one click away in the sidebar, so it is not repeated here (§27). */}
+        <Link
+          href="/account/alerts"
+          className="inline-flex items-center gap-2 rounded-full border border-stone-200 px-5 py-3 text-sm font-medium text-stone-700 transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#365DC4]"
+        >
+          <BellIcon aria-hidden="true" className="size-4 text-[#365DC4]" />
+          {dictionary.alerts.page.title}
+        </Link>
       </header>
       {resume && (
-        <section className="mb-10 border-y border-stone-200 py-7">
+        <section className="mb-10 rounded-[28px] border border-stone-200 bg-white p-6 sm:p-7">
           <p className="mb-4 text-sm font-medium">{t.resume}</p>
           <ProjectSummary project={projects[resume]} dict={library} locale={locale} />
           {projects[resume] && (
@@ -69,31 +86,6 @@ export default async function SavedPage(props: {
           )}
         </section>
       )}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <p className="text-sm text-stone-500">
-          {(saved.length === 1 ? t.countSingular : t.countPlural).replace(
-            '{count}',
-            String(saved.length),
-          )}
-        </p>
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Saved-search alerts (SHCWS-47) live next to what the buyer keeps. */}
-          <Link
-            href="/account/alerts"
-            className="inline-flex items-center gap-2 rounded-full border border-stone-200 px-5 py-3 text-sm font-medium text-stone-700 transition-colors hover:bg-white"
-          >
-            <BellIcon aria-hidden="true" className="size-4 text-[#365DC4]" />
-            {dictionary.alerts.page.title}
-          </Link>
-          <Link
-            href="/account/lists"
-            style={actionButtonStyle}
-            className="action-button rounded-full px-5 py-3 text-sm font-medium"
-          >
-            {t.myLists}
-          </Link>
-        </div>
-      </div>
       {saved.length ? (
         <SavedGallery
           key={initialList ?? 'all'}
@@ -112,17 +104,16 @@ export default async function SavedPage(props: {
         />
       ) : (
         !resume && (
-          <div className="border-y border-stone-200 py-14">
-            <BookmarkIcon className="mb-5 size-8 text-stone-300" aria-hidden="true" />
-            <h2 className="text-2xl font-medium">{t.emptyTitle}</h2>
+          <LibraryEmpty icon={<BookmarkIcon />} title={t.emptyTitle} text={t.emptyText}>
             <Link
               href="/#catalogo"
               style={actionButtonStyle}
-              className="action-button mt-6 inline-flex rounded-full px-5 py-3 text-sm"
+              className="action-button inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-medium"
             >
               {t.explore}
+              <ArrowRightIcon aria-hidden="true" className="button-arrow size-4" />
             </Link>
-          </div>
+          </LibraryEmpty>
         )
       )}
     </section>
