@@ -40,8 +40,9 @@ export const catalog = {
     articles: 'Artículos',
     topics: 'Categorías e industrias',
     noResults: 'Todavía no encontramos nada para «{query}»',
-    noResultsDesc: 'Prueba con otras palabras, explora el catálogo o cuéntanos qué necesitas.',
-    brief: 'Cuéntanos qué necesitas',
+    noResultsDesc:
+      'Prueba con otras palabras, explora el catálogo o publica tu necesidad: los proyectos que encajan te envían una propuesta.',
+    brief: 'Publica tu necesidad',
     explore: 'Explorar el catálogo',
     readArticle: 'Leer artículo',
   },
@@ -49,7 +50,7 @@ export const catalog = {
   noResultsDesc: 'Intenta quitar algunos filtros o explora otras categorías relacionadas.',
   emptyPageDesc:
     'Todavía no hay fichas publicadas aquí. Explora otra categoría o cuéntanos qué buscas.',
-  briefCta: 'Cuéntanos qué necesitas',
+  briefCta: 'Publica tu necesidad',
   alsoUsefulTitle: 'También podrían servir',
   alsoUsefulDesc:
     'No declararon todo lo que filtraste, pero encajan por su categoría y por lo que describen. Confírmalo con cada proyecto.',

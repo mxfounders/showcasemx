@@ -41,8 +41,9 @@ export const catalog = {
     articles: 'Articles',
     topics: 'Categories and industries',
     noResults: 'Nothing found for “{query}” yet',
-    noResultsDesc: 'Try other words, explore the catalog or tell us what you need.',
-    brief: 'Tell us what you need',
+    noResultsDesc:
+      'Try other words, explore the catalog or post your need: the projects that fit send you a proposal.',
+    brief: 'Post your need',
     explore: 'Explore the catalog',
     readArticle: 'Read article',
   },
@@ -50,7 +51,7 @@ export const catalog = {
   noResultsDesc: 'Try removing some filters or browse related categories.',
   emptyPageDesc:
     'There are no published listings here yet. Browse another category or tell us what you need.',
-  briefCta: 'Tell us what you need',
+  briefCta: 'Post your need',
   alsoUsefulTitle: 'Might also fit',
   alsoUsefulDesc:
     "They didn't declare everything you filtered by, but their category and description suggest a fit. Confirm with each project.",

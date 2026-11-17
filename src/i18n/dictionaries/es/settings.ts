@@ -236,6 +236,8 @@ export const settings = {
         'Se borrará la conversación de contacto en la que participas, también para la otra persona.',
       conversationMany:
         'Se borrarán las {count} conversaciones de contacto en las que participas, también para la otra persona.',
+      briefs:
+        'Se borrarán tus necesidades publicadas con las propuestas que recibieron, y las propuestas que enviaste.',
       library: 'Se borrarán tus guardados, listas y notas privadas.',
       noRecovery: 'No hay periodo de recuperación: no podremos restaurar nada después.',
       intro: 'Elimina tu cuenta y todo lo asociado a ella de forma permanente.',

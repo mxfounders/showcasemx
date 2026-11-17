@@ -75,11 +75,14 @@ export function ExportData({ dict }: { dict: Dictionary['settings']['data']['exp
 export function DeleteAccount({
   publications,
   conversations,
+  briefs = false,
   twoStep,
   dict,
 }: {
   publications: number;
   conversations: number;
+  /** Posted needs or sent proposals (SHCWS-58): they go with the account. */
+  briefs?: boolean;
   /** Two-step verification is on: the server also asks for a code (SHCWS-173). */
   twoStep: boolean;
   dict: Dictionary['settings']['data']['delete'];
@@ -102,6 +105,7 @@ export function DeleteAccount({
       (conversations === 1
         ? dict.conversationOne
         : dict.conversationMany.replace('{count}', String(conversations))),
+    briefs && dict.briefs,
     dict.library,
     dict.noRecovery,
   ].filter(Boolean) as string[];

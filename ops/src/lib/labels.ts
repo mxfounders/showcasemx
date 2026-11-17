@@ -179,6 +179,9 @@ export const AUDIT_ACTIONS: Record<string, ActionLabel> = {
     group: 'community',
   },
   report_resolve: { label: 'Resolvió un reporte', tone: 'sage', group: 'editorial' },
+  brief_hide: { label: 'Ocultó una necesidad', tone: 'terracotta', group: 'editorial' },
+  brief_unhide: { label: 'Volvió a mostrar una necesidad', tone: 'neutral', group: 'editorial' },
+  brief_shortlist: { label: 'Envió una lista corta', tone: 'blue', group: 'editorial' },
   report_dismiss: { label: 'Descartó un reporte', tone: 'neutral', group: 'editorial' },
   report_withdraw: { label: 'Retiró por reporte', tone: 'terracotta', group: 'editorial' },
   community_report_resolve: {

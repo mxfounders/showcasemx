@@ -238,6 +238,8 @@ export const settings = {
         'The contact conversation you take part in will be deleted, for the other person too.',
       conversationMany:
         'The {count} contact conversations you take part in will be deleted, for the other person too.',
+      briefs:
+        'Your posted needs and the proposals they received, and the proposals you sent, will be deleted.',
       library: 'Your saved projects, lists and private notes will be deleted.',
       noRecovery: "There's no recovery period: we won't be able to restore anything afterwards.",
       intro: 'Permanently delete your account and everything associated with it.',

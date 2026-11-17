@@ -28,6 +28,8 @@ export const notifications = {
     community:
       'Community by email: activity on my public lists (grouped by day) and a weekly summary of the lists and curators I follow',
     alerts: 'My search alerts by email (at most one a week per alert)',
+    briefs:
+      'Needs that fit my listings, proposals to my needs and short lists from the team by email',
     weekly: 'Weekly summary «Your week on shwcs» (Mondays, if you have a published listing)',
     save: 'Save preferences',
     verifyHint: 'Verify your email from {link} to turn them on.',

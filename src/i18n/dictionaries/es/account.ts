@@ -10,7 +10,9 @@ export const account = {
     myLists: 'Mis listas',
     savedLists: 'Listas guardadas',
     myContacts: 'Mis contactos',
+    myBriefs: 'Mis necesidades',
     opportunities: 'Oportunidades',
+    needs: 'Necesidades',
     opportunitiesUnread: '{count} sin leer',
     metrics: 'Métricas',
     /** Group headings, shown only when both groups are visible. */

@@ -14,6 +14,7 @@ import {
   LogIcon,
   MailIcon,
   MegaphoneIcon,
+  MessageAlertIcon,
   MessagesIcon,
   NewspaperIcon,
   PersonGearIcon,
@@ -23,7 +24,7 @@ import {
   type GotaIcon,
 } from '@/components/icons/gota';
 
-export type CountKey = 'reviews' | 'reports' | 'inquiries' | 'mail' | 'billing';
+export type CountKey = 'reviews' | 'reports' | 'inquiries' | 'mail' | 'billing' | 'briefs';
 
 export interface NavItem {
   href: string;
@@ -107,6 +108,13 @@ export const NAV: Array<{ section: string; items: NavItem[] }> = [
         label: 'Comunidad',
         Icon: MessagesIcon,
         keywords: 'listas comentarios',
+      },
+      {
+        href: '/panel/necesidades',
+        label: 'Necesidades',
+        Icon: MessageAlertIcon,
+        count: 'briefs',
+        keywords: 'briefs publica tu necesidad compradores propuestas lista corta concierge',
       },
       {
         href: '/panel/mensajes',

@@ -72,10 +72,11 @@ export const solution = {
     categoryTitle: 'Todo en {category}',
     categoryDesc: 'Las soluciones aprobadas de esta categoría, ordenadas por interacción real.',
     categoryCta: 'Ver categoría',
-    briefTitle: 'Cuéntanos qué necesitas',
-    briefDesc: 'Si ninguna encaja, escríbenos qué buscas. Lo lee una persona del equipo de shwcs.',
-    briefCta: 'Escribirnos',
-    /** Prefilled in the contact form; {name} is this listing. */
+    briefTitle: 'Publica tu necesidad',
+    briefDesc:
+      'Si ninguna encaja, describe qué buscas: los proyectos que encajan te envían una propuesta y una persona del equipo de shwcs la lee.',
+    briefCta: 'Publicar necesidad',
+    /** Prefilled in «Publica tu necesidad» (SHCWS-58); {name} is this listing. */
     briefNeed: 'Busco algo parecido a {name}',
   },
   /** Share button on the listing (SHCWS-54). */

@@ -1,5 +1,6 @@
 import { isSolutionId } from '@/lib/solutions/model';
 import { validProjectKey } from '@/lib/library/model';
+import { briefHref, readBriefPrefill } from '@/lib/briefs/links';
 export function authReturnTo(value: unknown): string {
   if (typeof value !== 'string') return '/account';
   if (
@@ -12,6 +13,9 @@ export function authReturnTo(value: unknown): string {
       '/account/contacts',
       '/account/opportunities',
       '/account/alerts',
+      '/account/briefs',
+      '/account/briefs/new',
+      '/account/needs',
     ].includes(value)
   )
     return value;
@@ -34,6 +38,19 @@ export function authReturnTo(value: unknown): string {
     isSolutionId(value.slice('/account/contacts/'.length))
   )
     return value;
+  // «Publica tu necesidad» from a search or category (SHCWS-58): only the bounded need and
+  // a known category survive, rebuilt from scratch.
+  if (value.startsWith('/account/briefs/new?')) {
+    const params = new URLSearchParams(value.slice(value.indexOf('?') + 1));
+    const prefill = readBriefPrefill({
+      necesidad: params.get('necesidad') ?? undefined,
+      categoria: params.get('categoria') ?? undefined,
+    });
+    return briefHref(prefill.problem, prefill.categories[0]);
+  }
+  // A brief or a matched need from a notice email (SHCWS-58).
+  const brief = /^\/account\/(briefs|needs)\/([a-f0-9-]+)$/i.exec(value);
+  if (brief && isSolutionId(brief[2])) return value;
   // A public listing, to follow it after signing in (SHCWS-24). By UUID: it redirects to
   // the listing's current address, and nothing else is accepted.
   if (/^\/soluciones\/[a-f0-9-]+$/i.test(value) && isSolutionId(value.slice('/soluciones/'.length)))
