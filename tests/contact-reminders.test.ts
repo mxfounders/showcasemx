@@ -189,14 +189,15 @@ test('alternatives never include the silent listing, one already contacted or a 
     categories: ['Ventas'],
     capabilities,
     response: null,
-    detailUrl: `/soluciones/${listing(n)}`,
+    solutionId: listing(n),
+    detailUrl: `/soluciones/p${n}`,
   });
   const catalog = [
     product(1, ['cotizaciones-propuestas']),
     product(2, ['cotizaciones-propuestas']),
     product(3, []),
     product(4, ['cotizaciones-propuestas']),
-    { ...product(5, ['cotizaciones-propuestas']), detailUrl: undefined },
+    { ...product(5, ['cotizaciones-propuestas']), solutionId: undefined, detailUrl: undefined },
   ];
   const current = { categories: ['Ventas'], capabilities: ['cotizaciones-propuestas'] };
   const picked = pickContactAlternatives(current, listing(1), new Set([listing(4)]), catalog);

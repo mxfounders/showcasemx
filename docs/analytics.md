@@ -32,6 +32,7 @@ Eventos de servidor (`captureServerEvent`, se envían con `after()` y nunca camb
 respuesta): `account_registered`, `signed_in` (`method`), `solution_created`,
 `solution_submitted`, `solution_deleted`, `project_saved`, `list_created` (`visibility`),
 `community_list_liked`, `contact_created`, `contact_updated` (`status`),
+`contact_batch_created` (`sent`, `existing`, `failed`: solo conteos, SHCWS-62),
 `review_created`/`review_updated` (`rating`), `review_deleted`, `ad_checkout_started`
 (`placement`, `scope`).
 

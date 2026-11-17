@@ -12,8 +12,10 @@ test('stable project identity across categories excludes examples and arbitrary 
   assert.equal(validProjectKey('catalog:example'), false);
   assert.equal(validProjectKey('solution:../draft'), false);
   const id = '00000000-0000-4000-8000-000000000001';
-  assert.equal(projectKey({ detailUrl: '/soluciones/' + id }), 'solution:' + id);
-  assert.equal(projectKey({ catalogId: 'cord', detailUrl: '/soluciones/' + id }), 'catalog:cord');
+  assert.equal(projectKey({ solutionId: id }), 'solution:' + id);
+  assert.equal(projectKey({ catalogId: 'cord', solutionId: id }), 'catalog:cord');
+  // A slug in the public URL is never an identity: the saved key is always the UUID.
+  assert.equal(projectKey({ solutionId: 'cord' }), null);
 });
 test('list names and purpose are trimmed and bounded', () => {
   assert.deepEqual(listDetails({ name: ' Cobros ', purpose: ' Comparar opciones ' }), {

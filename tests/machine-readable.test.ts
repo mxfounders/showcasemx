@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { llmsText, solutionMarkdown, type PublicSolutionData } from '../src/lib/machine-readable';
 
-const id = '3f2b6c1e-8a4d-4c2b-9e1f-0a1b2c3d4e5f';
+const path = '/soluciones/cord';
 const data: PublicSolutionData = {
   name: 'Cord',
   kind: 'Software',
@@ -26,7 +26,7 @@ const data: PublicSolutionData = {
 
 test('a listing in Markdown carries its declared data, dates and what it left out', () => {
   const markdown = solutionMarkdown({
-    id,
+    path,
     // The route never selects it, but even if a caller passed it, it must not appear.
     data: { ...data, contactEmail: 'privado@cord.test' } as PublicSolutionData,
     publishedAt: '2026-09-03 10:00:00+00',
@@ -36,7 +36,7 @@ test('a listing in Markdown carries its declared data, dates and what it left ou
   });
   assert.ok(markdown.startsWith('# Cord\n'));
   assert.match(markdown, /> Cotiza, factura y cobra sin perseguir a nadie\./);
-  assert.match(markdown, /Ficha en shwcs: https:\/\/shwcs\.site\/es\/soluciones\//);
+  assert.match(markdown, /Ficha en shwcs: https:\/\/shwcs\.site\/es\/soluciones\/cord\n/);
   assert.match(markdown, /Categorías: Ventas, Cobros/);
   assert.match(markdown, /Publicada en shwcs: 2026-09-03/);
   assert.match(markdown, /Datos generados: 2026-11-14/);
@@ -55,11 +55,11 @@ test('a listing in Markdown carries its declared data, dates and what it left ou
 
 test('llms.txt explains how to read shwcs and links every published listing as Markdown', () => {
   const text = llmsText({
-    solutions: [{ id, name: 'Cord', problem: 'Cotiza y cobra.' }],
+    solutions: [{ path, name: 'Cord', problem: 'Cotiza y cobra.' }],
     generatedAt: new Date('2026-11-14T12:00:00Z'),
   });
   assert.ok(text.startsWith('# shwcs\n\n> '));
-  assert.ok(text.includes(`[Cord](https://shwcs.site/soluciones/${id}.md): Cotiza y cobra.`));
+  assert.ok(text.includes('[Cord](https://shwcs.site/soluciones/cord.md): Cotiza y cobra.'));
   assert.match(text, /\[.+\]\(https:\/\/shwcs\.site\/es\/explorar\/cobros\)/);
   assert.match(text, /no certifica calidad/);
   assert.match(

@@ -246,7 +246,7 @@ test('the declared price reaches JSON-LD and the Markdown listing, and only then
     pricingModel: ['suscripcion-mensual'],
   };
   const ld = solutionJsonLd({
-    id: 'abc',
+    path: '/soluciones/abc',
     locale: 'es',
     data,
     publishedAt: null,
@@ -266,7 +266,7 @@ test('the declared price reaches JSON-LD and the Markdown listing, and only then
     },
   });
   const noCurrency = solutionJsonLd({
-    id: 'abc',
+    path: '/soluciones/abc',
     locale: 'es',
     data: { ...data, priceCurrency: undefined },
     publishedAt: null,
@@ -274,7 +274,7 @@ test('the declared price reaches JSON-LD and the Markdown listing, and only then
   });
   assert.equal('offers' in noCurrency, false);
   const markdown = solutionMarkdown({
-    id: '3f2b6c1e-8a4d-4c2b-9e1f-0a1b2c3d4e5f',
+    path: '/soluciones/prueba',
     data,
     publishedAt: null,
     domainVerified: false,

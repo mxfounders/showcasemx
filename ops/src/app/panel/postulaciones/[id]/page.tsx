@@ -26,6 +26,7 @@ import { requireOps } from '@/lib/auth';
 import { isUuid } from '@/lib/http';
 import { solutionDetail, solutionUpdatesForOps, type SolutionDetail } from '@/lib/data/solutions';
 import { verificationState } from '@/lib/data/recognition';
+import { slugState } from '@/lib/data/slug';
 import {
   countryOptions,
   emailHost,
@@ -65,6 +66,7 @@ import { AuditLine } from '@/components/domain/AuditLine';
 import { ActionButton } from '@/components/actions/ActionButton';
 import { DecisionPanel } from './DecisionPanel';
 import { VerificationPanel, type VerificationSignals } from './VerificationPanel';
+import { SlugPanel } from './SlugPanel';
 import { Gallery } from './Gallery';
 import { ReviewKeys } from './ReviewKeys';
 
@@ -154,9 +156,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function FichaTab({
   detail,
   productOrigin,
+  publicPath,
 }: {
   detail: SolutionDetail;
   productOrigin: string | null;
+  /** /soluciones/<slug> when the listing has one, else by UUID (SHCWS-101). */
+  publicPath: string;
 }) {
   const d = detail.solution.data;
   const founders = Array.isArray(d.founders) ? (d.founders as Array<Record<string, unknown>>) : [];
@@ -361,7 +366,7 @@ function FichaTab({
         )}
         {productOrigin && detail.solution.publishedData && (
           <a
-            href={`${productOrigin}/es/soluciones/${detail.solution.id}`}
+            href={`${productOrigin}/es${publicPath}`}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-accent-fg hover:underline"
@@ -440,15 +445,17 @@ export default async function SolutionPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<SearchParams>;
 }) {
-  await requireOps();
+  const user = await requireOps();
   const { id } = await params;
   if (!isUuid(id)) notFound();
   const query = await searchParams;
-  // Verification reads separately: without db/solution-recognition.sql only its card fails.
-  const [detail, recognition, updates] = await Promise.all([
+  // Verification, the public address and the updates read separately: without their
+  // migrations (db/solution-recognition.sql, db/solution-slugs.sql, db/solution-updates.sql)
+  // only their card or tab fails.
+  const [detail, recognition, slug, updates] = await Promise.all([
     solutionDetail(id),
     verificationState(id).catch(() => null),
-    // Without db/solution-updates.sql only the «Novedades» tab is empty.
+    slugState(id).catch(() => null),
     solutionUpdatesForOps(id).catch(() => []),
   ]);
   if (!detail) notFound();
@@ -636,7 +643,13 @@ export default async function SolutionPage({
 
           <Card>
             <CardBody className="pt-5">
-              {tab === 'ficha' && <FichaTab detail={detail} productOrigin={productOrigin} />}
+              {tab === 'ficha' && (
+                <FichaTab
+                  detail={detail}
+                  productOrigin={productOrigin}
+                  publicPath={`/soluciones/${slug?.slug ?? s.id}`}
+                />
+              )}
 
               {tab === 'cambios' &&
                 (changes.length === 0 ? (
@@ -961,6 +974,30 @@ export default async function SolutionPage({
                 <Alert tone="amber">
                   No se pudo leer la verificación. Comprueba que db/solution-recognition.sql esté
                   aplicada en esta base.
+                </Alert>
+              )}
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="Dirección pública"
+              description="La URL con nombre de la ficha. Las anteriores redirigen a esta."
+            />
+            <CardBody>
+              {slug ? (
+                <SlugPanel
+                  solutionId={s.id}
+                  name={asText(s.publishedData?.name) || asText(s.data.name) || '(sin nombre)'}
+                  state={slug}
+                  productOrigin={productOrigin}
+                  published={s.publishedData !== null}
+                  admin={user.level === 'admin'}
+                />
+              ) : (
+                <Alert tone="amber">
+                  No se pudo leer la dirección. Comprueba que db/solution-slugs.sql esté aplicada en
+                  esta base.
                 </Alert>
               )}
             </CardBody>

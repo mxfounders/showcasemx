@@ -112,8 +112,9 @@ seguridad comprueba los marcadores en JSON y en el HTML/RSC renderizado.
 | `/panel` | Pendientes, actividad del catálogo, colas, salud, tu acceso anterior e intentos fallidos con tu correo |
 | `/panel/revision` | Cola pendiente, la más antigua primero, con señales (cuenta nueva, sin verificar, actualización, reportes); `j`/`k` |
 | `/panel/postulaciones` | Todas las fichas: estados, categoría, proyecto vinculado, orden, exportación |
-| `/panel/postulaciones/[id]` | Ficha completa, diff palabra por palabra contra lo publicado, capturas, historial, actividad, reportes, comentarios; panel de decisión con plantillas y navegación por la cola |
+| `/panel/postulaciones/[id]` | Ficha completa, diff palabra por palabra contra lo publicado, capturas, historial, actividad, reportes, comentarios; panel de decisión con plantillas y navegación por la cola; «Dirección pública» con el slug, los anteriores y, para admin, el cambio de dirección |
 | `/panel/reportes` | Reportes de fichas y de comunidad con decisión obligatoria |
+| `/panel/fraude` | Señales de multicuentas por ficha/lista y por cuenta (7/30/90 días), cuentas marcadas e historial; marcar y quitar marca (admin + modo seguro) |
 | `/panel/dominios` | Pruebas TXT: verificadas, pendientes, vencidas, por revalidar (+90 días) |
 | `/panel/cuentas`, `/panel/cuentas/[id]` | Filtros, orden, exportación; identidad, seguridad (sesiones del producto por dispositivo, 2FA, tokens vivos, membresía ops), publicaciones, biblioteca (solo conteos), contactos (metadatos), comunidad, avisos y bitácora |
 | `/panel/contactos` | Solicitudes comprador → fundador, tasa de respuesta, serie diaria y línea de tiempo de estados; solicitudes sin respuesta con su etapa de recordatorio (SHCWS-61) |
@@ -142,6 +143,11 @@ y una paleta validada para daltonismo en ambos temas.
   revisa Bitácora filtrando por el grupo Seguridad y verifica la cadena.
 - **Restringir por red.** Define `OPS_IP_ALLOWLIST` con la IP o rango de la VPN y
   redeploy; cualquier otra red recibe 404 incluso en `/login`.
+- **Cambiar la URL de una ficha** (SHCWS-101). Publicar le da `/soluciones/<slug>` a
+  partir del nombre. Si el proyecto cambia de nombre, un admin la cambia en «Dirección
+  pública» de la postulación con un motivo; la anterior sigue redirigiendo (301) y el
+  dueño recibe un aviso. Un slug que otra ficha usa o usó no se acepta. Detalle en
+  [listings.md](listings.md#urls-con-nombre--14-noviembre-2026-shcws-101).
 
 ## Verificación
 
@@ -201,3 +207,39 @@ cuántas se marcaron en 30 días y cuántas se respondieron después de marcarse
 metadatos, como el resto de Contactos: nunca `details`, mensajes ni el comprador
 (`awaitingReply`, `ops/src/lib/data/contacts.ts`). Sin `db/contact-reminders.sql`, la
 tarjeta lo dice y la página carga.
+
+## Interacciones sospechosas — 14 noviembre 2026 (SHCWS-141)
+
+`/panel/fraude` busca multicuentas en me gusta, comentarios y reseñas de fichas y en me
+gusta, guardados y comentarios de listas públicas, en los últimos 7, 30 o 90 días. Las
+señales son motivos para mirar, nunca veredictos: un lanzamiento compartido en un grupo
+también trae cuentas nuevas en ráfaga. Nada de esto aparece en el producto ni en
+`/criterios`.
+
+- **Señales por ficha o lista**: cuentas creadas juntas que interactúan con lo mismo,
+  ráfaga de cuentas distintas en poco tiempo, cuentas que interactúan en sus primeras horas
+  y son la mayoría, y varias cuentas con la misma cadena de navegador (débil: los
+  navegadores populares la comparten). **Por cuenta**: correo de un proveedor de buzones
+  temporales (lista propia en el código, sin servicios externos) y sesiones desde un
+  navegador sin interfaz, una librería HTTP o un bot declarado.
+- Detectores y umbrales: `ops/src/lib/fraud.ts` (funciones puras, con pruebas en
+  `tests/fraud.test.ts`); datos: `ops/src/lib/data/fraud.ts`. La actividad del dueño sobre lo
+  suyo no cuenta ni es señal.
+- **Solo datos que ya existen**: fecha de registro, dominio del correo, user agent de
+  `auth_sessions` y hora de cada interacción. Sin IP (§49). Los guardados de fichas
+  (`buyer_saved_projects`) no entran: qué guardó cada persona es privado también para ops
+  (§68). Tampoco notas, propósitos de listas ni contenido de contactos (§44).
+- **Neutralizar**: un admin en modo seguro marca una cuenta (o todas las de una ficha con
+  «Neutralizar N cuentas») con motivo obligatorio. `POST /api/fraud` (`flag`, `unflag`)
+  escribe `account_flags` y una entrada de bitácora por cuenta (`account_flag`,
+  `account_unflag`) en la misma sentencia, y pide al producto revalidar el catálogo. No
+  puedes marcar tu propia cuenta.
+- **Efecto**: `account_flagged()` (`db/account-flags.sql`) hace que sus me gusta,
+  guardados, comentarios y reseñas pesen 0 en el orden del catálogo, en «Top de la semana» y
+  en «Populares» de comunidad. Lo que hizo sigue visible y la persona no recibe aviso.
+  Quitar la marca lo devuelve; el historial se conserva.
+- La ficha de la cuenta en Cuentas muestra la marca, su motivo y los botones para marcar o
+  quitarla. Los revisores ven el panel; solo un admin actúa.
+- Verificado contra `neondb` con cuentas `@example.invalid` y un ops local: el anillo de
+  prueba subía su ficha por encima de otra y su lista por encima de otra; al marcarlo,
+  ambas bajan, los contadores visibles no cambian y quitar la marca restaura el orden.

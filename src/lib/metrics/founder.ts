@@ -179,7 +179,7 @@ export async function categoryPositions(owner: string): Promise<CategoryPosition
   const products = await publicProducts();
   return categoryPositionsFrom(
     products.map(product => ({
-      id: product.detailUrl?.split('/').pop() ?? '',
+      id: product.solutionId ?? '',
       name: product.name,
       categories: product.categories,
     })),

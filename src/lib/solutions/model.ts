@@ -332,6 +332,8 @@ export const isSolutionStatus = (value: unknown): value is SolutionStatus =>
 // stored, so a draft already has a cover. See src/lib/solutions/site-image.ts.
 export type FounderSolution = {
   id: string;
+  /** Names the public page, /soluciones/<slug>; set at the first approval (SHCWS-101). */
+  slug?: string | null;
   catalog_key?: string | null;
   owner_id: string;
   data: SolutionData;

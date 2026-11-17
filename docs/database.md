@@ -92,6 +92,9 @@ migración a object storage:
 51. db/contact-reminders.sql — recordatorios a las 48 h y 5 días y «sin respuesta» a los 7: `contact_requests.unanswered_at` y dos índices parciales (SHCWS-61); después de contact-messages.sql y contact-outcomes.sql. `getContact`/`listContacts` y la señal de respuesta del catálogo leen la columna: aplicar antes de desplegar. Aplicada en `neondb` y en `shwcs_production` (14 nov 2026)
 52. db/solution-site-drafts.sql — intentos de ficha preparada con IA desde el sitio: cuota diaria, marcas del editor y costo (docs/site-draft.md); solo depende de founder_solutions y auth_accounts. Aplicada en `neondb` y en `shwcs_production` (17 nov 2026)
 53. db/solution-updates.sql — seguir una ficha y sus novedades fechadas: `solution_follows`, `solution_updates` (con borrado suave y moderación de ops) y el trigger que actualiza el aviso semanal; redefine `follow_notice()` de community-follows.sql (SHCWS-24). Sin ella, la ficha, la cuenta y el correo ocultan la sección. Aplicada en `neondb` (14 nov 2026)
+54. db/solution-slugs.sql — URLs con nombre para las fichas (SHCWS-101): `founder_solutions.slug` (única, CHECK de forma), `solution_slug_history` y el trigger que guarda el slug anterior; rellena el de las fichas publicadas (Cord y Flouvia toman `cord`/`flouvia`). El catálogo, la ficha y el middleware leen la columna: aplicar antes de desplegar. Aplicada en `neondb` (14 nov 2026)
+55. db/account-flags.sql — cuentas marcadas como sospechosas desde ops (`account_flags`, una marca activa por cuenta, historial) y la función `account_flagged()` que llaman el catálogo, «Top de la semana» y «Populares» de comunidad (SHCWS-141; docs/ops.md). Solo depende de auth_accounts. El producto llama la función: aplicar antes de desplegar. Aplicada en `neondb` (14 nov 2026)
+56. db/contact-batches.sql — propuesta a varios proyectos con un solo formulario: `contact_batches`, `contact_batch_items` y el índice único `contact_requests(buyer_id,id)` para sus claves compuestas (SHCWS-62); después de contact-requests.sql y buyer-library.sql. «Mis contactos» y el seguimiento del comprador la leen (si falta, solo ocultan el grupo): aplicar antes de desplegar. Aplicada solo en `neondb` (14 nov 2026)
 
 db/solution-applications.sql es el intake anónimo retirado: no aplicarlo.
 Newsletter es independiente; segments depende de subscribers.
@@ -106,6 +109,8 @@ producción `shwcs_production`) se registra en CLAUDE.md al aplicarlas.
 - Solo published_data alimenta catálogo, ficha y comparador; nunca el borrador.
 - Categorías múltiples están en JSON; category conserva compatibilidad.
 - Guardados apuntan a catalog:cord, catalog:flouvia o solution:UUID, sin copiar ficha.
+- La ficha pública vive en /soluciones/<slug> (SHCWS-101); el slug solo nombra la página.
+  Guardados, contactos, métricas, anuncios e imágenes siguen identificando la ficha por UUID.
 - Consultas de biblioteca y solicitudes acotadas a la sesión; SQL sin caché para
   información actual. No compartir notas con el dueño del proyecto.
 - Reseñas: públicas solo con estado `published` y correo del autor verificado; el nivel
