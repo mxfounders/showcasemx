@@ -424,6 +424,7 @@ export function CategoryPageLayout({
       palette={palette}
       locale={locale ?? 'es'}
       dict={dict}
+      compareDict={dict.compare}
     />
   );
 

@@ -33,6 +33,8 @@ const routes = new Map<string, Rest>([
   ['buscar', leaf],
   ['colecciones', oneOf(collections.map(item => item.slug))],
   ['comunidad', rest => leaf(rest) || idPage(rest)],
+  // A temporary comparison of 2–3 listings (SHCWS-53); its keys live in the query.
+  ['comparar', leaf],
   ['contacto', leaf],
   ['explorar', oneOf(categories.map(item => item.slug))],
   ['forgot-password', leaf],

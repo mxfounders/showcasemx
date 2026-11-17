@@ -37,6 +37,8 @@ export default function robots(): MetadataRoute.Robots {
         ...perLocale([
           '?',
           '/comunidad?',
+          // Temporary comparisons (SHCWS-53): any combination of public listings.
+          '/comparar',
           // Private, or a form every link reaches with its own ?next= return path.
           '/account',
           '/sign-in',

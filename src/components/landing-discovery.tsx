@@ -15,12 +15,14 @@ export function LandingDiscovery({
   dict,
   explorerDict,
   saveDict,
+  compareDict,
   locale,
 }: {
   published?: PublishedProduct[];
   dict: Dictionary['landing'];
   explorerDict: Dictionary['categoryExplorer'];
   saveDict: Dictionary['solutionUi'];
+  compareDict: Dictionary['catalog']['compare'];
   locale: string;
 }) {
   // Real interaction (comments > saves > likes > views) ranks within each category;
@@ -104,6 +106,7 @@ export function LandingDiscovery({
         onClear={() => setQuery('')}
         dict={explorerDict}
         saveDict={saveDict}
+        compareDict={compareDict}
         locale={locale}
       />
     </>

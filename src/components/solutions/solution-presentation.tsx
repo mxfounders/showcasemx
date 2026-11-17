@@ -2,6 +2,7 @@ import { PublicMetrics } from '@/components/metrics/public-metrics';
 import { ReportForm } from '@/components/trust/report-form';
 import { SolutionGallery } from './solution-gallery';
 import { SaveProjectButton } from '@/components/library/save-project-button';
+import { CompareToggle } from '@/components/compare/compare-toggle';
 import { LikeButton } from './like-button';
 import { SolutionSocial } from './solution-social';
 import { SimilarSolutions, type SimilarSection } from './similar-solutions';
@@ -82,6 +83,7 @@ export function SolutionPresentation({
   locale,
   dict,
   uiDict,
+  compareDict,
 }: {
   data: SolutionData;
   id: string;
@@ -121,6 +123,8 @@ export function SolutionPresentation({
   locale?: string;
   dict: Dictionary['solution'];
   uiDict: Dictionary['solutionUi'];
+  /** Public listing only: «Comparar» adds it to the comparison tray (SHCWS-53). */
+  compareDict?: Dictionary['catalog']['compare'];
 }) {
   // The project's own links say they come from shwcs (SHCWS-19): UTM tags and, with
   // `rel="noopener"` instead of `noreferrer`, shwcs as the referring origin. The private
@@ -638,6 +642,15 @@ export function SolutionPresentation({
                   dict={uiDict}
                 />
               </div>
+              {compareDict && !own && (
+                <div className="mt-3">
+                  <CompareToggle
+                    projectKey={catalogKey ? `catalog:${catalogKey}` : `solution:${id}`}
+                    name={data.name}
+                    dict={compareDict}
+                  />
+                </div>
+              )}
               {social && (
                 <div className="mt-3">
                   <LikeButton
