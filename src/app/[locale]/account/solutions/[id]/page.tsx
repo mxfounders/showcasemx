@@ -28,6 +28,7 @@ import { getDictionary } from '@/i18n/get-dictionary';
 import { getOwnerReviewDigest } from '@/lib/reviews/server';
 import { OwnerReviewDigest } from '@/components/reviews/owner-review-digest';
 import { getRecognition } from '@/lib/recognition/server';
+import { getSiteDraftMarks } from '@/lib/solutions/site-draft-server';
 import { RecognitionCard } from '@/components/recognition/recognition-card';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -170,13 +171,15 @@ export default async function SolutionPage(props: {
   const solution = await getSolution(params.id, account.id);
   if (!solution) notFound();
   const published = solution.published_data;
-  const [events, reviewDigest, recognition, bookings] = await Promise.all([
+  const [events, reviewDigest, recognition, bookings, siteDraft] = await Promise.all([
     getEvents(solution.id),
     // Optional: an outage in either hides its card, never the listing page.
     published ? getOwnerReviewDigest(solution.id).catch(() => null) : null,
     published ? getRecognition(solution.id, published.website).catch(() => null) : null,
     // What unpublishing would cancel (SHCWS-32); a failure reads as none.
     published ? activeListingBookings(account.id, solution.id).catch(() => 0) : 0,
+    // Marks for answers the AI draft took from the site; without them the editor still works.
+    getSiteDraftMarks(solution.id, account.id).catch(() => null),
   ]);
   // jsonb returns keys in a canonical order, so the two serialise identically when equal.
   const hasUnpublishedChanges =
@@ -321,6 +324,7 @@ export default async function SolutionPage(props: {
             hasSiteImage={Boolean(solution.has_site_image)}
             siteImageFailure={solution.site_image_failure}
             hasUnpublishedChanges={hasUnpublishedChanges}
+            siteDraft={siteDraft}
           />
         </div>
         {published && (

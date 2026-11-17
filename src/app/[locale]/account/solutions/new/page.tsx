@@ -1,10 +1,12 @@
 import { requireFounder } from '@/lib/solutions/server';
 import { NewSolutionForm } from '@/components/solutions/new-solution-form';
+import { siteDraftAvailable } from '@/lib/solutions/site-draft';
 import { getDictionary } from '@/i18n/get-dictionary';
 
 export default async function NewSolutionPage(props: { params: Promise<{ locale: string }> }) {
   const { locale } = await props.params;
-  const text = (await getDictionary(locale)).solutionEditor.newPage;
+  const dict = (await getDictionary(locale)).solutionEditor,
+    text = dict.newPage;
   await requireFounder(true);
   return (
     <section className="account-page">
@@ -12,7 +14,8 @@ export default async function NewSolutionPage(props: { params: Promise<{ locale:
       <p className="mb-10 mt-4 max-w-xl text-base leading-relaxed text-stone-500">
         {text.description}
       </p>
-      <NewSolutionForm dict={text} />
+      {/* Without an API key the AI path is hidden rather than offered and then refused. */}
+      <NewSolutionForm dict={text} siteDraft={dict.siteDraft} ai={siteDraftAvailable()} />
       <div className="mt-14 max-w-xl border-t border-stone-200 pt-8">
         <ol className="flex flex-wrap items-center gap-2">
           {text.steps.map((step, index) => (

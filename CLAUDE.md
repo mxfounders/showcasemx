@@ -118,7 +118,7 @@ No asignar otros proyectos por nombre, dominio o coincidencia de correo.
 
 Next.js 15.5.24 App Router, React 19.2.8, TypeScript estricto, Tailwind 3, GSAP,
 Gota (los íconos de Flouvia, §72). Neon HTTP mediante @neondatabase/serverless. Sharp para avatares y capturas.
-No Clerk, sin ORM y sin SDK de IA (retirados en la limpieza de §62). Stripe (`stripe@23.0.0`) para anuncios (§64).
+No Clerk ni ORM. `@anthropic-ai/sdk@1.3.0` solo para la ficha preparada con IA (§86); los SDK de IA anteriores se retiraron en §62. Stripe (`stripe@23.0.0`) para anuncios (§64).
 PostHog (`posthog-js`, `posthog-node`) para analítica, flags y errores, solo con consentimiento (§73).
 jose valida JWT de Google. PostCSS 8.5.26 mediante override para Next; APIs dinámicas async.
 
@@ -395,7 +395,7 @@ Un timeout no confirma fracaso de la escritura: revisar bandeja antes de repetir
 getDatabaseUrl usa, en orden: NEON_DATABASE_URL, DATABASE_URL, POSTGRES_URL.
 Son secretos solo de servidor; no imprimir valores, hosts con credenciales ni tokens.
 
-Orden de esquema operativo para base nueva: la lista completa (33 archivos, verificada
+Orden de esquema operativo para base nueva: la lista completa (34 archivos; los 33 primeros verificados
 sobre una base vacía el 10 de octubre de 2026) vive en docs/database.md. Aplicar con
 `npm run db:migrate -- <archivo> [<archivo> …]`, una transacción por archivo.
 
@@ -474,7 +474,7 @@ respuestas, cierre/reapertura, conflictos de versión, retiro e historial atómi
 finally elimina solo cuentas del test, datos en cascada y sus contadores.
 No usar cuentas reales del usuario ni enviar emails.
 
-Pruebas unitarias: 310 pasando al 14 de noviembre de 2026 (ver §78 y §79). Lint y TypeScript correctos.
+Pruebas unitarias: 350 pasando al 17 de noviembre de 2026 (ver §78, §79 y §86). Lint y TypeScript correctos.
 Integraciones nuevas: `RUN_REVIEWS_INTEGRATION=1 node tests/integration/reviews.cjs` y
 `RUN_COMPLIANCE_INTEGRATION=1 node tests/integration/compliance.cjs` (esta con un SAT
 simulado; ver su encabezado). Ambas aceptan `APP_ORIGIN` para apuntar a un build aislado.
@@ -3747,3 +3747,50 @@ SHCWS-73. Detalle en docs/ads.md («Media kit»). `/anunciate` (es/en) reemplaza
 código de moneda, cuentas y suscriptores (sin desglose por debajo de 100), un ejemplo del
 espacio patrocinado y las reglas. Todo sale de `src/lib/ads/media-kit.ts`, que lee la base
 como mucho una vez por hora. Sin migración.
+
+## 86. Ficha preparada con IA desde el sitio — 11 a 17 noviembre 2026
+
+Petición del propietario (SHCWS-151): que publicar sea rápido y que la IA llene la ficha a
+partir del sitio del proyecto. Contrato completo en `docs/site-draft.md`. (Escrita como §74
+en su rama; renumerada al integrarla con `main`, donde §74 es Stripe.)
+
+- **Entradas**: «Publica tu proyecto» (`/account/solutions/new`, el `NewSolutionForm` de
+  §76): con IA, «Empezar» redacta la ficha y muestra el avance real; «Prefiero llenarla a
+  mano» crea el borrador con el enlace como antes. El onboarding (SHCWS-28) gana un cuarto
+  paso para «Soy fundador» y «Un poco de ambos», «¿Agregamos tu producto ahora?»: con IA, a
+  mano o más tarde; comprador y explorador siguen con tres pasos (amplía §47). Sin
+  `ANTHROPIC_API_KEY` la opción no aparece en ninguno de los dos.
+- El servidor lee la página principal y hasta cuatro internas con las reglas SSRF de
+  `src/lib/net/guarded-fetch.ts`, quita las líneas repetidas entre páginas (menú, pie) y
+  Claude (`claude-sonnet-5-5`, esfuerzo `medium`, SDK oficial `@anthropic-ai/sdk@1.3.0`,
+  salida estructurada con las listas cerradas del catálogo como enums,
+  `fallbacks: "default"`) redacta el borrador. El servidor vuelve a
+  validar todo: nada fuera del catálogo, ninguna capacidad huérfana, ningún enlace que no
+  esté en el sitio.
+- Regla dura: si el sitio no lo dice, queda vacío. Solo se llenan campos vacíos; `[]` en
+  industrias, tamaños e integraciones es respuesta del fundador y la IA nunca lo escribe.
+  Nunca envía a revisión: el fundador recorre los tres pasos y confirma.
+- El editor de §76 marca con ✦ y la página fuente cada respuesta que sigue igual a lo
+  tomado del sitio; la marca desaparece al editarla, y la revisión etiqueta esas filas.
+  Tras un borrador con IA el editor trae en silencio portada y logo, sin ofrecer encima el
+  nombre y la descripción del sitio. Si el modelo falla, se guarda lo que se lee directo
+  (nombre y enlaces) como parcial y el aviso lo dice.
+- `db/solution-site-drafts.sql` (orden 52): un registro por intento con valores escritos,
+  fuentes, modelo y tokens, sin el texto del sitio. Cuota de 5 por cuenta y 300 globales
+  por 24 h, más `securityLimit` por hora. Privacidad (es/en) nombra a Anthropic como
+  subprocesador solo para esta función.
+- **Modelo elegido por medición** (17 nov, pedido del propietario: «uno que nos ahorre
+  costos»): mismos tres sitios con Haiku, Sonnet y Opus 5.5. Sonnet 5.5 igualó a Opus a
+  ~40 % del costo (0.04–0.07 USD por ficha) y en un tercio del tiempo (~9 s); Haiku 5.5
+  costó ~0.005 USD pero omitió datos y copió una promoción temporal. Tabla en
+  docs/site-draft.md («Modelo»). Quitar líneas repetidas bajó la entrada un 26 %.
+- Verificación: unitarias de `tests/site-draft.test.ts`, integración
+  `tests/integration/site-draft.ts` contra `neondb` con modelo simulado, y una llamada real
+  a Claude (17 nov, cordhq.app, cuenta temporal borrada): 18 campos con fuente, tamaño de
+  empresa vacío porque el sitio no lo dice. No probado: el recorrido en navegador contra un
+  despliegue con la clave.
+- Estado de despliegue (17 nov): `ANTHROPIC_API_KEY` ya está en Vercel y el propietario
+  aplicó `db/solution-site-drafts.sql` en `shwcs_production` (verificado: tabla, índices y
+  permisos del rol `shwcs_app_production`; datos sin cambios). Se activa con el deploy del
+  merge del PR mxfounders/showcasemx#1. Revisión legal del texto de Privacidad pendiente
+  (SHCWS-144).

@@ -16,6 +16,7 @@ import {
   RefreshIcon,
   RocketIcon,
   ShieldIcon,
+  SparklesIcon,
   TargetIcon,
   WorkflowIcon,
   type GotaIcon,
@@ -62,6 +63,7 @@ import {
 import { suggestCapabilityIds, suggestCategories, suggestIndustries } from '@/lib/search/suggest';
 import type { SiteImageFailure } from '@/lib/solutions/site-image';
 import type { Dictionary } from '@/i18n/dictionary';
+import type { SiteDraftMarks } from '@/lib/solutions/site-draft-server';
 
 type EditorDict = Dictionary['solutionEditor'];
 type SiteMeta = { name: string; description: string; links?: PublicLink[] };
@@ -89,6 +91,10 @@ function hostOf(value: string) {
   const url = safeSolutionUrl(value);
   return url ? new URL(url).hostname.replace(/^www\./, '') : '';
 }
+/** An answer keeps its «from your site» mark only while it still holds that value. */
+function sameValue(a: unknown, b: unknown) {
+  return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+}
 function toggled(list: readonly string[] | undefined, value: string) {
   const current = list ?? [];
   return current.includes(value) ? current.filter(item => item !== value) : [...current, value];
@@ -111,6 +117,7 @@ export function SolutionEditor({
   hasSiteImage,
   siteImageFailure,
   hasUnpublishedChanges,
+  siteDraft = null,
 }: {
   solution: FounderSolution;
   locale: string;
@@ -119,8 +126,11 @@ export function SolutionEditor({
   siteImageFailure?: string | null;
   /** Published listings only: whether the saved draft differs from what is public. */
   hasUnpublishedChanges: boolean;
+  /** What the AI draft wrote from the founder's site (docs/site-draft.md), if it ran. */
+  siteDraft?: SiteDraftMarks | null;
 }) {
-  const text = dict.editor;
+  const text = dict.editor,
+    marks = dict.siteDraft.marks;
   const reviewIndex = solutionQuestions.findIndex(item => item.id === 'review');
   const published = !!solution.published_data;
   const router = useRouter(),
@@ -161,6 +171,56 @@ export function SolutionEditor({
     questionText = dict.questions[question.id],
     blocked = pending || mediaBusy || reading;
   const categories = getSolutionCategories(data);
+  // Answers the AI draft took from the founder's site (src/lib/solutions/site-draft.ts).
+  const draftKey = (field: string) => (field === 'category' ? 'categories' : field);
+  const draftMarked = (field: string) => {
+    const key = draftKey(field) as keyof SolutionData;
+    return (
+      Boolean(siteDraft && key in siteDraft.suggested) &&
+      sameValue(data[key], siteDraft?.suggested[key])
+    );
+  };
+  const markedFields = siteDraft ? Object.keys(siteDraft.suggested).filter(draftMarked) : [];
+  const siteHost = siteDraft ? new URL(siteDraft.website).hostname.replace(/^www\./, '') : '';
+  function siteMark(fields: readonly string[]) {
+    const marked = fields.filter(draftMarked);
+    if (!siteDraft || !marked.length) return null;
+    const sources = Array.from(
+      new Set(
+        marked
+          .map(field => siteDraft.sources[draftKey(field)])
+          .filter((url): url is string => Boolean(url)),
+      ),
+    );
+    const direct = siteDraft.partial || marked.every(field => field === 'projectLinks');
+    return (
+      <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#365DC4]">
+        <SparklesIcon className="size-3.5" aria-hidden="true" />
+        {direct ? marks.taken : marks.suggested}
+        {!!sources.length && (
+          <span className="text-stone-500">
+            · {marks.source}:{' '}
+            {sources.map((url, index) => {
+              const path = new URL(url).pathname;
+              return (
+                <span key={url}>
+                  {index > 0 && ', '}
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2 hover:text-stone-700"
+                  >
+                    {path === '/' ? marks.home : path}
+                  </a>
+                </span>
+              );
+            })}
+          </span>
+        )}
+      </p>
+    );
+  }
   const categoryLabel = (category: string) => localizedCategoryDisplayLabel(category, locale);
 
   useEffect(() => {
@@ -194,14 +254,12 @@ export function SolutionEditor({
     autoRead.current = true;
     // Also when a cover already exists: what matters here is the empty name and
     // description, e.g. a founder back on a draft they left right after pasting the link.
-    if (
-      solution.status === 'draft' &&
-      !published &&
-      safeSolutionUrl(data.website) &&
-      !data.name.trim() &&
-      !data.problem.trim()
-    )
-      void readSite();
+    const fresh = solution.status === 'draft' && !published && safeSolutionUrl(data.website);
+    if (fresh && !data.name.trim() && !data.problem.trim()) void readSite();
+    // An AI draft wrote the text but not the cover and logo: fetch those quietly, without
+    // offering the site's own name and description over what the draft already wrote.
+    else if (fresh && siteDraft && !hasSiteImage && !siteImageFailure)
+      void readSite({ quiet: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on mount
   }, []);
 
@@ -281,7 +339,7 @@ export function SolutionEditor({
    * description. Fills only empty fields; anything the founder already wrote is kept
    * and the site's version is offered as a one-click alternative instead.
    */
-  async function readSite() {
+  async function readSite({ quiet = false }: { quiet?: boolean } = {}) {
     if (busy.current || reading) return;
     const website = withScheme(data.website);
     if (!safeSolutionUrl(website)) {
@@ -334,7 +392,7 @@ export function SolutionEditor({
         if (meta.links?.length && !payload.projectLinks?.length) patch.projectLinks = meta.links;
         if (Object.keys(patch).length) update(patch);
         setFromSite(filled);
-        setSiteOffer(offer);
+        if (!quiet) setSiteOffer(offer);
       }
       if (typeof result.icon === 'boolean') {
         setHasIcon(result.icon);
@@ -343,7 +401,7 @@ export function SolutionEditor({
       if (result.ok) {
         setHasCover(true);
         setCoverVersion(value => value + 1);
-        setSiteNote(meta?.name || meta?.description ? text.readDone : '');
+        setSiteNote(!quiet && (meta?.name || meta?.description) ? text.readDone : '');
       } else if (result.failure) {
         setSiteNote(
           (meta?.name || meta?.description ? text.readPartial + ' ' : '') +
@@ -716,17 +774,24 @@ export function SolutionEditor({
           ? text.any
           : values.map(value => labels[value] ?? value).join(' · ');
     const kindLabel = offeringOptions.find(item => item.value === data.kind)?.label ?? data.kind;
-    const essentials: { label: string; value: string; step: SolutionQuestion }[] = [
+    const essentials: {
+      label: string;
+      value: string;
+      step: SolutionQuestion;
+      fields: readonly string[];
+    }[] = [
       {
         label: text.review.project,
         value: [data.name, kindLabel, host].filter(Boolean).join(' · '),
         step: 'basics',
+        fields: ['name', 'kind'],
       },
-      { label: text.review.problem, value: data.problem, step: 'basics' },
+      { label: text.review.problem, value: data.problem, step: 'basics', fields: ['problem'] },
       {
         label: text.review.kindAndCategories,
         value: categories.map(categoryLabel).join(' · '),
         step: 'fit',
+        fields: ['categories'],
       },
       {
         label: text.review.capabilities,
@@ -734,14 +799,21 @@ export function SolutionEditor({
           .map(id => localizedCapabilityLabel(id, locale))
           .join(' · '),
         step: 'fit',
+        fields: ['capabilities'],
       },
-      { label: text.review.audience, value: data.audience, step: 'audience' },
+      {
+        label: text.review.audience,
+        value: data.audience,
+        step: 'audience',
+        fields: ['audience'],
+      },
       {
         label: text.review.market,
         value: [market(data.industries, industryLabels), market(data.companySizes, sizeLabels)]
           .filter(Boolean)
           .join(' — '),
         step: 'audience',
+        fields: ['industries', 'companySizes'],
       },
     ];
     const filled = optionalQuestions.filter(item => sectionFilled(data, item.id)).length;
@@ -756,7 +828,12 @@ export function SolutionEditor({
             {essentials.map(row => (
               <div key={row.label} className="flex items-start gap-4 px-5 py-4">
                 <div className="min-w-0 flex-1">
-                  <dt className="text-xs text-stone-400">{row.label}</dt>
+                  <dt className="text-xs text-stone-400">
+                    {row.label}
+                    {row.fields.some(draftMarked) && (
+                      <span className="ml-2 text-[#365DC4]">✦ {marks.reviewTag}</span>
+                    )}
+                  </dt>
                   <dd
                     className={`mt-1 line-clamp-3 whitespace-pre-wrap break-words text-sm leading-relaxed ${row.value ? 'text-stone-700' : 'text-[#A94E35]'}`}
                   >
@@ -1018,6 +1095,12 @@ export function SolutionEditor({
         }
       }}
     >
+      {!!markedFields.length && (
+        <p className="mb-8 flex gap-3 rounded-2xl border border-[#365DC4]/25 bg-[#E4EBFC]/50 px-5 py-4 text-sm leading-relaxed text-stone-700">
+          <SparklesIcon className="mt-0.5 size-4 shrink-0 text-[#365DC4]" aria-hidden="true" />
+          {(siteDraft?.partial ? marks.partialBanner : marks.banner).replace('{host}', siteHost)}
+        </p>
+      )}
       <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
         {question.optional ? (
           <button
@@ -1114,6 +1197,7 @@ export function SolutionEditor({
             <p className="mt-3 max-w-xl text-sm leading-relaxed text-stone-500">
               {question.id === 'review' && published ? text.reviewPublishedHint : questionText.hint}
             </p>
+            {question.id !== 'review' && siteMark(question.fields)}
           </div>
           <fieldset disabled={pending || mediaBusy} className="space-y-8">
             {question.id === 'basics' && basics()}
