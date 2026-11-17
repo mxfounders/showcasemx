@@ -21,6 +21,8 @@ export const mediaKit = {
     newsletterSoon:
       'Aún no enviamos campañas. Publicaremos los suscriptores cuando empecemos a enviar.',
     note: 'Visitas de página contadas en nuestro servidor, una por pestaña: no son personas únicas. No contamos a quien pide no ser rastreado (Do Not Track o GPC).',
+    noteDeduped:
+      'Visitas de página contadas en nuestro servidor, una por visitante, página y día, sin guardar su dirección IP: la misma persona cuenta otra vez otro día. No contamos a quien pide no ser rastreado (Do Not Track o GPC).',
   },
   people: {
     title: 'Quién usa shwcs',
@@ -57,6 +59,7 @@ export const mediaKit = {
       'Solo fichas aprobadas por el equipo editorial.',
       'Sin píxeles ni cookies de terceros: contamos impresiones y clics en nuestro servidor.',
       'Se paga por día. Si cancelas, te devolvemos cada día que empiece al menos 24 horas después.',
+      'Si shwcs deja de mostrarse 4 horas o más en uno de tus días, lo reponemos con un día más al final o te lo reembolsamos, sin que lo pidas.',
     ],
     terms: 'Condiciones completas de publicidad',
   },

@@ -2,10 +2,17 @@ import Link from '@/i18n/navigation';
 import { notFound } from 'next/navigation';
 import { ArrowLeftIcon } from '@/components/icons/gota';
 import { getSolution, requireFounder } from '@/lib/solutions/server';
-import { getSolutionCategories, isSolutionId } from '@/lib/solutions/model';
+import { isSolutionId } from '@/lib/solutions/model';
 import { publicProducts } from '@/lib/solutions/public';
-import { categories, localizedCategoryDisplayLabel } from '@/lib/taxonomy';
-import { adToday, maxCampaignDays, maxLeadDays } from '@/lib/ads/model';
+import {
+  adToday,
+  maxCampaignDays,
+  maxLeadDays,
+  scopedPlacements,
+  type ScopedPlacement,
+} from '@/lib/ads/model';
+import { listingScopes, scopeLabel } from '@/lib/ads/scopes';
+import { ownedOutageCredits } from '@/lib/ads/outages';
 import {
   adPlacementStatus,
   ownedBookings,
@@ -52,28 +59,33 @@ export default async function PromotePage(props: {
   }
 
   const published = solution.published_data;
-  const declared = published
-    ? categories
-        .filter(entry => getSolutionCategories(published).includes(entry.label))
-        .map(entry => ({
-          slug: entry.slug,
-          label: localizedCategoryDisplayLabel(entry.label, locale),
-        }))
-    : [];
-  const categoryLabel = (slug: string) =>
-    localizedCategoryDisplayLabel(
-      categories.find(entry => entry.slug === slug)?.label ?? slug,
-      locale,
-    );
+  // The pages this listing may sponsor, by what it declared (SHCWS-79): the server checks
+  // the same rule again when it reserves.
+  const scopes = Object.fromEntries(
+    scopedPlacements.map(placement => [
+      placement,
+      published
+        ? listingScopes(placement, published).map(slug => ({
+            slug,
+            label: scopeLabel(placement, slug, locale),
+          }))
+        : [],
+    ]),
+  ) as Record<ScopedPlacement, { slug: string; label: string }[]>;
+  const placeScopeLabel = (placement: Parameters<typeof scopeLabel>[0], scope: string) =>
+    scopeLabel(placement, scope, locale);
   // Price and reach first (SHCWS-72): none of this needs billing details.
-  const [placements, reach, bookings, billingProfile, waitlisted, products] = await Promise.all([
-    published ? adPlacementStatus() : Promise.resolve([]),
-    published ? placementReach().catch(() => ({})) : Promise.resolve({}),
-    ownedBookings(account.id, solution.id),
-    getBillingProfile(account.id),
-    published ? waitlistedPlacements(account.id).catch(() => []) : Promise.resolve([]),
-    published ? publicProducts().catch(() => []) : Promise.resolve([]),
-  ]);
+  const [placements, reach, bookings, billingProfile, waitlisted, products, credits] =
+    await Promise.all([
+      published ? adPlacementStatus() : Promise.resolve([]),
+      published ? placementReach().catch(() => ({})) : Promise.resolve({}),
+      ownedBookings(account.id, solution.id),
+      getBillingProfile(account.id),
+      published ? waitlistedPlacements(account.id).catch(() => []) : Promise.resolve([]),
+      published ? publicProducts().catch(() => []) : Promise.resolve([]),
+      // Days made up for outages (SHCWS-179); the list still renders without them.
+      ownedOutageCredits(account.id, solution.id).catch(() => []),
+    ]);
   const today = adToday();
   const name = published?.name || solution.data.name;
   // The card exactly as the catalogue serves it; right after approval the cached
@@ -120,7 +132,7 @@ export default async function PromotePage(props: {
         <PromoteForm
           solutionId={solution.id}
           placements={placements}
-          categories={declared}
+          scopes={scopes}
           reach={reach}
           product={card}
           today={today}
@@ -148,7 +160,8 @@ export default async function PromotePage(props: {
         solutionId={solution.id}
         bookings={bookings}
         today={today}
-        categoryLabel={categoryLabel}
+        scopeLabel={placeScopeLabel}
+        credits={credits}
         dict={t}
       />
     </section>

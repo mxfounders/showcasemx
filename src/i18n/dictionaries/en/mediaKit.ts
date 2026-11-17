@@ -21,6 +21,8 @@ export const mediaKit = {
     topCategories: 'Most viewed categories',
     newsletterSoon: 'We do not send campaigns yet. We will publish subscribers once we start.',
     note: 'Page views counted on our server, one per tab: they are not unique people. Visitors who ask not to be tracked (Do Not Track or GPC) are not counted.',
+    noteDeduped:
+      'Page views counted on our server, one per visitor, page and day, without storing their IP address: the same person counts again on another day. Visitors who ask not to be tracked (Do Not Track or GPC) are not counted.',
   },
   people: {
     title: 'Who uses shwcs',
@@ -57,6 +59,7 @@ export const mediaKit = {
       'Only listings approved by the editorial team.',
       'No third-party pixels or cookies: we count impressions and clicks on our server.',
       'Paid by the day. If you cancel, we refund every day that starts at least 24 hours later.',
+      'If shwcs is down for 4 hours or more on one of your days, we make it good with one more day at the end or refund it, without you asking.',
     ],
     terms: 'Full advertising terms',
   },

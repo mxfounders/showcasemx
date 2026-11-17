@@ -6,17 +6,11 @@ import { EditIcon } from '@/components/icons/gota';
 import { api, errorMessage } from '@/lib/client';
 import { toast } from '@/lib/toast';
 import { fmtMoney } from '@/lib/format';
-import { MAX_DAILY_RATE, parseRate } from '@/lib/ads';
+import { MAX_DAILY_RATE, PLACEMENT_LABEL, parseRate } from '@/lib/ads';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { Alert, Field } from '@/components/ui/Field';
 import { ActionButton } from '@/components/actions/ActionButton';
-
-const PLACEMENT: Record<string, string> = {
-  category: 'Categoría',
-  home: 'Inicio',
-  newsletter: 'Newsletter',
-};
 
 /**
  * Admin controls on a placement card (SHCWS-69), replacing `npm run ads:rates`:
@@ -31,7 +25,7 @@ export function PlacementControls({
   enabled: boolean;
   rates: Array<{ currency: string; dailyAmount: number }>;
 }) {
-  const name = PLACEMENT[placement] ?? placement;
+  const name = PLACEMENT_LABEL[placement] ?? placement;
   return (
     <div className="mt-3 flex flex-wrap gap-1.5">
       <RateEditor placement={placement} name={name} rates={rates} />

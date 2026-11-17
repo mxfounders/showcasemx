@@ -1,0 +1,48 @@
+name: Uptime probe
+
+# Sponsored-slot outages (SHCWS-179, docs/ads.md «Caídas»). Probes shwcs from outside
+# Vercel and reports each outage when the site is back, so shwcs can make good or refund
+# the sponsored days it did not serve. Off until the repository variable OUTAGE_PROBE is
+# set to `on` (Settings → Secrets and variables → Actions → Variables): a skipped job uses
+# no Actions minutes. Needs the secret OUTAGE_WEBHOOK_SECRET, the same value as in Vercel.
+# Every 30 minutes, off the hour: ~1,440 runs a month, each billed as one minute in a
+# private repository. An uptime service with a recovery webhook does the same job.
+
+on:
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: uptime-probe
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    if: vars.OUTAGE_PROBE == 'on'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/outage-probe.mjs
+          sparse-checkout-cone-mode: false
+      # The last run's state: when the site went down, and any report still to deliver.
+      - uses: actions/cache/restore@v4
+        with:
+          path: .outage-probe
+          key: outage-probe-${{ github.run_id }}
+          restore-keys: outage-probe-
+      - run: node scripts/outage-probe.mjs .outage-probe/state.json
+        env:
+          PROBE_URL: ${{ vars.OUTAGE_PROBE_URL || 'https://shwcs.site/api/health' }}
+          REPORT_URL: ${{ vars.OUTAGE_REPORT_URL || 'https://shwcs.site/api/internal/outages' }}
+          OUTAGE_WEBHOOK_SECRET: ${{ secrets.OUTAGE_WEBHOOK_SECRET }}
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: .outage-probe
+          key: outage-probe-${{ github.run_id }}-${{ github.run_attempt }}

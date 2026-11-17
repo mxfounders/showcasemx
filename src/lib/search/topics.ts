@@ -74,3 +74,38 @@ export function rankTopics(query: string, locale: string, limit = 6): TopicMatch
     .slice(0, limit)
     .map(({ kind, value, title, href, score }) => ({ kind, value, title, href, score }));
 }
+
+/**
+ * The one category a query points at, as a slug, or null (SHCWS-79): the scope of the
+ * sponsored slot on /buscar. Same words as {@link rankTopics} — a category's title, its
+ * vocabulary and the capabilities filed under it — but never its description, so an
+ * incidental word in the copy cannot route a query to an advertiser. The category that
+ * answers the most words of the query wins, then the highest score; a tie goes to the
+ * first one in the taxonomy, so the same query always reaches the same slot.
+ */
+export function inferQueryCategory(query: string, locale: string): string | null {
+  const scorers = queryTokens(query)
+    .map(token => makeQueryScorer(token))
+    .filter(scorer => scorer !== null);
+  if (!scorers.length) return null;
+  let best: { slug: string; answered: number; score: number } | null = null;
+  for (const category of localizedCategories(locale)) {
+    const subject: SearchableProduct = {
+      name: category.title,
+      description: '',
+      feature: '',
+      categories: [category.label],
+      capabilities: solutionCapabilities
+        .filter(item => item.category === category.label)
+        .map(item => item.id),
+    };
+    const perWord = scorers.map(scorer => scorer(subject));
+    const score = perWord.reduce((sum, value) => sum + value, 0);
+    const answered = perWord.filter(value => value > 0).length;
+    if (score <= 0) continue;
+    if (!best || answered > best.answered || (answered === best.answered && score > best.score)) {
+      best = { slug: category.slug, answered, score };
+    }
+  }
+  return best?.slug ?? null;
+}

@@ -98,6 +98,8 @@ export async function paymentHistory(accountId: string): Promise<PaymentRecord[]
         ORDER BY d.created_at) FILTER (WHERE d.id IS NOT NULL), '[]') AS documents
     FROM ad_campaigns c LEFT JOIN billing_documents d ON d.campaign_id = c.id
     WHERE c.owner_id = ${accountId} AND c.paid_at IS NOT NULL
+      -- A make-good day (SHCWS-179) is free: there is no payment to list.
+      AND c.makegood_of IS NULL
     GROUP BY c.id ORDER BY c.paid_at DESC LIMIT 200`;
   return rows.map(row => ({
     id: String(row.id),

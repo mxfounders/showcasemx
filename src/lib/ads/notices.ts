@@ -19,7 +19,9 @@ export async function createAdDateNotices() {
         CASE WHEN c.solution_id IS NULL THEN '/account' ELSE '/account/solutions/'||c.solution_id||'/promote' END)
       FROM ad_campaigns c, today
       WHERE c.status='paid' AND c.canceled_at IS NULL AND c.owner_id IS NOT NULL
-        AND c.starts_on=today.d+1`,
+        AND c.starts_on=today.d+1
+        -- A make-good day (SHCWS-179) was already announced with its date by its own notice.
+        AND c.makegood_of IS NULL`,
     sql`WITH today AS (SELECT (now() AT TIME ZONE ${adTimeZone})::date AS d),
       totals AS (SELECT campaign_id,sum(impressions)::bigint AS impressions,sum(clicks)::bigint AS clicks,
           sum(visits)::bigint AS visits

@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 import { getSession, sessionCookie } from '@/lib/auth/session';
 import { securityLimit } from '@/lib/auth/security';
 import { failure, solutionBody } from '@/lib/solutions/http';
-import { categories } from '@/lib/taxonomy';
+import { scopeLabel } from '@/lib/ads/scopes';
 import { adTermsVersion, adToday, readCampaignRequest, readPromotionCode } from '@/lib/ads/model';
 import { isPromotionRejection, resolvePromotionCode, type ResolvedPromo } from '@/lib/ads/promo';
 import { checkoutSessionParams } from '@/lib/ads/checkout';
@@ -60,7 +60,8 @@ export async function POST(request: NextRequest) {
     let promo: ResolvedPromo | null = null;
     try {
       const placement = dictionary.ads.placements[parsed.request.placement].label;
-      const category = categories.find(entry => entry.slug === parsed.request.scope)?.label;
+      // The page it runs on (category, industry or collection name), in the buyer's language.
+      const page = scopeLabel(parsed.request.placement, parsed.request.scope, locale);
       const customer = await stripeCustomerFor(stripe, account, profile);
       if (code) {
         // Checked again here, not trusted from the form: the code may have run out since.
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
           request: parsed.request,
           dailyAmount: reservation.dailyAmount,
           customer,
-          productName: [dictionary.ads.slot.label, placement, category, reservation.solutionName]
+          productName: [dictionary.ads.slot.label, placement, page, reservation.solutionName]
             .filter(Boolean)
             .join(' · '),
           locale,

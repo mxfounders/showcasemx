@@ -1,5 +1,5 @@
 import { isSolutionId } from '@/lib/solutions/model';
-import { categories } from '@/lib/taxonomy';
+import { categories, collections, industries } from '@/lib/taxonomy';
 
 /**
  * Sponsored placements: a founder buys a window of whole days in a clearly labelled
@@ -7,8 +7,42 @@ import { categories } from '@/lib/taxonomy';
  * Nothing here feeds the organic catalog order (src/lib/solutions/ranking.ts).
  */
 
-export const adPlacements = ['category', 'home', 'newsletter'] as const;
+export const adPlacements = [
+  'category',
+  'industry',
+  'collection',
+  'search',
+  'home',
+  'newsletter',
+] as const;
 export type AdPlacement = (typeof adPlacements)[number];
+
+/**
+ * Placements tied to one page of a closed set, named by its slug (SHCWS-79): a category, an
+ * industry, a collection, or for `search` the category a query points at
+ * (src/lib/search/topics.ts, inferQueryCategory). The others have no scope.
+ */
+export const scopedPlacements = ['category', 'industry', 'collection', 'search'] as const;
+export type ScopedPlacement = (typeof scopedPlacements)[number];
+
+export function isScopedPlacement(placement: AdPlacement): placement is ScopedPlacement {
+  return (scopedPlacements as readonly string[]).includes(placement);
+}
+
+/** Every slug a placement can be scoped to, from the taxonomy. Empty when it takes none. */
+export function placementScopeSlugs(placement: AdPlacement): string[] {
+  if (placement === 'category' || placement === 'search') return categories.map(c => c.slug);
+  if (placement === 'industry') return industries.map(i => i.slug);
+  if (placement === 'collection') return collections.map(c => c.slug);
+  return [];
+}
+
+/** Whether `scope` is a valid page for `placement` (empty for unscoped placements). */
+export function isPlacementScope(placement: AdPlacement, scope: string): boolean {
+  return isScopedPlacement(placement)
+    ? placementScopeSlugs(placement).includes(scope)
+    : scope === '';
+}
 
 export const adCurrencies = ['usd', 'mxn'] as const;
 export type AdCurrency = (typeof adCurrencies)[number];
@@ -130,7 +164,7 @@ export function lastBookableDay(
 export type CampaignRequest = {
   solutionId: string;
   placement: AdPlacement;
-  /** Category slug for `category`; empty otherwise. */
+  /** Page slug for a scoped placement ({@link isPlacementScope}); empty otherwise. */
   scope: string;
   /** YYYY-MM-DD in {@link adTimeZone}. */
   startsOn: string;
@@ -197,11 +231,7 @@ export function readCampaignRequest(
   if (!isAdPlacement(input.placement)) return { ok: false, error: 'placement' };
 
   const scope = typeof input.scope === 'string' ? input.scope : '';
-  const scopeValid =
-    input.placement === 'category'
-      ? categories.some(category => category.slug === scope)
-      : scope === '';
-  if (!scopeValid) return { ok: false, error: 'scope' };
+  if (!isPlacementScope(input.placement, scope)) return { ok: false, error: 'scope' };
 
   if (!isIsoDate(input.startsOn)) return { ok: false, error: 'startsOn' };
   if (input.startsOn < today) return { ok: false, error: 'startsInPast' };
@@ -333,4 +363,88 @@ export function bookingState(
   if (today >= end) return booking.canceledAt && end < booking.endsOn ? 'canceled' : 'ended';
   if (booking.canceledAt) return today < booking.startsOn ? 'canceled' : 'live';
   return today < booking.startsOn ? 'scheduled' : 'live';
+}
+
+/*
+ * Outages (SHCWS-179). The advertising terms (/terminos#publicidad) count a booked day as
+ * not delivered when shwcs could not serve for four hours or more, added up over that day
+ * in Mexico City time. Such a day is made good with one more day right after the booking
+ * when that day has room, and refunded otherwise. The windows come from a monitor outside
+ * Vercel (src/app/api/internal/outages), because the daily cron goes down with the site.
+ */
+export const outageThresholdMinutes = 4 * 60;
+
+export type OutageWindow = { start: Date; end: Date };
+
+/** Minutes of each day (Mexico City) covered by the windows; overlapping reports count once. */
+export function unservedMinutesByDay(windows: readonly OutageWindow[]): Map<string, number> {
+  const sorted = windows
+    .filter(window => window.end.getTime() > window.start.getTime())
+    .map(window => ({ start: window.start.getTime(), end: window.end.getTime() }))
+    .sort((a, b) => a.start - b.start);
+  const merged: { start: number; end: number }[] = [];
+  for (const window of sorted) {
+    const last = merged[merged.length - 1];
+    if (last && window.start <= last.end) last.end = Math.max(last.end, window.end);
+    else merged.push({ ...window });
+  }
+  const minutes = new Map<string, number>();
+  for (const window of merged) {
+    for (let day = adToday(new Date(window.start)); ; day = addDays(day, 1)) {
+      const from = Math.max(window.start, dayStart(day).getTime());
+      const to = Math.min(window.end, dayStart(addDays(day, 1)).getTime());
+      if (from >= window.end) break;
+      if (to > from) minutes.set(day, (minutes.get(day) ?? 0) + (to - from) / 60_000);
+    }
+  }
+  for (const [day, value] of minutes) minutes.set(day, Math.floor(value));
+  return minutes;
+}
+
+/** The days the windows left unserved for at least {@link outageThresholdMinutes}, in order. */
+export function undeliveredDays(
+  windows: readonly OutageWindow[],
+): { day: string; minutes: number }[] {
+  return [...unservedMinutesByDay(windows)]
+    .filter(([, minutes]) => minutes >= outageThresholdMinutes)
+    .map(([day, minutes]) => ({ day, minutes }))
+    .sort((a, b) => (a.day < b.day ? -1 : 1));
+}
+
+/**
+ * The refund for `days` whole booked days: the same proportion of what was charged as a
+ * cancellation or a withdrawal (see {@link refundAmount}), rounded down, and never more
+ * than what has not been refunded yet.
+ */
+export function dayRefundAmount(
+  booking: { startsOn: string; endsOn: string; totalAmount: number; refundRequested: number },
+  days = 1,
+): number {
+  const bookedDays = daysBetween(booking.startsOn, booking.endsOn);
+  if (bookedDays <= 0 || days <= 0) return 0;
+  const owed = Math.floor((booking.totalAmount * Math.min(days, bookedDays)) / bookedDays);
+  return Math.max(0, Math.min(owed, booking.totalAmount - booking.refundRequested));
+}
+
+/** Why an undelivered day was made good or refunded (db/ad-placements-outages.sql). */
+export type OutageCreditReason = 'room' | 'noRoom' | 'ended' | 'stopped' | 'unlisted';
+
+/**
+ * Where a make-good day for an undelivered day would go: the day right after the booking
+ * and the make-good days it already has (`lastEnd`, exclusive). It has to be a whole day
+ * still to come; a booking that was cancelled or withdrawn, or whose listing is no longer
+ * published, cannot run another day, so that day is refunded instead. Whether the day
+ * has room is checked against the inventory when the make-good is written.
+ */
+export function makegoodPlan(
+  booking: { servedUntil: string | null; canceledAt: string | null; lastEnd: string },
+  published: boolean,
+  today: string,
+):
+  | { ok: true; day: string }
+  | { ok: false; reason: Exclude<OutageCreditReason, 'room' | 'noRoom'> } {
+  if (booking.canceledAt || booking.servedUntil) return { ok: false, reason: 'stopped' };
+  if (!published) return { ok: false, reason: 'unlisted' };
+  if (booking.lastEnd <= today) return { ok: false, reason: 'ended' };
+  return { ok: true, day: booking.lastEnd };
 }

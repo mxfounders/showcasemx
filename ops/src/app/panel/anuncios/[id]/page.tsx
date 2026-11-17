@@ -4,9 +4,11 @@ import { notFound } from 'next/navigation';
 import { ExternalLinkIcon, MegaphoneIcon, RefreshIcon, UndoIcon } from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
 import { isUuid } from '@/lib/http';
-import { adBooking } from '@/lib/data/ads';
+import { adBooking, adBookingOutages } from '@/lib/data/ads';
 import {
   OPS_PAUSE_REASON,
+  OUTAGE_REASON_LABEL,
+  PLACEMENT_LABEL,
   REMOVAL_ERROR,
   REMOVAL_LABEL,
   adToday,
@@ -28,12 +30,6 @@ import { WithdrawBooking, type RemovalOption } from './WithdrawBooking';
 
 export const metadata: Metadata = { title: 'Reserva de anuncio' };
 
-const PLACEMENT: Record<string, string> = {
-  category: 'Categoría',
-  home: 'Inicio',
-  newsletter: 'Newsletter',
-};
-
 const PAUSE_REASON: Record<string, string> = {
   [OPS_PAUSE_REASON]: 'Pausada desde ops',
   platformRemoval: `Retirada · ${REMOVAL_LABEL.platformRemoval}`,
@@ -47,7 +43,7 @@ export default async function AnuncioPage({ params }: { params: Promise<{ id: st
   const user = await requireOps();
   const { id } = await params;
   if (!isUuid(id)) notFound();
-  const booking = await adBooking(id);
+  const [booking, outages] = await Promise.all([adBooking(id), adBookingOutages(id)]);
   if (booking === undefined) notFound();
   if (booking === null)
     return (
@@ -99,7 +95,7 @@ export default async function AnuncioPage({ params }: { params: Promise<{ id: st
       <PageHeader
         back={{ href: '/panel/anuncios', label: 'Anuncios' }}
         title={booking.solutionName}
-        description={`${PLACEMENT[booking.placement] ?? booking.placement}${booking.scope ? ` · ${booking.scope}` : ''} · ${day(booking.startsOn)} → ${day(booking.endsOn)}`}
+        description={`${PLACEMENT_LABEL[booking.placement] ?? booking.placement}${booking.scope ? ` · ${booking.scope}` : ''} · ${day(booking.startsOn)} → ${day(booking.endsOn)}`}
         meta={
           <>
             <Badge tone={paid ? 'sage' : 'neutral'} dot>
@@ -122,6 +118,7 @@ export default async function AnuncioPage({ params }: { params: Promise<{ id: st
               </Badge>
             )}
             {!booking.listingPublished && <Badge tone="amber">La ficha no está publicada</Badge>}
+            {outages.makegoodOf && <Badge tone="blue">Día de reposición</Badge>}
           </>
         }
         actions={
@@ -197,8 +194,84 @@ export default async function AnuncioPage({ params }: { params: Promise<{ id: st
         </Alert>
       )}
 
+      {outages.makegoodOf && (
+        <Alert tone="blue" className="mb-4" title="Día gratis por una caída de shwcs">
+          Repone el {outages.makegoodDay ? day(outages.makegoodDay) : 'día'} de{' '}
+          <Link href={`/panel/anuncios/${outages.makegoodOf}`} className="underline">
+            la reserva pagada
+          </Link>
+          , que shwcs no sirvió 4 h o más. No tiene cobro, así que no reembolsa nada.
+        </Alert>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
+          {outages.credits.length > 0 && (
+            <Card>
+              <CardHeader
+                title="Días afectados por caídas"
+                description="Cada día con 4 h o más sin servir (hora de Ciudad de México), según el monitor externo. Se decidió sin intervención."
+              />
+              <Table label="Días afectados por caídas">
+                <THead>
+                  <TH>Día</TH>
+                  <TH align="right">Sin servir</TH>
+                  <TH>Qué se hizo y por qué</TH>
+                  <TH align="right">Reembolso</TH>
+                </THead>
+                <TBody>
+                  {outages.credits.map(credit => (
+                    <TR key={credit.day}>
+                      <TD className="whitespace-nowrap">{day(credit.day)}</TD>
+                      <TD align="right" className="text-[13px]">
+                        {Math.floor(credit.unservedMinutes / 60)} h {credit.unservedMinutes % 60}{' '}
+                        min
+                      </TD>
+                      <TD className="text-[13px]">
+                        {credit.outcome === 'makegood' && credit.makegoodBookingId ? (
+                          <>
+                            Repuesto con el{' '}
+                            <Link
+                              href={`/panel/anuncios/${credit.makegoodBookingId}`}
+                              className="font-medium hover:text-accent-fg"
+                            >
+                              {credit.makegoodDay ? day(credit.makegoodDay) : 'día siguiente'}
+                            </Link>
+                            .
+                          </>
+                        ) : (
+                          'Reembolsado.'
+                        )}
+                        <p className="text-[12px] text-muted">
+                          {OUTAGE_REASON_LABEL[credit.reason] ?? credit.reason}
+                          {credit.sources ? ` Fuente: ${credit.sources}.` : ''}
+                        </p>
+                      </TD>
+                      <TD align="right" className="text-[13px]">
+                        {credit.outcome === 'makegood' ? (
+                          <span className="text-muted">—</span>
+                        ) : (
+                          <>
+                            {fmtMoney(credit.refundAmount, booking.currency)}
+                            <p className="text-[11.5px] text-muted">
+                              {credit.refundStatus === 'issued'
+                                ? 'Enviado a Stripe'
+                                : credit.refundStatus === 'none'
+                                  ? 'Sin importe'
+                                  : credit.refundStatus === 'failed'
+                                    ? `Stripe lo rechazó (${credit.refundError ?? 'sin código'})`
+                                    : 'Pendiente'}
+                            </p>
+                          </>
+                        )}
+                      </TD>
+                    </TR>
+                  ))}
+                </TBody>
+              </Table>
+            </Card>
+          )}
+
           <Card>
             <CardHeader title="Cobro" />
             <CardBody>
