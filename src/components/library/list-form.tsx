@@ -1,26 +1,38 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { CheckIcon, GlobeIcon, LockIcon, PlusIcon } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import { solutionCategories } from '@/lib/solutions/model';
 import { brandColors, solutionCategoryTones } from '@/lib/brand-colors';
-import { listDetails, listPublicationDetails, type BuyerList } from '@/lib/library/model';
+import {
+  listDetails,
+  listPublicationDetails,
+  minPublicListProjects,
+  reservedCurator,
+  type BuyerList,
+} from '@/lib/library/model';
 import { localizedCategoryDisplayLabel } from '@/lib/taxonomy';
 import type { Dictionary } from '@/i18n/dictionary';
 import { changeLibrary, libraryButton, libraryField, libraryError } from './client';
 export function ListForm({
   list,
+  availableProjects = 0,
   onCreated,
   dict,
   locale,
 }: {
   list?: BuyerList;
+  /** Published projects in the list; going public needs minPublicListProjects. */
+  availableProjects?: number;
   onCreated?: (id: string) => Promise<void> | void;
   dict: Dictionary['library'];
   locale: string;
 }) {
   const t = dict.form;
+  // The server enforces the same rule; this only explains it before submitting.
+  const lockedId = useId();
+  const canPublish = list?.visibility === 'public' || availableProjects >= minPublicListProjects;
   const [visibility, setVisibility] = useState<'private' | 'public'>(list?.visibility ?? 'private');
   const [categories, setCategories] = useState<string[]>(list?.categories ?? []);
   const [publicDescription, setPublicDescription] = useState(list?.public_description ?? '');
@@ -44,6 +56,14 @@ export function ListForm({
         if (busy.current) return;
         setError('');
         setMessage('');
+        if (reservedCurator(curatorName)) {
+          setError(dict.errors.reservedCurator);
+          return;
+        }
+        if (visibility === 'public' && !canPublish) {
+          setError(dict.errors.publicNeedsProjects);
+          return;
+        }
         const details = listDetails({ name, purpose });
         const publication = listPublicationDetails({
           visibility,
@@ -113,11 +133,12 @@ export function ListForm({
           <div className="grid grid-cols-2 gap-3">
             {(['private', 'public'] as const).map(value => {
               const active = visibility === value,
+                locked = value === 'public' && !canPublish,
                 Icon = value === 'private' ? LockIcon : GlobeIcon;
               return (
                 <label
                   key={value}
-                  className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-4 text-sm transition-colors ${active ? 'border-[#365DC4] bg-[#E4EBFC]/50 text-[#365DC4]' : 'border-stone-200 hover:border-stone-400'}`}
+                  className={`flex items-center gap-3 rounded-2xl border px-4 py-4 text-sm transition-colors ${locked ? 'cursor-not-allowed border-stone-200 text-stone-400' : active ? 'cursor-pointer border-[#365DC4] bg-[#E4EBFC]/50 text-[#365DC4]' : 'cursor-pointer border-stone-200 hover:border-stone-400'}`}
                 >
                   <input
                     className="sr-only peer"
@@ -125,6 +146,8 @@ export function ListForm({
                     name="visibility"
                     value={value}
                     checked={active}
+                    disabled={locked}
+                    aria-describedby={locked ? lockedId : undefined}
                     onChange={() => {
                       setVisibility(value);
                       setPublishConfirmed(false);
@@ -142,6 +165,11 @@ export function ListForm({
           <p className="mt-2 text-xs leading-relaxed text-stone-500">
             {visibility === 'private' ? t.privateHint : t.publicHint}
           </p>
+          {!canPublish && (
+            <p id={lockedId} className="mt-1 text-xs leading-relaxed text-stone-500">
+              {dict.errors.publicNeedsProjects}
+            </p>
+          )}
         </fieldset>
         <fieldset>
           <legend className="mb-3 text-sm">

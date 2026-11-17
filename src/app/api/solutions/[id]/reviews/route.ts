@@ -7,10 +7,17 @@ import { solutionsSql } from '@/lib/solutions/server';
 import { failure, solutionBody } from '@/lib/solutions/http';
 import { isSolutionId } from '@/lib/solutions/model';
 import { verificationDomain } from '@/lib/trust/domain';
-import { conflictsWithWebsite, readReply, readReview, readReviewReport } from '@/lib/reviews/model';
+import {
+  conflictsWithWebsite,
+  isReviewInviteToken,
+  readReply,
+  readReview,
+  readReviewReport,
+} from '@/lib/reviews/model';
 import { cfdiStatus, readCfdiReceipt } from '@/lib/compliance/cfdi';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { requestLocale } from '@/i18n/negotiate';
+import { captureServerEvent } from '@/lib/analytics/server';
 
 const ok = (data: Record<string, unknown> = {}) =>
   NextResponse.json({ ok: true, ...data }, { headers: { 'Cache-Control': 'no-store' } });
@@ -20,6 +27,10 @@ const ok = (data: Record<string, unknown> = {}) =>
  *
  * - save: write or edit your own review. The id comes from the client so a retried
  *   submit returns the same row; an edit carries `version` and loses to a newer one.
+ *   A new review written from the founder's invitation page carries `invite` (the
+ *   listing's link token): the account is marked as invited for this listing in the same
+ *   statement, so the review is labelled and weighs half (SHCWS-132). A token that no
+ *   longer matches the listing is refused instead of quietly saving an unlabelled review.
  * - delete: remove your own review.
  * - reply: the owner's public answer ('' removes it). The owner can never delete or
  *   edit a review — only ops can hide one, with a reason.
@@ -66,17 +77,35 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
       if (conflictsWithWebsite(String(target.domain), verificationDomain(target.website)))
         return failure(t.conflict, 409);
       const review = parsed.review;
+      const invite = body.invite === undefined ? null : body.invite;
+      if (invite !== null && !isReviewInviteToken(invite)) return failure(t.inviteInvalid, 400);
 
       if (body.version === undefined) {
+        if (invite !== null) {
+          const [valid] =
+            await sql`SELECT 1 FROM solution_review_invites WHERE solution_id=${id} AND token=${invite}`;
+          if (!valid) return failure(t.inviteInvalid, 409);
+        }
         // The SELECT re-checks publication and ownership inside the write, so a ficha
         // withdrawn between the read above and this insert takes no review.
-        const [inserted] =
-          await sql`INSERT INTO solution_reviews(id,solution_id,author_id,author_name,rating,recommends,headline,use_case,pros,cons,usage_duration,company_size,country)
+        const [inserted] = await sql`WITH inserted AS (
+            INSERT INTO solution_reviews(id,solution_id,author_id,author_name,rating,recommends,headline,use_case,pros,cons,usage_duration,company_size,country)
             SELECT ${reviewId},s.id,${account.id},${review.name},${review.rating},${review.recommends},${review.headline},${review.useCase},${review.pros},${review.cons},${review.usageDuration},${review.companySize},${review.country}
             FROM founder_solutions s WHERE s.id=${id} AND s.published_data IS NOT NULL AND s.owner_id<>${account.id}
-            ON CONFLICT DO NOTHING RETURNING id,version`;
+            ON CONFLICT DO NOTHING RETURNING id,version,solution_id,author_id
+          ), invited AS (
+            INSERT INTO solution_review_invitees(solution_id,account_id)
+            SELECT i.solution_id,i.author_id FROM inserted i
+            WHERE ${invite}::text IS NOT NULL AND EXISTS(
+              SELECT 1 FROM solution_review_invites v WHERE v.solution_id=i.solution_id AND v.token=${invite}::text)
+            ON CONFLICT DO NOTHING
+          ) SELECT id,version FROM inserted`;
         if (inserted) {
           revalidateTag('catalog');
+          captureServerEvent(request, account.id, 'review_created', {
+            rating: review.rating,
+            invited: invite !== null,
+          });
           return ok({ id: inserted.id, version: Number(inserted.version), created: true });
         }
         // Nothing inserted: either this exact submit already landed (a retry) or the
@@ -98,6 +127,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
           RETURNING id,version`;
       if (!updated) return failure(t.versionConflict, 409);
       revalidateTag('catalog');
+      captureServerEvent(request, account.id, 'review_updated', { rating: review.rating });
       return ok({ id: updated.id, version: Number(updated.version), created: false });
     }
 
@@ -106,6 +136,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
         await sql`DELETE FROM solution_reviews WHERE id=${reviewId} AND solution_id=${id} AND author_id=${account.id} RETURNING id`;
       if (!rows.length) return failure(t.notFound, 404);
       revalidateTag('catalog');
+      captureServerEvent(request, account.id, 'review_deleted');
       return ok();
     }
 

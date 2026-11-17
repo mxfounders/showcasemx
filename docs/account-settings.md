@@ -26,7 +26,8 @@ inventa estado.
   variable la función se muestra como no disponible y no se puede activar**; no
   se simula protección. Rotarla obliga a volver a dar de alta el factor.
 - Activar, desactivar y regenerar códigos piden la contraseña: la cookie de
-  sesión no basta para tocar el segundo factor.
+  sesión no basta para tocar el segundo factor. Desactivar y regenerar piden además
+  un código (ver abajo).
 - El secreto queda `totp_confirmed_at IS NULL` hasta que un código generado con
   él se acepta, así que abandonar el alta a la mitad no bloquea a nadie.
 - Diez códigos de respaldo de 8 dígitos, guardados como SHA-256, de un solo uso.
@@ -37,10 +38,58 @@ inventa estado.
 `POST /api/auth/login` deja de crear sesión cuando la cuenta tiene el factor
 activo: escribe `auth_login_challenges` (5 minutos, con el hash de contraseña
 del momento) y responde `{step:'totp'}`. `POST /api/auth/totp` lo consume.
-`totp_last_step` impide repetir un código dentro de su ventana; un código de
-respaldo se borra con `array_remove` en la misma transacción que abre la sesión.
-Cinco fallos queman el reto. Cambiar la contraseña lo invalida, porque el hash
-guardado deja de coincidir.
+Desde SHCWS-159:
+
+- Cada código reserva antes un intento del reto con un `UPDATE … attempts < 5`
+  atómico: cinco códigos por reto aunque lleguen en paralelo, y el reto se borra
+  al agotarse.
+- Los topes por red y global solo cuentan peticiones con un reto vivo; una cookie
+  inventada no los gasta.
+- Por cuenta, 10 códigos fallidos por hora sin importar el reto ni la red
+  (`auth-totp-fail:<hash de la cuenta>`). Un código correcto devuelve su lugar.
+- El código se gasta en la misma sentencia que abre la sesión: `totp_last_step`
+  sube solo si el paso es mayor, el código de respaldo se quita solo si sigue en la
+  lista y el reto se borra. Una repetición simultánea encuentra el código gastado.
+
+Cambiar la contraseña invalida el reto, porque el hash guardado deja de
+coincidir. `RUN_AUTH_SECURITY_INTEGRATION=1 node tests/integration/auth-security.cjs`
+lo comprueba contra un servidor aislado.
+
+### Ajustes del 14 de noviembre de 2026 (SHCWS-171 a 174)
+
+- **Activar exige correo confirmado** (`start` y `confirm` responden 409 sin él). Si
+  no, quien registra primero el correo de otra persona podría activarla y dejar fuera
+  al dueño real después de que recupere la cuenta. Seguridad lo explica en lugar del
+  botón.
+- **El código del alta queda gastado**: `confirm` guarda su paso en `totp_last_step`.
+- **Desactivar, regenerar códigos y eliminar la cuenta piden contraseña y código**
+  (de la app o de respaldo), gastado con `spendSecondFactor`
+  (`src/lib/auth/second-factor.ts`). Decisión del propietario: una contraseña robada
+  sola no quita la protección ni borra la cuenta.
+- **Aviso al llegar a 10 códigos fallidos** en una hora: aviso de seguridad
+  `totp-failures`, una vez por hora, con «No fui yo».
+- **Google también pide el código** (decisión del propietario, SHCWS-172): el callback
+  crea el mismo reto de 5 minutos con `issueLoginChallenge` y redirige a
+  `/sign-in?step=totp`, que abre directo el paso del código si la cookie del reto existe.
+- **Sesión de Google**: guarda `user_agent`, borra la sesión anterior de ese navegador y
+  no se abre para cuentas suspendidas (SHCWS-174).
+- **Cookie de estado de Google** `__Host-showcasemx_google_state` en producción, para
+  que un subdominio hermano no pueda plantarla. El callback acepta también el nombre
+  anterior y borra ambos, para no romper flujos iniciados antes del cambio (§20).
+
+### Límites de acceso (SHCWS-171)
+
+- `requestIdentity` agrupa IPv6 por su /64 (en producto y en ops): una conexión suele
+  tener una /64 entera, y contar direcciones sueltas no frenaba nada. IPv4 sigue exacta.
+- El contador compartido de cada ámbito ya no es un muro: por encima de su tope por
+  minuto solo se rechaza a las identidades que ya usaron una cuarta parte de su
+  permiso de la hora (`withinLimit`, `pressureAllowance`). El acceso con contraseña
+  usa la misma regla con 30 intentos por red cada 15 minutos y 120 por minuto en total.
+- Recuperación y enlace mágico limitan por red (10/h), por correo desde esa red (3/h)
+  y por correo (10/h); el enlace mágico, además, por invitación (30/h). Tres pedidos ya
+  no bloquean la recuperación de otra persona.
+- Restablecer contraseña y confirmar correo limitan por red: el token lo elige quien
+  llama. El inicio con Google limita por red (30/h) en vez de una clave fija para todos.
 
 ### Sesiones abiertas
 

@@ -1,7 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getSession, sessionCookie, cookieOptions } from '@/lib/auth/session';
+import { NextRequest, NextResponse, after } from 'next/server';
+import { getSession, sessionCookie, cookieOptions, readUserAgent } from '@/lib/auth/session';
+import { securityNotice } from '@/lib/auth/security-notices';
 import { hashPassword, verifyPassword } from '@/lib/auth/password';
 import { credentialErrors } from '@/lib/auth/validation';
+import { passwordLeaked } from '@/lib/auth/pwned';
 import { authSql, securityLimit } from '@/lib/auth/security';
 import { failure, solutionBody } from '@/lib/solutions/http';
 import { getDictionary } from '@/i18n/get-dictionary';
@@ -34,10 +36,16 @@ export async function POST(request: NextRequest) {
     )
       return failure(t.currentPasswordWrong, 400);
     if (body.currentPassword === body.password) return failure(t.passwordUnchanged, 400);
+    if ((await passwordLeaked(body.password)) === true) return failure(t.passwordLeaked, 400);
     const hash = await hashPassword(body.password);
     const changed =
       await sql`WITH changed AS (UPDATE auth_accounts SET password_hash=${hash} WHERE id=${account.id} AND password_hash=${rows[0].password_hash} RETURNING id), sessions AS (DELETE FROM auth_sessions WHERE account_id IN(SELECT id FROM changed)), tokens AS (DELETE FROM auth_password_resets WHERE account_id IN(SELECT id FROM changed)) SELECT id FROM changed`;
     if (!changed.length) return failure(t.accessChanged, 409);
+    after(() =>
+      securityNotice(account.id, 'password-changed', readUserAgent(request.headers)).catch(
+        () => undefined,
+      ),
+    );
     const response = NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
     response.cookies.set(sessionCookie, '', { ...cookieOptions, maxAge: 0 });
     return response;

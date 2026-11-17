@@ -1,7 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import QRCode from 'qrcode';
-import { getSession, sessionCookie } from '@/lib/auth/session';
+import { securityNotice } from '@/lib/auth/security-notices';
+import { getSession, readUserAgent, sessionCookie } from '@/lib/auth/session';
 import { verifyPassword } from '@/lib/auth/password';
+import { readSecondFactorCode, spendSecondFactor } from '@/lib/auth/second-factor';
 import { authSql, securityLimit } from '@/lib/auth/security';
 import { failure, solutionBody } from '@/lib/solutions/http';
 import {
@@ -21,10 +23,13 @@ export const runtime = 'nodejs';
 /**
  * Optional two-step verification for a product account.
  *
- * `start` and `disable` re-ask for the password: holding a session cookie is not
- * enough to add or remove a second factor. The secret is only marked confirmed
- * once a code generated from it is accepted, so a half-finished enrolment never
- * locks anybody out.
+ * Every change re-asks for the password: holding a session cookie is not enough to add
+ * or remove a second factor. Turning it on needs a confirmed email, or whoever registered
+ * someone else's address first could lock the real owner out after they recover it
+ * (SHCWS-173). Turning it off or replacing the backup codes also asks for a code, so a
+ * stolen password alone can't remove the protection. The secret is only marked confirmed
+ * once a code generated from it is accepted, and that code is spent on the spot, so a
+ * half-finished enrolment never locks anybody out and the code can't sign in afterwards.
  */
 export async function POST(request: NextRequest) {
   const t = (await getDictionary(requestLocale(request))).settings.errors;
@@ -43,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     const sql = authSql();
     const [row] =
-      await sql`SELECT password_hash, totp_secret, totp_confirmed_at, totp_last_step FROM auth_accounts WHERE id = ${account.id}`;
+      await sql`SELECT password_hash, totp_secret, totp_confirmed_at, totp_last_step, email_verified_at FROM auth_accounts WHERE id = ${account.id}`;
     if (!row) return failure(t.signInAgain, 401);
     const enabled = Boolean(row.totp_confirmed_at);
 
@@ -52,8 +57,17 @@ export async function POST(request: NextRequest) {
       return verifyPassword(body.password, String(row.password_hash));
     };
 
+    // The password and then a current code of the factor being changed.
+    const bothChecks = async () => {
+      if (!(await passwordChecks())) return t.wrongPassword;
+      const code = readSecondFactorCode(body?.code);
+      if (!code) return t.secondFactorMissing;
+      return (await spendSecondFactor(account.id, code)) ? null : t.secondFactorWrong;
+    };
+
     if (action === 'start') {
       if (enabled) return failure(t.totpAlreadyOnStart, 409);
+      if (!row.email_verified_at) return failure(t.totpEmailFirst, 409);
       if (!(await passwordChecks())) return failure(t.wrongPassword, 400);
       const secret = generateTotpSecret();
       const backupCodes = generateBackupCodes(10);
@@ -74,20 +88,28 @@ export async function POST(request: NextRequest) {
 
     if (action === 'confirm') {
       if (enabled) return failure(t.totpAlreadyOn, 409);
+      if (!row.email_verified_at) return failure(t.totpEmailFirst, 409);
       if (!row.totp_secret) return failure(t.totpNoSecret, 400);
       const code = typeof body?.code === 'string' ? body.code.trim().replace(/\s/g, '') : '';
       if (!/^\d{6}$/.test(code)) return failure(t.totpCodeFormat, 400);
-      if (verifyTotp(decryptSecret(String(row.totp_secret)), code, null) === null)
-        return failure(t.totpCodeMismatch, 400);
+      const step = verifyTotp(decryptSecret(String(row.totp_secret)), code, null);
+      if (step === null) return failure(t.totpCodeMismatch, 400);
+      // The enrolment code is spent here: it can't open a session within its window.
       const confirmed =
-        await sql`UPDATE auth_accounts SET totp_confirmed_at = now() WHERE id = ${account.id} AND totp_confirmed_at IS NULL RETURNING id`;
+        await sql`UPDATE auth_accounts SET totp_confirmed_at = now(), totp_last_step = ${step.toString()} WHERE id = ${account.id} AND totp_confirmed_at IS NULL AND totp_secret = ${row.totp_secret} RETURNING id`;
       if (!confirmed.length) return failure(t.totpAlreadyConfirmed, 409);
+      after(() =>
+        securityNotice(account.id, 'totp-on', readUserAgent(request.headers)).catch(
+          () => undefined,
+        ),
+      );
       return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
     }
 
     if (action === 'regenerate') {
       if (!enabled) return failure(t.totpEnableFirst, 409);
-      if (!(await passwordChecks())) return failure(t.wrongPassword, 400);
+      const refused = await bothChecks();
+      if (refused) return failure(refused, 400);
       const backupCodes = generateBackupCodes(10);
       // Replacing the list invalidates every previous code, including unused ones.
       await sql`UPDATE auth_accounts SET backup_codes = ${backupCodes.map(hashBackupCode)} WHERE id = ${account.id}`;
@@ -99,10 +121,14 @@ export async function POST(request: NextRequest) {
 
     // disable
     if (!enabled) return failure(t.totpNotOn, 409);
-    if (!(await passwordChecks())) return failure(t.wrongPassword, 400);
+    const refused = await bothChecks();
+    if (refused) return failure(refused, 400);
     const cleared =
       await sql`WITH cleared AS (UPDATE auth_accounts SET totp_secret = NULL, totp_confirmed_at = NULL, totp_last_step = NULL, backup_codes = NULL WHERE id = ${account.id} AND totp_confirmed_at IS NOT NULL RETURNING id), challenges AS (DELETE FROM auth_login_challenges WHERE account_id IN (SELECT id FROM cleared)) SELECT id FROM cleared`;
     if (!cleared.length) return failure(t.totpAlreadyOff, 409);
+    after(() =>
+      securityNotice(account.id, 'totp-off', readUserAgent(request.headers)).catch(() => undefined),
+    );
     return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     if (error instanceof Error && error.message === 'AUTH_TOTP_KEY_MISSING')

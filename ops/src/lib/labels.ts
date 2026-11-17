@@ -105,7 +105,15 @@ export const LEVEL: Record<string, Label> = {
 };
 
 export type AuditGroup =
-  'auth' | 'security' | 'editorial' | 'accounts' | 'community' | 'team' | 'data' | 'other';
+  | 'auth'
+  | 'security'
+  | 'editorial'
+  | 'accounts'
+  | 'community'
+  | 'team'
+  | 'money'
+  | 'data'
+  | 'other';
 
 interface ActionLabel {
   label: string;
@@ -154,6 +162,12 @@ export const AUDIT_ACTIONS: Record<string, ActionLabel> = {
   solution_reject: { label: 'Rechazó una ficha', tone: 'terracotta', group: 'editorial' },
   solution_changes_requested: { label: 'Pidió cambios', tone: 'lavender', group: 'editorial' },
   solution_withdraw: { label: 'Retiró una publicación', tone: 'terracotta', group: 'editorial' },
+  solution_verify: { label: 'Verificó una ficha', tone: 'blue', group: 'editorial' },
+  solution_unverify: { label: 'Retiró una verificación', tone: 'amber', group: 'editorial' },
+  tax_identity_save: { label: 'Registró identidad fiscal', tone: 'lavender', group: 'editorial' },
+  tax_identity_delete: { label: 'Borró identidad fiscal', tone: 'amber', group: 'editorial' },
+  award_editorial_create: { label: 'Eligió una Selección shwcs', tone: 'sage', group: 'editorial' },
+  award_revoke: { label: 'Revocó un reconocimiento', tone: 'terracotta', group: 'editorial' },
   solution_delete_comment: {
     label: 'Borró un comentario de ficha',
     tone: 'amber',
@@ -184,8 +198,55 @@ export const AUDIT_ACTIONS: Record<string, ActionLabel> = {
     group: 'community',
   },
   review_report_hide: { label: 'Ocultó una reseña', tone: 'terracotta', group: 'community' },
+  comment_report_resolve: {
+    label: 'Resolvió reporte de comentario',
+    tone: 'sage',
+    group: 'community',
+  },
+  comment_report_dismiss: {
+    label: 'Descartó reporte de comentario',
+    tone: 'neutral',
+    group: 'community',
+  },
+  comment_report_hide: {
+    label: 'Ocultó un comentario de ficha',
+    tone: 'terracotta',
+    group: 'community',
+  },
+  solution_comment_restore: {
+    label: 'Restauró un comentario de ficha',
+    tone: 'sage',
+    group: 'community',
+  },
+  question_report_resolve: {
+    label: 'Resolvió reporte de pregunta',
+    tone: 'sage',
+    group: 'community',
+  },
+  question_report_dismiss: {
+    label: 'Descartó reporte de pregunta',
+    tone: 'neutral',
+    group: 'community',
+  },
+  question_report_hide: {
+    label: 'Ocultó una pregunta reportada',
+    tone: 'terracotta',
+    group: 'community',
+  },
+  question_hide: {
+    label: 'Ocultó una pregunta sin reporte',
+    tone: 'terracotta',
+    group: 'community',
+  },
+  question_restore: { label: 'Restauró una pregunta', tone: 'sage', group: 'community' },
+  review_hide: { label: 'Ocultó una reseña sin reporte', tone: 'terracotta', group: 'community' },
   review_restore: { label: 'Restauró una reseña', tone: 'sage', group: 'community' },
   community_unpublish_list: { label: 'Despublicó una lista', tone: 'amber', group: 'community' },
+  community_rename_curator: {
+    label: 'Renombró la firma de una lista',
+    tone: 'amber',
+    group: 'community',
+  },
   community_delete_comment: {
     label: 'Borró un comentario de lista',
     tone: 'amber',
@@ -208,6 +269,31 @@ export const AUDIT_ACTIONS: Record<string, ActionLabel> = {
   inquiry_reopened: { label: 'Reabrió un mensaje', tone: 'neutral', group: 'other' },
   mail_retry: { label: 'Reintentó un correo', tone: 'blue', group: 'other' },
   export: { label: 'Exportó datos', tone: 'amber', group: 'data' },
+  ad_pause: { label: 'Pausó un anuncio', tone: 'amber', group: 'money' },
+  ad_resume: { label: 'Reanudó un anuncio', tone: 'sage', group: 'money' },
+  ad_withdraw_platform: {
+    label: 'Retiró un anuncio (decisión de shwcs)',
+    tone: 'terracotta',
+    group: 'money',
+  },
+  ad_withdraw_policy: {
+    label: 'Retiró un anuncio (incumplimiento)',
+    tone: 'terracotta',
+    group: 'money',
+  },
+  ad_refund_issued: { label: 'Envió un reembolso a Stripe', tone: 'blue', group: 'money' },
+  ad_refund_retry: { label: 'Reintentó un reembolso', tone: 'amber', group: 'money' },
+  ad_refund_failed: { label: 'Stripe rechazó un reembolso', tone: 'terracotta', group: 'money' },
+  ad_rate_set: { label: 'Cambió una tarifa de anuncios', tone: 'lavender', group: 'money' },
+  ad_placement_open: { label: 'Abrió un espacio de anuncios', tone: 'sage', group: 'money' },
+  ad_placement_close: { label: 'Cerró un espacio de anuncios', tone: 'amber', group: 'money' },
+  billing_retry: { label: 'Reintentó un CFDI', tone: 'blue', group: 'money' },
+  billing_reissue: {
+    label: 'Reemitió un CFDI con datos corregidos',
+    tone: 'amber',
+    group: 'money',
+  },
+  billing_notify: { label: 'Avisó de datos fiscales', tone: 'neutral', group: 'money' },
 };
 
 export function auditAction(action: string): ActionLabel {
@@ -223,6 +309,7 @@ export const AUDIT_GROUP_LABEL: Record<AuditGroup, string> = {
   accounts: 'Cuentas',
   community: 'Comunidad',
   team: 'Equipo',
+  money: 'Cobros',
   data: 'Datos',
   other: 'Otros',
 };

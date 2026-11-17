@@ -15,6 +15,8 @@ export const library = {
     listUnavailable: 'List not available.',
     invalidListUpdate: 'Check the details, the categories and the publishing confirmation.',
     listConflict: 'The list changed or is no longer available. Reload before continuing.',
+    reservedCurator: 'That signature is reserved for shwcs. Use your own name or alias.',
+    publicNeedsProjects: 'To make it public, the list needs at least 3 available projects.',
     projectUnavailable: 'This project is no longer available to save.',
     savedLimit: 'You can save up to 200 projects. Remove one before adding another.',
     actionUnavailable: 'Action not available.',
@@ -43,7 +45,8 @@ export const library = {
     private: 'Private',
     public: 'Public',
     privateHint: 'Only you can see it.',
-    publicHint: 'Visible in the community and to anyone with the link.',
+    publicHint:
+      'Visible in the community and to anyone with the link while it has at least 3 available projects.',
     categories: 'Categories',
     categoriesRequired: 'Choose at least one',
     publicDescription: 'Public description',
@@ -168,7 +171,7 @@ export const library = {
   },
   savedPage: {
     metaTitle: 'Saved',
-    title: 'Saved.',
+    title: 'Saved',
     onlyYou: 'Only you.',
     resume: 'The project you wanted to save',
     countSingular: '{count} saved project',
@@ -179,7 +182,7 @@ export const library = {
   },
   listsPage: {
     metaTitle: 'My lists',
-    title: 'My lists.',
+    title: 'My lists',
   },
   listPage: {
     metaTitle: 'Your list',
@@ -201,7 +204,7 @@ export const library = {
     invalidBody: "The selection changed or doesn't belong to this list.",
     backToList: 'Back to the list →',
     backTo: '← Back to {name}',
-    title: 'Decide with context.',
+    title: 'Decide with context',
     intro:
       'Information published by each project, with no scores or certifications. Confirm pricing, scope and availability before you hire.',
     help: 'On mobile, swipe the table sideways. Only you can see your notes.',
@@ -234,7 +237,7 @@ export const library = {
   },
   communitySaved: {
     metaTitle: 'Saved lists',
-    title: 'Saved lists.',
+    title: 'Saved lists',
     subtitle: 'Community selections you want to come back to.',
     explore: 'Explore the community →',
     emptyTitle: 'Save a selection worth keeping.',

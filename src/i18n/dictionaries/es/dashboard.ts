@@ -1,8 +1,14 @@
 export const dashboard = {
   title: 'Tu inicio',
   hello: 'Hola,',
-  yourSpace: 'Tu espacio.',
+  yourSpace: 'Tu espacio',
+  verifyEmailTitle: 'Confirma tu correo',
+  verifyEmailDesc:
+    'Te mandamos un enlace al registrarte. Con el correo confirmado te avisamos de nuevas solicitudes de contacto, tus likes y reseñas cuentan en el orden del catálogo y los proyectos saben que tu correo es real.',
   yourProjects: 'Tus proyectos',
+  metricsSummary:
+    'Últimos 30 días: {views} visitas · {requests} solicitudes. Clientes conseguidos vía shwcs: {won}.',
+  metricsSummaryLink: 'Ver métricas →',
   seeAll: 'Ver todos →',
   yourProjectFallback: 'Tu proyecto',
   unnamed: 'Sin nombre',
@@ -16,6 +22,13 @@ export const dashboard = {
   latestSaved: 'Últimos guardados',
   exploreProjects: 'Explorar proyectos',
   recentActivity: 'Actividad reciente',
+  /** «Te toca»: open conversations where the last word was the other person's. */
+  yourTurn: 'Te toca',
+  /** Founder side, with {company}. */
+  waitingForYou: '{company} espera tu respuesta',
+  /** Buyer side, with {project}. */
+  repliedToYou: '{project} te respondió',
+  answer: 'Responder',
   sent: 'Enviada',
   received: 'Recibida',
   contactStatuses: {
@@ -31,6 +44,16 @@ export const dashboard = {
   },
   nextActions: {
     reviewComments: 'Revisar comentarios',
+    unreadOpportunity: 'Tienes 1 oportunidad sin leer',
+    unreadOpportunities: 'Tienes {count} oportunidades sin leer',
+    answerOpportunity: 'Tienes 1 oportunidad sin responder',
+    answerOpportunities: 'Tienes {count} oportunidades sin responder',
+    answerOpportunitiesDetail: 'Responder pronto es lo que más pesa para cerrar una venta',
+    enableAlerts: 'Activa los avisos de solicitudes',
+    enableAlertsDetail: 'Te avisamos por correo en cuanto alguien quiere hablar contigo',
+    verifyDomain: 'Verifica el dominio',
+    renewDomain: 'Renueva la verificación del dominio',
+    promote: 'Promociona tu ficha',
     addScreenshots: 'Añadir capturas',
     complete: 'Completar',
     yourProject: 'Tu proyecto',

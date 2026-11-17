@@ -5,10 +5,17 @@ import { securityLimit } from '@/lib/auth/security';
 import { solutionsSql } from '@/lib/solutions/server';
 import { failure, solutionBody } from '@/lib/solutions/http';
 import { isSolutionId } from '@/lib/solutions/model';
-import { validProjectKey, listDetails, listPublicationDetails } from '@/lib/library/model';
+import {
+  validProjectKey,
+  listDetails,
+  listPublicationDetails,
+  minPublicListProjects,
+  reservedCurator,
+} from '@/lib/library/model';
 import { resolveProjects } from '@/lib/library/server';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { requestLocale } from '@/i18n/negotiate';
+import { captureServerEvent } from '@/lib/analytics/server';
 const ok = (data: Record<string, unknown> = {}) =>
   NextResponse.json({ ok: true, ...data }, { headers: { 'Cache-Control': 'no-store' } });
 export async function GET(request: NextRequest) {
@@ -38,9 +45,13 @@ export async function POST(request: NextRequest) {
     const sql = solutionsSql(),
       owner = account.id;
     if (!(await securityLimit('library', owner, 300))) return failure(t.rateLimited, 429);
+    if (['create-list', 'update-list'].includes(body.action) && reservedCurator(body.curatorName))
+      return failure(t.reservedCurator, 400);
     if (body.action === 'create-list') {
       const details = listDetails(body),
         publication = listPublicationDetails(body);
+      // A new list holds no projects yet, so it can't start public (SHCWS-116).
+      if (publication?.visibility === 'public') return failure(t.publicNeedsProjects, 409);
       if (!publication || !details || typeof body.id !== 'string' || !isSolutionId(body.id))
         return failure(t.invalidListDetails, 400);
       const results = await sql.transaction([
@@ -49,6 +60,7 @@ export async function POST(request: NextRequest) {
         sql`SELECT id FROM buyer_lists WHERE id=${body.id} AND owner_id=${owner}`,
       ]);
       if (!results[2].length) return failure(t.listLimit, 409);
+      captureServerEvent(request, owner, 'list_created', { visibility: publication.visibility });
       return ok({ id: body.id });
     }
     if (['update-list', 'delete-list'].includes(body.action)) {
@@ -63,6 +75,18 @@ export async function POST(request: NextRequest) {
         publication = listPublicationDetails(body);
       if (!publication || !details || !Number.isInteger(body.version))
         return failure(t.invalidListUpdate, 400);
+      if (publication.visibility === 'public') {
+        // Going public needs enough published projects; a list that's already public
+        // keeps its setting (Comunidad hides it while it's short, see community.ts).
+        const [current] =
+          await sql`SELECT l.visibility,(SELECT count(DISTINCT s.id) FROM buyer_list_items i JOIN founder_solutions s ON (i.project_key='solution:'||s.id::text OR (s.catalog_key IS NOT NULL AND i.project_key='catalog:'||s.catalog_key)) WHERE i.list_id=l.id AND i.owner_id=l.owner_id AND s.published_data IS NOT NULL)::int AS available FROM buyer_lists l WHERE l.id=${body.listId} AND l.owner_id=${owner}`;
+        if (
+          current &&
+          current.visibility !== 'public' &&
+          Number(current.available) < minPublicListProjects
+        )
+          return failure(t.publicNeedsProjects, 409);
+      }
       const rows =
         await sql`UPDATE buyer_lists SET name=${details.name},purpose=${details.purpose},visibility=${publication.visibility},categories=${publication.categories}::text[],public_description=${publication.publicDescription},curator_name=${publication.curatorName},version=version+1,updated_at=now() WHERE id=${body.listId} AND owner_id=${owner} AND version=${body.version} RETURNING id`;
       return rows.length ? ok() : failure(t.listConflict, 409);
@@ -79,6 +103,7 @@ export async function POST(request: NextRequest) {
       ]);
       if (!results[2].length) return failure(t.savedLimit, 409);
       revalidateTag('catalog');
+      captureServerEvent(request, owner, 'project_saved');
       return ok({ saved: true });
     }
     if (body.action === 'unsave') {

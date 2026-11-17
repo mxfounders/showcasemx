@@ -116,7 +116,7 @@ seguridad comprueba los marcadores en JSON y en el HTML/RSC renderizado.
 | `/panel/reportes` | Reportes de fichas y de comunidad con decisión obligatoria |
 | `/panel/dominios` | Pruebas TXT: verificadas, pendientes, vencidas, por revalidar (+90 días) |
 | `/panel/cuentas`, `/panel/cuentas/[id]` | Filtros, orden, exportación; identidad, seguridad (sesiones del producto por dispositivo, 2FA, tokens vivos, membresía ops), publicaciones, biblioteca (solo conteos), contactos (metadatos), comunidad, avisos y bitácora |
-| `/panel/contactos` | Solicitudes comprador → fundador, tasa de respuesta, serie diaria y línea de tiempo de estados |
+| `/panel/contactos` | Solicitudes comprador → fundador, tasa de respuesta, serie diaria y línea de tiempo de estados; solicitudes sin respuesta con su etapa de recordatorio (SHCWS-61) |
 | `/panel/comunidad` | Listas públicas, comentarios en listas y en fichas, moderación |
 | `/panel/mensajes` | Bandeja del formulario de contacto, responder por correo, atender/reabrir |
 | `/panel/correo` | Estado de los avisos transaccionales, reintentos |
@@ -153,3 +153,51 @@ y una paleta validada para daltonismo en ambos temas.
   de reportes propios y la cadena de la bitácora. La guarda del último admin solo
   se ejercita si la base no tiene otros admins reales; si los hay, la prueba lo
   dice y la salta en vez de tocar filas reales.
+
+
+## Avisos al equipo de revisión — 14 noviembre 2026 (SHCWS-139)
+
+- Al enviarse una ficha (nueva o con cambios), cada miembro activo de `solution_reviewers` recibe un correo con el enlace a la postulación en ops. Lo envía el producto con `after()`; no lleva el correo privado de la ficha.
+- Cada mañana, el cron de correo (`/api/internal/mail`) manda un resumen de lo pendiente: fichas en revisión y reportes abiertos de fichas, reseñas, comunidad y comentarios, lo más antiguo primero y marcado con ⚠ lo que pasó del tiempo prometido (`SOLUTION_REVIEW_TARGET_HOURS`, o 48 h sin la variable). Si no hay nada pendiente, no sale.
+- Solo en producción o con `REVIEW_ALERTS=1` (docs/env.md): la base de desarrollo tiene revisores reales.
+- La cola de postulaciones ya muestra la antigüedad de cada ficha («Actualizada»).
+- Código: `src/lib/review-queue/alerts.ts`.
+
+## Demanda de búsquedas — 14 noviembre 2026 (SHCWS-107)
+
+`/panel/demanda`: búsquedas de los últimos 7 días (total, sin resultados, terminadas en una
+ficha, distintas), las 20 sin resultados más frecuentes, las 20 más buscadas y la tendencia
+de las últimas 8 semanas. Lee `search_demand` (`db/search-demand.sql`), que el producto llena
+con una baliza en `/buscar`, el buscador del inicio y las páginas de categoría
+(`src/components/search/search-demand-beacon.tsx`, `POST /api/search-demand`): agregado por
+día y consulta normalizada, sin cuenta, dirección ni identificador; nada con DNT/GPC; nunca
+guarda algo que parezca correo, teléfono o URL (`src/lib/search/demand.ts`). Retención de
+400 días en el mantenimiento diario. Sin la tabla, la página lo dice.
+
+### Alertas activas por tema (SHCWS-175)
+
+Sección de solo lectura en `/panel/demanda`, junto a las búsquedas: las alertas de
+búsqueda guardadas por los compradores (`search_alerts`, SHCWS-47) agrupadas por tema
+(dónde se crearon —búsqueda, categoría, industria o colección—, su slug y su etiqueta
+legible, que ya lleva palabras y filtros, p. ej. «Nómina · Retail»). Por tema: número de
+alertas, cuentas distintas, coincidencias en 30 días (fichas distintas anunciadas, nunca
+las que ya existían al crear la alerta) y última coincidencia. Arriba: alertas, cuentas,
+temas y temas sin coincidencias en 30 días, que es a quién invitar. Ordena por alertas
+(por defecto), cuentas, coincidencias o última coincidencia, en ambos sentidos
+(`?orden=&dir=`), máximo 100 temas. Solo conteos: la consulta (`alertTopics`,
+`ops/src/lib/data/demand.ts`) nunca devuelve `owner_id`, correos ni identificadores de
+alerta; las cuentas suspendidas no cuentan. Sin la tabla, la sección lo dice y el resto de
+la página sigue. Prueba: `tests/integration/ops-reminders-alerts.cjs`.
+
+## Solicitudes sin respuesta — 14 noviembre 2026 (SHCWS-61)
+
+`/panel/contactos` gana la tarjeta «Sin respuesta del fundador»: solicitudes abiertas que
+el destinatario no ha tocado en más de 48 h y las marcadas «sin respuesta» a los 7 días
+(`contact_requests.unanswered_at`, docs/contacts.md), la espera más larga primero (50).
+Por fila: proyecto, fundador (destinatario), estado, etapa (más de 48 h, recordatorio de
+48 h, de 5 días o «sin respuesta», según los avisos que escribió el cron), días sin
+respuesta, fecha y la línea de tiempo de estados. Arriba: cuántas siguen sin respuesta,
+cuántas se marcaron en 30 días y cuántas se respondieron después de marcarse. Solo
+metadatos, como el resto de Contactos: nunca `details`, mensajes ni el comprador
+(`awaitingReply`, `ops/src/lib/data/contacts.ts`). Sin `db/contact-reminders.sql`, la
+tarjeta lo dice y la página carga.

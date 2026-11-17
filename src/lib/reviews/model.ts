@@ -123,14 +123,35 @@ export function readReviewReport(value: unknown) {
  * - unverified: saved, visible only to its author until the email is confirmed.
  * - email: confirmed address (the minimum for a public review).
  * - work: confirmed address on a company domain rather than a free mailbox.
+ * - contact: confirmed address and a contact request to this listing through shwcs that
+ *   reached «en conversación» or was closed as won (SHCWS-135, review_contact_backed in
+ *   db/review-invitations.sql). It proves a real relationship, never what was said.
  * - customer: confirmed address plus a receipt from the vendor checked with a public
  *   authority (in Mexico, a CFDI the SAT reports as vigente; docs/compliance.md).
  */
-export const reviewLevels = ['email', 'work', 'customer'] as const;
+export const reviewLevels = ['email', 'work', 'contact', 'customer'] as const;
 export type ReviewLevel = (typeof reviewLevels)[number];
 
 /** How much one review moves the ranking per star, by level. Published in /criterios. */
-export const reviewWeights: Record<ReviewLevel, number> = { email: 1, work: 1.5, customer: 3 };
+export const reviewWeights: Record<ReviewLevel, number> = {
+  email: 1,
+  work: 1.5,
+  contact: 2,
+  customer: 3,
+};
+
+/**
+ * A review written through the founder's own invitation link (SHCWS-132) weighs this much
+ * of its level. The vendor chooses whom to invite, so those reviews lean positive; review
+ * sites that accept vendor invitations label them and correct for it (TrustRadius weighs
+ * them less, G2 and Gartner label the source). shwcs does both. It only ever lowers a
+ * review: an invited review never counts more than the same review written unprompted.
+ */
+export const reviewInvitedFactor = 0.5;
+
+/** The founder's shareable link token (solution_review_invites.token). */
+export const isReviewInviteToken = (value: unknown): value is string =>
+  typeof value === 'string' && /^[a-f0-9]{32}$/.test(value);
 
 /**
  * Free mailbox providers, matched on the full domain. The pattern catches the country
@@ -182,11 +203,17 @@ export function reviewLevel(
   emailDomain: string,
   verified: boolean,
   proven = false,
+  contacted = false,
 ): ReviewLevel | 'unverified' {
   if (!verified) return 'unverified';
   if (proven) return 'customer';
+  if (contacted) return 'contact';
   return isWorkEmailDomain(emailDomain) ? 'work' : 'email';
 }
+
+/** What one review adds to the order per star: its level's weight, halved when invited. */
+export const reviewWeight = (level: ReviewLevel, invited: boolean) =>
+  reviewWeights[level] * (invited ? reviewInvitedFactor : 1);
 
 /**
  * Someone writing from the vendor's own domain (cordhq.app reviewing cordhq.app, or a

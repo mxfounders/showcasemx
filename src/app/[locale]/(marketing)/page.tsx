@@ -6,10 +6,16 @@ import { LandingFeatures } from '@/components/landing-features';
 import { LandingStackingCards } from '@/components/landing-stacking-cards';
 import { LandingBentoBlogs } from '@/components/landing-bento-blogs';
 import { FounderInvitation } from '@/components/founder-invitation';
+import { NewThisWeekStrip } from '@/components/new-this-week';
+import { CommunityStrip } from '@/components/community/community-strip';
+import { getPublicCollections } from '@/lib/library/community';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { localeAlternates } from '@/lib/seo';
 import { sponsoredProducts } from '@/lib/ads/sponsored';
 import { SponsoredSlots } from '@/components/ads/sponsored-slots';
+import { PlacementBeacon } from '@/components/ads/beacons';
+import { JsonLd } from '@/components/json-ld';
+import { siteJsonLd } from '@/lib/structured-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,14 +30,21 @@ export async function generateMetadata(props: {
 export default async function Home(props: { params: Promise<{ locale: string }> }) {
   const params = await props.params;
   const { locale } = params;
-  const [published, dictionary, sponsored] = await Promise.all([
+  const [published, dictionary, sponsored, lists] = await Promise.all([
     publicProducts(),
     getDictionary(locale),
     sponsoredProducts('home'),
+    // The home's way into Comunidad; the home still renders when it cannot be read.
+    getPublicCollections({ sort: 'popular' })
+      .then(result => result.collections.slice(0, 3))
+      .catch(() => []),
   ]);
 
   return (
     <div>
+      <JsonLd data={siteJsonLd(locale)} />
+      {/* Page views for the sponsored home slot's reach estimate (SHCWS-72). */}
+      <PlacementBeacon placement="home" />
       <Suspense
         fallback={<div className="min-h-[70vh]" aria-label={dictionary.landing.loadingCatalog} />}
       >
@@ -43,6 +56,7 @@ export default async function Home(props: { params: Promise<{ locale: string }> 
           locale={locale}
         />
       </Suspense>
+      <NewThisWeekStrip products={published} locale={locale} dict={dictionary.catalog} />
       {sponsored.length > 0 && (
         <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
           <SponsoredSlots items={sponsored} locale={locale} dict={dictionary.ads.slot} />
@@ -54,6 +68,7 @@ export default async function Home(props: { params: Promise<{ locale: string }> 
         explorerDict={dictionary.categoryExplorer}
       />
       <LandingStackingCards products={published} dict={dictionary.landing} />
+      <CommunityStrip collections={lists} dict={dictionary.community} />
       <LandingBentoBlogs dict={dictionary.bentoBlogs} locale={locale} />
       <FounderInvitation dict={dictionary.landing} />
     </div>

@@ -18,6 +18,13 @@ export function subjectHref(
     return subjectType === 'report' ? '/panel/reportes' : '/panel/comunidad';
   if (subjectType === 'inquiry') return `/panel/mensajes?id=${subjectId}&filtro=all`;
   if (subjectType === 'notification') return '/panel/correo?filtro=all';
+  if (subjectType === 'ad_campaign' && isUuidLike(subjectId)) return `/panel/anuncios/${subjectId}`;
+  if (subjectType === 'ad_placement') return '/panel/anuncios';
+  if (subjectType === 'billing_document') return '/panel/facturacion?filtro=all';
+  if (subjectType === 'review') return '/panel/comunidad?vista=resenas';
+  if (subjectType === 'comment_report') return '/panel/reportes?tipo=comentarios&estado=all';
+  if (subjectType === 'question_report') return '/panel/reportes?tipo=preguntas&estado=all';
+  if (subjectType === 'question') return '/panel/comunidad?vista=preguntas';
   return null;
 }
 

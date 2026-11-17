@@ -6,6 +6,9 @@ import { sendEmail } from '@/lib/notifications/server';
 import { deleteObjects } from '@/lib/storage/blob';
 import { processBillingQueue } from '@/lib/billing/server';
 import { refreshSat69b } from '@/lib/compliance/server';
+import { runWeeklyRecognition } from '@/lib/recognition/server';
+import { runMaintenance } from '@/lib/maintenance';
+import { renewDomainProofs } from '@/lib/trust/renewal';
 
 export const dynamic = 'force-dynamic';
 // The 69-B list is a 4.5 MB download on the days it changes (docs/compliance.md).
@@ -30,6 +33,19 @@ export async function GET(request: NextRequest) {
   // Mirror of the SAT's 69-B list. A conditional request makes most days a 304; a
   // failure keeps yesterday's list and is reported, never thrown.
   const registry = await refreshSat69b().catch(() => 'failed' as const);
+  // «Top de la semana» (docs/recognition.md): the last finished week is computed once, on
+  // the first run after it ends; every other day this is one indexed lookup. A failure
+  // leaves the week uncomputed, so the next run tries again.
+  const recognition = await runWeeklyRecognition()
+    .then(({ status, period, awarded }) => ({ status, period, awarded }))
+    .catch(() => ({ status: 'failed' as const }));
+  // Expired sessions and login challenges, screenshots never used and contact messages
+  // past their retention (SHCWS-12, src/lib/maintenance.ts). Counts per step; null means
+  // that step failed and runs again tomorrow.
+  const maintenance = await runMaintenance().catch(() => ({ status: 'failed' as const }));
+  // Domain proofs two weeks from lapsing (SHCWS-134): renewed if the TXT record is still
+  // there, otherwise one notice to the founder. Counts only; failures retry tomorrow.
+  const domains = await renewDomainProofs().catch(() => ({ status: 'failed' as const }));
   const config = recoveryConfig();
 
   // Orphaned blob sweep. Runs first (and only when explicitly enabled) so a slow
@@ -46,6 +62,12 @@ export async function GET(request: NextRequest) {
            OR EXISTS (SELECT 1 FROM solution_media_files f WHERE f.storage_key = o.key)
            OR EXISTS (SELECT 1 FROM solution_site_images i WHERE i.storage_key = o.key)
            OR EXISTS (SELECT 1 FROM auth_accounts a        WHERE a.avatar_key  = o.key)`;
+      // Site logos (db/solution-site-icons.sql) in their own statement: a database
+      // without that migration has no logo keys to protect, and must still sweep.
+      await sweepSql`DELETE FROM storage_orphans o
+        WHERE EXISTS (SELECT 1 FROM solution_site_icons c WHERE c.storage_key = o.key)`.catch(
+        () => undefined,
+      );
       // Lease a batch. attempts increments at lease time, so a run that dies
       // mid-batch still burns an attempt and cannot loop forever.
       const leased = await sweepSql`UPDATE storage_orphans SET attempts = attempts + 1,
@@ -101,7 +123,16 @@ export async function GET(request: NextRequest) {
 
   if (checks.database && checks.homepage) {
     return NextResponse.json(
-      { status: 'ok', checks, orphansDeadLettered, billingDocuments, registry },
+      {
+        status: 'ok',
+        checks,
+        orphansDeadLettered,
+        billingDocuments,
+        registry,
+        recognition,
+        maintenance,
+        domains,
+      },
       { headers: { 'Cache-Control': 'no-store' } },
     );
   }
@@ -129,6 +160,9 @@ export async function GET(request: NextRequest) {
           orphansDeadLettered,
           billingDocuments,
           registry,
+          recognition,
+          maintenance,
+          domains,
         },
         { status: 503, headers: { 'Cache-Control': 'no-store' } },
       );
@@ -143,6 +177,9 @@ export async function GET(request: NextRequest) {
       orphansDeadLettered,
       billingDocuments,
       registry,
+      recognition,
+      maintenance,
+      domains,
     },
     { status: 503, headers: { 'Cache-Control': 'no-store' } },
   );

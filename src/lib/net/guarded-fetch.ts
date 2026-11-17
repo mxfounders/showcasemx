@@ -9,8 +9,9 @@ import { isIP } from 'node:net';
  * and the connection; that residual race is documented in docs/listings.md rather
  * than papered over.
  *
- * Shared by the site cover (og:image) and the AI draft reader, which both read the
- * website a founder declared.
+ * Shared by everything that reads the website a founder declared: the cover
+ * (og:image), the logo (src/lib/solutions/site-icon.ts), the page itself and the
+ * AI draft reader (src/lib/solutions/site-reader.ts).
  */
 
 const MAX_REDIRECTS = 3;
@@ -101,9 +102,17 @@ export async function guardedFetch(
   return null;
 }
 
-export async function readCapped(response: Response, limit: number): Promise<Buffer | null> {
+/**
+ * The body, at most `limit` bytes. Past the limit it returns null, or, with `truncate`,
+ * the first `limit` bytes: enough for a page's <head> when the whole page is huge.
+ */
+export async function readCapped(
+  response: Response,
+  limit: number,
+  { truncate = false }: { truncate?: boolean } = {},
+): Promise<Buffer | null> {
   const declared = Number(response.headers.get('content-length') ?? 0);
-  if (declared > limit) return null;
+  if (declared > limit && !truncate) return null;
   const reader = response.body?.getReader();
   if (!reader) return null;
   const chunks: Uint8Array[] = [];
@@ -113,8 +122,10 @@ export async function readCapped(response: Response, limit: number): Promise<Buf
     if (done) break;
     size += value.byteLength;
     if (size > limit) {
-      await reader.cancel();
-      return null;
+      await reader.cancel().catch(() => {});
+      if (!truncate) return null;
+      chunks.push(value);
+      return Buffer.concat(chunks).subarray(0, limit);
     }
     chunks.push(value);
   }

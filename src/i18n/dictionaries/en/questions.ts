@@ -1,0 +1,82 @@
+import type { Dictionary } from '../../dictionary';
+
+export const questions = {
+  title: 'Questions',
+  intro:
+    "Specific doubts that don't call for a contact request: invoicing, integrations, whether there's an app. The vendor answers.",
+  empty: 'No questions yet. If something is missing to decide on {name}, ask it here.',
+  ask: 'Ask a question',
+  signIn: 'Sign in',
+  signInSuffix: 'to ask a question.',
+  verify:
+    'To ask in public, confirm your email first. That way we know there is a person behind every question.',
+  verifyLink: 'Confirm my email',
+  ownNote:
+    "You get an email with every new question. Your answer is highlighted as the vendor's; you can't edit or delete other people's questions, but you can report them.",
+  unanswered: 'No answer yet',
+  answerFrom: 'Answer from {name}',
+  hidden: 'Moderation hid your question: {reason}.',
+  form: {
+    name: 'Public name',
+    namePlaceholder: 'Your name or how you want to sign',
+    body: 'Your question',
+    bodyPlaceholder:
+      'Does it issue invoices? Does it connect to my accounting system? Is there a mobile app?',
+    counter: '{count}/{max}',
+    rules:
+      "It is published with the name you write, never with your email. Don't share personal data or your company's confidential information.",
+    submit: 'Post question',
+    sending: 'Posting…',
+    cancel: 'Cancel',
+  },
+  answer: {
+    action: 'Answer',
+    edit: 'Edit answer',
+    remove: 'Remove answer',
+    label: 'Your public answer',
+    placeholder: 'Answer with what any visitor needs to know.',
+    submit: 'Post answer',
+    saving: 'Posting…',
+    cancel: 'Cancel',
+  },
+  delete: 'Delete my question',
+  deleteConfirm: "Delete your question? It can't be undone.",
+  deleting: 'Deleting…',
+  report: {
+    action: 'Report',
+    title: 'Report this question',
+    reason: 'Reason',
+    reasons: {
+      spam: 'Spam or advertising',
+      abuse: 'Offensive or with personal data',
+      impersonation: 'Impersonates another person or company',
+      other: 'Other',
+    },
+    details: "What's wrong",
+    detailsPlaceholder: 'Explain what you saw, with at least 10 characters.',
+    submit: 'Send report',
+    sending: 'Sending…',
+    cancel: 'Cancel',
+    done: 'Thank you. Moderation will review the report.',
+  },
+  errors: {
+    foreignOrigin: 'Submit the form from shwcs.',
+    signIn: 'Sign in to continue.',
+    invalidRequest: "We couldn't process the request.",
+    rateLimited: 'Too many attempts. Wait a few minutes.',
+    unpublished: 'This solution is no longer published.',
+    own: "You can't ask on your own listing. Answer other people's questions.",
+    verify: 'Confirm your email to ask public questions.',
+    notFound: "We couldn't find that question.",
+    notOwner: 'Only the vendor can answer.',
+    answerInvalid: 'The answer can have up to 2,000 characters.',
+    reportDetails: 'Choose a reason and explain the problem (10 to 2,000 characters).',
+    reportRateLimited: 'You sent several reports in a row. Try again later.',
+    reportConflict: 'You already reported this question or it is no longer visible.',
+    saveFailed: "We couldn't save. Try again.",
+    fields: {
+      name: 'Enter a public name of up to 60 characters.',
+      body: 'The question must have 10 to 500 characters.',
+    },
+  },
+} as const satisfies Dictionary['questions'];

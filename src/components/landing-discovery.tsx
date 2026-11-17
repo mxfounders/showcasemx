@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { SearchDemandBeacon } from '@/components/search/search-demand-beacon';
 import { useSearchParams } from 'next/navigation';
 import { Hero } from './hero';
 import { CategoryExplorer } from './category-explorer';
 import { previewCategories, catalogPriority, type PreviewProduct } from '@/lib/catalog-preview';
-import { searchCatalog } from '@/lib/catalog-search';
+import { heroSuggestions, searchCatalog } from '@/lib/catalog-search';
 import type { PublishedProduct } from '@/lib/solutions/public';
 import type { Dictionary } from '@/i18n/dictionary';
 
@@ -47,6 +48,10 @@ export function LandingDiscovery({
       })),
     [published],
   );
+  const suggestions = useMemo(
+    () => heroSuggestions(categories, dict.heroSearchExamples),
+    [categories, dict.heroSearchExamples],
+  );
   const params = useSearchParams();
   const urlQuery = (params.get('q') ?? '').slice(0, 200).trim();
   const [query, setQuery] = useState(urlQuery);
@@ -75,8 +80,12 @@ export function LandingDiscovery({
   }
   return (
     <>
+      <SearchDemandBeacon query={query} results={results?.length ?? 0} surface="home" />
       <Hero
         dict={dict}
+        chips={suggestions.chips}
+        examples={suggestions.examples}
+        locale={locale}
         onSearch={value => {
           setQuery(value.trim());
           revealCatalog();

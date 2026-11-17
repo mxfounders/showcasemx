@@ -1,5 +1,5 @@
 import Link from '@/i18n/navigation';
-import { BookmarkIcon, LockIcon } from '@/components/icons/gota';
+import { BellIcon, BookmarkIcon, LockIcon } from '@/components/icons/gota';
 import {
   requireBuyer,
   getSaved,
@@ -76,13 +76,23 @@ export default async function SavedPage(props: {
             String(saved.length),
           )}
         </p>
-        <Link
-          href="/account/lists"
-          style={actionButtonStyle}
-          className="action-button rounded-full px-5 py-3 text-sm font-medium"
-        >
-          {t.myLists}
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Saved-search alerts (SHCWS-47) live next to what the buyer keeps. */}
+          <Link
+            href="/account/alerts"
+            className="inline-flex items-center gap-2 rounded-full border border-stone-200 px-5 py-3 text-sm font-medium text-stone-700 transition-colors hover:bg-white"
+          >
+            <BellIcon aria-hidden="true" className="size-4 text-[#365DC4]" />
+            {dictionary.alerts.page.title}
+          </Link>
+          <Link
+            href="/account/lists"
+            style={actionButtonStyle}
+            className="action-button rounded-full px-5 py-3 text-sm font-medium"
+          >
+            {t.myLists}
+          </Link>
+        </div>
       </div>
       {saved.length ? (
         <SavedGallery

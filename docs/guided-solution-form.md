@@ -1,30 +1,58 @@
-# Postulación guiada, creadores y redes
+# Registro de un proyecto: enlace primero, tres pasos y lo opcional aparte
 
-Entrega original 30/08/2026, ampliada el 5/09/2026 (CLAUDE.md §59). Sustituye
-la interfaz anterior de cuatro pantallas largas. Conserva las cuatro fases
-internas para compatibilidad, pero presenta **17 preguntas cortas**: nombre,
-tipo/categorías, problema, **qué hace en concreto (capacidades)**, audiencia,
-a quién sirve (industrias/tamaño), alcance, creadores, enlaces, capturas, demo,
-contratación (modelo/rango de precio), implementación/arranque/soporte,
-**con qué se conecta**, **qué cumplimiento acredita**, evidencia, sitio/contacto
-y revisión final. Las tres preguntas en negrita son la ampliación de §59; el
-resto es la entrega original de esta página.
+Sustituye el editor de 17 preguntas lineales (§59) desde el 14 de noviembre de 2026
+(SHCWS-29, SHCWS-36). Petición del propietario: que cualquiera registre un proyecto
+rápido, sin RFC ni pantallas de más.
+
+## Recorrido
+
+1. **`/account/solutions/new` pide solo el enlace** (sitio o perfil público; acepta
+   `tuproyecto.com` sin `https://`). El borrador nace con él (`POST /api/solutions` con
+   `website`) y abre el editor.
+2. **El editor lee el sitio una vez por visita** mientras nombre y descripción están vacíos:
+   `POST /api/solutions/[id]/site-image` guarda la portada y devuelve lo que la página dice
+   de sí misma (`readSiteMeta`, `readSiteLinks` en `src/lib/solutions/site-image.ts`, con
+   la misma protección SSRF de §50). Solo llena campos vacíos: nombre (og:site_name o la
+   primera parte del título), descripción (og:description o meta description) y redes
+   oficiales (LinkedIn, X, Instagram, YouTube, GitHub, Product Hunt, TikTok; nunca botones
+   de compartir ni publicaciones). Lo que el fundador ya escribió se respeta y la versión
+   del sitio aparece como botón «Usar…». No hay IA: metadatos del propio sitio (la IA sigue
+   en SHCWS-151).
+3. **Tres pasos obligatorios** (`requiredQuestions`, `src/lib/solutions/questions.ts`):
+   - **Lo básico**: enlace, nombre, tipo, descripción (mínimo 20, con contador).
+   - **Dónde encaja**: categorías y, debajo de cada una, sus capacidades. Sugerencias de un
+     clic desde el texto (`src/lib/search/suggest.ts`): raíz común («cotiza» ↔
+     «cotizaciones»), cada término cuenta una vez, palabras genéricas («cliente»,
+     «empresa»…) no cuentan y una categoría débil no aparece. Quitar una categoría quita sus
+     capacidades. «¿No ves tu categoría?» guarda `otherCategory` (80 caracteres, privado:
+     solo lo lee ops; nunca entra a `published_data`).
+   - **Para quién**: cliente ideal e industrias/tamaños, con «Cualquier industria» y
+     «Cualquier tamaño» como primera opción (el `[]` de §54).
+4. **Revisa y envía**: resumen con «Editar» por fila, correo privado de revisión
+   (prellenado con el de la cuenta) y el botón de envío. Debajo, **«Hazla más fuerte»**:
+   capturas, demo, precio, arranque y soporte, integraciones, cumplimiento, alcance,
+   equipo, redes y evidencia como tarjetas en cualquier orden, cada una con «Guardar» y
+   «Descartar cambios».
+
+A la derecha, en escritorio, la tarjeta del catálogo se redibuja con cada tecla
+(`ListingPreview`): portada (captura propia o la del sitio), nombre, descripción,
+categorías y dominio. Una ficha publicada abre directo en la revisión y su botón dice
+«Enviar actualización a revisión»; sin cambios pendientes queda deshabilitado.
+
+## Compatibilidad
+
+`step` (0..3) y `editor_question` siguen igual en la base. Los ids del editor anterior
+(`identity`, `categories`, `problem`, `capabilities`, `market`, `contact`) reanudan en el
+paso equivalente y la API los sigue aceptando con su fase (`questionPhase`, con
+`Object.hasOwn` para que «constructor» no resuelva por el prototipo). Las fases 2 y 3
+antiguas reanudan en la revisión.
 
 ## Interacción
 
-Sobre el mismo fondo y ancho de cuenta; sin tarjeta contenedora. Una pregunta
-visible a la vez, avance persistido, transición GSAP de 220 ms (desactivada con
-reduced motion), foco en el título y desplazamiento a la pregunta al avanzar.
-El índice desplegable permite ir a cualquier pregunta guardando el borrador actual.
-Anterior también guarda; no asumir que avanzar significa que todos los campos
-opcionales ya están completos. Guardar y salir conserva incluso borradores incompletos.
-
-Enter en un input continúa; Ctrl/Cmd+Enter en texto también. Enter en un textarea
-normal añade un salto de línea. Se respeta composición IME. **Nunca se envía a
-revisión con el atajo global**: hace falta activar el botón final. Botones/controles
-quedan bloqueados durante escritura/subida. El guardado mantiene CAS y no simula
-éxito al fallar. Si la revisión final encuentra errores, vuelve a la pregunta adecuada.
-El panel de seguimiento de la postulación se conserva debajo del editor.
+Una pantalla a la vez, transición GSAP de 220 ms (desactivada con reduced motion), foco en
+el título al cambiar. Enter en un input continúa; Ctrl/Cmd+Enter en un texto largo
+también; en el campo del enlace Enter no avanza. **Nunca se envía a revisión con un
+atajo**: hace falta el botón. Cada «Continuar» guarda con CAS; un fallo no simula éxito.
 
 ## Datos públicos optativos
 

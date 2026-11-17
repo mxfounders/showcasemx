@@ -27,12 +27,18 @@ export function BillingProfileForm({
   version: initialVersion,
   countries,
   dict,
+  submitLabel,
+  onSaved,
 }: {
   initial: BillingProfile | null;
   version: number;
   /** Country codes with their names, resolved on the server so markup never differs. */
   countries: { code: string; name: string }[];
   dict: Dictionary['billing'];
+  /** Replaces «Save» when the form is the last step of another flow (buying a slot). */
+  submitLabel?: string;
+  /** Called once the server stored the profile; the page is then not refreshed. */
+  onSaved?: (profile: { countryCode: string }) => void;
 }) {
   const t = dict.profile;
   const router = useRouter();
@@ -80,7 +86,8 @@ export function BillingProfileForm({
       }
       setVersion(result.version);
       setSaved(true);
-      router.refresh();
+      if (onSaved) onSaved({ countryCode: values.countryCode });
+      else router.refresh();
     } catch {
       setError({ message: dict.errors.network });
     } finally {
@@ -235,7 +242,7 @@ export function BillingProfileForm({
           style={actionButtonStyle}
           className="action-button inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-medium disabled:opacity-60"
         >
-          {pending ? t.saving : t.save}
+          {pending ? t.saving : (submitLabel ?? t.save)}
           <ArrowRightIcon aria-hidden="true" className="size-4 button-arrow" />
         </button>
         {saved && (

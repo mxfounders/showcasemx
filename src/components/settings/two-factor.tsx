@@ -19,10 +19,13 @@ const field =
 export function TwoFactor({
   enabled,
   available,
+  emailVerified,
   dict,
 }: {
   enabled: boolean;
   available: boolean;
+  /** Turning it on needs a confirmed email (SHCWS-173); the server checks it too. */
+  emailVerified: boolean;
   dict: Dictionary['settings']['security']['twoFactor'];
 }) {
   const router = useRouter();
@@ -167,7 +170,11 @@ export function TwoFactor({
         onSubmit={event => {
           event.preventDefault();
           run(async () => {
-            const result = await call({ action: disabling ? 'disable' : 'regenerate', password });
+            const result = await call({
+              action: disabling ? 'disable' : 'regenerate',
+              password,
+              code,
+            });
             if (disabling) {
               reset();
               router.refresh();
@@ -175,6 +182,7 @@ export function TwoFactor({
               setCodes(result.backupCodes as string[]);
               setStage('idle');
               setPassword('');
+              setCode('');
             }
           });
         }}
@@ -194,6 +202,21 @@ export function TwoFactor({
               setError('');
             }}
             className={`mt-2 ${field}`}
+          />
+        </label>
+        <label className="block text-sm font-medium text-stone-700">
+          {dict.codeLabel}
+          <input
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            required
+            value={code}
+            onChange={event => {
+              setCode(event.target.value.replace(/\D/g, '').slice(0, 8));
+              setError('');
+            }}
+            placeholder="123456"
+            className={`mt-2 ${field} max-w-[220px] tracking-[0.2em]`}
           />
         </label>
         {error && (
@@ -379,15 +402,21 @@ export function TwoFactor({
         {dict.inactive}
       </p>
       <p className="text-sm leading-relaxed text-stone-500">{dict.inactiveDesc}</p>
-      <button
-        type="button"
-        onClick={() => setStage('password')}
-        style={actionButtonStyle}
-        className="action-button inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium"
-      >
-        <ShieldIcon aria-hidden="true" className="size-4" />
-        {dict.enable}
-      </button>
+      {emailVerified ? (
+        <button
+          type="button"
+          onClick={() => setStage('password')}
+          style={actionButtonStyle}
+          className="action-button inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium"
+        >
+          <ShieldIcon aria-hidden="true" className="size-4" />
+          {dict.enable}
+        </button>
+      ) : (
+        <p className="rounded-xl border border-[#E8D9A8] bg-[#FBF6E7] px-4 py-3 text-sm leading-relaxed text-[#6B4E15]">
+          {dict.verifyEmailFirst}
+        </p>
+      )}
     </div>
   );
 }

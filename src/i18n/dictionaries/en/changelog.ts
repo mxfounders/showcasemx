@@ -22,10 +22,132 @@ export const changelog = {
     account: 'Account',
   },
   months: {
+    november: 'November 2026',
+    october: 'October 2026',
     september: 'September 2026',
     august: 'August 2026',
   },
   releases: {
+    conversations: {
+      date: 'November 14, 2026',
+      label: 'Contacts',
+      title: 'Conversations with projects',
+      summary:
+        'After you request a proposal, you and the project can write to each other inside shwcs without losing the thread.',
+      items: [
+        'Both sides write messages, and the top shows whose turn it is to reply.',
+        'Each message notifies the other side in their account and by email.',
+        'Projects see which opportunities they have not read yet.',
+      ],
+    },
+    listings: {
+      date: 'November 14, 2026',
+      label: 'Listings',
+      title: 'List your project in minutes',
+      summary:
+        'Paste your site’s link and the listing fills in its name, description, cover and social links. Then it takes three steps to send it for review.',
+      items: [
+        '14 categories and 15 industries, plus «Don’t see your category?» to tell us what is missing.',
+        '«Verified by shwcs»: the team reviews the project and the listing shows it, without asking for a tax ID.',
+        'Recognition: Top of the week, from verified activity, and the shwcs Pick, chosen by the team.',
+        'Badges for your site, light or dark, in both languages.',
+      ],
+    },
+    reviewInvites: {
+      date: 'November 14, 2026',
+      label: 'Reviews',
+      title: 'More reviews and questions on every listing',
+      summary:
+        'Projects can invite their customers to review them, and anyone can ask a question on the listing.',
+      items: [
+        'An invited review says «Invited by the project» and counts half in the catalog order.',
+        '«Contacted via shwcs» marks the review of someone who talked to the project here, without showing the conversation.',
+        'Public questions with the project’s answer.',
+      ],
+    },
+    alerts: {
+      date: 'November 14, 2026',
+      label: 'Discovery',
+      title: 'Alerts for what you care about',
+      summary: 'Save a search and we let you know when something that fits is published.',
+      items: [
+        '«Notify me» on search and on every category; manage them in My alerts.',
+        'Follow community lists and the people who sign them.',
+        'Every Monday, projects get «Your week on shwcs» with their visits, clicks and what is pending.',
+      ],
+    },
+    gota: {
+      date: 'October 23, 2026',
+      label: 'Design',
+      title: 'New icons across shwcs',
+      summary:
+        "The whole interface is now drawn with Gota, Flouvia's icon set: finer strokes and a single style across the site, the account and the team's panel.",
+      items: [
+        'Each page loads only the icons it uses.',
+        'Decorative icons stay hidden from screen readers; meaningful ones keep their accessible name.',
+      ],
+    },
+    reviews: {
+      date: 'October 10, 2026',
+      label: 'Reviews',
+      title: 'Reviews from people who use each project',
+      summary:
+        'Any account can review a published listing: stars, what they use it for, the best part and what they would improve. Each review says how verified its author is.',
+      items: [
+        "One review per account and listing; it goes public once the author's email is verified.",
+        'Visible levels: verified email, company email and verified purchase with its CFDI.',
+        'The owner answers in public but never edits or deletes a review; nobody reviews their own listing.',
+        'Stars and the number of reviews show on catalog cards.',
+      ],
+    },
+    registries: {
+      date: 'October 10, 2026',
+      label: 'Trust',
+      title: 'Public registries on the listing',
+      summary:
+        "When a tax identity is on file, the listing says whether the provider appears on the SAT's 69-B list and as of which date, without showing the RFC.",
+      items: [
+        'The list is refreshed daily from the official source.',
+        '«Verified purchase»: a reviewer can validate their CFDI with the SAT; only a fingerprint of the folio is kept.',
+      ],
+    },
+    english: {
+      date: 'October 10, 2026',
+      label: 'Languages',
+      title: 'All of shwcs in English',
+      summary:
+        'After the information pages in September, the whole site and the account now work in Spanish and English.',
+      items: [
+        'Catalog, listings, community, blog, account and settings in both languages.',
+        'Error messages come back in the language of the page you act from.',
+        'All 16 blog articles have an English version.',
+        'Emails are still in Spanish for now.',
+      ],
+    },
+    communityReports: {
+      date: 'September 5, 2026',
+      label: 'Community',
+      title: 'Report community lists and comments',
+      summary:
+        'If a public list or a comment breaks the rules, any account can report it and the team reviews it.',
+      items: [
+        'Clear reasons: spam, abuse, impersonation or other.',
+        'Nobody can report their own list or comment.',
+        "Community search finds partial matches in each list's name, description and projects.",
+      ],
+    },
+    security: {
+      date: 'September 3, 2026',
+      label: 'Account',
+      title: 'More control over your account and your data',
+      summary:
+        'Settings now show what is left to protect and let you decide what happens to your information.',
+      items: [
+        'Optional two-step verification with an authenticator app and backup codes.',
+        "A list of open sessions to close the ones you don't recognize.",
+        'Download a copy of your data or delete your account whenever you want.',
+      ],
+    },
     capabilities: {
       date: 'September 5, 2026',
       label: 'New',

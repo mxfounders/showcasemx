@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession, sessionCookie } from '@/lib/auth/session';
-import { securityLimit, authSql } from '@/lib/auth/security';
+import { securityLimit, authSql, requestIdentity } from '@/lib/auth/security';
 import { recoveryConfig } from '@/lib/auth/recovery';
 import {
   requestVerification,
@@ -18,7 +18,8 @@ export async function POST(request: NextRequest) {
     if (!body) return failure(t.invalidRequest, 400);
     if (body.action === 'confirm') {
       if (!validVerificationToken(body.token)) return failure(t.verificationLinkInvalid, 400);
-      if (!(await securityLimit('verify-token', body.token, 5)))
+      // Keyed by network: the token is whatever the caller sends (SHCWS-171).
+      if (!(await securityLimit('verify-token', requestIdentity(request.headers), 10)))
         return failure(t.tooManyAttemptsShort, 429);
       if (!(await consumeVerification(body.token))) return failure(t.verificationLinkUsed, 400);
       return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });

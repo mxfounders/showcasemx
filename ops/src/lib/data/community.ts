@@ -32,7 +32,7 @@ export async function communityOverview(q = '', page = 1, pageSize = 30) {
         LIMIT ${pageSize + 1} OFFSET ${offset}
       `,
       sql`
-        SELECT c.id, c.solution_id, c.author_name, c.body, c.created_at,
+        SELECT c.id, c.solution_id, c.author_name, c.body, c.created_at, c.hidden_at, c.hidden_reason,
           COALESCE(s.published_data->>'name', s.data->>'name') AS target_name, a.email AS author_email
         FROM solution_comments c
         JOIN founder_solutions s ON s.id = c.solution_id
@@ -63,6 +63,8 @@ export async function communityOverview(q = '', page = 1, pageSize = 30) {
     authorEmail: c.author_email ? String(c.author_email) : null,
     body: String(c.body),
     createdAt: iso(c.created_at),
+    // Only comments of listings can be hidden (db/solution-comment-reports.sql).
+    hiddenReason: c.hidden_at ? String(c.hidden_reason ?? '') : null,
   });
   const s = stats[0] ?? {};
   return {

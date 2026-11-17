@@ -5,7 +5,7 @@ import { categories, collections, industries } from './taxonomy';
 // What a path under /[locale] can be, checked by the middleware before anything
 // renders. Bots and vulnerability scanners probe thousands of paths a day
 // (/wp-login.php, /.env, /xmlrpc.php…); without this check each one rendered a full
-// page and answered 200 (CLAUDE.md §73). Deeper checks that need the database (does
+// page and answered 200 (CLAUDE.md §79). Deeper checks that need the database (does
 // this UUID exist?) stay in the pages; the closed slug sets below are checked here,
 // because a page-level notFound() under a loading.tsx can only answer 200 (§53).
 // tests/routes.test.ts walks src/app/[locale] so a new route cannot be left out.
@@ -25,7 +25,9 @@ const routes = new Map<string, Rest>([
   ...infoSlugs.map((info): [string, Rest] => [info, leaf]),
   // Private tree: its own pages authenticate and send anonymous visitors to sign-in.
   ['account', () => true],
+  ['anunciate', leaf],
   ['blog', rest => leaf(rest) || blogPost(rest)],
+  ['buscar', leaf],
   ['colecciones', oneOf(collections.map(item => item.slug))],
   ['comunidad', rest => leaf(rest) || idPage(rest)],
   ['contacto', leaf],
@@ -33,12 +35,16 @@ const routes = new Map<string, Rest>([
   ['forgot-password', leaf],
   ['industria', oneOf(industries.map(item => item.slug))],
   ['newsletter', rest => leaf(rest) || (rest.length === 1 && rest[0] === 'unsubscribe')],
+  ['nuevo', leaf],
   ['onboarding', leaf],
+  // A review invitation link (src/lib/reviews/invitations.ts): 16 random bytes in hex.
+  ['resenar', rest => rest.length === 1 && /^[0-9a-f]{32}$/.test(rest[0])],
   ['reset-password', leaf],
   ['sign-in', leaf],
   ['sign-up', leaf],
   ['soluciones', idPage],
   ['verify-email', leaf],
+  ['weekly', rest => rest.length === 1 && rest[0] === 'unsubscribe'],
 ]);
 
 /**
@@ -46,6 +52,11 @@ const routes = new Map<string, Rest>([
  * can name a page. No page has a dot in its path, so anything file-like is rejected.
  */
 export function isPagePath(segments: readonly string[]): boolean {
+  // A page's generated share image (opengraph-image.tsx) is served under the page itself,
+  // as /…/opengraph-image or with a hash suffix: valid wherever the page is.
+  const last = segments.at(-1);
+  if (last && /^(?:opengraph|twitter)-image(?:-[0-9a-z]+)?$/i.test(last))
+    return isPagePath(segments.slice(0, -1));
   if (segments.some(segment => segment.includes('.'))) return false;
   if (segments.length === 0) return true;
   const [first, ...rest] = segments;

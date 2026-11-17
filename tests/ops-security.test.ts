@@ -1,6 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildCsp, clientIp, ipAllowed, isIp, parseAllowlist, parseIp } from '../ops/src/lib/net';
+import {
+  buildCsp,
+  clientIp,
+  ipAllowed,
+  isIp,
+  networkKey,
+  parseAllowlist,
+  parseIp,
+} from '../ops/src/lib/net';
 import { csvCell, toCsv } from '../ops/src/lib/csv';
 import { fieldChanges, wordDiff } from '../ops/src/lib/diff';
 import { niceTicks } from '../ops/src/components/charts/scale';
@@ -56,6 +64,14 @@ test('ops client IP prefers platform headers and ignores garbage', () => {
   );
   assert.equal(clientIp(new Headers({ 'x-forwarded-for': '<script>' })), null);
   assert.equal(clientIp(new Headers()), null);
+});
+
+test('ops rate limits count an IPv6 /64 as one network (SHCWS-171)', () => {
+  assert.equal(networkKey('2001:db8:aa:bb::1'), '2001:db8:aa:bb::/64');
+  assert.equal(networkKey('2001:db8:aa:bb:ffff:1:2:3'), '2001:db8:aa:bb::/64');
+  assert.equal(networkKey('::ffff:198.51.100.4'), '198.51.100.4');
+  assert.equal(networkKey('198.51.100.4'), '198.51.100.4');
+  assert.equal(networkKey('nope'), null);
 });
 
 test('ops CSP is nonce-based without unsafe-inline scripts in production', () => {

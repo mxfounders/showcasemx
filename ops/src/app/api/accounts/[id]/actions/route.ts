@@ -1,6 +1,7 @@
 import { opsRoute, readReason } from '@/lib/api';
 import { failure, isUuid, ok } from '@/lib/http';
 import { triggerCatalogRevalidate } from '@/lib/catalog';
+import { removalSummary, stopListingBookings } from '@/lib/ad-removal';
 import { audit } from '@/lib/audit';
 
 export const runtime = 'nodejs';
@@ -124,10 +125,21 @@ export const POST = opsRoute<{ id: string }>(
       ip,
     });
     if (solutions.length) await triggerCatalogRevalidate();
+    // Their sponsored days stop too (SHCWS-81), under shwcs's own decision: a breach is
+    // decided per listing, from a report or the review panel.
+    const ads = await stopListingBookings(
+      sql,
+      solutions.map(row => String(row.id)),
+      'platformRemoval',
+      user,
+      reason,
+      ip,
+    );
+    const adsLine = removalSummary(ads);
     return ok({
       solutionsUnpublished: solutions.length,
       listsHidden: lists.length,
-      message: `${solutions.length} fichas retiradas y ${lists.length} listas ocultas.${logged ? '' : ' No se pudo registrar en la bitácora.'}`,
+      message: `${solutions.length} fichas retiradas y ${lists.length} listas ocultas.${adsLine ? ` ${adsLine}` : ''}${logged ? '' : ' No se pudo registrar en la bitácora.'}`,
     });
   },
 );

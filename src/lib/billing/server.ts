@@ -215,10 +215,15 @@ async function issueInvoice(document: QueuedDocument) {
   const sql = solutionsSql();
   const [booking] = await sql`SELECT c.owner_id, c.billing_email, c.solution_name, c.placement,
       c.scope, c.ends_on - c.starts_on AS days, c.daily_amount, c.subtotal_amount, c.tax_amount,
-      c.currency, c.stripe_payment_intent_id,
+      c.discount_amount, c.currency, c.stripe_payment_intent_id,
       to_char(c.starts_on, 'YYYY-MM-DD') AS starts_on, to_char(c.ends_on - 1, 'YYYY-MM-DD') AS last_day
     FROM ad_campaigns c WHERE c.id = ${document.campaign_id}`;
-  const taxRate = cfdiTaxRate(Number(booking.subtotal_amount), Number(booking.tax_amount ?? 0));
+  // Stripe taxes what is left after a promotion code, so the rate is read on that base.
+  const discount = Number(booking.discount_amount ?? 0);
+  const taxRate = cfdiTaxRate(
+    Number(booking.subtotal_amount) - discount,
+    Number(booking.tax_amount ?? 0),
+  );
   if (taxRate === null) throw new CordError(0, 'tax_rate_mismatch');
 
   const providerId =
@@ -232,6 +237,7 @@ async function issueInvoice(document: QueuedDocument) {
           currency: document.currency,
           taxRate,
           reference: `shwcs booking ${document.campaign_id}`,
+          discountAmount: discount,
         }),
         `invoice:${document.id}`,
       )

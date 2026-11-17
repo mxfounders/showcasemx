@@ -5,6 +5,7 @@ import { isSolutionId } from '@/lib/solutions/model';
 import { solutionsSql } from '@/lib/solutions/server';
 import { contactTarget, findContact } from '@/lib/contacts/server';
 import { ContactForm } from '@/components/contacts/forms';
+import { SponsoredContactIntent } from '@/components/ads/beacons';
 import { getDictionary } from '@/i18n/get-dictionary';
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const dictionary = await getDictionary((await params).locale);
@@ -15,13 +16,17 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 export default async function NewContact(props: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ solution?: string }>;
+  searchParams: Promise<{ solution?: string; ad?: string }>;
 }) {
   const [{ locale }, searchParams] = await Promise.all([props.params, props.searchParams]);
   const t = (await getDictionary(locale)).contacts;
   const id = searchParams.solution;
   if (!id || !isSolutionId(id)) notFound();
-  const account = await requireBuyer('/account/contacts/new?solution=' + id),
+  // `ad`: the sponsored booking the buyer came from, kept through sign-in (SHCWS-70).
+  const ad = searchParams.ad && isSolutionId(searchParams.ad) ? searchParams.ad : null;
+  const account = await requireBuyer(
+      '/account/contacts/new?solution=' + id + (ad ? '&ad=' + ad : ''),
+    ),
     target = await contactTarget(id);
   if (!target) notFound();
   const existing = await findContact(account.id, id);
@@ -53,17 +58,23 @@ export default async function NewContact(props: {
           </Link>
         </div>
       ) : (
-        <ContactForm
-          solutionId={id}
-          recipientId={target.owner_id}
-          projectName={target.name}
-          email={account.email}
-          defaults={{
-            name: String(profile?.name ?? ''),
-            company: String(profile?.organization ?? ''),
-          }}
-          dict={t}
-        />
+        <>
+          {ad && <SponsoredContactIntent bookingId={ad} solutionId={id} />}
+          <ContactForm
+            solutionId={id}
+            recipientId={target.owner_id}
+            projectName={target.name}
+            listingSizes={
+              Array.isArray(target.company_sizes) ? (target.company_sizes as string[]) : undefined
+            }
+            email={account.email}
+            defaults={{
+              name: String(profile?.name ?? ''),
+              company: String(profile?.organization ?? ''),
+            }}
+            dict={t}
+          />
+        </>
       )}
     </section>
   );

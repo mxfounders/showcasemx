@@ -48,7 +48,14 @@ Segmento de fundadores: `profile IN ('founder', 'both')`; compradores: `profile 
 
 En instalaciones nuevas, aplicar primero `db/newsletter-subscribers.sql` y después `db/newsletter-segments.sql`.
 
-Acceso y registro: encabezado «Bienvenido a shwcs», composición centrada directamente sobre el fondo, sin tarjeta exterior. Campos transparentes con iconos y CTA azul suave. Google aparece como botón deshabilitado con aviso «Próximamente»; OAuth no está conectado. Se conserva el acceso real por correo/contraseña.
+Acceso y registro: encabezado «Bienvenido a shwcs», composición centrada directamente sobre el fondo, sin tarjeta exterior. Campos transparentes con iconos y CTA azul suave. El botón de Google solo aparece con `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` configurados; sin ellos se oculta junto con el separador (SHCWS-26, sustituye el botón deshabilitado «Pendiente de conexión»). Se conserva el acceso real por correo/contraseña.
+
+Registro (14 nov 2026, SHCWS-26/155):
+
+- Una cuenta nueva sale del registro con sesión (`signedIn: true`) y sigue a `next` sin otro formulario. Si `next` es `/account/saved?project=…`, el formulario guarda el proyecto al abrir la sesión y lleva a Guardados: lo pide el envío del formulario, nunca un enlace GET (§5). `next=/account/contacts/new?solution=…` abre el formulario de contacto directamente.
+- Una cuenta existente nunca abre sesión desde el registro, sea cual sea la contraseña (`signedIn: false`, mismo estado y forma de respuesta). Su dueño recibe «Ya tienes una cuenta en shwcs» con enlaces para entrar o elegir contraseña, como máximo uno al día por dirección (`src/lib/auth/existing-account.ts`).
+- Límite conocido y aceptado en SHCWS-26: la cookie de sesión (y `signedIn`) distingue una cuenta nueva de una existente. Lo acotan el límite de 30 intentos cada 15 minutos por dirección de red y el correo al dueño, que hace visible cada sondeo. Iniciar sesión y recuperar contraseña siguen sin revelar si una cuenta existe.
+- Prueba: `RUN_REGISTER_INTEGRATION=1 node tests/integration/register-session.cjs`.
 
 ## Dashboard MVP y validación propia
 

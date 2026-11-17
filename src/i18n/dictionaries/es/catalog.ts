@@ -9,6 +9,9 @@ export const catalog = {
     compliance: 'Cumplimiento',
     format: 'Formato',
     useCase: 'Caso de uso',
+    /** SHCWS-52: projects that answer 8 of 10 requests, half of them within 48 h. */
+    response: 'Respuesta',
+    fastResponse: 'Responde rápido',
   },
   moreFilters: 'Más filtros',
   clear: 'Limpiar',
@@ -22,8 +25,30 @@ export const catalog = {
   showingPrefix: 'Mostrando',
   solutionSingular: 'solución',
   solutionPlural: 'soluciones',
+  searchLabel: 'Buscar en esta página',
+  searchPlaceholder: 'Necesidad, función o nombre',
+  searchPage: {
+    metaTitle: 'Buscar',
+    title: 'Resultados para «{query}»',
+    titleEmpty: 'Buscar en shwcs',
+    label: 'Buscar soluciones, listas y artículos',
+    placeholder: '¿Qué necesitas resolver?',
+    submit: 'Buscar',
+    solutions: 'Soluciones',
+    lists: 'Listas de la comunidad',
+    articles: 'Artículos',
+    topics: 'Categorías e industrias',
+    noResults: 'Todavía no encontramos nada para «{query}»',
+    noResultsDesc: 'Prueba con otras palabras, explora el catálogo o cuéntanos qué necesitas.',
+    brief: 'Cuéntanos qué necesitas',
+    explore: 'Explorar el catálogo',
+    readArticle: 'Leer artículo',
+  },
   noResultsTitle: 'No encontramos soluciones',
   noResultsDesc: 'Intenta quitar algunos filtros o explora otras categorías relacionadas.',
+  emptyPageDesc:
+    'Todavía no hay fichas publicadas aquí. Explora otra categoría o cuéntanos qué buscas.',
+  briefCta: 'Cuéntanos qué necesitas',
   alsoUsefulTitle: 'También podrían servir',
   alsoUsefulDesc:
     'No declararon todo lo que filtraste, pero encajan por su categoría y por lo que describen. Confírmalo con cada proyecto.',
@@ -32,4 +57,26 @@ export const catalog = {
   reasonCompanySize: 'No declaró tamaño de empresa',
   ratingLabel: '{rating} de 5 estrellas, {count} reseñas',
   viewSolution: 'Conocer solución',
+  /** /nuevo and its block on the home (SHCWS-125). Headings without a final period (§37). */
+  newThisWeek: {
+    metaTitle: 'Nuevo esta semana',
+    metaDescription:
+      'Las fichas aprobadas en shwcs en los últimos siete días, ordenadas por fecha de aprobación.',
+    title: 'Nuevo esta semana',
+    description:
+      'Las fichas que el equipo aprobó en los últimos siete días, de la más reciente a la más antigua. Aquí no se vota: cada ficha nueva se queda una semana completa y después pasa al archivo.',
+    emptyTitle: 'Esta semana todavía no se aprobó ninguna ficha nueva',
+    emptyDesc:
+      'Cuando el equipo apruebe una, aparecerá aquí durante siete días. Mientras tanto, explora el catálogo o revisa las semanas anteriores.',
+    exploreCta: 'Explorar el catálogo',
+    archiveTitle: 'Semanas anteriores',
+    weekHeading: 'Semana del {period}',
+    approvedOn: 'Aprobada el {date}',
+    founderNote:
+      '¿Construyes software para empresas? Publicar es gratis: al aprobarse, tu ficha aparece aquí una semana completa.',
+    founderCta: 'Cómo publicar',
+    homeTitle: 'Nuevo esta semana',
+    homeDesc: 'Fichas aprobadas en los últimos siete días, por fecha de aprobación.',
+    homeCta: 'Ver todo lo nuevo',
+  },
 } as const;

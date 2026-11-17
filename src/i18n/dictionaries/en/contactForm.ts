@@ -10,6 +10,7 @@ export const contactForm = {
     context: 'Tell us the context.',
     review: 'Is everything correct?',
   },
+  prefillNeed: "I'm looking for a solution for: {need}.",
   errors: {
     reason: 'Choose the reason that best matches your message.',
     name: 'Enter your name.',

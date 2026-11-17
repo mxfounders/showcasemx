@@ -6,18 +6,20 @@ es el primero. Sin adaptador, la identidad se guarda y la ficha solo dice que se
 
 ## Identidad fiscal del proveedor
 
-- La declara el dueño de la ficha en `/account/solutions/[id]` (tarjeta «Identidad
-  fiscal»). `POST /api/solutions/[id]/tax-identity` (`save`/`delete`): mismo origen,
-  sesión, solo el dueño, 20 cambios por hora.
+- La registra el **equipo en ops** al verificar la ficha (panel «Verificación» de
+  `/panel/postulaciones/[id]`, `POST /api/verification` con `tax-save`/`tax-delete`,
+  bitácora sin el identificador). El fundador ya no la escribe en ningún lado: se
+  retiraron la tarjeta y `POST /api/solutions/[id]/tax-identity` (SHCWS-163,
+  docs/recognition.md).
 - `solution_tax_identities` (una por ficha): **privada**. Nunca entra a `published_data`
   ni viaja a un visitante; la ficha pública muestra solo el resultado de la consulta,
   porque el RFC de una persona física es un dato personal.
 - Validación (`readTaxIdentity`, `src/lib/compliance/server.ts`): en México, RFC
   estricto (`src/lib/compliance/rfc.ts`, compartido con facturación) y sin RFC genéricos;
   en otros países, un identificador simple de 3 a 40 caracteres.
-- Cambiarla no requiere revisión editorial: el resultado sale de un registro público, no
-  de lo que afirma el proveedor. La ficha lo presenta como «RFC declarado por el
-  proveedor»; no prueba que el RFC sea suyo.
+- Cambiarla no requiere revisión editorial: el resultado sale de un registro público. La
+  ficha lo presenta como «RFC registrado por el equipo de shwcs al revisar el proyecto»;
+  es una consulta pública, no una certificación.
 
 ## México: lista 69-B del SAT
 
@@ -83,5 +85,4 @@ comprobantes (sin la huella).
 - Probar «Compra comprobada» con un CFDI real.
 - Adaptadores de otros países: NIF/IVA de la UE (VIES), Companies House (Reino Unido).
 - REPSE para agencias y servicios, y la lista de PAC autorizados.
-- Mostrar en ops la identidad fiscal y el resultado de cada ficha.
 - Comparar el RFC receptor con los datos de facturación de quien reseña.

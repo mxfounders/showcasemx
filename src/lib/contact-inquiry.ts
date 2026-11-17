@@ -30,6 +30,34 @@ export type ContactInquiry = {
   urgency: InquiryUrgency;
 };
 
+/** Longest search we carry into the form: the catalog's own search box stops at 200. */
+const maxPrefillNeed = 200;
+
+/**
+ * What a link may pre-select in the contact form: `/contacto?motivo=find&necesidad=…`.
+ * Only a known reason and a bounded, single-line need; the person still reviews,
+ * completes and sends the form themselves.
+ */
+export function readContactPrefill(params: { motivo?: unknown; necesidad?: unknown }): {
+  reason?: InquiryReason;
+  need: string;
+} {
+  const reason = inquiryReasons.find(item => item.value === params.motivo)?.value;
+  const need =
+    typeof params.necesidad === 'string'
+      ? params.necesidad.replace(/\s+/g, ' ').trim().slice(0, maxPrefillNeed)
+      : '';
+  return { reason, need };
+}
+
+/** The «tell us what you need» link for a search or page that found nothing. */
+export function contactBriefHref(need = '') {
+  const query = new URLSearchParams({ motivo: 'find' });
+  const trimmed = need.replace(/\s+/g, ' ').trim().slice(0, maxPrefillNeed);
+  if (trimmed) query.set('necesidad', trimmed);
+  return `/contacto?${query}`;
+}
+
 function text(value: unknown, maximum: number) {
   if (typeof value !== 'string') return '';
   const normalized = value.trim().replace(/\r\n/g, '\n');

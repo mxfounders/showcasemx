@@ -36,6 +36,11 @@ export const community = {
     next: 'Siguiente',
     pagePrefix: 'Página',
   },
+  home: {
+    title: 'Listas de la comunidad',
+    desc: 'Selecciones de proyectos que arma y comparte la gente de shwcs.',
+    cta: 'Ver todas las listas',
+  },
   byPrefix: 'Por',
   public: 'Pública',
   private: 'Privada',

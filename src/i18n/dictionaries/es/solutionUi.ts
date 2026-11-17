@@ -39,6 +39,24 @@ export const solutionUi = {
     empty: 'Sé la primera persona en comentar esta ficha.',
     deleteError: 'No pudimos eliminarlo.',
     postError: 'No pudimos publicar.',
+    reportLabel: 'Reportar este comentario',
+    /** Shown only to its author, above a comment ops hid; the reason follows. */
+    hiddenNote: 'Solo tú ves este comentario: lo ocultó el equipo de shwcs. Motivo:',
+  },
+  /** Reporting someone else's comment on a listing (SHCWS-140); ops decides. */
+  commentReport: {
+    done: 'Reporte recibido. El equipo de shwcs lo revisará.',
+    loginSuffix: 'para reportar.',
+    reasonLabel: 'Motivo',
+    reasonSpam: 'Spam o promoción no deseada',
+    reasonAbuse: 'Abuso o contenido ofensivo',
+    reasonImpersonation: 'Suplantación o datos de otra persona',
+    reasonOther: 'Otro motivo',
+    detailsLabel: '¿Qué debemos revisar?',
+    saving: 'Guardando…',
+    submit: 'Enviar reporte',
+    cancel: 'Cancelar',
+    genericError: 'Intenta de nuevo.',
   },
   report: {
     done: 'Reporte recibido. Revisaremos lo que compartiste.',
@@ -66,6 +84,9 @@ export const solutionUi = {
     invalidAction: 'Acción inválida.',
     saveFailed: 'No pudimos guardar el cambio.',
     unconfirmed: 'No pudimos confirmar el cambio. Recarga para comprobarlo antes de repetir.',
+    reportDetails: 'Indica el motivo y al menos 10 caracteres de contexto.',
+    reportRateLimited: 'Demasiados reportes. Intenta más tarde.',
+    reportConflict: 'Ya tienes un reporte abierto sobre este comentario o ya no está disponible.',
   },
   /** Messages returned by POST /api/reports (opening a report on a public listing). */
   reportErrors: {

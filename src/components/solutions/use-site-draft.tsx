@@ -36,25 +36,31 @@ export function useSiteDraft(dict: Dict) {
     setStage(null);
   };
 
-  /** Creates the empty draft once; returns its id, or null with the error set. */
-  async function ensureDraft(): Promise<string | null> {
+  /**
+   * Creates the draft once, with its link when there is one; returns its id, or null
+   * with the error set. `quiet` skips the progress list (filling it by hand needs none).
+   */
+  async function ensureDraft(
+    website?: string,
+    { quiet = false, failure = dict.errors.failed }: { quiet?: boolean; failure?: string } = {},
+  ): Promise<string | null> {
     if (confirmed.current && id.current) return id.current;
-    setStage('creating');
+    if (!quiet) setStage('creating');
     id.current ??= crypto.randomUUID();
     try {
       const created = await fetch('/api/solutions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: id.current }),
+        body: JSON.stringify(website ? { id: id.current, website } : { id: id.current }),
         signal: AbortSignal.timeout(15000),
       });
       const result = await created.json();
       if (!created.ok) {
-        fail(result.error ?? dict.errors.failed);
+        fail(result.error ?? failure);
         return null;
       }
     } catch {
-      fail(dict.errors.failed);
+      fail(failure);
       return null;
     }
     confirmed.current = true;
@@ -78,7 +84,7 @@ export function useSiteDraft(dict: Dict) {
     }
     busy.current = true;
     try {
-      const draftId = await ensureDraft();
+      const draftId = await ensureDraft(website);
       if (!draftId) return true;
       setStage('reading');
       const response = await fetch(`/api/solutions/${draftId}/site-draft`, {

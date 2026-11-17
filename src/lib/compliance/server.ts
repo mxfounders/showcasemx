@@ -4,8 +4,10 @@ import { isGenericRfc, isRfc, normalizeRfc } from './rfc';
 import { parseSat69b, sat69bUrl, type Sat69bSituation } from './sat-69b';
 
 /**
- * A vendor's declared fiscal identity and what public registries say about it
- * (docs/compliance.md). The identity stays private; only the lookup result is public.
+ * A vendor's fiscal identity and what public registries say about it (docs/compliance.md).
+ * The team records it in ops while verifying a listing (SHCWS-163); founders never type
+ * it. The identity stays private; only the lookup result is public. readTaxIdentity is
+ * the rule ops mirrors in ops/src/lib/recognition.ts.
  * Countries without a registry adapter store the identity and show no result.
  */
 
@@ -71,26 +73,6 @@ export async function getTaxIdentity(solutionId: string): Promise<TaxIdentity | 
   const [row] =
     await sql`SELECT country, tax_id FROM solution_tax_identities WHERE solution_id = ${solutionId}`;
   return row ? { country: String(row.country), taxId: String(row.tax_id) } : null;
-}
-
-/** Saves for the owner only; returns false when the listing is not theirs. */
-export async function saveTaxIdentity(solutionId: string, owner: string, identity: TaxIdentity) {
-  const sql = solutionsSql();
-  const rows = await sql`INSERT INTO solution_tax_identities (solution_id, country, tax_id)
-    SELECT id, ${identity.country}, ${identity.taxId} FROM founder_solutions
-    WHERE id = ${solutionId} AND owner_id = ${owner}
-    ON CONFLICT (solution_id) DO UPDATE
-      SET country = EXCLUDED.country, tax_id = EXCLUDED.tax_id, updated_at = now()
-    RETURNING solution_id`;
-  return rows.length > 0;
-}
-
-export async function deleteTaxIdentity(solutionId: string, owner: string) {
-  const sql = solutionsSql();
-  const rows = await sql`DELETE FROM solution_tax_identities t USING founder_solutions s
-    WHERE t.solution_id = ${solutionId} AND s.id = t.solution_id AND s.owner_id = ${owner}
-    RETURNING t.solution_id`;
-  return rows.length > 0;
 }
 
 /**

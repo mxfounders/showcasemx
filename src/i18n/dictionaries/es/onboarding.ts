@@ -33,7 +33,7 @@ export const onboarding = {
         label: 'Sí, con IA',
         detail: 'Pega tu sitio y preparamos el borrador. Lo revisas antes de enviarlo.',
       },
-      manual: { label: 'Sí, a mano', detail: 'Lo llenas pregunta por pregunta.' },
+      manual: { label: 'Sí, a mano', detail: 'Tres pasos cortos y lo envías.' },
       later: { label: 'Más tarde', detail: 'Te esperará en tu inicio.' },
     },
     pressEnter: 'presiona Enter ↵',

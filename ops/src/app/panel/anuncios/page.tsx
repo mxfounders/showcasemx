@@ -16,6 +16,7 @@ import { Badge, type Tone } from '@/components/ui/Badge';
 import { Stat } from '@/components/ui/Stat';
 import { Alert } from '@/components/ui/Field';
 import { RelativeTime } from '@/components/ui/RelativeTime';
+import { PlacementControls } from './PlacementControls';
 
 export const metadata: Metadata = { title: 'Anuncios' };
 
@@ -49,7 +50,7 @@ export default async function AnunciosPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  await requireOps();
+  const user = await requireOps();
   const params = await searchParams;
   const filter = choice(params, 'filtro', AD_FILTERS, 'all');
   const page = pageParam(params);
@@ -69,7 +70,7 @@ export default async function AnunciosPage({
     <>
       <PageHeader
         title="Anuncios"
-        description="Espacios patrocinados pagados con Stripe. Vista de solo lectura: pausar o retirar con reembolso se decide en el producto, donde vive la lógica de cobro."
+        description="Espacios patrocinados pagados con Stripe. Abre una reserva para pausarla, reanudarla o retirarla con el reembolso que le toca."
       />
       <section className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat
@@ -106,7 +107,11 @@ export default async function AnunciosPage({
       <Card className="mb-6">
         <CardHeader
           title="Espacios y tarifas"
-          description="Inventario configurado en ad_placements y ad_rates."
+          description={
+            user.level === 'admin'
+              ? 'Tarifas diarias antes de impuestos. Cambiarlas o abrir y cerrar un espacio pide modo seguro y motivo.'
+              : 'Tarifas diarias antes de impuestos.'
+          }
         />
         <CardBody>
           {data.placements.length === 0 ? (
@@ -137,6 +142,13 @@ export default async function AnunciosPage({
                           .join(' · ')
                       : 'Sin tarifa'}
                   </p>
+                  {user.level === 'admin' && (
+                    <PlacementControls
+                      placement={placement.id}
+                      enabled={placement.enabled}
+                      rates={placement.rates}
+                    />
+                  )}
                 </li>
               ))}
             </ul>
@@ -177,16 +189,12 @@ export default async function AnunciosPage({
               return (
                 <TR key={item.id}>
                   <TD>
-                    {item.solutionId ? (
-                      <Link
-                        href={`/panel/postulaciones/${item.solutionId}`}
-                        className="font-medium hover:text-accent-fg"
-                      >
-                        {item.solutionName}
-                      </Link>
-                    ) : (
-                      <span className="font-medium">{item.solutionName}</span>
-                    )}
+                    <Link
+                      href={`/panel/anuncios/${item.id}`}
+                      className="font-medium hover:text-accent-fg"
+                    >
+                      {item.solutionName}
+                    </Link>
                     <p className="text-[12px] text-muted">
                       {item.ownerId ? (
                         <Link

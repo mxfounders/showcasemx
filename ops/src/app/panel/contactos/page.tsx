@@ -2,7 +2,14 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { HandshakeIcon, LockIcon } from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
-import { CONTACT_STATUSES, listContacts } from '@/lib/data/contacts';
+import {
+  CONTACT_STATUSES,
+  OUTCOME_VALUES,
+  awaitingReply,
+  contactOutcomeTotals,
+  listContacts,
+  type ReplyStage,
+} from '@/lib/data/contacts';
 import { CONTACT_STATUS } from '@/lib/labels';
 import { fmtNumber, fmtPercent } from '@/lib/format';
 import { choice, hrefWith, pageParam, param, type SearchParams } from '@/lib/url';
@@ -16,10 +23,27 @@ import { Pagination } from '@/components/ui/Pagination';
 import { RelativeTime } from '@/components/ui/RelativeTime';
 import { AreaChart } from '@/components/charts/AreaChart';
 import { ContactStatusBadge } from '@/components/domain/StatusBadge';
+import { Badge, type Tone } from '@/components/ui/Badge';
 import { ExportButton } from '@/components/actions/ExportButton';
 import { ContactTimeline } from './ContactTimeline';
 
 export const metadata: Metadata = { title: 'Contactos' };
+
+const OUTCOME_VALUE_LABEL: Record<(typeof OUTCOME_VALUES)[number], string> = {
+  under_1k: 'Menos de 1,000',
+  '1k_5k': '1,000–5,000',
+  '5k_25k': '5,000–25,000',
+  '25k_100k': '25,000–100,000',
+  over_100k: 'Más de 100,000',
+};
+
+// Where an unanswered request is in the reminder pass (SHCWS-61, docs/contacts.md).
+const REPLY_STAGE: Record<ReplyStage, { label: string; tone: Tone }> = {
+  waiting: { label: 'Más de 48 h', tone: 'neutral' },
+  reminded48h: { label: 'Recordatorio 48 h', tone: 'amber' },
+  reminded5d: { label: 'Recordatorio 5 días', tone: 'amber' },
+  unanswered: { label: 'Sin respuesta', tone: 'terracotta' },
+};
 
 export default async function ContactosPage({
   searchParams,
@@ -30,7 +54,11 @@ export default async function ContactosPage({
   const params = await searchParams;
   const status = choice(params, 'estado', CONTACT_STATUSES, 'all');
   const page = pageParam(params);
-  const data = await listContacts({ status, q: param(params, 'q'), page });
+  const [data, outcomes, awaiting] = await Promise.all([
+    listContacts({ status, q: param(params, 'q'), page }),
+    contactOutcomeTotals(),
+    awaitingReply(),
+  ]);
   const total = data.statusCounts.all ?? 0;
   const answered = (data.statusCounts.conversation ?? 0) + (data.statusCounts.closed ?? 0);
 
@@ -80,6 +108,146 @@ export default async function ContactosPage({
           </CardBody>
         </Card>
       </div>
+      <Card className="mb-6">
+        <CardHeader
+          title="Resultados declarados por fundadores"
+          description="Totales de oportunidades cerradas según lo que registra cada fundador. Ops nunca ve el resultado de una solicitud concreta y shwcs no verifica ventas."
+        />
+        <CardBody>
+          {outcomes ? (
+            <div className="grid gap-6 md:grid-cols-2">
+              <ul className="space-y-1.5 text-[13px]">
+                {(
+                  [
+                    ['Ganadas: se volvieron clientes', outcomes.won],
+                    ['Perdidas', outcomes.lost],
+                    ['No eran para el proyecto', outcomes.notFit],
+                    ['Cerradas sin resultado', outcomes.unrecorded],
+                  ] as const
+                ).map(([label, value]) => (
+                  <li key={label} className="flex items-center justify-between">
+                    <span>{label}</span>
+                    <span className="num font-medium">{fmtNumber(value)}</span>
+                  </li>
+                ))}
+              </ul>
+              <ul className="space-y-1.5 text-[13px]">
+                <li className="text-muted">Valor aproximado de las ganadas (USD)</li>
+                {OUTCOME_VALUES.map(key => (
+                  <li key={key} className="flex items-center justify-between">
+                    <span>{OUTCOME_VALUE_LABEL[key]}</span>
+                    <span className="num font-medium">{fmtNumber(outcomes.values[key])}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p className="text-[13px] text-muted">
+              Sin datos: falta aplicar db/contact-outcomes.sql en esta base.
+            </p>
+          )}
+        </CardBody>
+      </Card>
+      <Card className="mb-6">
+        <CardHeader
+          title="Sin respuesta del fundador"
+          description="Solicitudes abiertas que el fundador no ha respondido en más de 48 h y las marcadas «sin respuesta» a los 7 días, la espera más larga primero. Recordatorios a las 48 h y a los 5 días; a los 7, el comprador recibe alternativas y la solicitud cuenta en la señal de respuesta. Solo metadatos."
+        />
+        <CardBody className="space-y-4">
+          {awaiting ? (
+            <>
+              <ul className="flex flex-wrap gap-x-8 gap-y-2 text-[13px]">
+                <li>
+                  <span className="num font-semibold">{fmtNumber(awaiting.totals.ignored)}</span>{' '}
+                  <span className="text-muted">sin respuesta ahora</span>
+                </li>
+                <li>
+                  <span className="num font-semibold">{fmtNumber(awaiting.totals.marked30d)}</span>{' '}
+                  <span className="text-muted">marcadas en 30 días</span>
+                </li>
+                <li>
+                  <span className="num font-semibold">
+                    {fmtNumber(awaiting.totals.answeredLate)}
+                  </span>{' '}
+                  <span className="text-muted">respondidas después de marcarse</span>
+                </li>
+              </ul>
+              <Table label="Solicitudes sin respuesta">
+                <THead>
+                  <TH>Proyecto</TH>
+                  <TH>Fundador</TH>
+                  <TH>Estado</TH>
+                  <TH>Etapa</TH>
+                  <TH align="right">Días sin respuesta</TH>
+                  <TH>Creada</TH>
+                  <TH />
+                </THead>
+                <TBody>
+                  {awaiting.items.length === 0 ? (
+                    <EmptyRow colSpan={7}>
+                      <EmptyState
+                        compact
+                        icon={HandshakeIcon}
+                        title="Ninguna solicitud espera respuesta"
+                      />
+                    </EmptyRow>
+                  ) : (
+                    awaiting.items.map(item => (
+                      <TR key={item.id}>
+                        <TD>
+                          <Link
+                            href={`/panel/postulaciones/${item.solutionId}`}
+                            className="font-medium hover:text-accent-fg"
+                          >
+                            {item.projectName}
+                          </Link>
+                        </TD>
+                        <TD className="max-w-[220px] truncate text-[13px]">
+                          {item.recipientId ? (
+                            <Link
+                              href={`/panel/cuentas/${item.recipientId}`}
+                              className="text-fg-2 hover:text-accent-fg"
+                            >
+                              {item.recipientEmail}
+                            </Link>
+                          ) : (
+                            <span className="text-muted">eliminado</span>
+                          )}
+                        </TD>
+                        <TD>
+                          <ContactStatusBadge status={item.status} />
+                        </TD>
+                        <TD>
+                          <Badge tone={REPLY_STAGE[item.stage].tone}>
+                            {REPLY_STAGE[item.stage].label}
+                          </Badge>
+                        </TD>
+                        <TD align="right">{fmtNumber(item.days)}</TD>
+                        <TD className="whitespace-nowrap text-[13px] text-muted">
+                          <RelativeTime value={item.createdAt} />
+                        </TD>
+                        <TD>
+                          <ContactTimeline id={item.id} project={item.projectName} />
+                        </TD>
+                      </TR>
+                    ))
+                  )}
+                </TBody>
+              </Table>
+              {awaiting.total > awaiting.items.length && (
+                <p className="text-[12.5px] text-muted">
+                  Se muestran las {fmtNumber(awaiting.items.length)} con más espera de{' '}
+                  {fmtNumber(awaiting.total)}.
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-[13px] text-muted">
+              Sin datos: falta aplicar db/contact-reminders.sql en esta base.
+            </p>
+          )}
+        </CardBody>
+      </Card>
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <Segmented
           label="Estado"

@@ -2,7 +2,7 @@ export const metrics = {
   metaTitle: 'Métricas',
   numberLocale: 'es-MX',
   unnamed: 'Sin nombre',
-  title: 'Métricas.',
+  title: 'Métricas',
   intro: 'Cómo encuentran tus proyectos y cuándo ese interés se convierte en contacto.',
   period: 'Últimos 30 días',
   summaryAria: 'Resumen de actividad',
@@ -33,7 +33,48 @@ export const metrics = {
     'Cuando una ficha reciba visitas, clics o solicitudes, aquí verás el recorrido completo.',
   emptyCta: 'Revisar mis soluciones',
   footnote:
-    'Estas cifras cuentan eventos. Excluimos tus propias visitas y respetamos DNT/GPC; bloqueadores, recargas y tráfico automatizado pueden cambiar los totales. Guardados, listas y notas de compradores permanecen privados.',
+    'Estas cifras cuentan eventos. Excluimos tus propias visitas y respetamos DNT/GPC; bloqueadores, recargas y tráfico automatizado pueden cambiar los totales. Quién guardó tu ficha, sus listas y sus notas permanecen privados: solo ves totales.',
+  /** SHCWS-23 and SHCWS-22: everything below counts rows that exist, nothing estimated. */
+  insights: {
+    intentTitle: 'Interés en tus fichas',
+    intentNote:
+      'Totales de cuentas reales, nunca quiénes son. Tus propios guardados, listas y me gusta no cuentan.',
+    saves: 'Guardados',
+    publicLists: 'En listas públicas',
+    publicListsDetail: 'Listas de la comunidad que incluyen tu ficha',
+    likes: 'Me gusta',
+    reviews: 'Reseñas públicas',
+    last30: '{count} en los últimos 30 días',
+    rating: 'Promedio de {rating} de 5',
+    outcomesTitle: 'Resultado de tus oportunidades',
+    outcomesNote:
+      'Lo que registras al cerrar cada oportunidad. Solo tú lo ves y shwcs no verifica ventas.',
+    won: 'Clientes conseguidos vía shwcs',
+    lost: 'Perdidas',
+    notFit: 'No eran para ti',
+    unrecorded: 'Cerradas sin resultado',
+    valuesTitle: 'Valor aproximado de lo ganado',
+    outcomesEmpty:
+      'Cuando cierres una oportunidad y registres qué resultó, aquí verás cuántos clientes conseguiste.',
+    positionTitle: 'Posición en el catálogo',
+    positionNote:
+      'Tu lugar en el orden «Más populares» de cada categoría, que pesa interacción real de cuentas verificadas y pierde fuerza con el tiempo. No es una calificación.',
+    position: '{position} de {total}',
+    peersTitle: 'Frente a fichas parecidas',
+    peersNote:
+      'Visitas de los últimos 30 días frente a la mediana de otras fichas de tu primera categoría. Solo la mostramos si hay al menos 3, para no exponer a nadie.',
+    peersYours: 'Tu ficha: {views} visitas',
+    peersMedian: 'Mediana de {peers} fichas: {median} visitas',
+    peersFew: 'Aún hay menos de 3 fichas de otros proyectos en {category}.',
+    monthsTitle: 'Últimos 12 meses',
+    monthsNote:
+      'Por mes calendario. Un cero también puede significar que esa señal aún no se medía ese mes.',
+    month: 'Mes',
+    requests: 'Solicitudes',
+    notMeasured:
+      'Todavía no registramos en qué búsquedas aparece tu ficha ni con qué otras la comparan, así que no mostramos esas cifras.',
+    unavailable: 'No pudimos cargar esta sección. Recarga para intentarlo de nuevo.',
+  },
   chart: {
     ariaLabel: 'Actividad diaria. Usa las flechas izquierda y derecha para explorar cada fecha.',
     title: 'Actividad diaria de los últimos 30 días',

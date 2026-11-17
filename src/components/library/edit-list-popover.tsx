@@ -10,10 +10,12 @@ import type { Dictionary } from '@/i18n/dictionary';
 
 export function EditListPopover({
   list,
+  availableProjects,
   dict,
   locale,
 }: {
   list: BuyerList;
+  availableProjects: number;
   dict: Dictionary['library'];
   locale: string;
 }) {
@@ -83,7 +85,13 @@ export function EditListPopover({
               <CloseIcon className="size-4" aria-hidden="true" />
             </button>
           </div>
-          <ListForm key={list.version} list={list} dict={dict} locale={locale} />
+          <ListForm
+            key={list.version}
+            list={list}
+            availableProjects={availableProjects}
+            dict={dict}
+            locale={locale}
+          />
         </div>
       )}
     </div>

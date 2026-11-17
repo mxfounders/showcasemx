@@ -38,6 +38,11 @@ export const community = {
     next: 'Next',
     pagePrefix: 'Page',
   },
+  home: {
+    title: 'Community lists',
+    desc: 'Project selections put together and shared by people on shwcs.',
+    cta: 'See all lists',
+  },
   byPrefix: 'By',
   public: 'Public',
   private: 'Private',

@@ -19,11 +19,22 @@ import {
   ImageIcon,
   LockIcon,
   RadioUnselectedIcon,
+  StarIcon,
   SyncIcon,
 } from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
 import { isUuid } from '@/lib/http';
 import { solutionDetail, type SolutionDetail } from '@/lib/data/solutions';
+import { verificationState } from '@/lib/data/recognition';
+import {
+  countryOptions,
+  emailHost,
+  fmtMonth,
+  fmtWeek,
+  recognitionHost,
+  scopeLabel,
+} from '@/lib/recognition';
+import { Alert } from '@/components/ui/Field';
 import { daysSince, fmtBytes, fmtDate, fmtDateTime, fmtNumber, fmtPercent } from '@/lib/format';
 import { FIELD_LABELS, asList, asText, checklist, humanize, safeHref } from '@/lib/solution-fields';
 import { fieldChanges, wordDiff, type FieldChange } from '@/lib/diff';
@@ -45,6 +56,7 @@ import { Timeline } from '@/components/domain/Timeline';
 import { AuditLine } from '@/components/domain/AuditLine';
 import { ActionButton } from '@/components/actions/ActionButton';
 import { DecisionPanel } from './DecisionPanel';
+import { VerificationPanel, type VerificationSignals } from './VerificationPanel';
 import { Gallery } from './Gallery';
 import { ReviewKeys } from './ReviewKeys';
 
@@ -151,6 +163,20 @@ function FichaTab({
               ),
               wide: true,
             },
+            ...(asText(d.otherCategory)
+              ? [
+                  {
+                    label: 'Categoría sugerida por el fundador',
+                    value: (
+                      <span className="inline-flex flex-wrap items-center gap-1.5">
+                        {asText(d.otherCategory)}
+                        <Badge>No existe en la taxonomía</Badge>
+                      </span>
+                    ),
+                    wide: true,
+                  },
+                ]
+              : []),
             { label: 'Problema que resuelve', value: <Prose value={d.problem} />, wide: true },
             { label: 'Cliente ideal', value: <Prose value={d.audience} />, wide: true },
             { label: 'Cuándo no encaja', value: <Prose value={d.notFor} />, wide: true },
@@ -399,7 +425,11 @@ export default async function SolutionPage({
   const { id } = await params;
   if (!isUuid(id)) notFound();
   const query = await searchParams;
-  const detail = await solutionDetail(id);
+  // Verification reads separately: without db/solution-recognition.sql only its card fails.
+  const [detail, recognition] = await Promise.all([
+    solutionDetail(id),
+    verificationState(id).catch(() => null),
+  ]);
   if (!detail) notFound();
 
   const s = detail.solution;
@@ -430,6 +460,32 @@ export default async function SolutionPage({
   const prevHref = fromQueue ? queueHref(detail.queue.prevId) : null;
   const productOrigin = process.env.PRODUCT_APP_ORIGIN?.trim() || null;
   const openReports = detail.reports.filter(report => report.status === 'open').length;
+  // Signals for «Verificado por shwcs». The public check is tied to the published host;
+  // before publication, to the draft's.
+  const publishedHost = recognitionHost(s.publishedData?.website);
+  const dataHost = recognitionHost(s.data.website);
+  const currentHost = publishedHost ?? dataHost;
+  const emailDomain = emailHost(s.ownerEmail);
+  const proof = detail.domainProof;
+  const signals: VerificationSignals = {
+    currentHost,
+    draftHost: publishedHost && dataHost && dataHost !== publishedHost ? dataHost : null,
+    domainProof: proof
+      ? {
+          domain: proof.domain,
+          verified: !!proof.verifiedAt,
+          fresh: !!proof.verifiedAt && daysSince(proof.verifiedAt) <= 90,
+          expired: !!proof.expiresAt && new Date(proof.expiresAt).getTime() < Date.now(),
+        }
+      : null,
+    emailDomain,
+    emailMatches:
+      !!emailDomain &&
+      !!currentHost &&
+      (currentHost === emailDomain || currentHost.endsWith(`.${emailDomain}`)),
+  };
+  const canVerify =
+    s.publishedData !== null || s.status === 'pending' || s.status === 'changes_requested';
 
   return (
     <>
@@ -792,6 +848,29 @@ export default async function SolutionPage({
           </Card>
 
           <Card>
+            <CardHeader
+              title="Verificación"
+              description="«Verificado por shwcs» lo decide el equipo."
+            />
+            <CardBody>
+              {recognition ? (
+                <VerificationPanel
+                  solutionId={s.id}
+                  canVerify={canVerify}
+                  state={recognition}
+                  signals={signals}
+                  countries={countryOptions()}
+                />
+              ) : (
+                <Alert tone="amber">
+                  No se pudo leer la verificación. Comprueba que db/solution-recognition.sql esté
+                  aplicada en esta base.
+                </Alert>
+              )}
+            </CardBody>
+          </Card>
+
+          <Card>
             <CardHeader title="Propietario" />
             <CardBody className="space-y-3">
               <Link href={`/panel/cuentas/${s.ownerId}`} className="group flex items-center gap-3">
@@ -869,34 +948,39 @@ export default async function SolutionPage({
             </CardBody>
           </Card>
 
-          <Card>
-            <CardHeader title="Dominio" />
-            <CardBody className="text-[13px]">
-              {detail.domainProof ? (
-                <div className="space-y-1.5">
-                  <p className="font-mono text-[12.5px]">{detail.domainProof.domain}</p>
-                  {detail.domainProof.verifiedAt ? (
-                    <Badge
-                      tone={daysSince(detail.domainProof.verifiedAt) > 90 ? 'amber' : 'sage'}
-                      dot
-                    >
-                      Verificado {fmtDate(detail.domainProof.verifiedAt)}
-                      {daysSince(detail.domainProof.verifiedAt) > 90 ? ' · revalidar' : ''}
-                    </Badge>
-                  ) : (
-                    <Badge tone="amber" dot>
-                      Pendiente · vence {fmtDate(detail.domainProof.expiresAt)}
-                    </Badge>
-                  )}
-                  <p className="text-[11.5px] text-muted">
-                    El TXT prueba control del dominio, no identidad legal.
-                  </p>
-                </div>
-              ) : (
-                <p className="text-muted">Sin verificación de dominio.</p>
-              )}
-            </CardBody>
-          </Card>
+          {recognition && recognition.awards.length > 0 && (
+            <Card>
+              <CardHeader title="Reconocimientos" />
+              <CardBody>
+                <ul className="space-y-2 text-[13px]">
+                  {recognition.awards.map(award => (
+                    <li key={award.id} className="flex flex-wrap items-center gap-2">
+                      {award.kind === 'editorial' ? (
+                        <Badge tone="sage" icon={StarIcon}>
+                          Selección shwcs · {fmtMonth(award.periodStart)}
+                        </Badge>
+                      ) : (
+                        <Badge tone="amber" icon={StarIcon}>
+                          #{award.rank} {scopeLabel(award.scope)}
+                        </Badge>
+                      )}
+                      {award.kind === 'weekly' && (
+                        <span className="text-[12px] text-muted">
+                          {fmtWeek(award.periodStart, award.periodEnd)}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/panel/destacados"
+                  className="mt-3 inline-flex text-[12.5px] font-medium text-accent-fg hover:underline"
+                >
+                  Gestionar en Destacados
+                </Link>
+              </CardBody>
+            </Card>
+          )}
         </aside>
       </div>
     </>

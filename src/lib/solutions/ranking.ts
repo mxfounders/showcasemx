@@ -19,13 +19,18 @@
 // like the rest. A five-star review from a company address weighs 7.5; a one-star
 // review from a free mailbox weighs 1 — it never subtracts, so a competitor cannot
 // sink a ficha by leaving low ratings, only fail to lift it.
+//
+// `response` is the moderate bonus for answering contact requests (0–2, what one save
+// weighs; responseRankBonus in src/lib/solutions/response.ts, SHCWS-52): it exists only
+// with at least three requests from verified accounts in the last 90 days.
 export const solutionScore = (
   likes: number,
   saves: number,
   comments: number,
   views: number,
   reviews = 0,
-) => likes + saves * 2 + comments * 3 + reviews + Math.log1p(views) * 0.1;
+  response = 0,
+) => likes + saves * 2 + comments * 3 + reviews + Math.log1p(views) * 0.1 + response;
 
 // Half-life in days for the exponential decay applied to likes/saves/comments
 // and to each day's view count. A single constant, consumed by the SQL in

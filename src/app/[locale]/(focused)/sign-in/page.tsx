@@ -3,7 +3,7 @@ import { googleConfig } from '@/lib/auth/google';
 import { authReturnTo } from '@/lib/auth/return-to';
 import { cookies } from 'next/headers';
 import { localeRedirect } from '@/i18n/redirect';
-import { getSession, sessionCookie } from '@/lib/auth/session';
+import { challengeCookie, getSession, sessionCookie } from '@/lib/auth/session';
 import type { Metadata } from 'next';
 import { AuthForm } from '@/components/auth-form';
 export async function generateMetadata({
@@ -19,19 +19,25 @@ export async function generateMetadata({
 }
 export default async function SignInPage(props: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ next?: string; google?: string }>;
+  searchParams: Promise<{ next?: string; google?: string; step?: string }>;
 }) {
   const searchParams = await props.searchParams;
   const { locale } = await props.params;
   const dict = (await getDictionary(locale)).auth;
   const returnTo = authReturnTo(searchParams.next);
+  const jar = await cookies();
   let signedIn = false;
   try {
-    signedIn = Boolean(await getSession((await cookies()).get(sessionCookie)?.value));
+    signedIn = Boolean(await getSession(jar.get(sessionCookie)?.value));
   } catch {
     /* The form reports unavailable storage when submitted. */
   }
   if (signedIn) return localeRedirect(returnTo);
+  // Back from Google on an account with two-step verification (SHCWS-172): the code
+  // step opens directly. The cookie only proves a challenge may exist; the server
+  // checks it when the code is sent, and the normal form shows if it's gone.
+  const awaitingCode =
+    searchParams.step === 'totp' && /^[a-f0-9]{64}$/.test(jar.get(challengeCookie)?.value ?? '');
   return (
     <section className="mx-auto max-w-[568px] px-6 pb-20 pt-8 sm:pt-14">
       <h1 className="text-4xl font-semibold leading-[1.08] tracking-[-0.045em] text-stone-900 sm:text-5xl">
@@ -43,7 +49,13 @@ export default async function SignInPage(props: {
           {dict.googleError}
         </p>
       )}
-      <AuthForm dict={dict} googleAvailable={!!googleConfig()} returnTo={returnTo} mode="login" />
+      <AuthForm
+        dict={dict}
+        googleAvailable={!!googleConfig()}
+        returnTo={returnTo}
+        mode="login"
+        awaitingCode={awaitingCode}
+      />
     </section>
   );
 }

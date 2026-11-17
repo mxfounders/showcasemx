@@ -44,6 +44,8 @@ type BlogEntry = {
   publishedAt: string;
   readingMinutes: number;
   tone: BlogTone;
+  /** Catalog category (taxonomy slug) the article is about, when it has a clear one. */
+  catalogCategory?: string;
   content: Record<Locale, BlogContent>;
 };
 
@@ -447,6 +449,7 @@ const featuredEntries: BlogEntry[] = [
   },
   {
     slug: 'que-necesita-un-cfo-antes-de-hablar',
+    catalogCategory: 'finanzas',
     category: 'operations',
     publishedAt: '2026-09-01',
     readingMinutes: 6,
@@ -540,7 +543,7 @@ const featuredEntries: BlogEntry[] = [
           {
             title: 'Señales comprensibles',
             paragraphs: [
-              'En shwcs queremos mostrar por qué aparece algo: fecha, categoría, actividad o selección editorial. La persona debe poder cambiar el criterio y reconocer sus límites.',
+              'En shwcs queremos mostrar por qué aparece algo: fecha, categoría, actividad o selección editorial. La persona debe poder cambiar el criterio y reconocer sus límites; por eso publicamos [cómo se ordena el catálogo](/criterios).',
             ],
           },
           {
@@ -570,7 +573,7 @@ const featuredEntries: BlogEntry[] = [
           {
             title: 'Understandable signals',
             paragraphs: [
-              'At shwcs we want to show why something appears: date, category, activity or editorial selection. People should be able to change the criterion and recognize its limits.',
+              'At shwcs we want to show why something appears: date, category, activity or editorial selection. People should be able to change the criterion and recognize its limits; that is why we publish [how the catalog is ordered](/criterios).',
             ],
           },
           {

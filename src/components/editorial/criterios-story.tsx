@@ -13,21 +13,29 @@ import {
   FingerprintIcon,
   HeartIcon,
   LayoutIcon,
+  MessageReplyIcon,
   ShieldIcon,
   StarIcon,
   TextIcon,
   type GotaIcon,
 } from '@/components/icons/gota';
 import type { Dictionary } from '@/i18n/dictionary';
+import { reviewInvitedFactor, reviewWeights } from '@/lib/reviews/model';
 
 type WeightId = keyof Dictionary['criteria']['weights'];
 type CriterionId = keyof Dictionary['criteria']['items'];
 
 const rankingWeights: readonly { id: WeightId; Icon: GotaIcon; weight: string }[] = [
-  { id: 'review', Icon: StarIcon, weight: '★ × 1–1.5' },
+  // From an invited review with a verified email to a proven purchase (src/lib/reviews/model.ts).
+  {
+    id: 'review',
+    Icon: StarIcon,
+    weight: `★ × ${reviewWeights.email * reviewInvitedFactor}–${reviewWeights.customer}`,
+  },
   { id: 'comment', Icon: CommentIcon, weight: '× 3' },
   { id: 'save', Icon: BookmarkIcon, weight: '× 2' },
   { id: 'like', Icon: HeartIcon, weight: '× 1' },
+  { id: 'response', Icon: MessageReplyIcon, weight: '+ 0–2' },
   { id: 'view', Icon: EyeIcon, weight: '× 0.1' },
 ];
 
@@ -114,7 +122,14 @@ const criterios: readonly {
   },
 ];
 
-export function CriteriosStory({ dict }: { dict: Dictionary['criteria'] }) {
+export function CriteriosStory({
+  dict,
+  after,
+}: {
+  dict: Dictionary['criteria'];
+  /** Sections rendered inside the same page rhythm, e.g. recognitions (docs/recognition.md). */
+  after?: React.ReactNode;
+}) {
   return (
     <article className="pb-24 sm:pb-32">
       {/* ── HERO ─────────────────────────────────────────────── */}
@@ -188,6 +203,12 @@ export function CriteriosStory({ dict }: { dict: Dictionary['criteria'] }) {
             <p className="mt-5 max-w-md text-base leading-relaxed text-stone-600 sm:text-lg">
               {dict.orderDesc}
             </p>
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-stone-500">
+              {dict.communityOrder}
+            </p>
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-stone-500">
+              {dict.responseNote}
+            </p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             {rankingWeights.map(({ id, Icon, weight }) => (
@@ -205,6 +226,7 @@ export function CriteriosStory({ dict }: { dict: Dictionary['criteria'] }) {
           </div>
         </div>
       </section>
+      {after}
     </article>
   );
 }

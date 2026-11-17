@@ -27,7 +27,7 @@ import { commonText } from '@/i18n/common';
 // Every filter combination is its own server-rendered URL, so crawlers must not walk
 // them (nofollow, plus robots.txt and noindex on the page) and the browser must not
 // prefetch them: each visible tab would otherwise cost a function call per visit
-// (CLAUDE.md §73).
+// (CLAUDE.md §79).
 const filterLink = { rel: 'nofollow', prefetch: false } as const;
 
 export function CommunityFilterBar({

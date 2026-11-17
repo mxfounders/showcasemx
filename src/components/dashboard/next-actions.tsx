@@ -2,6 +2,9 @@ import Link from '@/i18n/navigation';
 import {
   ArrowRightIcon,
   BalanceScaleIcon,
+  BellIcon,
+  ShieldIcon,
+  TrendUpIcon,
   BriefcaseIcon,
   CameraIcon,
   ClientsIcon,
@@ -16,6 +19,7 @@ import {
 } from '@/components/icons/gota';
 import type { FounderSolution } from '@/lib/solutions/model';
 import type { BuyerBoard } from '@/lib/library/model';
+import type { FounderSignals } from '@/lib/dashboard/server';
 import { solutionChecklist } from '@/lib/solutions/completeness';
 import { brandColors, solutionCategoryTones } from '@/lib/brand-colors';
 import { localizedCategoryDisplayLabel } from '@/lib/taxonomy';
@@ -26,6 +30,7 @@ export function NextActions({
   solutions,
   boards,
   unorganized,
+  signals,
   dict,
   locale,
 }: {
@@ -34,11 +39,13 @@ export function NextActions({
   solutions: FounderSolution[];
   boards: BuyerBoard[];
   unorganized: number;
+  /** Lead-related tasks for founders (SHCWS-16); each shows only while it applies. */
+  signals?: FounderSignals;
   dict: Dictionary['dashboard'];
   locale: string;
 }) {
   const text = dict.nextActions;
-  const tasks = founder
+  const guide = founder
     ? solutions
         .filter(solution => solution.status !== 'pending')
         .map(solution => {
@@ -66,6 +73,77 @@ export function NextActions({
         .sort((a, b) => a.priority - b.priority)
         .slice(0, 3)
     : [];
+  // In the issue's order: answer leads, keep alerts on, complete the guide, prove the
+  // domain, then promote. «Confirm your email» is the banner above, not a task here.
+  const tasks =
+    founder && signals
+      ? [
+          // Unread first (SHCWS-14): it also covers a buyer who withdrew since your visit.
+          ...(signals.unreadOpportunities > 0
+            ? [
+                {
+                  href: '/account/opportunities?status=unread',
+                  title:
+                    signals.unreadOpportunities === 1
+                      ? text.unreadOpportunity
+                      : text.unreadOpportunities.replace(
+                          '{count}',
+                          String(signals.unreadOpportunities),
+                        ),
+                  detail: text.answerOpportunitiesDetail,
+                  Icon: InboxIcon,
+                  tone: brandColors.terracotta,
+                },
+              ]
+            : signals.newOpportunities > 0
+              ? [
+                  {
+                    href: '/account/opportunities?status=new',
+                    title:
+                      signals.newOpportunities === 1
+                        ? text.answerOpportunity
+                        : text.answerOpportunities.replace(
+                            '{count}',
+                            String(signals.newOpportunities),
+                          ),
+                    detail: text.answerOpportunitiesDetail,
+                    Icon: InboxIcon,
+                    tone: brandColors.terracotta,
+                  },
+                ]
+              : []),
+          ...(signals.alertsOff
+            ? [
+                {
+                  href: '/account/settings/notifications',
+                  title: text.enableAlerts,
+                  detail: text.enableAlertsDetail,
+                  Icon: BellIcon,
+                  tone: brandColors.blue,
+                },
+              ]
+            : []),
+          ...guide,
+          ...signals.domains.map(domain => ({
+            href: `/account/solutions/${domain.id}/trust`,
+            title: domain.expiring ? text.renewDomain : text.verifyDomain,
+            detail: domain.name,
+            Icon: ShieldIcon,
+            tone: brandColors.lavender,
+          })),
+          ...(signals.promote
+            ? [
+                {
+                  href: `/account/solutions/${signals.promote.id}/promote`,
+                  title: text.promote,
+                  detail: signals.promote.name,
+                  Icon: TrendUpIcon,
+                  tone: brandColors.amber,
+                },
+              ]
+            : []),
+        ]
+      : guide;
   const ready = buyer ? boards.filter(board => board.covers.length >= 2).slice(0, 2) : [];
   const shortcuts = [
     ...(founder

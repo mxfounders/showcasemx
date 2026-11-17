@@ -1,0 +1,57 @@
+/** Saved-search alerts (SHCWS-47): the button on search and catalog pages, and /account/alerts. */
+export const alerts = {
+  button: {
+    create: 'Avísame cuando haya algo nuevo',
+    creating: 'Creando alerta…',
+    created: 'Listo. Te avisaremos cuando se publique algo que coincida.',
+    exists: 'Ya tenías esta alerta.',
+    error: 'No pudimos crear la alerta. Intenta otra vez.',
+    manage: 'Ver mis alertas',
+    hint: 'Te avisamos en tu cuenta y, por correo, como máximo una vez por semana.',
+    signIn: 'Inicia sesión',
+    signInSuffix: 'para crear la alerta. La guardamos para que la confirmes en Mis alertas.',
+  },
+  page: {
+    metaTitle: 'Mis alertas',
+    title: 'Mis alertas',
+    subtitle:
+      'Te avisamos cuando se publica algo que coincide con una búsqueda que guardaste. Por correo, como máximo una vez por semana por alerta.',
+    count: '{count} de {max} alertas',
+    emptyTitle: 'Aún no tienes alertas',
+    emptyBody:
+      'Busca algo o abre una categoría con tus filtros y elige «Avísame cuando haya algo nuevo».',
+    explore: 'Buscar soluciones',
+    created: 'Creada el {date}',
+    matchesTitle: 'Lo nuevo que encontramos',
+    noMatches: 'Todavía no se ha publicado nada nuevo para esta alerta.',
+    open: 'Ver resultados',
+    delete: 'Borrar alerta',
+    deleting: 'Borrando…',
+    confirmDelete: '¿Borrar esta alerta? Dejarás de recibir sus avisos.',
+    cancel: 'Cancelar',
+    deleteError: 'No pudimos borrar la alerta. Intenta otra vez.',
+    emailOff: 'Los correos de alertas están apagados. Puedes activarlos en {link}.',
+    emailUnverified: 'Para recibirlas por correo, verifica tu dirección en {link}.',
+    preferences: 'Preferencias de avisos',
+    security: 'Seguridad',
+    pendingTitle: 'La alerta que empezaste',
+    pendingCreate: 'Crear esta alerta',
+    pendingDismiss: 'Descartar',
+  },
+  scope: {
+    search: 'Búsqueda',
+    explorar: 'Categoría',
+    industria: 'Industria',
+    colecciones: 'Colección',
+  },
+  /** Messages returned by /api/alerts. */
+  errors: {
+    foreignOrigin: 'Usa shwcs para cambiar tus alertas.',
+    signIn: 'Inicia sesión para crear la alerta.',
+    invalid: 'No pudimos entender esta búsqueda.',
+    limit: 'Ya tienes el máximo de alertas. Borra alguna para crear otra.',
+    notFound: 'Esa alerta ya no existe.',
+    rateLimited: 'Demasiados cambios. Intenta más tarde.',
+    unavailable: 'No pudimos guardar el cambio. Intenta otra vez.',
+  },
+} as const;

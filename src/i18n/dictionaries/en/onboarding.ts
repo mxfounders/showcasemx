@@ -35,7 +35,7 @@ export const onboarding = {
         label: 'Yes, with AI',
         detail: 'Paste your website and we draft it. You review it before sending.',
       },
-      manual: { label: 'Yes, by hand', detail: 'You fill it in one question at a time.' },
+      manual: { label: 'Yes, by hand', detail: 'Three short steps, then you send it.' },
       later: { label: 'Later', detail: 'It will be waiting on your home.' },
     },
     pressEnter: 'press Enter ↵',

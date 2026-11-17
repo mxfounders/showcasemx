@@ -11,10 +11,16 @@ import { stripeClient } from './stripe';
  *
  * Returns false when a refund could not be issued; the caller then keeps the account so
  * the person can retry instead of losing money they are owed.
+ *
+ * With `solutionId`, only that listing's bookings: a founder who unpublishes their own
+ * listing cancels like any advertiser (SHCWS-32), since the slot can't serve without it.
  */
-export async function cancelAccountBookings(accountId: string): Promise<boolean> {
+export async function cancelAccountBookings(
+  accountId: string,
+  solutionId?: string,
+): Promise<boolean> {
   const rows = await solutionsSql()`SELECT id, version FROM ad_campaigns
-    WHERE owner_id = ${accountId} AND (
+    WHERE owner_id = ${accountId} AND (${solutionId ?? null}::uuid IS NULL OR solution_id = ${solutionId ?? null}::uuid) AND (
       status IN ('checkout','processing')
       OR (status = 'paid' AND canceled_at IS NULL AND paused_at IS NULL
           AND coalesce(served_until, ends_on) > (now() AT TIME ZONE ${adTimeZone})::date)
@@ -68,4 +74,19 @@ export async function cancelAccountBookings(accountId: string): Promise<boolean>
     }
   }
   return true;
+}
+
+/**
+ * Paid sponsored bookings of one listing that are still running or yet to start, for the
+ * founder to read before unpublishing it (SHCWS-32). Holds in checkout are not counted:
+ * they are simply released. A missing ads table reads as none.
+ */
+export async function activeListingBookings(accountId: string, solutionId: string) {
+  const rows = await solutionsSql()`SELECT count(*)::int AS n FROM ad_campaigns
+    WHERE owner_id = ${accountId} AND solution_id = ${solutionId} AND status = 'paid'
+      AND canceled_at IS NULL AND paused_at IS NULL
+      AND coalesce(served_until, ends_on) > (now() AT TIME ZONE ${adTimeZone})::date`.catch(
+    () => [],
+  );
+  return Number(rows[0]?.n ?? 0);
 }

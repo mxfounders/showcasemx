@@ -1,7 +1,9 @@
 import type { Dictionary } from '@/i18n/dictionary';
 
 // The closed set of editorial and legal pages served by /[locale]/[info]. Shared by
-// that route, the middleware's route check (src/lib/routes.ts) and the sitemap.
+// that route, the middleware's route check (src/lib/routes.ts), the sitemap and the
+// navigation tests, which check footer and navbar links against it without importing
+// the page's components.
 export const storyPages = [
   'aplicar',
   'criterios',
@@ -24,5 +26,7 @@ export function isInfoSlug(value: string): value is InfoSlug {
   return (infoSlugs as readonly string[]).includes(value);
 }
 
-/** Pages kept out of search results until their legal review closes (§18). */
-export const unindexedInfoPages: readonly InfoSlug[] = ['privacidad', 'terminos'];
+/** Pages kept out of search results until their legal review closes (§18); the sitemap leaves them out. */
+export const noindexInfoSlugs: readonly InfoSlug[] = ['privacidad', 'terminos'];
+/** Same list, under the name the bot-traffic fix used. */
+export const unindexedInfoPages = noindexInfoSlugs;

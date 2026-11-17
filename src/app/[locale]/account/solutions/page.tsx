@@ -6,6 +6,7 @@ import {
   ClockIcon,
   LayersIcon,
   LayoutIcon,
+  MegaphoneIcon,
 } from '@/components/icons/gota';
 import { requireFounder, getOwnedSolutions } from '@/lib/solutions/server';
 import { getSolutionCategories, type SolutionStatus } from '@/lib/solutions/model';
@@ -36,7 +37,8 @@ const statusTone: Record<SolutionStatus, keyof typeof brandColors> = {
 
 export default async function AccountPage(props: { params: Promise<{ locale: string }> }) {
   const { locale } = await props.params;
-  const dict = (await getDictionary(locale)).solutionEditor,
+  const dictionary = await getDictionary(locale),
+    dict = dictionary.solutionEditor,
     text = dict.list;
   const offeringLabels: Record<string, string> = Object.fromEntries(
     localizedOfferingOptions(locale).map(item => [item.value, item.label]),
@@ -158,7 +160,10 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
                   checklist = solutionChecklist(solution.data),
                   done = checklist.filter(item => item.done).length,
                   progress = Math.round((done / checklist.length) * 100),
-                  deletable = solution.status === 'draft' && !solution.published_data;
+                  deletable =
+                    solution.status === 'draft' &&
+                    !solution.published_data &&
+                    !solution.was_published;
                 const KindIcon =
                   solution.data.kind === 'Software'
                     ? LayoutIcon
@@ -192,12 +197,11 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
                           <h3 className="break-words text-xl font-semibold tracking-tight text-stone-900">
                             {name}
                           </h3>
-                          <StatusBadge status={solution.status} dict={dict.statuses} />
-                          {solution.published_data && solution.status !== 'published' && (
-                            <span className="rounded-full border border-stone-200 px-2.5 py-1 text-[11px] text-stone-500">
-                              {text.previousStillPublic}
-                            </span>
-                          )}
+                          <StatusBadge
+                            status={solution.status}
+                            dict={dict.statuses}
+                            live={solution.published_data ? dict.liveStatuses : undefined}
+                          />
                         </div>
                         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-stone-500">
                           {dict.statuses[solution.status].next}
@@ -261,7 +265,17 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
                           {action}
                           <ArrowRightIcon aria-hidden="true" className="size-4 button-arrow" />
                         </Link>
-                        {solution.status === 'published' && (
+                        {solution.published_data && (
+                          // Every published listing can be promoted from here (SHCWS-150).
+                          <Link
+                            href={`/account/solutions/${solution.id}/promote`}
+                            className="inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-sm font-medium text-[#365DC4] transition-colors hover:bg-[#E4EBFC] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                          >
+                            <MegaphoneIcon aria-hidden="true" className="size-4" />
+                            {dictionary.ads.entry.promote}
+                          </Link>
+                        )}
+                        {solution.published_data && (
                           <Link
                             href={`/soluciones/${solution.id}`}
                             target="_blank"

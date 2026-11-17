@@ -11,26 +11,32 @@ import { notFoundResponse } from './lib/not-found-response';
  *
  * A path that cannot be a page (`/wp-login.php`, `/.env`, `/es/admin`) gets a small 404
  * here instead of reaching `[locale]`, which used to render the whole home page for any
- * unknown first segment (CLAUDE.md §73).
+ * unknown first segment (CLAUDE.md §79).
  */
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  // next.config.mjs turns off Next's own trailing-slash redirect for the analytics
+  // relay, so pages keep a single URL here instead.
+  const trimmed = pathname.replace(/(.)\/+$/, '$1');
   // Next can hand the middleware a page's own transport forms (RSC payloads, prefetch
   // and per-segment variants); they are judged as the page they belong to.
-  const page = pathname.replace(/(?:\.segments\/.*|\.prefetch(?:\.rsc)?|\.rsc)$/, '');
+  const page = trimmed.replace(/(?:\.segments\/.*|\.prefetch(?:\.rsc)?|\.rsc)$/, '');
   const segments = page.split('/').filter(Boolean);
   const [first = ''] = segments;
   if (isLocale(first)) {
-    return isPagePath(segments.slice(1))
-      ? withLocaleHeader(request, first)
-      : notFoundResponse(first);
+    if (!isPagePath(segments.slice(1))) return notFoundResponse(first);
+    if (trimmed === pathname) return withLocaleHeader(request, first);
+    // A plain URL keeps the query; a NextURL clone would put back the trailing slash.
+    const url = new URL(request.nextUrl.href);
+    url.pathname = trimmed;
+    return NextResponse.redirect(url, 308);
   }
 
   const locale = requestLocale(request);
   if (!isPagePath(segments)) return notFoundResponse(locale);
-  // Clone so the query survives the redirect (e.g. /sign-in?next=/account/saved).
-  const url = request.nextUrl.clone();
-  url.pathname = `/${locale}${pathname}`;
+  // A plain URL keeps the query (e.g. /sign-in?next=/account/saved).
+  const url = new URL(request.nextUrl.href);
+  url.pathname = `/${locale}${trimmed === '/' ? '' : trimmed}`;
   return NextResponse.redirect(url);
 }
 
@@ -46,6 +52,6 @@ function withLocaleHeader(request: NextRequest, locale: Locale) {
 // tests/routes.test.ts checks this list against public/ and src/app.
 export const config = {
   matcher: [
-    '/((?!api/|_next/|_vercel/|__nextjs|brand/|icons/|images/|favicon\\.ico$|icon\\.png$|apple-icon\\.png$|og-image\\.png$|manifest\\.webmanifest$|robots\\.txt$|sitemap\\.xml$).*)',
+    '/((?!api/|relay/|_next/|_vercel/|__nextjs|brand/|icons/|images/|favicon\\.ico$|icon\\.png$|apple-icon\\.png$|og-image\\.png$|manifest\\.webmanifest$|robots\\.txt$|sitemap\\.xml$|llms\\.txt$|soluciones/[^/]+\\.md$).*)',
   ],
 };

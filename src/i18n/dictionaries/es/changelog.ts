@@ -20,10 +20,136 @@ export const changelog = {
     account: 'Cuenta',
   },
   months: {
+    november: 'Noviembre de 2026',
+    october: 'Octubre de 2026',
     september: 'Septiembre de 2026',
     august: 'Agosto de 2026',
   },
+  /**
+   * Only what is live (SHCWS-131): each entry matches a release in the git history of
+   * main, dated by the day it shipped. Work still on a branch stays out.
+   */
   releases: {
+    conversations: {
+      date: '14 de noviembre de 2026',
+      label: 'Contactos',
+      title: 'Conversaciones con los proyectos',
+      summary:
+        'Después de pedir una propuesta, tú y el proyecto pueden escribirse dentro de shwcs sin perder el hilo.',
+      items: [
+        'Los dos lados escriben mensajes y arriba se ve a quién le toca responder.',
+        'Cada mensaje avisa a la otra parte en su cuenta y por correo.',
+        'Los proyectos ven qué oportunidades no han leído.',
+      ],
+    },
+    listings: {
+      date: '14 de noviembre de 2026',
+      label: 'Fichas',
+      title: 'Publica tu proyecto en minutos',
+      summary:
+        'Pegas el enlace de tu sitio y la ficha se llena con su nombre, descripción, portada y redes. Después son tres pasos para enviarla a revisión.',
+      items: [
+        '14 categorías y 15 industrias, y «¿No ves tu categoría?» para decirnos qué falta.',
+        '«Verificado por shwcs»: el equipo revisa el proyecto y la ficha lo muestra, sin pedirte el RFC.',
+        'Reconocimientos: Top de la semana por actividad verificada y Selección shwcs, elegida por el equipo.',
+        'Insignias para poner en tu sitio, en claro u oscuro y en los dos idiomas.',
+      ],
+    },
+    reviewInvites: {
+      date: '14 de noviembre de 2026',
+      label: 'Reseñas',
+      title: 'Más reseñas y preguntas en cada ficha',
+      summary:
+        'Los proyectos pueden invitar a sus clientes a reseñar, y cualquiera puede hacer una pregunta en la ficha.',
+      items: [
+        'Una reseña por invitación dice «Invitada por el proyecto» y pesa la mitad en el orden del catálogo.',
+        '«Contactó vía shwcs» marca la reseña de quien habló con el proyecto aquí, sin mostrar la conversación.',
+        'Preguntas públicas con la respuesta del proyecto.',
+      ],
+    },
+    alerts: {
+      date: '14 de noviembre de 2026',
+      label: 'Descubrimiento',
+      title: 'Avisos de lo que te interesa',
+      summary: 'Guarda una búsqueda y te avisamos cuando se publique algo que encaje.',
+      items: [
+        '«Avísame» en la búsqueda y en cada categoría; las administras en Mis alertas.',
+        'Sigue listas de la comunidad y a quienes las firman.',
+        'Cada lunes, los proyectos reciben «Tu semana en shwcs» con sus visitas, clics y lo que tienen pendiente.',
+      ],
+    },
+    gota: {
+      date: '23 de octubre de 2026',
+      label: 'Diseño',
+      title: 'Íconos nuevos en todo shwcs',
+      summary:
+        'Toda la interfaz se dibuja ahora con Gota, el set de íconos de Flouvia: trazos más finos y un solo estilo en el sitio, la cuenta y el panel del equipo.',
+      items: [
+        'Cada página carga solo los íconos que usa.',
+        'Los íconos decorativos siguen ocultos para lectores de pantalla; los que significan algo conservan su nombre accesible.',
+      ],
+    },
+    reviews: {
+      date: '10 de octubre de 2026',
+      label: 'Reseñas',
+      title: 'Reseñas de quienes usan cada proyecto',
+      summary:
+        'Cualquier cuenta puede reseñar una ficha publicada: estrellas, para qué la usa, lo mejor y lo que mejoraría. Cada reseña dice qué tan comprobado está quien la escribe.',
+      items: [
+        'Una reseña por cuenta y ficha; se publica cuando el correo de quien la escribe está verificado.',
+        'Niveles visibles: correo verificado, correo de empresa y compra comprobada con su CFDI.',
+        'El dueño responde en público, pero nunca edita ni borra una reseña; nadie reseña su propia ficha.',
+        'Las estrellas y el número de reseñas aparecen en las tarjetas del catálogo.',
+      ],
+    },
+    registries: {
+      date: '10 de octubre de 2026',
+      label: 'Confianza',
+      title: 'Registros públicos en la ficha',
+      summary:
+        'Cuando hay una identidad fiscal registrada, la ficha dice si el proveedor aparece en la lista 69-B del SAT y con qué fecha de corte, sin mostrar el RFC.',
+      items: [
+        'La lista se actualiza cada día desde la fuente oficial.',
+        '«Compra comprobada»: quien reseña puede validar su CFDI ante el SAT; solo se guarda una huella del folio.',
+      ],
+    },
+    english: {
+      date: '10 de octubre de 2026',
+      label: 'Idiomas',
+      title: 'shwcs completo en inglés',
+      summary:
+        'Después de las páginas informativas en septiembre, ahora todo el sitio y la cuenta funcionan en español y en inglés.',
+      items: [
+        'Catálogo, fichas, comunidad, blog, cuenta y configuración en los dos idiomas.',
+        'Los mensajes de error llegan en el idioma de la página desde la que actúas.',
+        'Los 16 artículos del blog tienen versión en inglés.',
+        'Los correos siguen en español por ahora.',
+      ],
+    },
+    communityReports: {
+      date: '5 de septiembre de 2026',
+      label: 'Comunidad',
+      title: 'Reporta listas y comentarios de la comunidad',
+      summary:
+        'Si una lista pública o un comentario rompe las reglas, cualquier cuenta puede reportarlo y el equipo lo revisa.',
+      items: [
+        'Motivos claros: spam, abuso, suplantación u otro.',
+        'Nadie puede reportar su propia lista o comentario.',
+        'La búsqueda de Comunidad encuentra coincidencias parciales en el nombre, la descripción y los proyectos de cada lista.',
+      ],
+    },
+    security: {
+      date: '3 de septiembre de 2026',
+      label: 'Cuenta',
+      title: 'Más control sobre tu cuenta y tus datos',
+      summary:
+        'Configuración ahora muestra qué falta por proteger y te deja decidir qué pasa con tu información.',
+      items: [
+        'Verificación en dos pasos opcional con app autenticadora y códigos de respaldo.',
+        'Lista de sesiones abiertas para cerrar las que no reconozcas.',
+        'Descarga una copia de tus datos o elimina tu cuenta cuando quieras.',
+      ],
+    },
     capabilities: {
       date: '5 de septiembre de 2026',
       label: 'Nuevo',

@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { NextRequest } from 'next/server';
 import { parseCsv, parseSat69b } from '../src/lib/compliance/sat-69b';
 import {
   cfdiExpressions,
@@ -10,7 +9,7 @@ import {
 } from '../src/lib/compliance/cfdi';
 import { readTaxIdentity } from '../src/lib/compliance/server';
 import { reviewLevel, reviewWeights } from '../src/lib/reviews/model';
-import { POST as taxIdentityPost } from '../src/app/api/solutions/[id]/tax-identity/route';
+import { existsSync } from 'node:fs';
 
 test('parseCsv handles quoted commas, escaped quotes and CRLF', () => {
   assert.deepEqual(parseCsv('a,"b, c","d ""e"""\r\n1,,3\n'), [
@@ -153,17 +152,7 @@ test('a proven purchase is the strongest review level', () => {
   assert.ok(reviewWeights.customer > reviewWeights.work);
 });
 
-test('the tax identity API rejects foreign origins, bad ids and anonymous requests', async () => {
-  const call = (origin: string, id = '00000000-0000-4000-8000-000000000001') =>
-    taxIdentityPost(
-      new NextRequest(`https://shwcs.example/api/solutions/${id}/tax-identity`, {
-        method: 'POST',
-        headers: { origin, 'content-type': 'application/json' },
-        body: JSON.stringify({ action: 'save', country: 'MX', taxId: 'AAA010101AAA' }),
-      }),
-      { params: Promise.resolve({ id }) },
-    );
-  assert.equal((await call('https://evil.example')).status, 403);
-  assert.equal((await call('https://shwcs.example', 'nope')).status, 400);
-  assert.equal((await call('https://shwcs.example')).status, 401);
+test('founders cannot write a tax identity: the team records it in ops (SHCWS-163)', () => {
+  assert.equal(existsSync('src/app/api/solutions/[id]/tax-identity/route.ts'), false);
+  assert.equal(existsSync('ops/src/app/api/verification/route.ts'), true);
 });

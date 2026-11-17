@@ -6,6 +6,14 @@ import {
   type ProjectMetric,
 } from '@/components/metrics/metrics-dashboard';
 import { getDictionary } from '@/i18n/get-dictionary';
+import { FounderInsights } from '@/components/metrics/founder-insights';
+import {
+  categoryPositions,
+  intentTotals,
+  monthlyMetrics,
+  outcomeTotals,
+  peerComparisons,
+} from '@/lib/metrics/founder';
 
 export async function generateMetadata({
   params,
@@ -20,10 +28,19 @@ export const dynamic = 'force-dynamic';
 export default async function MetricsPage(props: { params: Promise<{ locale: string }> }) {
   const account = await requireFounder(),
     sql = solutionsSql();
-  const dict = (await getDictionary((await props.params).locale)).metrics;
-  const [projectRows, dailyRows] = await Promise.all([
+  const { locale } = await props.params;
+  const dictionary = await getDictionary(locale),
+    dict = dictionary.metrics;
+  // Each block loads on its own: one that fails says so instead of hiding the page.
+  const settled = <T,>(promise: Promise<T>) => promise.catch(() => null);
+  const [projectRows, dailyRows, intent, outcomes, positions, peers, months] = await Promise.all([
     sql`SELECT s.id::text,s.data->>'name' AS name,COALESCE(m.views,0)::int AS views,COALESCE(m.clicks,0)::int AS clicks,(SELECT count(*)::int FROM contact_requests r WHERE r.solution_id=s.id AND r.created_at>=current_date-29) AS requests FROM founder_solutions s LEFT JOIN (SELECT solution_id,sum(views) AS views,sum(clicks) AS clicks FROM solution_daily_metrics WHERE day>=current_date-29 GROUP BY solution_id) m ON m.solution_id=s.id WHERE s.owner_id=${account.id} ORDER BY COALESCE(m.views,0) DESC,COALESCE(m.clicks,0) DESC,s.updated_at DESC`,
     sql`WITH dates AS (SELECT generate_series(current_date-29,current_date,interval '1 day')::date AS day),activity AS (SELECT m.day,sum(m.views)::int AS views,sum(m.clicks)::int AS clicks FROM solution_daily_metrics m JOIN founder_solutions s ON s.id=m.solution_id WHERE s.owner_id=${account.id} AND m.day>=current_date-29 GROUP BY m.day),requests AS (SELECT r.created_at::date AS day,count(*)::int AS requests FROM contact_requests r JOIN founder_solutions s ON s.id=r.solution_id WHERE s.owner_id=${account.id} AND r.created_at>=current_date-29 GROUP BY r.created_at::date) SELECT d.day::text,COALESCE(a.views,0)::int AS views,COALESCE(a.clicks,0)::int AS clicks,COALESCE(r.requests,0)::int AS requests FROM dates d LEFT JOIN activity a ON a.day=d.day LEFT JOIN requests r ON r.day=d.day ORDER BY d.day`,
+    settled(intentTotals(account.id)),
+    settled(outcomeTotals(account.id)),
+    settled(categoryPositions(account.id)),
+    settled(peerComparisons(account.id)),
+    settled(monthlyMetrics(account.id)),
   ]);
   const projects = projectRows.map(row => ({
     id: String(row.id),
@@ -38,5 +55,23 @@ export default async function MetricsPage(props: { params: Promise<{ locale: str
     clicks: Number(row.clicks),
     requests: Number(row.requests),
   })) satisfies DailyMetric[];
-  return <MetricsDashboard projects={projects} days={days} dict={dict} />;
+  return (
+    <MetricsDashboard
+      projects={projects}
+      days={days}
+      dict={dict}
+      insights={
+        <FounderInsights
+          intent={intent}
+          outcomes={outcomes}
+          positions={positions}
+          peers={peers}
+          months={months}
+          locale={locale}
+          dict={dict}
+          valueLabels={dictionary.contacts.actions.values}
+        />
+      }
+    />
+  );
 }

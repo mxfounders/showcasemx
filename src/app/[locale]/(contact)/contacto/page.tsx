@@ -4,6 +4,7 @@ import Link from '@/i18n/navigation';
 import { ArrowUpRightIcon, CheckIcon, MailIcon } from '@/components/icons/gota';
 import { ContactForm } from '@/components/contact/contact-form';
 import { getDictionary } from '@/i18n/get-dictionary';
+import { readContactPrefill } from '@/lib/contact-inquiry';
 
 export async function generateMetadata({
   params,
@@ -15,10 +16,18 @@ export async function generateMetadata({
   return { title: `${contact.metaTitle} | shwcs`, description: contact.metaDescription };
 }
 
-export default async function ContactPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function ContactPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ motivo?: string | string[]; necesidad?: string | string[] }>;
+}) {
   const { locale } = await params;
   const dict = await getDictionary(locale);
   const t = dict.contact;
+  // A search with no results links here with its words (SHCWS-39).
+  const prefill = readContactPrefill(await searchParams);
   return (
     <div className="min-h-svh lg:grid lg:h-svh lg:grid-cols-[minmax(420px,44%)_minmax(0,1fr)] lg:overflow-hidden">
       <aside className="flex h-32 items-center bg-[#365DC4] px-6 text-white sm:h-36 sm:px-10 lg:mx-0 lg:my-6 lg:block lg:h-[calc(100svh-48px)] lg:overflow-hidden lg:rounded-l-none lg:rounded-r-[28px] lg:px-12 lg:py-12">
@@ -68,7 +77,15 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
         </div>
       </aside>
       <section className="flex min-h-[calc(100svh-8rem)] items-start justify-center px-5 py-10 sm:min-h-[calc(100svh-9rem)] sm:px-10 sm:py-12 lg:h-svh lg:min-h-0 lg:items-center lg:overflow-y-auto lg:px-12 lg:py-16 xl:px-20">
-        <ContactForm dict={dict.contactForm} />
+        <ContactForm
+          dict={dict.contactForm}
+          prefill={{
+            reason: prefill.reason,
+            message: prefill.need
+              ? dict.contactForm.prefillNeed.replace('{need}', prefill.need)
+              : undefined,
+          }}
+        />
       </section>
     </div>
   );

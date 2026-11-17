@@ -49,13 +49,21 @@ test('the og:image is read from the head and resolved against the page', () => {
     'https://a.test/x.png',
   );
   assert.equal(readImageMeta('<head><title>sin portada</title></head>', page), null);
-  // A tag that only appears in the body is ignored: it is not page metadata.
+  // Streamed metadata (React 19, Next.js) lands after the head: read when the head has
+  // none, and never over the head's own.
   assert.equal(
     readImageMeta(
       '<head></head><body><meta property="og:image" content="/tarde.png"></body>',
       page,
     ),
-    null,
+    'https://ejemplo.test/tarde.png',
+  );
+  assert.equal(
+    readImageMeta(
+      '<head><meta property="og:image" content="/head.png"></head><body><meta property="og:image:secure_url" content="https://ejemplo.test/tarde.png"></body>',
+      page,
+    ),
+    'https://ejemplo.test/head.png',
   );
 });
 

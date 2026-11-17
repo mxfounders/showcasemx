@@ -61,7 +61,7 @@ async function writeDraft(
     const { data, applied } = mergeSiteDraft(current, patch);
     const changed = await sql`WITH changed AS (
         UPDATE founder_solutions SET data = ${JSON.stringify(data)}::jsonb, version = version + 1,
-          step = 0, editor_question = 'identity', updated_at = now()
+          step = 0, editor_question = 'basics', updated_at = now()
         WHERE id = ${solutionId} AND owner_id = ${ownerId} AND version = ${Number(row.version)}
           AND status IN ('draft', 'changes_requested')
         RETURNING id, status),

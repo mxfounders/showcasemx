@@ -38,7 +38,10 @@ import {
  * inside delimiters, and the system prompt says to ignore instructions found there.
  */
 
-export const SITE_DRAFT_MODEL = 'claude-opus-5-5';
+// Chosen by measurement (docs/site-draft.md, «Modelo»): on the same three sites Sonnet 5.5
+// wrote drafts as complete as Opus 5.5 at about 40% of the cost and in a third of the time.
+export const SITE_DRAFT_MODEL = 'claude-sonnet-5-5';
+export const SITE_DRAFT_EFFORT = 'medium';
 export const siteDraftAvailable = () => Boolean(process.env.ANTHROPIC_API_KEY);
 
 const textFields = {
@@ -160,7 +163,7 @@ Campos:
 - companySizes: solo si el sitio lo dice (por ejemplo «para pymes» o «enterprise»).
 - pricingModel: cómo se contrata, según el sitio.
 - priceBand: solo si hay un precio publicado que cae claramente en un rango en dólares al mes; «depende-alcance» si el sitio dice que se cotiza.
-- pricing: resumen de los planes y precios publicados, con sus cifras tal como aparecen. Máximo 350 caracteres.
+- pricing: resumen de los planes y precios publicados, con sus cifras tal como aparecen. Sin promociones temporales, descuentos con fecha ni ofertas con vigencia. Máximo 350 caracteres.
 - setupTime: solo si el sitio dice cuánto tarda empezar a usarlo.
 - implementation y support: solo si el sitio describe cómo se implementa o qué soporte da. Máximo 350 caracteres cada uno.
 - integrationKeys: herramientas del catálogo que el sitio dice que conecta. integrations: otras integraciones o el detalle, máximo 350 caracteres.
@@ -182,8 +185,29 @@ Cumplimiento: ${catalog(localizedComplianceOptions('es'))}`;
 const demoHint = /demo|prueba|trial|try|agenda|book|sandbox|gratis|free|empieza|start/i;
 const fence = (value: string) => value.replace(/</g, '‹').replace(/>/g, '›');
 
+/**
+ * Every page repeats the menu, the footer and the cookie banner. A line is sent once, on
+ * the first page that has it, so the extra pages carry only what is new on them; pages
+ * keep their numbers, which the answer cites as sources.
+ */
+export function dedupePages<T extends { text: string }>(pages: readonly T[]): T[] {
+  const seen = new Set<string>();
+  return pages.map(page => ({
+    ...page,
+    text: page.text
+      .split('\n')
+      .filter(line => {
+        const key = line.trim().toLowerCase();
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .join('\n'),
+  }));
+}
+
 export function siteDraftUser(site: SiteReading) {
-  const pages = site.pages
+  const pages = dedupePages(site.pages)
     .map(
       (page, index) =>
         `<pagina numero="${index + 1}" url="${fence(page.url)}">\nTítulo: ${fence(page.title)}\nDescripción: ${fence(page.description)}\n${fence(page.text)}\n</pagina>`,
@@ -352,47 +376,60 @@ export type GeneratedDraft =
   | { ok: false; failure: 'refused' | 'truncated' | 'invalidOutput' | 'providerError' };
 export type DraftGenerator = (request: { system: string; user: string }) => Promise<GeneratedDraft>;
 
-/** The real generator: one Messages API call with a JSON-schema response format. */
-export const anthropicDraftGenerator: DraftGenerator = async ({ system, user }) => {
-  const client = new Anthropic({ timeout: 150_000, maxRetries: 1 });
-  try {
-    const response = await client.beta.messages.create({
-      model: SITE_DRAFT_MODEL,
-      max_tokens: 16000,
-      // Opus 5.5 can decline a request; "default" lets the API retry it on the
-      // fallback model it picks for that refusal category.
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
-      output_config: {
-        effort: 'medium',
-        format: { type: 'json_schema', schema: siteDraftSchema },
-      },
-      system,
-      messages: [{ role: 'user', content: user }],
-    });
-    if (response.stop_reason === 'refusal') return { ok: false, failure: 'refused' };
-    if (response.stop_reason === 'max_tokens') return { ok: false, failure: 'truncated' };
-    const block = response.content.find(item => item.type === 'text');
-    if (!block || block.type !== 'text') return { ok: false, failure: 'invalidOutput' };
-    let output: unknown;
+type Effort = 'low' | 'medium' | 'high';
+
+/**
+ * One Messages API call with a JSON-schema response format. Opus and Sonnet can retry a
+ * declined request on the fallback model the API picks for that refusal category;
+ * Haiku has no server-side fallback and rejects the parameter, so it is left out there.
+ */
+export function draftGenerator(
+  model: string = SITE_DRAFT_MODEL,
+  effort: Effort = SITE_DRAFT_EFFORT,
+): DraftGenerator {
+  return async ({ system, user }) => {
+    const client = new Anthropic({ timeout: 150_000, maxRetries: 1 });
+    const fallback = !model.startsWith('claude-haiku');
     try {
-      output = JSON.parse(block.text);
-    } catch {
-      return { ok: false, failure: 'invalidOutput' };
+      const response = await client.beta.messages.create({
+        model,
+        max_tokens: 16000,
+        ...(fallback
+          ? { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' as const }
+          : {}),
+        output_config: {
+          effort,
+          format: { type: 'json_schema', schema: siteDraftSchema },
+        },
+        system,
+        messages: [{ role: 'user', content: user }],
+      });
+      if (response.stop_reason === 'refusal') return { ok: false, failure: 'refused' };
+      if (response.stop_reason === 'max_tokens') return { ok: false, failure: 'truncated' };
+      const block = response.content.find(item => item.type === 'text');
+      if (!block || block.type !== 'text') return { ok: false, failure: 'invalidOutput' };
+      let output: unknown;
+      try {
+        output = JSON.parse(block.text);
+      } catch {
+        return { ok: false, failure: 'invalidOutput' };
+      }
+      return {
+        ok: true,
+        output,
+        model: response.model,
+        inputTokens: response.usage.input_tokens,
+        outputTokens: response.usage.output_tokens,
+      };
+    } catch (error) {
+      // Status only: never the message, which can echo request content.
+      console.error(
+        'site-draft provider error',
+        error instanceof Anthropic.APIError ? error.status : 'network',
+      );
+      return { ok: false, failure: 'providerError' };
     }
-    return {
-      ok: true,
-      output,
-      model: response.model,
-      inputTokens: response.usage.input_tokens,
-      outputTokens: response.usage.output_tokens,
-    };
-  } catch (error) {
-    // Status only: never the message, which can echo request content.
-    console.error(
-      'site-draft provider error',
-      error instanceof Anthropic.APIError ? error.status : 'network',
-    );
-    return { ok: false, failure: 'providerError' };
-  }
-};
+  };
+}
+
+export const anthropicDraftGenerator = draftGenerator();

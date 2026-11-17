@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { NextRequest } from 'next/server';
-import { validateContactInquiry } from '../src/lib/contact-inquiry';
+import {
+  contactBriefHref,
+  readContactPrefill,
+  validateContactInquiry,
+} from '../src/lib/contact-inquiry';
 import { POST } from '../src/app/api/contact/route';
 
 const valid = {
@@ -40,4 +44,22 @@ test('public contact endpoint rejects foreign origins before storage or delivery
   });
   const response = await POST(request);
   assert.equal(response.status, 403);
+});
+
+test('a search with no results reaches the contact form with its words, bounded', () => {
+  const href = contactBriefHref('  software para   mi restaurante ');
+  assert.equal(href, '/contacto?motivo=find&necesidad=software+para+mi+restaurante');
+  const params = Object.fromEntries(new URLSearchParams(href.split('?')[1]));
+  assert.deepEqual(readContactPrefill(params), {
+    reason: 'find',
+    need: 'software para mi restaurante',
+  });
+  assert.equal(contactBriefHref(''), '/contacto?motivo=find');
+  // Unknown reasons are dropped, repeated params and long text are bounded.
+  assert.deepEqual(readContactPrefill({ motivo: 'admin', necesidad: ['a', 'b'] }), {
+    reason: undefined,
+    need: '',
+  });
+  assert.equal(readContactPrefill({ necesidad: 'x'.repeat(500) }).need.length, 200);
+  assert.equal(readContactPrefill({ necesidad: 'línea\nnueva\tok' }).need, 'línea nueva ok');
 });

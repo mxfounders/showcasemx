@@ -39,6 +39,7 @@ import {
   TrendUpIcon,
 } from '@/components/icons/gota';
 import { LanguageSelector } from './language-selector';
+import { ConsentPreferencesButton } from './analytics/consent';
 import type { Dictionary } from '@/i18n/dictionary';
 
 // ─── FooterLink con GSAP slide-up ─────────────────────────────────────────────
@@ -244,6 +245,7 @@ export function Footer({ dict, locale = 'es' }: { dict: Dictionary['footer']; lo
             </p>
             <div className="h-3 w-px bg-stone-300 hidden sm:block" />
             <LanguageSelector />
+            <ConsentPreferencesButton className="rounded text-[12px] text-stone-400 underline-offset-2 transition-colors hover:text-stone-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#365DC4]" />
           </div>
           <div className="flex items-center justify-center gap-5">
             <Link

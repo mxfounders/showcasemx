@@ -4,7 +4,10 @@ import { emptySolution, readSolutionData, solutionErrors } from '../src/lib/solu
 import {
   questionErrors,
   questionIndex,
+  questionPhase,
   solutionQuestions,
+  requiredQuestions,
+  optionalQuestions,
   isSolutionQuestion,
 } from '../src/lib/solutions/questions';
 const founder = {
@@ -38,13 +41,41 @@ test('public founders and links are bounded and cannot smuggle private account m
   assert.ok(solutionErrors(draft).founders);
   assert.ok(solutionErrors(draft).projectLinks);
 });
-test('guided form resumes old phases, validates only current question and still rejects bad optional URLs', () => {
-  for (const step of [0, 1, 2, 3])
-    assert.equal(solutionQuestions[questionIndex(null, step)].phase, step);
-  assert.equal(solutionQuestions[questionIndex('founders', 0)].id, 'founders');
+test('registration editor: three required steps, legacy drafts resume, optional stays optional', () => {
+  assert.deepEqual(
+    requiredQuestions.map(item => item.id),
+    ['basics', 'fit', 'audience', 'review'],
+  );
+  // Drafts saved by the previous 18-question editor resume at the equivalent step.
+  for (const [legacy, id] of [
+    ['identity', 'basics'],
+    ['categories', 'basics'],
+    ['problem', 'basics'],
+    ['capabilities', 'fit'],
+    ['market', 'audience'],
+    ['contact', 'review'],
+  ])
+    assert.equal(solutionQuestions[questionIndex(legacy)].id, id);
+  assert.equal(solutionQuestions[questionIndex(null, 0)].id, 'basics');
+  assert.equal(solutionQuestions[questionIndex(null, 1)].id, 'fit');
+  assert.equal(solutionQuestions[questionIndex(null, 2)].id, 'review');
+  assert.equal(solutionQuestions[questionIndex(null, 3)].id, 'review');
+  // The API checks question and phase together, for current and legacy ids.
+  for (const item of solutionQuestions) assert.equal(questionPhase(item.id), item.phase);
+  assert.equal(questionPhase('contact'), 2);
+  assert.equal(questionPhase('constructor'), undefined);
   assert.equal(isSolutionQuestion('constructor'), false);
   assert.deepEqual(
-    questionErrors({ ...emptySolution, name: 'Example' }, questionIndex('identity')),
+    questionErrors(
+      {
+        ...emptySolution,
+        name: 'Example',
+        kind: 'Software',
+        website: 'https://example.com',
+        problem: 'Un problema concreto que resolvemos',
+      },
+      questionIndex('basics'),
+    ),
     [],
   );
   assert.ok(
@@ -54,5 +85,10 @@ test('guided form resumes old phases, validates only current question and still 
     ).length,
   );
   assert.deepEqual(questionErrors(emptySolution, questionIndex('founders')), []);
-  assert.equal(solutionQuestions[solutionQuestions.length - 1].id, 'review');
+  assert.ok(optionalQuestions.every(item => item.optional));
+  // Every field that can block a submission lives in some question, so the editor can
+  // always take the founder to it.
+  const placed = new Set<string>(solutionQuestions.flatMap(item => [...item.fields]));
+  for (const field of Object.keys(solutionErrors(emptySolution)))
+    assert.ok(placed.has(field), field);
 });

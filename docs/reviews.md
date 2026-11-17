@@ -30,10 +30,42 @@ envía al navegador el correo o su dominio.
 | Sin verificar | Correo sin confirmar | No es pública |
 | Correo verificado | Correo confirmado en un buzón gratuito | estrellas × 1 |
 | Correo de empresa | Correo confirmado en un dominio propio | estrellas × 1.5 |
+| Contactó vía shwcs | Correo confirmado y una solicitud de contacto de esa cuenta a esa ficha que llegó a «en conversación» o se cerró como ganada (`review_contact_backed`, SHCWS-135) | estrellas × 2 |
 | Compra comprobada | Correo confirmado y un comprobante del proveedor confirmado por una autoridad (México: CFDI vigente ante el SAT, `docs/compliance.md`) | estrellas × 3 |
 
 Los buzones gratuitos están en `freeEmailDomains` y `freeEmailPattern`
 (`src/lib/reviews/model.ts`), compartidos por la interfaz y por el SQL del ranking.
+
+Una reseña que llegó por el enlace de invitación del propio proyecto (SHCWS-132) pesa la
+mitad de su nivel (`reviewInvitedFactor`, `reviewWeight` en `src/lib/reviews/model.ts`) y
+muestra «Invitada por el proyecto». La marca es por cuenta y ficha
+(`solution_review_invitees`), así que borrar y reescribir la reseña no la quita.
+
+## Invitaciones a reseñar (SHCWS-132, SHCWS-135)
+
+Contrato: `db/review-invitations.sql`, `src/lib/reviews/invitations.ts`.
+
+- **Enlace del fundador**: uno por ficha publicada, se crea solo cuando el dueño lo pide
+  (`POST /api/solutions/[id]/review-invite`, `create`/`rotate`) en la tarjeta de
+  `OwnerReviewDigest` (`/account/solutions/[id]#invitar-resenas`). Lleva a
+  `/resenar/<token>`: con sesión, el formulario; sin sesión, un correo para entrar o la
+  contraseña. Reemplazar el enlace invalida el anterior; un token reemplazado al guardar
+  responde 409 en vez de guardar una reseña sin marca. La tarjeta dice las reglas:
+  invitar a todos y ningún incentivo que dependa del sentido de la reseña
+  (Términos › Reseñas). Criterio elegido, el más estricto de los sitios de reseñas: G2 y
+  Gartner etiquetan el origen y TrustRadius pesa menos lo que trae el proveedor; aquí
+  hacemos las dos cosas.
+- **Entrar por correo** (`POST /api/auth/magic-link`, `src/lib/auth/magic-link.ts`): un
+  token de 32 bytes, solo su SHA-256 guardado, 30 minutos, un uso, en el fragmento del
+  enlace. Crea la cuenta ya verificada si no existía. A una cuenta existente solo la abre
+  si ya estaba verificada cuando se pidió el enlace y su contraseña no cambió; nunca abre
+  ni verifica una cuenta sin verificar (posible pre-registro ajeno) ni una con verificación
+  en dos pasos. Respuesta igual exista o no la cuenta. 3 por correo y 10 por red cada hora.
+- **Invitación de shwcs** (`invite_contact_reviews()`, cron diario de correo): a los 30
+  días de que una solicitud llegó a «en conversación» o se cerró como ganada (ventana de 30
+  a 90 días, una vez por solicitud), aviso de categoría `contact` al comprador que aún no
+  reseñó, con enlace a `/account/reviews/[id]`. El correo no cita nada de la conversación.
+  Estas reseñas no llevan descuento: nadie eligió a quién invitar.
 
 ## Avisos, filtros y vista del dueño
 

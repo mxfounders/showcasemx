@@ -38,9 +38,20 @@ const stepTitles = ['reason', 'person', 'context', 'review'] as const;
 const field =
   'w-full border-0 border-b-2 border-stone-200 bg-transparent px-0 py-3 text-xl text-stone-900 outline-none transition-colors placeholder:text-stone-300 focus:border-[#365DC4] sm:text-2xl';
 
-export function ContactForm({ dict: t }: { dict: Dictionary['contactForm'] }) {
+export function ContactForm({
+  dict: t,
+  prefill,
+}: {
+  dict: Dictionary['contactForm'];
+  /** Chosen reason and a started message, e.g. from a search that found nothing. */
+  prefill?: { reason?: InquiryReason; message?: string };
+}) {
   const [step, setStep] = useState(0),
-    [values, setValues] = useState<Values>(initial),
+    [values, setValues] = useState<Values>(() => ({
+      ...initial,
+      ...(prefill?.reason ? { reason: prefill.reason } : {}),
+      ...(prefill?.message ? { message: prefill.message } : {}),
+    })),
     [error, setError] = useState(''),
     [pending, setPending] = useState(false),
     [sent, setSent] = useState(false);

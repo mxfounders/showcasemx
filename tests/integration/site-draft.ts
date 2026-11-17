@@ -105,7 +105,7 @@ Object.assign(process.env, parse(fs.readFileSync(process.env.ENV_FILE ?? '.env.l
     assert.deepEqual(data.companySizes, ['pyme', 'mediana']);
     assert.equal(data.demoUrl, undefined, 'an invented link is dropped');
     assert.equal(data.website, website.endsWith('/') ? website : `${website}/`);
-    assert.equal(row.editor_question, 'identity');
+    assert.equal(row.editor_question, 'basics');
     assert.equal(row.step, 0);
     assert.ok(data.projectLinks?.length, 'public links read from the site');
 

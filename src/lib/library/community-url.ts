@@ -17,9 +17,10 @@ export type CommunityFilters = {
   page: number;
 };
 
-// One URL per set of filters: values travel in taxonomy order, never click order, so
-// ?category=Ventas,Cobros and ?category=Cobros,Ventas cannot both exist as pages for a
-// crawler to walk (CLAUDE.md §73).
+// One URL per set of filters: only known values, each once, in taxonomy order (never
+// click order), so ?category=Ventas,Cobros and ?category=Cobros,Ventas cannot both exist
+// as pages for a crawler to walk (bot-traffic fix, 23 Oct 2026). A URL can never select
+// more than the taxonomy holds.
 const ordered = (values: readonly string[], allowed: readonly string[]): string[] =>
   [...values].sort((a, b) => allowed.indexOf(a) - allowed.indexOf(b));
 
@@ -33,7 +34,7 @@ const clean = (raw: string | undefined, allowed: readonly string[]): string[] =>
               .map(v => v.trim())
               .filter(v => allowed.includes(v)),
           ),
-        ).slice(0, 7),
+        ),
         allowed,
       )
     : [];

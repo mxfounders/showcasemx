@@ -15,9 +15,10 @@ import {
   suggestCapabilities,
   isRealMatch,
 } from '../src/lib/search/facets';
-import { rankSearch } from '../src/lib/search/score';
+import { matchStrength, queryTokens, rankSearch, wordRoot } from '../src/lib/search/score';
+import { rankTopics } from '../src/lib/search/topics';
 import { searchCatalog } from '../src/lib/catalog-search';
-import { solutionCapabilities } from '../src/lib/solutions/model';
+import { solutionCapabilities, solutionCategories } from '../src/lib/solutions/model';
 import { capabilityLabels } from '../src/lib/taxonomy';
 
 test('normalizeText strips accents, case and punctuation to spaced tokens', () => {
@@ -40,15 +41,7 @@ test('every vocabulary term is already normalized (no accents, no uppercase, no 
 });
 
 test('the capability catalog is internally consistent: unique ids, every id has a label, every category is real', () => {
-  const legal = new Set([
-    'Cobros',
-    'Finanzas',
-    'Nómina',
-    'Ventas',
-    'Operación',
-    'Legal',
-    'Agencias',
-  ]);
+  const legal = new Set<string>(solutionCategories);
   const seen = new Set<string>();
   for (const item of solutionCapabilities) {
     assert.ok(!seen.has(item.id), `duplicate capability id ${item.id}`);
@@ -59,15 +52,7 @@ test('the capability catalog is internally consistent: unique ids, every id has 
 });
 
 test('conceptCategories only points at real solution categories', () => {
-  const legal = new Set([
-    'Cobros',
-    'Finanzas',
-    'Nómina',
-    'Ventas',
-    'Operación',
-    'Legal',
-    'Agencias',
-  ]);
+  const legal = new Set<string>(solutionCategories);
   for (const [concept, cats] of Object.entries(conceptCategories)) {
     assert.ok(cats.length > 0, `${concept} maps to nothing`);
     for (const category of cats)
@@ -356,4 +341,116 @@ test('a declared capability counts as strongly for an English query as for a Spa
   for (const query of ['cotizaciones', 'quotes']) {
     assert.equal(rankSearch(query, [generic, declared])[0]?.name, 'Declared', query);
   }
+});
+
+// SHCWS-41: how buyers describe what they need, before they know the category's name.
+// Each phrase must point at the category or industry page a person would expect first.
+const buyerPhrases: { locale: 'es' | 'en'; phrase: string; expected: string }[] = [
+  { locale: 'es', phrase: 'que me cobren a tiempo', expected: 'Cobros' },
+  { locale: 'es', phrase: 'quiero que mis clientes me paguen a tiempo', expected: 'Cobros' },
+  { locale: 'es', phrase: 'necesito facturar más rápido', expected: 'Cobros' },
+  { locale: 'es', phrase: 'que me paguen las facturas vencidas', expected: 'Cobros' },
+  { locale: 'es', phrase: 'facturación electrónica CFDI', expected: 'Cobros' },
+  { locale: 'es', phrase: 'sistema para mi restaurante', expected: 'Hospitalidad' },
+  { locale: 'es', phrase: 'software para mi clínica', expected: 'Salud' },
+  { locale: 'es', phrase: 'un sistema para mi escuela', expected: 'Educación' },
+  { locale: 'es', phrase: 'software para mi constructora', expected: 'Construcción' },
+  { locale: 'es', phrase: 'quiero una app a la medida', expected: 'Agencias' },
+  { locale: 'es', phrase: 'una aplicación a la medida para mi negocio', expected: 'Agencias' },
+  { locale: 'es', phrase: 'necesito una página web para mi empresa', expected: 'Agencias' },
+  { locale: 'es', phrase: 'necesito un chatbot para whatsapp', expected: 'Atención al cliente' },
+  {
+    locale: 'es',
+    phrase: 'un chatbot que conteste a mis clientes',
+    expected: 'Atención al cliente',
+  },
+  { locale: 'es', phrase: 'atender a mis clientes por WhatsApp', expected: 'Atención al cliente' },
+  { locale: 'es', phrase: 'pagar la nómina de mis empleados', expected: 'Nómina' },
+  { locale: 'es', phrase: 'calcular el aguinaldo y las vacaciones', expected: 'Nómina' },
+  { locale: 'es', phrase: 'llevar el inventario de mi almacén', expected: 'Operación' },
+  { locale: 'es', phrase: 'cotizar más rápido a mis distribuidores', expected: 'Ventas' },
+  { locale: 'es', phrase: 'dar seguimiento a mis prospectos', expected: 'Ventas' },
+  { locale: 'es', phrase: 'firmar contratos en línea', expected: 'Legal' },
+  { locale: 'es', phrase: 'saber cuánto dinero tengo en el banco', expected: 'Finanzas' },
+  { locale: 'es', phrase: 'controlar los gastos de la empresa', expected: 'Finanzas' },
+  { locale: 'es', phrase: 'llevar la contabilidad', expected: 'Finanzas' },
+  {
+    locale: 'es',
+    phrase: 'vender en línea con mi propia tienda',
+    expected: 'Comercio electrónico',
+  },
+  { locale: 'es', phrase: 'conseguir más clientes con anuncios', expected: 'Marketing' },
+  { locale: 'es', phrase: 'proteger mi empresa de hackers', expected: 'TI y seguridad' },
+  {
+    locale: 'es',
+    phrase: 'respaldar la información de las computadoras',
+    expected: 'TI y seguridad',
+  },
+  {
+    locale: 'es',
+    phrase: 'automatizar procesos con inteligencia artificial',
+    expected: 'Datos e IA',
+  },
+  {
+    locale: 'es',
+    phrase: 'comunicación interna y juntas con mi equipo',
+    expected: 'Productividad',
+  },
+  { locale: 'es', phrase: 'conectar mi sistema con una API', expected: 'Desarrollo' },
+  { locale: 'es', phrase: 'rentar departamentos', expected: 'Inmobiliario' },
+  { locale: 'en', phrase: 'I want my clients to pay on time', expected: 'Cobros' },
+  { locale: 'en', phrase: 'an app for my restaurant', expected: 'Hospitalidad' },
+  { locale: 'en', phrase: 'payroll for my employees', expected: 'Nómina' },
+  { locale: 'en', phrase: 'a chatbot for customer support', expected: 'Atención al cliente' },
+  { locale: 'en', phrase: 'I need a custom app', expected: 'Agencias' },
+  { locale: 'en', phrase: 'online store', expected: 'Comercio electrónico' },
+];
+
+test('buyer phrases point at the category or industry page a person expects (SHCWS-41)', () => {
+  assert.ok(buyerPhrases.length >= 30);
+  for (const { locale, phrase, expected } of buyerPhrases) {
+    const [first] = rankTopics(phrase, locale);
+    assert.equal(first?.value, expected, `«${phrase}» → ${first?.value ?? 'nothing'}`);
+  }
+});
+
+test('generic words step aside when the query says something more specific', () => {
+  assert.deepEqual(queryTokens('sistema para mi restaurante'), ['restaurante']);
+  assert.deepEqual(queryTokens('quiero que mis clientes me paguen a tiempo'), ['paguen']);
+  assert.deepEqual(queryTokens('una app de cobranza'), ['cobranza']);
+  // Alone they still search: every listing is software, so «software» lists by its words.
+  assert.deepEqual(queryTokens('software'), ['software']);
+  assert.deepEqual(queryTokens('quiero una app'), ['app']);
+});
+
+test('conjugations share a root; short or unrelated words do not fold together', () => {
+  assert.equal(matchStrength('cobren', 'cobro'), 1);
+  assert.equal(matchStrength('facturen', 'facturacion'), 1);
+  assert.equal(matchStrength('cotice', 'cotizacion'), 1);
+  assert.equal(matchStrength('concilien', 'conciliacion'), 1);
+  assert.equal(matchStrength('vencidas', 'vencimiento'), 1);
+  assert.equal(matchStrength('invoicing', 'invoice'), 1);
+  assert.equal(wordRoot('busque'), wordRoot('buscar'));
+  assert.equal(matchStrength('contrato', 'control'), 0);
+  assert.equal(matchStrength('custom', 'customer'), 0);
+  assert.equal(matchStrength('pages', 'pago'), 0);
+  // A long shared prefix still counts, but less than a shared root.
+  assert.equal(matchStrength('facturar', 'facturables'), 0.5);
+});
+
+test('the catalog search understands how buyers phrase a need', () => {
+  for (const query of ['que me cobren a tiempo', 'quiero que mis clientes me paguen'])
+    assert.deepEqual(
+      searchCatalog(query).map(p => p.name),
+      ['Cord'],
+      query,
+    );
+  assert.equal(searchCatalog('que nos facturen')[0]?.name, 'Cord');
+  // Flouvia builds custom software (docs/listings.md): it is the honest answer for an app.
+  assert.deepEqual(
+    searchCatalog('quiero una app a la medida').map(p => p.name),
+    ['Flouvia'],
+  );
+  // No real listing serves restaurants yet: an honest empty result, not a stretch.
+  assert.equal(searchCatalog('sistema para mi restaurante').length, 0);
 });

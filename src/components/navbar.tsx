@@ -55,35 +55,9 @@ const menuKeys = ['compradores', 'fundadores', 'recursos'] as const satisfies re
 
 // ─── Mockup visual ────────────────────────────────────────────────────────────
 
-function MockupVisual({ type }: { type: string }) {
-  if (type === 'drops') {
-    return (
-      <div className="w-full rounded-xl bg-stone-900 p-3 mb-4 overflow-hidden">
-        <div className="flex items-center gap-1.5 mb-3">
-          {[0, 1, 2].map(i => (
-            <div key={i} className="size-2 rounded-full bg-stone-700" />
-          ))}
-        </div>
-        {Object.values(brandColors).map((c, i) => (
-          <div key={i} className="flex items-center gap-2 mb-2 last:mb-0">
-            <div
-              style={{ backgroundColor: c.solid }}
-              className="size-5 rounded-md opacity-80 shrink-0"
-            />
-            <div className="flex-1 space-y-1">
-              <div
-                className={`h-1.5 rounded-full bg-stone-600 ${i % 2 === 0 ? 'w-3/4' : 'w-1/2'}`}
-              />
-              <div className="h-1 rounded-full bg-stone-700 w-1/3" />
-            </div>
-            <div className="h-4 w-7 rounded-full bg-stone-700 flex items-center justify-center">
-              <span className="text-[7px] text-stone-400 font-medium">new</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
+// Every featured block shows the catalogue mockup (the dark «Weekly Drops» one was retired
+// with SHCWS-131, when /drops became /nuevo).
+function MockupVisual() {
   return (
     <div className="w-full rounded-xl bg-gradient-to-br from-stone-100 to-stone-200 p-3 mb-4">
       <div className="grid grid-cols-2 gap-1.5">
@@ -378,17 +352,21 @@ export function Navbar({
 
         {/* RIGHT */}
         <div className="flex items-center gap-2">
+          {/* The visible word doubles as the accessible name: sr-only on small
+              screens (where `title` is the hover hint), shown from lg up. */}
           <Link
             href={`/${locale}/comunidad`}
-            aria-label={dict.communityLabel}
-            title={dict.communityTitle}
+            title={dict.communityLabel}
             onClick={() => {
               setActiveMenu(null);
               setMobileMenuOpen(false);
             }}
-            className="group flex size-10 shrink-0 items-center justify-center rounded-full text-stone-700 transition-colors hover:bg-[#EEE5F5] hover:text-[#7753A5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7753A5]"
+            className="group flex h-10 min-w-10 shrink-0 items-center justify-center gap-1.5 rounded-full text-stone-700 transition-colors hover:bg-[#EEE5F5] hover:text-[#7753A5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7753A5] lg:pl-2.5 lg:pr-3.5"
           >
             <CommunityIcon className="size-[23px]" />
+            <span className="sr-only text-[13.5px] font-medium lg:not-sr-only">
+              {dict.communityTitle}
+            </span>
           </Link>
           <NavbarSearch
             onOpen={() => {
@@ -486,7 +464,7 @@ export function Navbar({
 
             {/* Featured */}
             <div className="w-[200px] shrink-0 border-l border-stone-100 pl-6 ml-2">
-              <MockupVisual type={currentMenu.featured.mockupType} />
+              <MockupVisual />
               <span className="inline-block text-[9.5px] font-bold uppercase tracking-widest bg-stone-900 text-white px-2 py-0.5 rounded-full mb-2">
                 {currentMenu.featured.tag}
               </span>

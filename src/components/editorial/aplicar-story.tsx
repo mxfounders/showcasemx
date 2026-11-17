@@ -3,19 +3,21 @@
 import Link from '@/i18n/navigation';
 import {
   ArrowRightIcon,
+  ArrowUpRightIcon,
   CheckCircleIcon,
   PenToolIcon,
-  ShieldIcon,
+  RocketIcon,
   type GotaIcon,
 } from '@/components/icons/gota';
+import { actionButtonStyle } from '@/lib/brand-colors';
 import type { Dictionary } from '@/i18n/dictionary';
 
 type StepId = keyof Dictionary['apply']['steps'];
 
 const steps: readonly { id: StepId; icon: GotaIcon; color: string; text: string }[] = [
   { id: 'draft', icon: PenToolIcon, color: '#E4EBFC', text: '#264DAE' },
-  { id: 'domain', icon: ShieldIcon, color: '#E4EDE2', text: '#416B50' },
-  { id: 'review', icon: CheckCircleIcon, color: '#F4E4DA', text: '#A94E35' },
+  { id: 'review', icon: CheckCircleIcon, color: '#E4EDE2', text: '#416B50' },
+  { id: 'publish', icon: RocketIcon, color: '#F4E4DA', text: '#A94E35' },
 ];
 
 export function AplicarStory({ dict }: { dict: Dictionary['apply'] }) {
@@ -29,6 +31,19 @@ export function AplicarStory({ dict }: { dict: Dictionary['apply'] }) {
           </h1>
           <div className="max-w-md space-y-5 lg:justify-self-end lg:pb-1">
             <p className="text-lg leading-relaxed tracking-[-0.02em] text-stone-600">{dict.desc}</p>
+            {/* Sign-up keeps the destination through login and sends an
+                existing session straight to the new draft. */}
+            <div>
+              <Link
+                href="/sign-up?next=/account/solutions/new"
+                style={actionButtonStyle}
+                className="group inline-flex items-center gap-3 rounded-full px-6 py-3.5 font-medium action-button transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4"
+              >
+                {dict.cta}
+                <ArrowUpRightIcon aria-hidden="true" className="size-5 button-arrow-diagonal" />
+              </Link>
+              <p className="mt-3 text-xs text-stone-500">{dict.ctaNote}</p>
+            </div>
             <Link
               href="/criterios"
               className="group inline-flex items-center gap-2 text-sm font-medium text-[#A94E35]"

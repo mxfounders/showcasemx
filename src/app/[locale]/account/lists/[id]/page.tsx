@@ -82,7 +82,12 @@ export default async function ListPage(props: { params: Promise<{ id: string; lo
       </header>
       <div className="mb-7 flex flex-wrap items-center gap-3">
         <AddSavedToList listId={list.id} projects={options} dict={library} locale={params.locale} />
-        <EditListPopover list={list} dict={library} locale={params.locale} />
+        <EditListPopover
+          list={list}
+          availableProjects={items.filter(item => projects[item.project_key]).length}
+          dict={library}
+          locale={params.locale}
+        />
       </div>
       {items.length > 1 && (
         <ComparisonPicker

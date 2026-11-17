@@ -51,7 +51,9 @@ function samplePaths(file: string): string[][] {
                 : getBlogSlugs()
           : segment === '[id]'
             ? [uuid]
-            : [segment];
+            : segment === '[token]'
+              ? ['0123456789abcdef0123456789abcdef']
+              : [segment];
     paths = paths.flatMap(path => values.map(value => [...path, value]));
   });
   return paths;
@@ -128,6 +130,8 @@ test('middleware still redirects real unprefixed pages and passes real ones thro
   }
 });
 
+const nextSpecialFiles = new Set(['global-error', 'layout', 'not-found', 'error', 'loading']);
+
 const metadataRoutes: Record<string, string> = {
   manifest: 'manifest.webmanifest',
   robots: 'robots.txt',
@@ -139,6 +143,8 @@ test('the middleware skips every file the site serves and nothing else', () => {
   const runs = (path: string) => new RegExp(regexp).test(path);
 
   const served = ['/api/health', '/api/v1/unknown', '/_next/static/chunks/main.js'];
+  // Route handlers outside [locale]: src/app/llms.txt and src/app/soluciones/[file].
+  served.push('/llms.txt', `/soluciones/${uuid}.md`, '/relay/static/array.js');
   served.push('/_vercel/insights/script.js');
   for (const name of readdirSync(join(__dirname, '..', 'public'))) {
     const isDir = statSync(join(__dirname, '..', 'public', name)).isDirectory();
@@ -147,6 +153,8 @@ test('the middleware skips every file the site serves and nothing else', () => {
   for (const name of readdirSync(appDir)) {
     if (statSync(join(appDir, name)).isDirectory() || name.endsWith('.css')) continue;
     const route = name.match(/^(.+)\.tsx?$/)?.[1];
+    // Next's special files (error screens, layouts) render inside a route; they are not URLs.
+    if (route && nextSpecialFiles.has(route)) continue;
     if (route) {
       assert.ok(metadataRoutes[route], `src/app/${name}: add its URL to the matcher and here`);
       served.push(`/${metadataRoutes[route]}`);
@@ -164,4 +172,12 @@ test('the middleware skips every file the site serves and nothing else', () => {
     '/api',
   ])
     assert.equal(runs(path), true, `${path} must reach middleware`);
+});
+
+test('a page share image is a known path wherever the page is', () => {
+  assert.equal(isPagePath(['explorar', categories[0].slug, 'opengraph-image']), true);
+  assert.equal(isPagePath(['soluciones', uuid, 'opengraph-image-1a2b3c']), true);
+  assert.equal(isPagePath(['explorar', 'no-existe', 'opengraph-image']), false);
+  assert.equal(isPagePath(['resenar', 'not-a-token']), false);
+  assert.equal(isPagePath(['weekly', 'unsubscribe']), true);
 });

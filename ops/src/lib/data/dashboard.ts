@@ -27,7 +27,9 @@ export async function dashboardData(user: { id: string; email: string }) {
           (SELECT count(*) FROM contact_requests WHERE created_at >= now() - interval '7 days')::int AS contacts_7d,
           ((SELECT count(*) FROM solution_reports WHERE status = 'open')
             + (SELECT count(*) FROM community_reports WHERE status = 'open')
-            + (SELECT count(*) FROM solution_review_reports WHERE status = 'open'))::int AS open_reports,
+            + (SELECT count(*) FROM solution_review_reports WHERE status = 'open')
+            + (SELECT count(*) FROM solution_comment_reports WHERE status = 'open')
+            + (SELECT count(*) FROM solution_question_reports WHERE status = 'open'))::int AS open_reports,
           (SELECT count(*) FROM contact_inquiries WHERE handled_at IS NULL)::int AS inquiries,
           (SELECT count(*) FROM account_notifications WHERE email_state = 'failed')::int AS mail_failed,
           (SELECT count(*) FROM account_notifications WHERE email_state IN ('pending', 'sending'))::int AS mail_queued,
@@ -79,6 +81,16 @@ export async function dashboardData(user: { id: string; email: string }) {
           SELECT r.id, 'review' AS kind, r.reason, r.created_at,
             COALESCE(s.published_data->>'name', s.data->>'name') AS subject
           FROM solution_review_reports r JOIN founder_solutions s ON s.id = r.solution_id
+          WHERE r.status = 'open'
+          UNION ALL
+          SELECT r.id, 'comment' AS kind, r.reason, r.created_at,
+            COALESCE(s.published_data->>'name', s.data->>'name') AS subject
+          FROM solution_comment_reports r JOIN founder_solutions s ON s.id = r.solution_id
+          WHERE r.status = 'open'
+          UNION ALL
+          SELECT r.id, 'question' AS kind, r.reason, r.created_at,
+            COALESCE(s.published_data->>'name', s.data->>'name') AS subject
+          FROM solution_question_reports r JOIN founder_solutions s ON s.id = r.solution_id
           WHERE r.status = 'open'
         ) open_reports
         ORDER BY created_at ASC LIMIT 5
@@ -149,7 +161,7 @@ export async function dashboardData(user: { id: string; email: string }) {
     })),
     reports: reports.map(r => ({
       id: String(r.id),
-      kind: String(r.kind) as 'solution' | 'community' | 'review',
+      kind: String(r.kind) as 'solution' | 'community' | 'review' | 'comment' | 'question',
       reason: String(r.reason),
       createdAt: iso(r.created_at),
       subject: r.subject ? String(r.subject) : '(sin nombre)',

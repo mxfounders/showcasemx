@@ -24,6 +24,7 @@ Todo empieza en cero. No se siembran likes, comentarios ni vistas ficticias.
 | `like` | sesión, ficha publicada, no ser el dueño | toggle atómico, devuelve `{active,count}` |
 | `comment` | sesión, ficha publicada, `name` 1–60, `comment` 1–500 | inserción idempotente por `commentId` |
 | `delete-comment` | sesión, ser el **autor** del comentario | borra la fila |
+| `report-comment` | sesión, comentario visible de otra persona, motivo y 10–2000 caracteres | un reporte abierto por persona y comentario (409 al repetir), 5/hora |
 
 Guardas en orden: `Origin` exacto (403) → sesión (401) → cuerpo válido (400)
 → `securityLimit('solution-social', account.id, 60)` (429) →
@@ -53,7 +54,8 @@ solutionScore(likes, saves, comments, views) = likes + saves*2 + comments*3 + vi
 ```
 
 Un comentario pesa como 3, un guardado como 2, un like como 1, una vista
-0.1. `src/lib/solutions/public.ts` ordena el catálogo por esta fórmula
+0.1. (Fórmula vigente, con decaimiento, reseñas y la bonificación de respuesta de
+SHCWS-52: ver `ranking.ts`, docs/reviews.md y docs/listings.md.) `src/lib/solutions/public.ts` ordena el catálogo por esta fórmula
 (calculada en SQL, contando guardados con la misma doble identidad
 `solution:UUID`/`catalog:key` que ya usa la comunidad) y expone
 `likes/saves/comments/views/score` en cada producto. El desempate es
@@ -87,7 +89,33 @@ el código — mismo patrón que `db/community-social.sql`.
 
 Igual que la comunidad de listas (CLAUDE.md §23): sin reputación ponderada,
 sin decaimiento temporal del puntaje, sin defensa sólida ante multicuentas.
-El backoffice de ops modera comentarios de fichas; no hay reporte de
-comentarios por parte de visitantes todavía. No reutilizar el flujo de
-reportes de soluciones (`/api/reports`) como si ya cubriera esta capa social
-— son entidades distintas.
+El backoffice de ops modera comentarios de fichas.
+
+## Reportes de comentarios (SHCWS-140)
+
+`db/solution-comment-reports.sql` añade `solution_comment_reports` (espejo de
+`solution_review_reports` y `community_reports`: motivos `spam`, `abuse`,
+`impersonation`, `other`; un reporte abierto por persona y comentario;
+`comment_id ON DELETE SET NULL` para que el reporte y su decisión sobrevivan al
+comentario) y las columnas `solution_comments.hidden_at`/`hidden_reason`.
+
+- Cualquier cuenta que no sea la autora puede reportar desde la bandera del
+  comentario, **incluido el fundador de la ficha**: no puede borrar ni ocultar
+  comentarios ajenos (§46), solo pedir que ops los revise.
+- Un comentario oculto sale de la ficha pública, de su contador y del orden del
+  catálogo (`public.ts`) y de los reconocimientos semanales; su autor lo sigue
+  viendo con el motivo. Ocultar, restaurar, resolver y descartar son decisiones
+  exclusivas de ops con bitácora. No reutilizar `/api/reports` (fichas): son
+  entidades distintas.
+
+## Preguntas públicas (SHCWS-57)
+
+`db/solution-questions.sql`: `solution_questions` (id del cliente, alias 1–60, texto
+10–500, respuesta del dueño hasta 2000, `hidden_at`/`hidden_reason`) y
+`solution_question_reports` (espejo de `solution_comment_reports`).
+`POST /api/solutions/[id]/questions` con `ask` (cuenta con correo verificado, nunca el
+dueño, 10 por hora), `delete` (solo el autor), `answer` (solo el dueño; `''` la quita) y
+`report` (cualquiera menos el autor, incluido el dueño). Cada pregunta crea un aviso
+`question:<id>` con `listing_notice()` y se envía en el momento. Las respuestas visibles
+alimentan el JSON-LD `FAQPage` de la ficha (`solutionQuestionsJsonLd`). Ocultar y
+restaurar son de ops; la pestaña en ops está pendiente.

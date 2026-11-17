@@ -149,15 +149,18 @@ export const settings = {
         'La verificación en dos pasos no está habilitada en este entorno todavía. Falta configurar la clave de cifrado {key} en el servidor.',
       active: 'Activa',
       activeDesc:
-        'Al entrar te pediremos un código de tu aplicación de autenticación además de tu contraseña.',
+        'Al entrar te pediremos un código de tu aplicación de autenticación además de tu contraseña, también si entras con Google.',
       regenerate: 'Generar códigos de respaldo nuevos',
       disable: 'Desactivar',
       previousInvalid: 'Los códigos anteriores dejaron de servir.',
       disableDesc:
-        'Al desactivarla, tu cuenta volverá a protegerse solo con la contraseña. Confirma con tu contraseña actual.',
+        'Al desactivarla, tu cuenta volverá a protegerse solo con la contraseña. Confirma con tu contraseña actual y un código.',
       regenerateDesc:
-        'Se generarán diez códigos nuevos y los anteriores dejarán de funcionar. Confirma con tu contraseña actual.',
+        'Se generarán diez códigos nuevos y los anteriores dejarán de funcionar. Confirma con tu contraseña actual y un código.',
       currentPassword: 'Contraseña actual',
+      codeLabel: 'Código de tu aplicación o de respaldo',
+      verifyEmailFirst:
+        'Para activarla, primero confirma tu correo con el enlace de arriba. Así nadie puede activarla en una cuenta con un correo que no es suyo.',
       cancel: 'Cancelar',
       confirming: 'Confirmando…',
       disableSubmit: 'Desactivar verificación',
@@ -241,6 +244,8 @@ export const settings = {
       genericError: 'No pudimos eliminar la cuenta. Intenta de nuevo.',
       consequencesTitle: 'Esto es lo que va a pasar',
       currentPassword: 'Contraseña actual',
+      codeLabel: 'Código de verificación en dos pasos',
+      codeHelp: 'El de tu aplicación de autenticación o uno de tus códigos de respaldo.',
       confirmLabel: 'Escribe {word} para confirmar',
       confirmWord: 'ELIMINAR',
       cancel: 'Cancelar',
@@ -278,6 +283,8 @@ export const settings = {
     profileUnavailable: 'No pudimos guardar los cambios. Tus datos siguen en el formulario.',
     passwordInvalid:
       'Revisa las contraseñas. La nueva debe tener al menos 6 caracteres y coincidir con la confirmación.',
+    passwordLeaked:
+      'Esta contraseña apareció en filtraciones de otros sitios; elige otra que no uses en ningún lado.',
     currentPasswordWrong: 'La contraseña actual no es correcta.',
     passwordUnchanged: 'Elige una contraseña diferente a la actual.',
     passwordUnavailable:
@@ -291,6 +298,7 @@ export const settings = {
     googlePasswordWrong:
       'Contraseña incorrecta. Si entraste solo con Google, establece primero una contraseña con Olvidé mi contraseña.',
     googleChanged: 'La conexión cambió. Recarga.',
+    googleVerifyFirst: 'Confirma tu correo antes de vincular Google. Pide el enlace en Seguridad.',
     googleNotConfigured: 'Google todavía no está configurado.',
     googleUseMainDomain: 'Usa el dominio principal.',
     googleUnavailable: 'No pudimos cambiar la conexión.',
@@ -331,5 +339,9 @@ export const settings = {
     totpNotOn: 'La verificación en dos pasos no está activa.',
     totpAlreadyOff: 'La verificación en dos pasos ya estaba desactivada.',
     totpUnavailable: 'No pudimos completar el cambio. Intenta de nuevo.',
+    totpEmailFirst:
+      'Confirma tu correo antes de activar la verificación en dos pasos. Pide el enlace en Seguridad.',
+    secondFactorMissing: 'Escribe el código de tu aplicación o uno de respaldo.',
+    secondFactorWrong: 'El código no es correcto o ya se usó.',
   },
 } as const;
