@@ -3789,7 +3789,8 @@ en su rama; renumerada al integrarla con `main`, donde §74 es Stripe.)
   a Claude (17 nov, cordhq.app, cuenta temporal borrada): 18 campos con fuente, tamaño de
   empresa vacío porque el sitio no lo dice. No probado: el recorrido en navegador contra un
   despliegue con la clave.
-- Estado de despliegue (17 nov): `ANTHROPIC_API_KEY` ya está en Vercel (lo hizo el
-  propietario). **Falta aplicar `db/solution-site-drafts.sql` en `shwcs_production` antes
-  de desplegar**: sin la tabla la ruta responde 503 al reservar y no hay marcas. Revisión
-  legal del texto de Privacidad pendiente (SHCWS-144).
+- Estado de despliegue (17 nov): `ANTHROPIC_API_KEY` ya está en Vercel y el propietario
+  aplicó `db/solution-site-drafts.sql` en `shwcs_production` (verificado: tabla, índices y
+  permisos del rol `shwcs_app_production`; datos sin cambios). Se activa con el deploy del
+  merge del PR mxfounders/showcasemx#1. Revisión legal del texto de Privacidad pendiente
+  (SHCWS-144).

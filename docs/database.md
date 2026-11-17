@@ -90,7 +90,7 @@ migración a object storage:
 49. db/community-follows.sql — seguir listas y curadores: `community_list_follows`, `community_curator_follows`, `community_list_announcements` y sus triggers (SHCWS-121); después de community-notices.sql
 50. db/solution-site-icons.sql — el logo que declara el sitio de cada ficha, copiado a Blob como WebP de 128 px, con sus triggers de recolección (SHCWS-177); después de media-storage.sql. El código funciona sin ella (sin logos de sitio). Aplicada en `neondb` y en `shwcs_production` (14 nov 2026)
 51. db/contact-reminders.sql — recordatorios a las 48 h y 5 días y «sin respuesta» a los 7: `contact_requests.unanswered_at` y dos índices parciales (SHCWS-61); después de contact-messages.sql y contact-outcomes.sql. `getContact`/`listContacts` y la señal de respuesta del catálogo leen la columna: aplicar antes de desplegar. Aplicada en `neondb` y en `shwcs_production` (14 nov 2026)
-52. db/solution-site-drafts.sql — intentos de ficha preparada con IA desde el sitio: cuota diaria, marcas del editor y costo (docs/site-draft.md); solo depende de founder_solutions y auth_accounts
+52. db/solution-site-drafts.sql — intentos de ficha preparada con IA desde el sitio: cuota diaria, marcas del editor y costo (docs/site-draft.md); solo depende de founder_solutions y auth_accounts. Aplicada en `neondb` y en `shwcs_production` (17 nov 2026)
 
 db/solution-applications.sql es el intake anónimo retirado: no aplicarlo.
 Newsletter es independiente; segments depende de subscribers.
