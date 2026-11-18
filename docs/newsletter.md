@@ -200,22 +200,40 @@ de seguridad de algunos correos (que abren enlaces) inflan los totales: ops lo a
 - Ya existentes: `RESEND_API_KEY`, `AUTH_EMAIL_FROM`, `AUTH_APP_ORIGIN`,
   `NEWSLETTER_UNSUBSCRIBE_SECRET`, `PRODUCT_APP_ORIGIN` (ops). Detalle en [env.md](env.md).
 
-## Puesta en marcha (André)
+## Puesta en marcha
 
-1. Aplicar `db/newsletter-sending.sql` en `shwcs_production` con el rol propietario.
-2. `OPS_NEWSLETTER_SECRET` en los dos proyectos de Vercel (`openssl rand -hex 32`) y redeploy.
-3. En Resend → Webhooks: endpoint `https://shwcs.site/api/webhooks/resend` con los eventos
-   `email.delivered`, `email.bounced`, `email.complained` y `email.suppressed`; copiar el signing
-   secret a `RESEND_WEBHOOK_SECRET` en `shwcs` (sensitive) y redeploy.
-4. Revisar en Resend que el seguimiento de aperturas y clics del dominio siga **apagado** (shwcs
-   cuenta sus propios clics y no usa píxel).
-5. Revisar el plan de Resend: el gratuito tiene cuota diaria y mensual; un 429 por cuota pausa el
-   envío una hora y lo retoma solo.
-6. Pedir confirmación a los suscriptores anteriores desde `/panel/newsletter`.
-7. Primera campaña: borrador → prueba a su correo → enviar. El envío real a suscriptores lo hace
-   André.
-8. La revisión legal de los cambios en Privacidad (SHCWS-144) y, si se consideran materiales, el
-   aviso de 15 días que promete la política a los suscriptores activos.
+Hecho el 18 de noviembre de 2026:
+
+- `db/newsletter-sending.sql` aplicada en `shwcs_production` con el rol propietario. Verificado:
+  seis tablas, columnas nuevas, la función `newsletter_in_segment()`, permisos
+  SELECT/INSERT/UPDATE/DELETE y EXECUTE del rol `shwcs_app_production` (leyendo como ese rol) y
+  datos sin cambios (1 suscriptor, sin confirmar; 6 cuentas; 7 fichas).
+- Webhook creado en Resend para `https://shwcs.site/api/webhooks/resend` con
+  `email.delivered`, `email.bounced`, `email.complained` y `email.suppressed`, **desactivado**:
+  hasta que exista la ruta en producción y su secreto, cada evento fallaría y Resend acabaría
+  desactivándolo solo.
+- Comprobado en Resend: dominio `shwcs.site` verificado, seguimiento de aperturas y de clics
+  **apagado**.
+- La cuenta de Resend está en el **plan gratuito** (sus respuestas traen las cabeceras
+  `x-resend-daily-quota` y `x-resend-monthly-quota`, que solo existen en ese plan; el 18 nov
+  marcaban 59 y 136). La cuota es de toda la cuenta: una campaña grande puede agotarla y frenar
+  también los correos transaccionales (recuperación, verificación, avisos) hasta el día siguiente.
+  Con más de unas decenas de suscriptores, pasar a un plan de pago antes de enviar. Si se agota, el
+  worker pausa el envío una hora y lo retoma solo.
+
+Pendiente (André):
+
+1. Desplegar el código (rama integrada en `main`).
+2. `OPS_NEWSLETTER_SECRET` en `shwcs` y `shwcs-ops` (Vercel, equipo `mxfounders`), **mismo valor**
+   (`openssl rand -hex 32`), Production y Preview, sensitive; redeploy de ambos. Sin él, ops escribe
+   borradores pero no los prueba ni los envía.
+3. En Resend → Webhooks, abrir el webhook de `shwcs.site/api/webhooks/resend`, copiar su
+   signing secret (`whsec_…`) a `RESEND_WEBHOOK_SECRET` en `shwcs` (sensitive), redeploy y
+   **activar** el webhook.
+4. Pedir confirmación al suscriptor anterior desde `/panel/newsletter` («Pedir confirmación»).
+5. Primera campaña: borrador → prueba a tu correo → enviar.
+6. Revisión legal de los cambios en Privacidad (SHCWS-144) y decidir si es un cambio material (la
+   política promete avisar con 15 días a los suscriptores activos).
 
 ## Verificación (17 nov 2026)
 
