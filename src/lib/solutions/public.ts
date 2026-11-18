@@ -10,7 +10,7 @@ import {
   reviewInvitedFactor,
   reviewWeights,
 } from '@/lib/reviews/model';
-import { solutionCover } from './gallery';
+import { readCoverSource, solutionCover } from './gallery';
 import { solutionPath } from './slug';
 import { recognitionHost } from '@/lib/recognition/model';
 import { verificationDomain } from '@/lib/trust/domain';
@@ -103,6 +103,8 @@ const fetchPublishedRows = unstable_cache(
   s.published_data->>'problem' AS problem,s.published_data->>'audience' AS audience,
   s.published_data->>'website' AS website,
   s.published_data->'screenshots'->0->>'id' AS cover_id,
+  s.published_data->>'coverSource' AS cover_source,
+  COALESCE(s.published_data->'hideSiteImage'='true'::jsonb,false) AS hide_site_image,
   COALESCE(l.n,0) likes,COALESCE(c.n,0) comments,COALESCE(sv.n,0) saves,COALESCE(v.n,0) views,
   COALESCE(rv.n,0) reviews,rv.average AS rating,
   COALESCE(l.decayed,0) likes_score,COALESCE(c.decayed,0) comments_score,COALESCE(sv.decayed,0) saves_score,COALESCE(v.decayed,0) views_score,
@@ -159,11 +161,13 @@ export async function publicProducts(): Promise<PublishedProduct[]> {
     const products = rows.map(row => {
       const response = responses.get(String(row.id)) ?? null;
       const staticProduct = staticArtFor(row.catalog_key, row.website);
-      // See src/lib/solutions/gallery.ts: screenshot the founder curated, then the
-      // site's own og:image, then the local art shipped for Cord/Flouvia.
+      // The listing's first slide (src/lib/solutions/gallery.ts), then the local art
+      // shipped for Cord/Flouvia.
       const ogImage = solutionCover(String(row.id), {
         coverScreenshotId: isSolutionId(String(row.cover_id)) ? String(row.cover_id) : undefined,
         hasSiteImage: Boolean(row.has_site_image),
+        hideSiteImage: Boolean(row.hide_site_image),
+        coverSource: readCoverSource(row.cover_source),
         staticArt: staticProduct?.ogImage,
       });
       return {

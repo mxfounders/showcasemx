@@ -37,6 +37,11 @@ export type SolutionResourceKind = (typeof solutionResourceKinds)[number];
 // their own site as a ficha slide. Absent/false = shown, so no existing ficha
 // changes. Named in the negative on purpose: an absent boolean must mean
 // "show", and a jsonb key that is merely false already means that.
+// coverSource: which image leads — the card cover and the first slide. Absent or 'site'
+// = the site's og:image (the default the owner chose on 18 Nov 2026); 'screenshot' = the
+// founder's first gallery image, with the og:image after the gallery.
+export const solutionCoverSources = ['site', 'screenshot'] as const;
+export type SolutionCoverSource = (typeof solutionCoverSources)[number];
 export type SolutionData = {
   name: string;
   kind: string;
@@ -59,6 +64,7 @@ export type SolutionData = {
   founders?: SolutionFounder[];
   projectLinks?: PublicLink[];
   hideSiteImage?: boolean;
+  coverSource?: SolutionCoverSource;
   industries?: string[];
   companySizes?: string[];
   capabilities?: string[];
@@ -650,6 +656,10 @@ export function readSolutionData(value: unknown): SolutionData | null {
   if (input.hideSiteImage !== undefined) {
     if (typeof input.hideSiteImage !== 'boolean') return null;
     result.hideSiteImage = input.hideSiteImage;
+  }
+  if (input.coverSource !== undefined) {
+    if (!solutionCoverSources.includes(input.coverSource as SolutionCoverSource)) return null;
+    if (input.coverSource === 'screenshot') result.coverSource = 'screenshot';
   }
   // An empty array is a real, valid answer ("sirve a cualquier industria/tamaño"),
   // distinct from the field being absent (never answered). Both fields keep that

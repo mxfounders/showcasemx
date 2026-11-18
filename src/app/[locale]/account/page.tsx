@@ -179,6 +179,8 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
                 const image = solutionCover(solution.id, {
                   coverScreenshotId: coverId && isSolutionId(coverId) ? coverId : undefined,
                   hasSiteImage: solution.has_site_image,
+                  hideSiteImage: solution.data.hideSiteImage,
+                  coverSource: solution.data.coverSource,
                   staticArt: catalog?.ogImage,
                 });
                 return (
