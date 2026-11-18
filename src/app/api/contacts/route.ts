@@ -20,6 +20,7 @@ import { getDictionary } from '@/i18n/get-dictionary';
 import { requestLocale } from '@/i18n/negotiate';
 import { captureServerEvent } from '@/lib/analytics/server';
 import { deliverNotifications } from '@/lib/notifications/server';
+import { chooseProposal } from '@/lib/briefs/server';
 export async function POST(request: NextRequest) {
   const t = (await getDictionary(requestLocale(request))).contacts.errors;
   if (request.headers.get('origin') !== request.nextUrl.origin) return failure(t.origin, 403);
@@ -54,6 +55,10 @@ export async function POST(request: NextRequest) {
         { id: body.id, solutionId: body.solutionId, recipientId: body.recipientId, details },
         account,
       );
+      // Chosen from the proposals to a brief (SHCWS-58): the proposal points to this
+      // conversation. Best-effort: the request is already sent either way.
+      if (typeof body.briefId === 'string' && isSolutionId(body.briefId))
+        await chooseProposal(body.briefId, body.solutionId, account.id, id).catch(() => false);
     } else if (body.action === 'update') {
       if (
         !isContactStatus(body.status) ||

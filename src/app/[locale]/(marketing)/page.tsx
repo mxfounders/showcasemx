@@ -53,6 +53,7 @@ export default async function Home(props: { params: Promise<{ locale: string }> 
           dict={dictionary.landing}
           explorerDict={dictionary.categoryExplorer}
           saveDict={dictionary.solutionUi}
+          compareDict={dictionary.catalog.compare}
           locale={locale}
         />
       </Suspense>

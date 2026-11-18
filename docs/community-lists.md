@@ -152,6 +152,6 @@ Migración `db/community-follows.sql` (aplicada solo en `neondb`), después de
 
 ## Límites pendientes
 
-No hay colaboración entre autores, clonado, portadas personalizadas ni perfiles públicos. El ranking mide interacción bruta, no calidad ni tendencia temporal, y puede manipularse creando cuentas; usarlo solo como orden auxiliar durante beta. El curador modera comentarios de su lista directamente y ahora también existe un reporte central en ops (ver arriba), pero todavía faltan bloqueo, apelación, reputación y defensa sólida ante multicuentas — no promover masivamente la función hasta cerrar esa operación.
+No hay colaboración entre autores, clonado ni portadas personalizadas. Los perfiles públicos existen desde SHCWS-120 ([public-profiles.md](public-profiles.md)): con el perfil activo, la firma de una lista enlaza a él y «Seguir a…» sigue a la persona. El ranking mide interacción bruta, no calidad ni tendencia temporal, y puede manipularse creando cuentas; usarlo solo como orden auxiliar durante beta. El curador modera comentarios de su lista directamente y ahora también existe un reporte central en ops (ver arriba), pero todavía faltan bloqueo, apelación, reputación y defensa sólida ante multicuentas — no promover masivamente la función hasta cerrar esa operación.
 
 Marca vigente: **shwcs**. Rebranding de interfaz aplicado después de esta entrega; dominio, logo y servicios externos pendientes.

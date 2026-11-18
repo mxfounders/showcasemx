@@ -19,9 +19,12 @@ export type SecurityEvent =
   | 'google-unlinked'
   | 'new-device'
   | 'totp-failures'
+  | 'passkey-added'
+  | 'passkey-removed'
   | 'assistant-token';
 
-const titles: Record<SecurityEvent, (device: string) => string> = {
+// `detail` is the passkey's name for the passkey events; the other events ignore it.
+const titles: Record<SecurityEvent, (device: string, detail: string) => string> = {
   'password-changed': device => `Se cambió la contraseña de tu cuenta (${device})`,
   'password-reset': device => `Se restableció la contraseña de tu cuenta (${device})`,
   'totp-on': device => `Se activó la verificación en dos pasos (${device})`,
@@ -33,6 +36,9 @@ const titles: Record<SecurityEvent, (device: string) => string> = {
   // Only reachable after a correct password (or Google): «No fui yo» is the right advice.
   'totp-failures': device =>
     `Diez códigos incorrectos en una hora al entrar a tu cuenta (${device})`,
+  // A passkey signs in without the password or a code (SHCWS-158): adding one is worth an email.
+  'passkey-added': (device, name) => `Se añadió una passkey a tu cuenta: «${name}» (${device})`,
+  'passkey-removed': (device, name) => `Se quitó una passkey de tu cuenta: «${name}» (${device})`,
   // SHCWS-152. A new password turns every token off too (assistant_tokens.password_stamp).
   'assistant-token': device => `Se creó un token para conectar un asistente de IA (${device})`,
 };
@@ -42,8 +48,8 @@ const hrefs: Partial<Record<SecurityEvent, string>> = {
   'assistant-token': '/account/settings/connections',
 };
 
-export function securityTitle(event: SecurityEvent, device: string) {
-  return titles[event](device);
+export function securityTitle(event: SecurityEvent, device: string, detail = '') {
+  return titles[event](device, detail).slice(0, 180);
 }
 
 async function device(userAgent: string | null) {
@@ -54,11 +60,12 @@ export async function securityNotice(
   accountId: string,
   event: SecurityEvent,
   userAgent: string | null,
+  detail = '',
 ) {
   const sql = authSql();
   const [row] =
     await sql`INSERT INTO account_notifications(owner_id,category,source_key,title,href,email_state)
-    VALUES (${accountId},'security',${`security:${event}:${randomUUID()}`},${securityTitle(event, await device(userAgent))},${hrefs[event] ?? '/account/settings/security'},'pending')
+    VALUES (${accountId},'security',${`security:${event}:${randomUUID()}`},${securityTitle(event, await device(userAgent), detail)},${hrefs[event] ?? '/account/settings/security'},'pending')
     RETURNING id::text`;
   if (row) await deliverNotifications({ ids: [String(row.id)] });
 }

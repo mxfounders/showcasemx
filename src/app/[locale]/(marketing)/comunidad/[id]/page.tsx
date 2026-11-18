@@ -119,8 +119,20 @@ export default async function PublicCollectionPage({
               </p>
             )}
             <p className="mt-5 text-sm text-stone-500">
-              {dict.byPrefix} {collection.curator} <span aria-hidden="true">·</span>{' '}
-              {collection.count}{' '}
+              {dict.byPrefix}{' '}
+              {/* The signature links to the curator's public profile only when they turned
+                  it on and it shows this list (SHCWS-120). */}
+              {collection.profile ? (
+                <Link
+                  href={`/c/${collection.profile.handle}`}
+                  className="font-medium text-[#365DC4] underline-offset-4 hover:underline"
+                >
+                  {collection.curator}
+                </Link>
+              ) : (
+                collection.curator
+              )}{' '}
+              <span aria-hidden="true">·</span> {collection.count}{' '}
               {collection.count === 1 ? dict.projectSingular : dict.projectPlural}
             </p>
           </div>
@@ -171,6 +183,8 @@ export default async function PublicCollectionPage({
         following={collection.following}
         followingCurator={collection.followingCurator}
         curator={collection.curator}
+        profile={collection.profile}
+        profileDict={fullDict.profiles.follows}
         own={collection.own}
         comments={comments}
         dict={dict}

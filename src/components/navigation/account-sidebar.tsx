@@ -16,8 +16,10 @@ import {
   HomeIcon,
   InboxIcon,
   LayersIcon,
+  MegaphoneIcon,
   MenuIcon,
   SendIcon,
+  TargetIcon,
 } from '@/components/icons/gota';
 import { LogoutButton } from '@/components/logout-button';
 import { CommunityIcon } from '@/components/library/community-icon';
@@ -101,6 +103,13 @@ export function AccountSidebar({
       tone: brandColors.blue,
     },
     {
+      group: 'buyer',
+      href: '/account/briefs',
+      label: text.myBriefs,
+      Icon: MegaphoneIcon,
+      tone: brandColors.amber,
+    },
+    {
       group: 'founder',
       href: '/account/solutions',
       label: text.mySolutions,
@@ -113,6 +122,13 @@ export function AccountSidebar({
       label: text.opportunities,
       Icon: InboxIcon,
       tone: brandColors.terracotta,
+    },
+    {
+      group: 'founder',
+      href: '/account/needs',
+      label: text.needs,
+      Icon: TargetIcon,
+      tone: brandColors.lavender,
     },
     {
       group: 'founder',

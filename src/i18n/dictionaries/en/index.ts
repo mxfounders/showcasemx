@@ -44,6 +44,8 @@ import { contactThread } from './contactThread';
 import { contactBatch } from './contactBatch';
 import { alerts } from './alerts';
 import { follows } from './follows';
+import { briefs } from './briefs';
+import { profiles } from './profiles';
 import { assistant } from './assistant';
 
 export const en = {
@@ -92,5 +94,7 @@ export const en = {
   contactBatch,
   alerts,
   follows,
+  briefs,
+  profiles,
   assistant,
 } satisfies Dictionary;

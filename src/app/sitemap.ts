@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { localized, staticPages } from '@/lib/sitemap';
 import { publicProducts } from '@/lib/solutions/public';
 import { indexableCollections } from '@/lib/library/community';
+import { indexableProfiles } from '@/lib/profiles/server';
 
 // Rebuilt hourly so new approvals show up without a deploy. publicProducts()
 // returns [] when the database is unreachable, so a build without one still works.
@@ -18,5 +19,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     path: `/comunidad/${list.id}`,
     lastModified: list.updatedAt,
   }));
-  return [...staticPages(), ...solutions, ...lists].flatMap(localized);
+  // Public profiles that are on and show something (SHCWS-120); an empty one is noindex.
+  const profiles = (await indexableProfiles().catch(() => [])).map(profile => ({
+    path: `/c/${profile.handle}`,
+    lastModified: profile.updatedAt,
+  }));
+  return [...staticPages(), ...solutions, ...lists, ...profiles].flatMap(localized);
 }

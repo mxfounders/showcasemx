@@ -34,6 +34,8 @@ import { getRecognition } from '@/lib/recognition/server';
 import { getSiteDraftMarks } from '@/lib/solutions/site-draft-server';
 import { RecognitionCard } from '@/components/recognition/recognition-card';
 import { currencyOptions } from '@/lib/currencies';
+import { countryPickerOptions } from '@/lib/countries';
+import { languageOptions } from '@/lib/languages';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const dictionary = await getDictionary((await params).locale);
@@ -345,6 +347,8 @@ export default async function SolutionPage(props: {
             siteImageFailure={solution.site_image_failure}
             hasUnpublishedChanges={hasUnpublishedChanges}
             currencies={currencyOptions(locale)}
+            countries={countryPickerOptions(locale)}
+            languages={languageOptions(locale)}
             siteDraft={siteDraft}
           />
         </div>

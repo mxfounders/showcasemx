@@ -149,6 +149,9 @@ export const solutionEditor = {
       'Completa los enlaces del proyecto con URLs HTTP(S) sin credenciales, o elimina los vacíos.',
     priceIncomplete:
       'Para mostrar tu precio de entrada, elige su moneda y qué paga: por mes, por proyecto…',
+    foundedYearInvalid: 'El año de fundación no puede ser posterior a este año.',
+    casesInvalid:
+      'Cada caso necesita el cliente y qué cambió; el enlace, si lo pones, debe ser una URL HTTP(S).',
   },
   /** Keyed by `solutionQuestions[].id` (src/lib/solutions/questions.ts). */
   questions: {
@@ -208,6 +211,14 @@ export const solutionEditor = {
       title: 'Casos y evidencia',
       hint: 'Un caso, un portafolio o un resultado con contexto. Nada que no puedas respaldar.',
     },
+    markets: {
+      title: 'Dónde operas',
+      hint: 'Desde dónde trabajas, en qué países atiendes y facturas, en qué idiomas das soporte y cómo te pagan. Con esto una empresa filtra por su país.',
+    },
+    track: {
+      title: 'Trayectoria y clientes',
+      hint: 'Desde cuándo existe el proyecto, cuántas personas lo hacen, a cuántos clientes atiende y casos con nombre.',
+    },
   },
   /** One line under each optional section's card on the review screen. */
   sections: {
@@ -221,6 +232,8 @@ export const solutionEditor = {
     founders: 'Quién está detrás del proyecto.',
     links: 'Redes y enlaces oficiales.',
     evidence: 'Un caso o portafolio con contexto.',
+    markets: 'Países, idiomas y formas de pago.',
+    track: 'Año, equipo, clientes y casos.',
   },
   editor: {
     any: 'Cualquiera',
@@ -361,6 +374,46 @@ export const solutionEditor = {
     noIntegrations: 'No se conecta con otras herramientas',
     complianceLegend: 'Normas y certificaciones',
     evidenceUrlLabel: 'Enlace al caso, portafolio o evidencia',
+    /** SHCWS-56: «Dónde operas» and «Trayectoria y clientes». */
+    provider: {
+      originLabel: 'País de origen',
+      originPlaceholder: 'Elige un país',
+      serviceLegend: 'Dónde atiendes clientes',
+      billingLegend: 'Dónde puedes facturar',
+      billingHint:
+        'Países donde emites una factura o comprobante que le sirva al cliente en su país.',
+      anyCountry: 'Cualquier país',
+      addCountry: 'Añadir país…',
+      frequent: 'Más usados',
+      all: 'Todos',
+      remove: 'Quitar {name}',
+      currenciesLegend: 'Monedas en que cobras',
+      addCurrency: 'Añadir moneda…',
+      languagesLegend: 'Idiomas de soporte',
+      addLanguage: 'Añadir idioma…',
+      supportHoursLabel: 'Horario de soporte',
+      supportHoursPlaceholder: 'Por ejemplo: lunes a viernes de 9 a 18 h, hora de Bogotá',
+      paymentLegend: 'Cómo te pueden pagar',
+      foundedLabel: 'Año de fundación',
+      foundedPlaceholder: 'Por ejemplo: 2021',
+      teamLegend: 'Personas en el equipo',
+      customersLegend: 'Clientes que atiendes hoy',
+      bandsNote: 'Rangos, no cifras exactas: se publican como dato declarado por ti.',
+      casesTitle: 'Casos de clientes',
+      casesNote:
+        'Se publican como «declarado por el proyecto» hasta que el cliente lo confirme. Pide permiso antes de nombrar a un cliente.',
+      caseLabel: 'Caso {index}',
+      caseClient: 'Cliente',
+      caseClientPlaceholder:
+        'La empresa o cómo describirla, por ejemplo: distribuidora de 80 personas',
+      caseProblem: 'Qué pasaba antes',
+      caseResult: 'Qué cambió',
+      caseResultPlaceholder: 'Un resultado concreto, con números si los tienes',
+      caseUrl: 'Enlace para leer más · opcional',
+      removeCase: 'Quitar este caso',
+      addCase: 'Añadir caso',
+      casesCount: '{count}/{limit} casos',
+    },
   },
   profile: {
     linkType: 'Tipo de enlace {index}',

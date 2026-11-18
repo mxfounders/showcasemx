@@ -3,7 +3,7 @@ import { ArrowUpRightIcon } from '@/components/icons/gota';
 import type { Dictionary } from '@/i18n/dictionary';
 import type { PublishedProduct } from '@/lib/solutions/public';
 import type { SimilarExit, SimilarityMatch } from '@/lib/solutions/similar';
-import { contactBriefHref } from '@/lib/contact-inquiry';
+import { briefHref } from '@/lib/briefs/links';
 import {
   localizedCapabilityLabel,
   localizedCategoryDisplayLabel,
@@ -136,7 +136,7 @@ export function SimilarSolutions({
           return (
             <Link
               key="brief"
-              href={contactBriefHref(dict.exits.briefNeed.replace('{name}', solutionName))}
+              href={briefHref(dict.exits.briefNeed.replace('{name}', solutionName))}
               className={`${card} border-dashed`}
             >
               <div>

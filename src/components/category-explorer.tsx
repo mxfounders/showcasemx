@@ -1,6 +1,7 @@
 'use client';
 
 import { SaveProjectButton } from '@/components/library/save-project-button';
+import { CompareToggle } from '@/components/compare/compare-toggle';
 import { projectKey } from '@/lib/library/model';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
@@ -21,7 +22,7 @@ import {
   type PreviewCategory,
 } from '@/lib/catalog-preview';
 import { localizedCategoryDisplayLabel, localizedOfferingOptions } from '@/lib/taxonomy';
-import { contactBriefHref } from '@/lib/contact-inquiry';
+import { briefHref } from '@/lib/briefs/links';
 import { priceSummary } from '@/lib/solutions/pricing';
 import type { Dictionary } from '@/i18n/dictionary';
 import { ProjectMark } from '@/components/project-mark';
@@ -103,6 +104,7 @@ export function CategoryExplorer({
   onClear,
   dict,
   saveDict,
+  compareDict,
   locale,
 }: {
   categories?: PreviewCategory[];
@@ -113,6 +115,8 @@ export function CategoryExplorer({
   onClear: () => void;
   dict: Dictionary['categoryExplorer'];
   saveDict: Dictionary['solutionUi'];
+  /** «Comparar» on published listings (SHCWS-53); examples never get it. */
+  compareDict: Dictionary['catalog']['compare'];
   locale: string;
 }) {
   const displayed = selected;
@@ -268,9 +272,9 @@ export function CategoryExplorer({
                 <p className="mt-3 max-w-md text-sm leading-relaxed text-stone-500">
                   {dict.emptyDesc}
                 </p>
-                {/* The need doesn't get lost: it travels to the contact form (SHCWS-39). */}
+                {/* The need doesn't get lost: it becomes a brief (SHCWS-39, SHCWS-58). */}
                 <Link
-                  href={contactBriefHref(query)}
+                  href={briefHref(query)}
                   style={actionButtonStyle}
                   className="action-button mt-6 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium"
                 >
@@ -343,9 +347,21 @@ export function CategoryExplorer({
                         fallbackClassName="flex items-center justify-center text-sm font-semibold text-white"
                         fallbackStyle={{ backgroundColor: palette.solid }}
                       />
-                      <span className="text-[20px] font-semibold tracking-[-0.03em] text-stone-900">
-                        {product.name}
-                      </span>
+                      {product.detailUrl ? (
+                        // The card's link, stretched over it (::after), so «Comparar» can be a
+                        // sibling button rather than a button nested inside a link.
+                        <Link
+                          href={product.detailUrl}
+                          aria-label={label}
+                          className="text-[20px] font-semibold tracking-[-0.03em] text-stone-900 outline-none after:absolute after:inset-0 after:rounded-[20px] focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-stone-800"
+                        >
+                          {product.name}
+                        </Link>
+                      ) : (
+                        <span className="text-[20px] font-semibold tracking-[-0.03em] text-stone-900">
+                          {product.name}
+                        </span>
+                      )}
                       {product.verified && <VerifiedMark locale={locale} />}
                       <ArrowUpRightIcon
                         aria-hidden="true"
@@ -372,7 +388,16 @@ export function CategoryExplorer({
                         </span>
                       )}
                       {product.detailUrl ? (
-                        <span className="shrink-0 text-stone-600">{dict.seeSolution}</span>
+                        product.solutionId ? (
+                          <CompareToggle
+                            projectKey={projectKey(product) ?? `solution:${product.solutionId}`}
+                            name={product.name}
+                            dict={compareDict}
+                            className="relative z-10 shrink-0"
+                          />
+                        ) : (
+                          <span className="shrink-0 text-stone-600">{dict.seeSolution}</span>
+                        )
                       ) : (
                         <span className="inline-flex shrink-0 items-center gap-1 text-stone-600">
                           {dict.seeExample} <PlusIcon aria-hidden="true" className="size-3" />
@@ -384,9 +409,9 @@ export function CategoryExplorer({
                 // Real published solutions navigate straight to their ficha; static
                 // examples (no detailUrl) open the preview dialog instead.
                 return product.detailUrl ? (
-                  <Link key={key} href={product.detailUrl} aria-label={label} className={className}>
+                  <article key={key} className={`relative ${className}`}>
                     {content}
-                  </Link>
+                  </article>
                 ) : (
                   <button
                     key={key}
@@ -401,7 +426,7 @@ export function CategoryExplorer({
               })}
               {showBrief && (
                 <Link
-                  href={contactBriefHref(dict.briefPrefill.replace('{category}', categoryLabel))}
+                  href={briefHref('', category.label)}
                   className="group flex h-[328px] min-w-0 flex-col justify-between rounded-[20px] p-5 text-left transition-[background-color,transform] duration-300 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800 motion-reduce:transform-none sm:h-[340px]"
                   style={{ backgroundColor: palette.soft, color: palette.solid }}
                 >

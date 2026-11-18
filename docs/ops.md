@@ -243,3 +243,28 @@ también trae cuentas nuevas en ráfaga. Nada de esto aparece en el producto ni 
 - Verificado contra `neondb` con cuentas `@example.invalid` y un ops local: el anillo de
   prueba subía su ficha por encima de otra y su lista por encima de otra; al marcarlo,
   ambas bajan, los contadores visibles no cambian y quitar la marca restaura el orden.
+
+## Perfiles públicos — 17 noviembre 2026 (SHCWS-120)
+
+Detalle del producto en [public-profiles.md](public-profiles.md). En la ficha de cuenta
+(`/panel/cuentas/<id>?tab=comunidad`), tarjeta «Perfil público» con su enlace, estado (activo,
+apagado por su dueño u oculto por ops con su motivo), cuántas fichas y listas muestra,
+cuántas personas lo siguen (solo el número) y sus enlaces anteriores. El encabezado de la
+cuenta muestra una insignia «Perfil /c/<enlace>».
+
+`POST /api/profiles`, con motivo de 10 caracteres o más; el cambio, la bitácora y el aviso al
+dueño (categoría `account`, enlace a Ajustes) van en una sola sentencia:
+
+- `hide` / `unhide` (cualquier miembro de ops): el perfil deja de verse (el middleware tarda
+  hasta un minuto en responder 404) o vuelve a verse si su dueño lo tiene activo. El dueño
+  lee el motivo en Ajustes. Fichas y listas no cambian. Bitácora: `profile_hide`,
+  `profile_unhide`.
+- `force_handle` (solo admin): enlace nuevo con las mismas reglas del producto
+  (`ops/src/lib/profiles.ts`, copia de `src/lib/profiles/handle.ts`). El anterior va a
+  `profile_handle_blocks`: no redirige y nadie puede volver a usarlo. Bitácora:
+  `profile_force_handle` con `from` y `to`.
+- «Despublicar todo» de una cuenta también oculta su perfil, con el mismo motivo.
+
+Ops nunca edita el nombre, la bio ni los enlaces del perfil: si algo no cumple, se oculta.
+Liberar un handle bloqueado es una operación manual en la base (`DELETE FROM
+profile_handle_blocks WHERE handle = …`), registrada aparte.

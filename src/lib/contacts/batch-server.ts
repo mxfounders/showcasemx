@@ -86,10 +86,15 @@ export async function createContactBatch(
   allowAttempt: () => Promise<boolean>,
 ): Promise<{ grouped: boolean; results: BatchResult[] }> {
   const sql = solutionsSql();
-  const members = await listSolutionIds(account.id, input.listId);
-  if (!members) throw new BatchError(404, 'listUnavailable');
-  if (input.recipients.some(recipient => !members.has(recipient.solutionId)))
-    throw new BatchError(400, 'notInList');
+  // From a list, every project must still be in it. From a temporary comparison there is
+  // no list: each recipient is checked like a single request (published, not the buyer's
+  // own, the owner shown) by createContact below.
+  if (input.listId) {
+    const members = await listSolutionIds(account.id, input.listId);
+    if (!members) throw new BatchError(404, 'listUnavailable');
+    if (input.recipients.some(recipient => !members.has(recipient.solutionId)))
+      throw new BatchError(400, 'notInList');
+  }
   const solutionIds = input.recipients.map(recipient => recipient.solutionId);
   const onFile =
     await sql`SELECT id,solution_id FROM contact_requests WHERE buyer_id=${account.id} AND solution_id=ANY(${solutionIds}::uuid[])`;

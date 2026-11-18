@@ -5,18 +5,22 @@ import { ExportData, DeleteAccount } from '@/components/settings/data-controls';
 import { LanguagePreference } from '@/components/settings/language-preference';
 import { ConsentPreferencesButton } from '@/components/analytics/consent';
 import { i18n, type Locale } from '@/i18n/config';
+import { siteOrigin } from '@/lib/seo';
 import { getDictionary } from '@/i18n/get-dictionary';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DataSettings(props: { params: Promise<{ locale: string }> }) {
   const { locale } = await props.params;
-  const dict = (await getDictionary(locale)).settings.data;
+  const dictionary = await getDictionary(locale);
+  const dict = dictionary.settings.data;
   const account = await requireFounder();
   let publications = 0,
     conversations = 0,
     twoStep = false,
-    storageFailed = false;
+    briefs = false,
+    storageFailed = false,
+    profileHandle: string | null = null;
   try {
     const sql = authSql();
     const [[owned], [contacts], [security]] = await Promise.all([
@@ -27,8 +31,20 @@ export default async function DataSettings(props: { params: Promise<{ locale: st
     publications = Number(owned?.total ?? 0);
     conversations = Number(contacts?.total ?? 0);
     twoStep = security?.enabled === true;
+    // The public profile goes with the account (SHCWS-120); optional if its table is missing.
+    const [profile] =
+      await sql`SELECT handle FROM public_profiles WHERE account_id=${account.id}`.catch(() => []);
+    profileHandle = profile ? String(profile.handle) : null;
   } catch {
     storageFailed = true;
+  }
+  // Posted needs and sent proposals (SHCWS-58); a base without db/buyer-briefs.sql has none.
+  try {
+    const [row] =
+      await authSql()`SELECT EXISTS(SELECT 1 FROM buyer_briefs WHERE buyer_id=${account.id}) OR EXISTS(SELECT 1 FROM buyer_brief_proposals WHERE founder_id=${account.id}) AS any`;
+    briefs = row?.any === true;
+  } catch {
+    briefs = false;
   }
 
   const current = (i18n.locales as readonly string[]).includes(locale)
@@ -80,7 +96,16 @@ export default async function DataSettings(props: { params: Promise<{ locale: st
           <DeleteAccount
             publications={publications}
             conversations={conversations}
+            briefs={briefs}
             twoStep={twoStep}
+            profileNotice={
+              profileHandle
+                ? dictionary.profiles.settings.deleteConsequence.replace(
+                    '{url}',
+                    `${new URL(siteOrigin).host}/c/${profileHandle}`,
+                  )
+                : null
+            }
             dict={dict.delete}
           />
         )}

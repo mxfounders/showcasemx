@@ -26,6 +26,8 @@ export const notifications = {
     community:
       'Comunidad por correo: actividad en mis listas públicas (agrupada por día) y un resumen semanal de las listas y curadores que sigo',
     alerts: 'Mis alertas de búsqueda por correo (como máximo uno por semana por alerta)',
+    briefs:
+      'Necesidades que encajan con mis fichas, propuestas a mis necesidades y listas cortas del equipo por correo',
     weekly: 'Resumen semanal «Tu semana en shwcs» (lunes, si tienes una ficha publicada)',
     save: 'Guardar preferencias',
     verifyHint: 'Verifica tu correo desde {link} para activarlos.',
