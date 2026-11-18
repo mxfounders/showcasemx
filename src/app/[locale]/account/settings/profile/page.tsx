@@ -2,13 +2,23 @@ import { requireFounder } from '@/lib/solutions/server';
 import { authSql } from '@/lib/auth/security';
 import { AccountProfileForm } from '@/components/account-profile-form';
 import { AvatarForm } from '@/components/settings/avatar-form';
+import { PublicProfileForm } from '@/components/settings/public-profile-form';
+import {
+  getOwnProfile,
+  getProfileItems,
+  profileFollowerCount,
+  type OwnProfile,
+  type ProfileItems,
+} from '@/lib/profiles/server';
+import { siteOrigin } from '@/lib/seo';
 import { getDictionary } from '@/i18n/get-dictionary';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ProfileSettings(props: { params: Promise<{ locale: string }> }) {
   const account = await requireFounder();
-  const dictionary = await getDictionary((await props.params).locale);
+  const locale = (await props.params).locale;
+  const dictionary = await getDictionary(locale);
   const dict = dictionary.settings.profile;
   const sql = authSql();
   const [row] =
@@ -20,6 +30,13 @@ export default async function ProfileSettings(props: { params: Promise<{ locale:
     role: String(row?.role ?? ''),
   };
   const card = 'rounded-2xl border border-stone-200 bg-white p-6 shadow-sm';
+  // The public profile (SHCWS-120). If its tables are missing or the read fails, the rest
+  // of the page still works and the card says it is unavailable.
+  const publicProfile = (await Promise.all([
+    getOwnProfile(account.id),
+    getProfileItems(account.id),
+    profileFollowerCount(account.id),
+  ]).catch(() => null)) as [OwnProfile | null, ProfileItems, number | null] | null;
   return (
     <section className="space-y-6">
       <div className={card}>
@@ -40,6 +57,27 @@ export default async function ProfileSettings(props: { params: Promise<{ locale:
           dict={dict.form}
           options={{ profiles: dictionary.newsletter.profiles, roles: dictionary.newsletter.roles }}
         />
+      </div>
+
+      <div id="perfil-publico" className={`${card} scroll-mt-24`}>
+        <h2 className="mb-2 text-lg font-medium text-stone-900">
+          {dictionary.profiles.settings.title}
+        </h2>
+        {publicProfile ? (
+          <PublicProfileForm
+            initial={publicProfile[0]}
+            suggestedName={profile.name}
+            items={publicProfile[1]}
+            followers={publicProfile[2]}
+            host={new URL(siteOrigin).host}
+            locale={locale}
+            dict={dictionary.profiles.settings}
+          />
+        ) : (
+          <p role="status" className="text-sm text-stone-500">
+            {dictionary.profiles.errors.unavailable}
+          </p>
+        )}
       </div>
     </section>
   );

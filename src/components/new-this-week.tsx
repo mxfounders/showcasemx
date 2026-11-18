@@ -52,6 +52,7 @@ export function NewThisWeekStrip({
             palette={palette}
             locale={locale}
             dict={dict}
+            compareDict={dict.compare}
           />
         ))}
       </div>

@@ -3,6 +3,7 @@ import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { getSession, sessionCookie } from '@/lib/auth/session';
 import { getDictionary } from '@/i18n/get-dictionary';
+import { CompareTray } from '@/components/compare/compare-tray';
 
 export default async function MarketingLayout(props: {
   children: React.ReactNode;
@@ -28,6 +29,8 @@ export default async function MarketingLayout(props: {
         {children}
       </main>
       <Footer dict={dict.footer} locale={locale} />
+      {/* «Comparar» selection from cards and listings (SHCWS-53). */}
+      <CompareTray dict={dict.catalog.compare} />
     </>
   );
 }

@@ -32,7 +32,10 @@ rápido, sin RFC ni pantallas de más.
    (prellenado con el de la cuenta) y el botón de envío. Debajo, **«Hazla más fuerte»**:
    capturas, demo, precio, arranque y soporte, integraciones, cumplimiento, alcance,
    equipo, redes y evidencia como tarjetas en cualquier orden, cada una con «Guardar» y
-   «Descartar cambios».
+   «Descartar cambios». Desde SHCWS-56 (17 nov 2026), también **«Dónde operas»** (país,
+   mercados donde atiende y factura, monedas, idiomas y horario de soporte, formas de pago)
+   y **«Trayectoria y clientes»** (año, equipo, clientes y casos declarados); ver
+   docs/provider-facts.md.
 
 A la derecha, en escritorio, la tarjeta del catálogo se redibuja con cada tecla
 (`ListingPreview`): portada (captura propia o la del sitio), nombre, descripción,

@@ -65,6 +65,7 @@ function Grid({
             palette={palette}
             locale={locale}
             dict={dict}
+            compareDict={dict.compare}
           />
           <p className="mt-2 px-1 text-[11px] text-stone-500">
             {approvedOn(product, locale, dict.newThisWeek.approvedOn)}

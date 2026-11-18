@@ -35,6 +35,27 @@ export const solutionQuestions = [
   { id: 'founders', phase: 2, fields: ['founders'], optional: true },
   { id: 'links', phase: 2, fields: ['projectLinks'], optional: true },
   { id: 'evidence', phase: 2, fields: ['evidence', 'evidenceUrl'], optional: true },
+  // Provider facts (SHCWS-56): where it operates, then its track record and cases.
+  {
+    id: 'markets',
+    phase: 2,
+    fields: [
+      'originCountry',
+      'serviceCountries',
+      'billingCountries',
+      'currencies',
+      'supportLanguages',
+      'supportHours',
+      'paymentMethods',
+    ],
+    optional: true,
+  },
+  {
+    id: 'track',
+    phase: 2,
+    fields: ['foundedYear', 'teamSize', 'customerCount', 'cases'],
+    optional: true,
+  },
 ] as const;
 export type SolutionQuestion = (typeof solutionQuestions)[number]['id'];
 
@@ -126,6 +147,23 @@ export function sectionFilled(data: SolutionData, id: SolutionQuestion) {
       return !!data.projectLinks?.length;
     case 'evidence':
       return !!(data.evidence || data.evidenceUrl);
+    case 'markets':
+      return !!(
+        data.originCountry ||
+        data.serviceCountries !== undefined ||
+        data.billingCountries !== undefined ||
+        data.currencies?.length ||
+        data.supportLanguages?.length ||
+        data.supportHours ||
+        data.paymentMethods?.length
+      );
+    case 'track':
+      return !!(
+        data.foundedYear !== undefined ||
+        data.teamSize ||
+        data.customerCount ||
+        data.cases?.length
+      );
     default:
       return false;
   }

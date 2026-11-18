@@ -64,7 +64,8 @@ export function BatchContactForm({
   contactsDict: c,
   dict: t,
 }: {
-  listId: string;
+  /** null when the projects come from a temporary comparison, not a list (SHCWS-53). */
+  listId: string | null;
   rows: BatchRow[];
   email: string;
   defaults: { name: string; company: string };

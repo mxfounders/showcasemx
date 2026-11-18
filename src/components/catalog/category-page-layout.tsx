@@ -22,7 +22,15 @@ import {
   localizedComplianceOptions,
   localizedCategoryDisplayLabel,
 } from '@/lib/taxonomy';
-import { matchIndustry, matchCapability, matchCompanySize, isRealMatch } from '@/lib/search/facets';
+import {
+  matchIndustry,
+  matchCompanySize,
+  isRealMatch,
+  declaredLanguages,
+  declaredMarkets,
+  marketFit,
+  languageFit,
+} from '@/lib/search/facets';
 import type { PublishedProduct } from '@/lib/solutions/public';
 import { contactBriefHref } from '@/lib/contact-inquiry';
 import { makeQueryScorer } from '@/lib/search/score';
@@ -31,7 +39,14 @@ import { isFastResponder } from '@/lib/solutions/response-model';
 import { CatalogCard } from './catalog-card';
 import { SearchAlertButton } from '@/components/alerts/search-alert-button';
 import { alertScopes, readAlertCriteria } from '@/lib/alerts/model';
-import { filterAxes, multiValueAxes } from '@/lib/search/catalog-filter';
+import {
+  filterAxes,
+  multiValueAxes,
+  placeProduct,
+  type SoftReason,
+} from '@/lib/search/catalog-filter';
+import { countryName } from '@/lib/countries';
+import { languageName } from '@/lib/languages';
 import { effectivePriceBand, matchesPricingModel } from '@/lib/solutions/pricing';
 
 type Product = PublishedProduct;
@@ -274,11 +289,37 @@ export function CategoryPageLayout({
       ),
     };
 
+    // SHCWS-56: countries listings named for serving *and* invoicing, and their support
+    // languages; a listing for «any country» matches every choice without adding options.
+    const byName = (options: { value: string; label: string }[]) =>
+      options.sort((a, b) => a.label.localeCompare(b.label, locale ?? 'es'));
+    const pais = {
+      id: 'pais',
+      label: dict.filters.country,
+      options: byName(
+        declaredMarkets(products).map(code => ({
+          value: code,
+          label: countryName(code, locale ?? 'es'),
+        })),
+      ).filter(option => products.some(p => marketFit(p, option.value) === 'real')),
+    };
+    const idioma = {
+      id: 'idioma',
+      label: dict.filters.language,
+      options: byName(
+        declaredLanguages(products).map(code => ({
+          value: code,
+          label: languageName(code, locale ?? 'es'),
+        })),
+      ).filter(option => products.some(p => languageFit(p, option.value) === 'real')),
+    };
+
     const byRoute =
       basePath === '/explorar'
         ? [
             industria,
             capacidad,
+            pais,
             respuesta,
             tamano,
             integracion,
@@ -286,21 +327,24 @@ export function CategoryPageLayout({
             contratacion,
             arranque,
             cumplimiento,
+            idioma,
             modelo,
           ]
         : basePath === '/industria'
           ? [
               problema,
               capacidad,
+              pais,
               respuesta,
               tamano,
               integracion,
               precio,
               contratacion,
               arranque,
+              idioma,
               modelo,
             ]
-          : [problema, capacidad, respuesta, tamano, precio, contratacion, modelo];
+          : [problema, capacidad, pais, respuesta, tamano, precio, contratacion, idioma, modelo];
 
     return byRoute.filter(filter => filter.options.length > 0);
   }, [basePath, products, capabilityOptions, locale, dict]);
@@ -324,76 +368,19 @@ export function CategoryPageLayout({
     [sortValue],
   );
 
-  // Each axis compares against the real declared field, not substrings in
-  // free-text copy. Hard axes (problema, integración, cumplimiento, precio,
-  // contratación, arranque, modelo) are a strict AND across axes, OR within each axis — a
-  // real mismatch on any of them excludes the product outright. Industry,
-  // capability and size are "soft": [] ("fits any", industry/size only) or a
-  // declared match keeps a product in the main grid; a product that never
-  // declared the axis but whose own text implies it (industry/capability via
-  // matchIndustry/matchCapability's inference) — or never declared a size at
-  // all — lands in the separate "También podrían servir" section, never
-  // mixed into the declared results; a real declared mismatch on any axis,
-  // soft or hard, excludes the product entirely.
+  // Each axis compares against the real declared field, never substrings in free-text
+  // copy. The rules live in placeProduct (src/lib/search/catalog-filter.ts), shared with
+  // the saved-search alerts: hard axes exclude on a mismatch; soft axes (industry,
+  // capability, size, country, support language) send a listing that never declared the
+  // axis — or only implies it in its text — to «También podrían servir», with the reason.
   const { primary, inferred } = useMemo(() => {
-    const problema = selections.problema ?? [];
-    const industria = selections.industria ?? [];
-    const capacidad = selections.capacidad ?? [];
-    const tamano = selections.tamano ?? [];
-    const integracion = selections.integracion ?? [];
-    const cumplimiento = selections.cumplimiento ?? [];
-    const precio = selections.precio?.[0];
-    const contratacion = selections.contratacion ?? [];
-    const arranque = selections.arranque?.[0];
-    const modelo = selections.modelo?.[0];
-    const respuesta = selections.respuesta?.[0];
-
-    const passesHard = (product: Product) => {
-      if (
-        problema.length &&
-        !problema.some(value => product.category === value || product.categories?.includes(value))
-      )
-        return false;
-      if (
-        integracion.length &&
-        !integracion.some(value => product.integrationKeys?.includes(value))
-      )
-        return false;
-      if (cumplimiento.length && !cumplimiento.some(value => product.compliance?.includes(value)))
-        return false;
-      if (precio && effectivePriceBand(product) !== precio) return false;
-      if (contratacion.length && !contratacion.some(value => matchesPricingModel(product, value)))
-        return false;
-      if (arranque && product.setupTime !== arranque) return false;
-      if (modelo && product.offering !== modelo) return false;
-      if (respuesta === 'rapido' && !isFastResponder(product.response)) return false;
-      return true;
+    const reasonText: Record<SoftReason, string> = {
+      industry: dict.reasonIndustry,
+      capability: dict.reasonCapability,
+      companySize: dict.reasonCompanySize,
+      market: dict.reasonMarket,
+      language: dict.reasonLanguage,
     };
-
-    // 'real' passes outright; 'soft' lands the product in "También podrían
-    // servir" (with a reason) as long as nothing else was a hard 'fail';
-    // 'fail' excludes the product from both lists.
-    const industriaLevel = (product: Product): 'real' | 'soft' | 'fail' => {
-      if (!industria.length) return 'real';
-      const levels = industria.map(value => matchIndustry(product, value));
-      if (levels.some(isRealMatch)) return 'real';
-      return levels.includes('inferred') ? 'soft' : 'fail';
-    };
-    const capacidadLevel = (product: Product): 'real' | 'soft' | 'fail' => {
-      if (!capacidad.length) return 'real';
-      const levels = capacidad.map(value => matchCapability(product, value));
-      if (levels.some(isRealMatch)) return 'real';
-      return levels.includes('inferred') ? 'soft' : 'fail';
-    };
-    const tamanoLevel = (product: Product): 'real' | 'soft' | 'fail' => {
-      if (!tamano.length) return 'real';
-      if (tamano.some(value => isRealMatch(matchCompanySize(product, value)))) return 'real';
-      // matchCompanySize never infers (see facets.ts) — a 'none' here could
-      // mean "declared, doesn't match" (a real fail) or "never answered"
-      // (the actual gap this bucket exists for); only the latter is soft.
-      return product.companySizes === undefined ? 'soft' : 'fail';
-    };
-
     // Same scorer as the catalog search (synonyms, plurals, vocabulary of the declared
     // categories); with words typed, relevance leads and the chosen sort breaks ties.
     const scorer = makeQueryScorer(query, { requireLiteral: true });
@@ -403,20 +390,10 @@ export function CategoryPageLayout({
     const inferredList: { product: Product; reasons: string[] }[] = [];
     for (const product of products) {
       if (scorer && scorer(product) <= 0) continue;
-      if (!passesHard(product)) continue;
-      const iLevel = industriaLevel(product),
-        cLevel = capacidadLevel(product),
-        tLevel = tamanoLevel(product);
-      if (iLevel === 'fail' || cLevel === 'fail' || tLevel === 'fail') continue;
-      if (iLevel === 'real' && cLevel === 'real' && tLevel === 'real') {
-        primaryList.push(product);
-        continue;
-      }
-      const reasons: string[] = [];
-      if (iLevel === 'soft') reasons.push(dict.reasonIndustry);
-      if (cLevel === 'soft') reasons.push(dict.reasonCapability);
-      if (tLevel === 'soft') reasons.push(dict.reasonCompanySize);
-      inferredList.push({ product, reasons });
+      const placement = placeProduct(product, selections);
+      if (placement.level === 'primary') primaryList.push(product);
+      else if (placement.level === 'inferred')
+        inferredList.push({ product, reasons: placement.reasons.map(code => reasonText[code]) });
     }
     return {
       primary: relevance(applySort(primaryList)),
@@ -447,6 +424,7 @@ export function CategoryPageLayout({
       palette={palette}
       locale={locale ?? 'es'}
       dict={dict}
+      compareDict={dict.compare}
     />
   );
 

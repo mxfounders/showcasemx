@@ -14,6 +14,23 @@ export const catalog = {
     useCase: 'Use case',
     response: 'Response',
     fastResponse: 'Replies fast',
+    /** SHCWS-56: serves and invoices in the country; support language. */
+    country: 'Serves and invoices in',
+    language: 'Support language',
+  },
+  /** SHCWS-53: the «Compare» toggle on cards and listings, and the tray that opens it. */
+  compare: {
+    add: 'Compare',
+    added: 'Comparing',
+    addLabel: 'Add {name} to the comparison',
+    removeLabel: 'Remove {name} from the comparison',
+    full: 'You chose 3 already: remove one to add another',
+    trayLabel: 'Listings to compare',
+    open: 'Compare {count}',
+    needMore: 'Choose another listing to compare',
+    clear: 'Clear',
+    addedNotice: '{name} is in the comparison ({count} of 3).',
+    removedNotice: '{name} left the comparison.',
   },
   moreFilters: 'More filters',
   clear: 'Clear',
@@ -57,6 +74,8 @@ export const catalog = {
   reasonIndustry: "Didn't declare that industry",
   reasonCapability: "Didn't declare that capability",
   reasonCompanySize: "Didn't declare a company size",
+  reasonMarket: "Didn't declare where it serves or invoices",
+  reasonLanguage: "Didn't declare support languages",
   ratingLabel: '{rating} out of 5 stars, {count} reviews',
   viewSolution: 'View solution',
   newThisWeek: {

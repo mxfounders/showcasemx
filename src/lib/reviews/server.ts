@@ -69,7 +69,7 @@ export async function getSolutionReviews(
 ): Promise<{ summary: ReviewSummary; reviews: PublicReview[] }> {
   const sql = solutionsSql();
   const viewerId = viewer || null;
-  const [rows, [aggregate]] = await Promise.all([
+  const [rows, summaries] = await Promise.all([
     sql`SELECT r.id,r.author_name,r.rating,r.recommends,r.headline,r.use_case,r.pros,r.cons,
       r.usage_duration,r.company_size,r.country,r.status,r.hidden_reason,r.reply,r.reply_at,
       r.version,r.created_at,r.updated_at,r.author_id=${viewerId}::uuid AS mine,
@@ -82,42 +82,9 @@ export async function getSolutionReviews(
       WHERE r.solution_id=${solutionId} AND r.author_id<>s.owner_id
         AND ((r.status='published' AND a.email_verified_at IS NOT NULL) OR r.author_id=${viewerId}::uuid)
       ORDER BY (r.author_id=${viewerId}::uuid) DESC,r.created_at DESC,r.id LIMIT 100`,
-    sql`SELECT count(*)::int AS count,avg(r.rating)::float AS average,
-      count(*) FILTER (WHERE r.recommends)::int AS recommends,
-      count(*) FILTER (WHERE r.rating=1)::int AS s1,count(*) FILTER (WHERE r.rating=2)::int AS s2,
-      count(*) FILTER (WHERE r.rating=3)::int AS s3,count(*) FILTER (WHERE r.rating=4)::int AS s4,
-      count(*) FILTER (WHERE r.rating=5)::int AS s5,
-      count(*) FILTER (WHERE split_part(a.email,'@',2)<>ALL(${freeEmailDomains as readonly string[]}::text[])
-        AND split_part(a.email,'@',2)!~${freeEmailPattern}
-        AND NOT EXISTS(SELECT 1 FROM solution_review_proofs p WHERE p.review_id=r.id)
-        AND NOT review_contact_backed(r.author_id,r.solution_id))::int AS work,
-      count(*) FILTER (WHERE review_contact_backed(r.author_id,r.solution_id)
-        AND NOT EXISTS(SELECT 1 FROM solution_review_proofs p WHERE p.review_id=r.id))::int AS contacts,
-      count(*) FILTER (WHERE EXISTS(SELECT 1 FROM solution_review_proofs p WHERE p.review_id=r.id))::int AS customers,
-      count(*) FILTER (WHERE review_invited(r.author_id,r.solution_id))::int AS invited
-      FROM solution_reviews r JOIN auth_accounts a ON a.id=r.author_id
-      JOIN founder_solutions s ON s.id=r.solution_id
-      WHERE r.solution_id=${solutionId} AND r.status='published'
-        AND a.email_verified_at IS NOT NULL AND r.author_id<>s.owner_id`,
+    getReviewSummaries([solutionId]),
   ]);
-  const summary: ReviewSummary = aggregate
-    ? {
-        count: Number(aggregate.count),
-        average: aggregate.average == null ? null : Number(aggregate.average),
-        distribution: [
-          Number(aggregate.s1),
-          Number(aggregate.s2),
-          Number(aggregate.s3),
-          Number(aggregate.s4),
-          Number(aggregate.s5),
-        ],
-        recommends: Number(aggregate.recommends),
-        work: Number(aggregate.work),
-        contacts: Number(aggregate.contacts),
-        customers: Number(aggregate.customers),
-        invited: Number(aggregate.invited),
-      }
-    : emptyReviewSummary;
+  const summary = summaries.get(solutionId) ?? emptyReviewSummary;
   const reviews = rows.map(row => {
     const mine = Boolean(row.mine);
     const created = new Date(row.created_at);
@@ -172,4 +139,52 @@ export async function getOwnerReviewDigest(solutionId: string) {
     average: row?.average == null ? null : Number(row.average),
     unanswered: Number(row?.unanswered ?? 0),
   };
+}
+
+/**
+ * The public review summary of several listings in one query (the ficha asks for one,
+ * the comparator for up to three, SHCWS-53). Same rules as the ficha: published reviews
+ * from verified addresses, never the owner's; each counts once at its highest level.
+ */
+export async function getReviewSummaries(ids: readonly string[]) {
+  const result = new Map<string, ReviewSummary>();
+  if (!ids.length) return result;
+  const sql = solutionsSql();
+  const rows =
+    await sql`SELECT r.solution_id::text AS solution_id,count(*)::int AS count,avg(r.rating)::float AS average,
+      count(*) FILTER (WHERE r.recommends)::int AS recommends,
+      count(*) FILTER (WHERE r.rating=1)::int AS s1,count(*) FILTER (WHERE r.rating=2)::int AS s2,
+      count(*) FILTER (WHERE r.rating=3)::int AS s3,count(*) FILTER (WHERE r.rating=4)::int AS s4,
+      count(*) FILTER (WHERE r.rating=5)::int AS s5,
+      count(*) FILTER (WHERE split_part(a.email,'@',2)<>ALL(${freeEmailDomains as readonly string[]}::text[])
+        AND split_part(a.email,'@',2)!~${freeEmailPattern}
+        AND NOT EXISTS(SELECT 1 FROM solution_review_proofs p WHERE p.review_id=r.id)
+        AND NOT review_contact_backed(r.author_id,r.solution_id))::int AS work,
+      count(*) FILTER (WHERE review_contact_backed(r.author_id,r.solution_id)
+        AND NOT EXISTS(SELECT 1 FROM solution_review_proofs p WHERE p.review_id=r.id))::int AS contacts,
+      count(*) FILTER (WHERE EXISTS(SELECT 1 FROM solution_review_proofs p WHERE p.review_id=r.id))::int AS customers,
+      count(*) FILTER (WHERE review_invited(r.author_id,r.solution_id))::int AS invited
+      FROM solution_reviews r JOIN auth_accounts a ON a.id=r.author_id
+      JOIN founder_solutions s ON s.id=r.solution_id
+      WHERE r.solution_id=ANY(${ids}::uuid[]) AND r.status='published'
+        AND a.email_verified_at IS NOT NULL AND r.author_id<>s.owner_id
+      GROUP BY r.solution_id`;
+  for (const aggregate of rows)
+    result.set(String(aggregate.solution_id), {
+      count: Number(aggregate.count),
+      average: aggregate.average == null ? null : Number(aggregate.average),
+      distribution: [
+        Number(aggregate.s1),
+        Number(aggregate.s2),
+        Number(aggregate.s3),
+        Number(aggregate.s4),
+        Number(aggregate.s5),
+      ],
+      recommends: Number(aggregate.recommends),
+      work: Number(aggregate.work),
+      contacts: Number(aggregate.contacts),
+      customers: Number(aggregate.customers),
+      invited: Number(aggregate.invited),
+    });
+  return result;
 }

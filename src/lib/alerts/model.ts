@@ -27,6 +27,8 @@ import {
   solutionPricingModels,
   solutionSetupTimes,
 } from '@/lib/solutions/model';
+import { countryCodes, countryName } from '@/lib/countries';
+import { languageCodes, languageName } from '@/lib/languages';
 import { isRealMatch, matchIndustry } from '@/lib/search/facets';
 import { normalizeText } from '@/lib/search/normalize';
 import { makeQueryScorer, queryTokens, type SearchableProduct } from '@/lib/search/score';
@@ -80,6 +82,8 @@ const legalValues: Record<FilterAxis, readonly string[]> = {
   arranque: solutionSetupTimes,
   cumplimiento: solutionCompliance,
   modelo: offerings,
+  pais: countryCodes(),
+  idioma: languageCodes(),
 };
 
 function topicExists(scope: AlertScope, topic: string) {
@@ -209,6 +213,10 @@ function filterValueLabel(axis: FilterAxis, value: string, locale: string, fastR
       return option(localizedComplianceOptions(locale));
     case 'modelo':
       return option(localizedOfferingOptions(locale));
+    case 'pais':
+      return countryName(value, locale);
+    case 'idioma':
+      return languageName(value, locale);
   }
 }
 

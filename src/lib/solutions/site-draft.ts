@@ -12,8 +12,14 @@ import {
   solutionPriceBands,
   solutionPricingModels,
   solutionSetupTimes,
+  solutionPaymentMethods,
+  supportHoursLimit,
+  minFoundedYear,
   type SolutionData,
 } from './model';
+import { isCountryCode } from '@/lib/countries';
+import { isCurrencyCode } from '@/lib/currencies';
+import { isLanguageCode } from '@/lib/languages';
 import { readProjectLinks, type SiteReading } from './site-reader';
 import {
   localizedCapabilityLabel,
@@ -23,6 +29,7 @@ import {
   localizedPriceBandOptions,
   localizedPricingModelOptions,
   localizedSetupTimeOptions,
+  localizedPaymentMethodOptions,
 } from '@/lib/taxonomy';
 
 /**
@@ -54,6 +61,7 @@ const textFields = {
   implementation: { limit: 400, min: 1 },
   support: { limit: 400, min: 1 },
   integrations: { limit: 400, min: 1 },
+  supportHours: { limit: supportHoursLimit, min: 3 },
 } as const;
 type TextField = keyof typeof textFields;
 const listFields = [
@@ -64,11 +72,27 @@ const listFields = [
   'pricingModel',
   'integrationKeys',
   'compliance',
+  'paymentMethods',
 ] as const;
-const choiceFields = ['kind', 'priceBand', 'setupTime', 'demoUrl'] as const;
+/** Code lists checked against Intl (SHCWS-56): countries, currencies, languages. */
+const codeFields = [
+  'serviceCountries',
+  'billingCountries',
+  'currencies',
+  'supportLanguages',
+] as const;
+const choiceFields = [
+  'kind',
+  'priceBand',
+  'setupTime',
+  'demoUrl',
+  'originCountry',
+  'foundedYear',
+] as const;
 export const draftFields = [
   ...(Object.keys(textFields) as TextField[]),
   ...listFields,
+  ...codeFields,
   ...choiceFields,
   'projectLinks',
 ] as const;
@@ -110,6 +134,14 @@ export const siteDraftSchema = {
     integrations: text,
     compliance: list(solutionCompliance),
     demoUrl: text,
+    originCountry: text,
+    serviceCountries: { type: 'array', items: { type: 'string' } },
+    billingCountries: { type: 'array', items: { type: 'string' } },
+    currencies: { type: 'array', items: { type: 'string' } },
+    supportLanguages: { type: 'array', items: { type: 'string' } },
+    supportHours: text,
+    paymentMethods: list(solutionPaymentMethods),
+    foundedYear: nullable({ type: 'integer' }),
     sources: {
       type: 'array',
       items: {
@@ -169,6 +201,14 @@ Campos:
 - integrationKeys: herramientas del catálogo que el sitio dice que conecta. integrations: otras integraciones o el detalle, máximo 350 caracteres.
 - compliance: solo lo que el sitio afirma cumplir.
 - demoUrl: la URL exacta de una demo o prueba que aparezca en la lista de enlaces; si no hay, null.
+- originCountry: el país donde está la empresa, como código ISO 3166-1 de dos letras en mayúsculas (MX, CO, US…), solo si el sitio lo dice (dirección, «somos una empresa de…»). Un número de teléfono o un dominio .mx no bastan.
+- serviceCountries: países donde el sitio dice que atiende clientes, en códigos ISO de dos letras. Si dice que atiende a cualquier país o no lo dice, lista vacía.
+- billingCountries: países donde el sitio dice que factura o emite comprobantes fiscales, en códigos ISO de dos letras. Si no lo dice, lista vacía.
+- currencies: monedas en que cobra según los precios publicados, en códigos ISO 4217 (USD, MXN, COP…).
+- supportLanguages: idiomas en que el sitio dice que da soporte, en códigos ISO 639-1 en minúsculas (es, en, pt…). El idioma en que está escrito el sitio no basta.
+- supportHours: el horario de soporte tal como lo publica el sitio. Máximo 120 caracteres.
+- paymentMethods: formas de pago que el sitio menciona.
+- foundedYear: el año de fundación, solo si el sitio lo dice («desde 2019», «fundada en 2021»).
 
 Categorías y capacidades:
 ${capabilities}
@@ -179,7 +219,8 @@ Modelos de contratación: ${catalog(localizedPricingModelOptions('es'))}
 Rangos de precio: ${catalog(localizedPriceBandOptions('es'))}
 Tiempo de arranque: ${catalog(localizedSetupTimeOptions('es'))}
 Integraciones: ${catalog(localizedIntegrationOptions('es'))}
-Cumplimiento: ${catalog(localizedComplianceOptions('es'))}`;
+Cumplimiento: ${catalog(localizedComplianceOptions('es'))}
+Formas de pago: ${catalog(localizedPaymentMethodOptions('es'))}`;
 }
 
 const demoHint = /demo|prueba|trial|try|agenda|book|sandbox|gratis|free|empieza|start/i;
@@ -279,6 +320,7 @@ export function readDraftOutput(raw: unknown, site: Pick<SiteReading, 'pages' | 
     ['pricingModel', solutionPricingModels],
     ['integrationKeys', solutionIntegrations],
     ['compliance', solutionCompliance],
+    ['paymentMethods', solutionPaymentMethods],
   ];
   for (const [field, values] of lists) {
     const chosen = known(values, input[field]);
@@ -288,6 +330,46 @@ export function readDraftOutput(raw: unknown, site: Pick<SiteReading, 'pages' | 
     patch.priceBand = String(input.priceBand);
   if (solutionSetupTimes.includes(input.setupTime as never))
     patch.setupTime = String(input.setupTime);
+  // SHCWS-56. Codes are checked against Intl; an empty list is never written, because []
+  // on service and billing countries means «any country», an answer only the founder gives.
+  const codes = (
+    value: unknown,
+    valid: (code: string) => boolean,
+    normalize: (v: string) => string,
+  ) =>
+    Array.isArray(value)
+      ? Array.from(
+          new Set(
+            value
+              .filter((item): item is string => typeof item === 'string')
+              .map(item => normalize(item.trim()))
+              .filter(valid),
+          ),
+        )
+      : [];
+  const upper = (value: string) => value.toUpperCase();
+  const lower = (value: string) => value.toLowerCase();
+  for (const [field, valid, normalize] of [
+    ['serviceCountries', isCountryCode, upper],
+    ['billingCountries', isCountryCode, upper],
+    ['currencies', isCurrencyCode, upper],
+    ['supportLanguages', isLanguageCode, lower],
+  ] as const) {
+    const chosen = codes(input[field], valid, normalize).slice(0, 20);
+    if (chosen.length) patch[field] = chosen;
+  }
+  if (
+    typeof input.originCountry === 'string' &&
+    isCountryCode(input.originCountry.trim().toUpperCase())
+  )
+    patch.originCountry = input.originCountry.trim().toUpperCase();
+  if (
+    typeof input.foundedYear === 'number' &&
+    Number.isInteger(input.foundedYear) &&
+    input.foundedYear >= minFoundedYear &&
+    input.foundedYear <= new Date().getUTCFullYear()
+  )
+    patch.foundedYear = input.foundedYear;
   if (typeof input.demoUrl === 'string') {
     const demo = safeSolutionUrl(input.demoUrl.trim());
     if (demo && site.anchors.some(anchor => anchor.url === demo)) patch.demoUrl = demo;
@@ -338,7 +420,13 @@ const isEmpty = (value: unknown) =>
 export function mergeSiteDraft(current: SolutionData, patch: Partial<SolutionData>) {
   const data: SolutionData = { ...current };
   const applied: Partial<SolutionData> = {};
-  const answeredWhenEmpty = new Set(['industries', 'companySizes', 'integrationKeys']);
+  const answeredWhenEmpty = new Set([
+    'industries',
+    'companySizes',
+    'integrationKeys',
+    'serviceCountries',
+    'billingCountries',
+  ]);
   for (const [key, value] of Object.entries(patch) as [keyof SolutionData, unknown][]) {
     if (key === 'category' || value === undefined) continue;
     if (key === 'categories') {

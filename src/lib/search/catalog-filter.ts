@@ -2,10 +2,14 @@ import { isFastResponder, type ResponseSignal } from '@/lib/solutions/response-m
 import { effectivePriceBand, matchesPricingModel, type PriceFields } from '@/lib/solutions/pricing';
 import {
   isRealMatch,
+  languageFit,
+  marketFit,
   matchCapability,
   matchCompanySize,
   matchIndustry,
   type FacetSubject,
+  type FitLevel,
+  type MarketSubject,
 } from './facets';
 
 /**
@@ -17,13 +21,14 @@ import {
  *   respuesta) are AND across axes and OR within one; a mismatch excludes the listing.
  *   «precio» compares the band the listing declared or, without one, the band its USD
  *   «Desde» price falls in (src/lib/solutions/pricing.ts);
- * - soft axes (industria, capacidad, tamaño): a declared match or «fits any» keeps it in
- *   the grid; a value only inferred from its text, or a size never declared, sends it to
- *   «También podrían servir»; a declared mismatch excludes it.
+ * - soft axes (industria, capacidad, tamaño, país, idioma): a declared match or «fits any»
+ *   keeps it in the grid; a value only inferred from its text, or a size, market or
+ *   support language never declared, sends it to «También podrían servir»; a declared
+ *   mismatch excludes it. «país» means serves *and* invoices there (marketFit, SHCWS-56).
  *
  * Keep both in step: a change here belongs in the layout too, and the other way round.
  */
-export interface FilterableProduct extends FacetSubject, PriceFields {
+export interface FilterableProduct extends FacetSubject, PriceFields, MarketSubject {
   category?: string;
   categories?: string[];
   integrationKeys?: string[];
@@ -34,7 +39,7 @@ export interface FilterableProduct extends FacetSubject, PriceFields {
 }
 
 export type CatalogSelections = Readonly<Record<string, readonly string[] | undefined>>;
-export type SoftReason = 'industry' | 'capability' | 'companySize';
+export type SoftReason = 'industry' | 'capability' | 'companySize' | 'market' | 'language';
 export type CatalogPlacement =
   { level: 'primary' } | { level: 'inferred'; reasons: SoftReason[] } | { level: 'excluded' };
 
@@ -47,6 +52,8 @@ export const multiValueAxes = new Set([
   'cumplimiento',
   'tamano',
   'contratacion',
+  'pais',
+  'idioma',
 ]);
 /** Every axis a catalog page can filter by; `sort` orders and never filters. */
 export const filterAxes = [
@@ -61,6 +68,8 @@ export const filterAxes = [
   'arranque',
   'cumplimiento',
   'modelo',
+  'pais',
+  'idioma',
 ] as const;
 export type FilterAxis = (typeof filterAxes)[number];
 
@@ -91,7 +100,13 @@ function passesHard(product: FilterableProduct, selections: CatalogSelections) {
   return true;
 }
 
-type Level = 'real' | 'soft' | 'fail';
+type Level = FitLevel;
+/** OR within the axis: the best level any chosen value reaches. */
+function bestFit(values: readonly string[], fit: (value: string) => Level): Level {
+  if (!values.length) return 'real';
+  const levels = values.map(fit);
+  return levels.includes('real') ? 'real' : levels.includes('soft') ? 'soft' : 'fail';
+}
 function softLevel(values: readonly string[], match: (value: string) => string): Level {
   if (!values.length) return 'real';
   const levels = values.map(match);
@@ -118,10 +133,14 @@ export function placeProduct(
       : product.companySizes === undefined
         ? 'soft'
         : 'fail';
-  if (industry === 'fail' || capability === 'fail' || size === 'fail') return { level: 'excluded' };
+  const market = bestFit(selections.pais ?? [], value => marketFit(product, value));
+  const language = bestFit(selections.idioma ?? [], value => languageFit(product, value));
+  if ([industry, capability, size, market, language].includes('fail')) return { level: 'excluded' };
   const reasons: SoftReason[] = [];
   if (industry === 'soft') reasons.push('industry');
   if (capability === 'soft') reasons.push('capability');
   if (size === 'soft') reasons.push('companySize');
+  if (market === 'soft') reasons.push('market');
+  if (language === 'soft') reasons.push('language');
   return reasons.length ? { level: 'inferred', reasons } : { level: 'primary' };
 }

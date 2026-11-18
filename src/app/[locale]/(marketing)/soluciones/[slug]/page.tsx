@@ -14,6 +14,7 @@ import { SponsoredVisit } from '@/components/ads/beacons';
 import type { SimilarSection } from '@/components/solutions/similar-solutions';
 import type { Metadata } from 'next';
 import { SolutionPresentation } from '@/components/solutions/solution-presentation';
+import { listingPublisher } from '@/lib/profiles/server';
 import { getSolutionReviews } from '@/lib/reviews/server';
 import { ReviewSection } from '@/components/reviews/review-section';
 import { SolutionUpdates } from '@/components/solutions/solution-updates';
@@ -177,6 +178,7 @@ export default async function PublicSolution(props: {
     questionsLoad,
     contactedLoad,
     updatesLoad,
+    publisherLoad,
   ] = await Promise.allSettled([
     getSolutionReviews(id, viewer),
     complianceResult(id),
@@ -189,7 +191,14 @@ export default async function PublicSolution(props: {
     viewer && viewer !== String(row.owner_id) ? contactBacked(viewer, id) : Promise.resolve(false),
     // Dated updates and whether the viewer follows the listing (SHCWS-24).
     getSolutionUpdates(id, viewer),
+    // The owner's public profile, only when on and showing this listing (SHCWS-120).
+    listingPublisher(id),
   ]);
+  const publisherProfile = publisherLoad.status === 'fulfilled' ? publisherLoad.value : null;
+  const publisher = publisherProfile && {
+    ...publisherProfile,
+    label: dict.profiles.page.publishedBy,
+  };
   const updates = updatesLoad.status === 'fulfilled' ? updatesLoad.value : null;
   if (reviewsLoad.status === 'fulfilled') reviews = reviewsLoad.value;
   const compliance = complianceLoad.status === 'fulfilled' ? complianceLoad.value : null;
@@ -281,6 +290,7 @@ export default async function PublicSolution(props: {
         viewerVerified={viewerVerified}
         hasSiteImage={Boolean(row.has_site_image)}
         similar={similar}
+        publisher={publisher}
         outboundMedium={medium}
         sponsoredBooking={sponsoredBooking}
         reviewBadge={
@@ -358,6 +368,7 @@ export default async function PublicSolution(props: {
         locale={params.locale}
         dict={dict.solution}
         uiDict={dict.solutionUi}
+        compareDict={dict.catalog.compare}
       />
     </>
   );
