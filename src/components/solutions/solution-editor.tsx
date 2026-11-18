@@ -8,6 +8,7 @@ import {
   CheckIcon,
   ClientsIcon,
   ClipboardCheckIcon,
+  GlobeIcon,
   ImagesIcon,
   LinkIcon,
   PlayIcon,
@@ -18,6 +19,7 @@ import {
   ShieldIcon,
   SparklesIcon,
   TargetIcon,
+  TrendUpIcon,
   WorkflowIcon,
   type GotaIcon,
 } from '@/components/icons/gota';
@@ -28,6 +30,7 @@ import type { PublicLink } from '@/lib/solutions/profile';
 import { Chips, Suggestions } from './editor/chips';
 import { ListingPreview } from './editor/listing-preview';
 import { PriceFields } from './editor/price-fields';
+import { MarketsFields, TrackFields, type GroupedOptions } from './editor/provider-fields';
 import { priceSummary } from '@/lib/solutions/pricing';
 import { actionButtonStyle, solutionCategoryTones } from '@/lib/brand-colors';
 import {
@@ -80,6 +83,8 @@ const sectionIcons: Partial<Record<SolutionQuestion, GotaIcon>> = {
   founders: ClientsIcon,
   links: LinkIcon,
   evidence: ClipboardCheckIcon,
+  markets: GlobeIcon,
+  track: TrendUpIcon,
 };
 
 /** «cordhq.app» → «https://cordhq.app»: nobody should have to type the scheme. */
@@ -119,6 +124,8 @@ export function SolutionEditor({
   siteImageFailure,
   hasUnpublishedChanges,
   currencies,
+  countries,
+  languages,
   siteDraft = null,
 }: {
   solution: FounderSolution;
@@ -126,6 +133,9 @@ export function SolutionEditor({
   dict: EditorDict;
   /** ISO currencies for the «Desde» price, built on the server (src/lib/currencies.ts). */
   currencies: CurrencyOptions;
+  /** Countries and languages for «Dónde operas» (SHCWS-56), built on the server too. */
+  countries: GroupedOptions;
+  languages: GroupedOptions;
   hasSiteImage: boolean;
   siteImageFailure?: string | null;
   /** Published listings only: whether the saved draft differs from what is public. */
@@ -1051,6 +1061,20 @@ export function SolutionEditor({
             })}
           </>
         );
+      case 'markets':
+        return (
+          <MarketsFields
+            data={data}
+            update={update}
+            countries={countries}
+            currencies={currencies}
+            languages={languages}
+            locale={locale}
+            dict={text.provider}
+          />
+        );
+      case 'track':
+        return <TrackFields data={data} update={update} locale={locale} dict={text.provider} />;
       default:
         return null;
     }

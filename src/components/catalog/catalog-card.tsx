@@ -10,6 +10,8 @@ import type { PreviewProduct } from '@/lib/catalog-preview';
 import type { Dictionary } from '@/i18n/dictionary';
 import { ResponseSignalNote } from './response-signal';
 import { DomainVerifiedChip } from './domain-verified';
+import { CompareToggle } from '@/components/compare/compare-toggle';
+import { projectKey } from '@/lib/library/model';
 
 /**
  * One listing card of the catalogue pages (/explorar, /industria, /colecciones) and of
@@ -21,20 +23,23 @@ export function CatalogCard({
   palette,
   locale,
   dict,
+  compareDict,
 }: {
   product: PreviewProduct;
   index: number;
   palette: { backgroundColor: string; color: string };
   locale: string;
   dict: Pick<Dictionary['catalog'], 'ratingLabel' | 'viewSolution'>;
+  /** «Comparar» (SHCWS-53): only published listings, never on a sponsored slot. */
+  compareDict?: Dictionary['catalog']['compare'];
 }) {
   // Only what the listing declared (SHCWS-51): «Desde», a band or its pricing model.
   const price = priceSummary(product, locale);
+  const key = product.solutionId ? projectKey(product) : null;
+  // The name is the card's link, stretched over the whole card (::after), so «Comparar»
+  // can sit on the card as a sibling button instead of inside the link.
   return (
-    <Link
-      href={product.detailUrl || '#'}
-      className="group flex flex-col justify-between rounded-[24px] border border-stone-200 bg-white p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:border-stone-300 hover:shadow-xl hover:shadow-stone-200/50"
-    >
+    <article className="group relative flex flex-col justify-between rounded-[24px] border border-stone-200 bg-white p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:border-stone-300 hover:shadow-xl hover:shadow-stone-200/50 motion-reduce:transition-none motion-reduce:hover:translate-y-0">
       <div>
         {product.website ? (
           <div
@@ -78,9 +83,12 @@ export function CatalogCard({
             fallbackClassName="flex items-center justify-center text-xs font-semibold text-white"
             fallbackStyle={{ backgroundColor: palette.color }}
           />
-          <span className="text-lg font-semibold tracking-tight text-stone-900">
+          <Link
+            href={product.detailUrl || '#'}
+            className="text-lg font-semibold tracking-tight text-stone-900 outline-none after:absolute after:inset-0 after:rounded-[24px] focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-[#365DC4]"
+          >
             {product.name}
-          </span>
+          </Link>
           {product.verified && <VerifiedMark locale={locale} />}
           <ArrowUpRightIcon
             aria-hidden="true"
@@ -116,10 +124,20 @@ export function CatalogCard({
         ) : (
           <span className="truncate pr-4">{product.provider || product.name}</span>
         )}
-        <span className="inline-flex shrink-0 items-center text-[#365DC4]">
-          {dict.viewSolution}
+        <span className="flex shrink-0 items-center gap-3">
+          {key && compareDict && (
+            <CompareToggle
+              projectKey={key}
+              name={product.name}
+              dict={compareDict}
+              className="relative z-10"
+            />
+          )}
+          <span aria-hidden="true" className="inline-flex items-center text-[#365DC4]">
+            {dict.viewSolution}
+          </span>
         </span>
       </div>
-    </Link>
+    </article>
   );
 }

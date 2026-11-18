@@ -13,6 +13,23 @@ export const catalog = {
     /** SHCWS-52: projects that answer 8 of 10 requests, half of them within 48 h. */
     response: 'Respuesta',
     fastResponse: 'Responde rápido',
+    /** SHCWS-56: serves and invoices in the country; support language. */
+    country: 'Atiende y factura en',
+    language: 'Idioma de soporte',
+  },
+  /** SHCWS-53: the «Comparar» toggle on cards and listings, and the tray that opens it. */
+  compare: {
+    add: 'Comparar',
+    added: 'Comparando',
+    addLabel: 'Añadir {name} a la comparación',
+    removeLabel: 'Quitar {name} de la comparación',
+    full: 'Ya elegiste 3: quita una para añadir otra',
+    trayLabel: 'Fichas para comparar',
+    open: 'Comparar {count}',
+    needMore: 'Elige otra ficha para comparar',
+    clear: 'Vaciar',
+    addedNotice: '{name} está en la comparación ({count} de 3).',
+    removedNotice: '{name} salió de la comparación.',
   },
   moreFilters: 'Más filtros',
   clear: 'Limpiar',
@@ -56,6 +73,8 @@ export const catalog = {
   reasonIndustry: 'No declaró esa industria',
   reasonCapability: 'No declaró esa capacidad',
   reasonCompanySize: 'No declaró tamaño de empresa',
+  reasonMarket: 'No declaró dónde atiende o factura',
+  reasonLanguage: 'No declaró idiomas de soporte',
   ratingLabel: '{rating} de 5 estrellas, {count} reseñas',
   viewSolution: 'Conocer solución',
   /** /nuevo and its block on the home (SHCWS-125). Headings without a final period (§37). */

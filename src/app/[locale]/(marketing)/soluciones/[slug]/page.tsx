@@ -358,6 +358,7 @@ export default async function PublicSolution(props: {
         locale={params.locale}
         dict={dict.solution}
         uiDict={dict.solutionUi}
+        compareDict={dict.catalog.compare}
       />
     </>
   );

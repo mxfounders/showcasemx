@@ -106,6 +106,11 @@ reales en esta entrega.
 
 Hacer una lista corta de tres proveedores obligaba a llenar tres formularios. Ahora:
 
+> **Sin lista (SHCWS-53, 17 nov 2026).** También se pide propuesta desde una comparación
+> temporal del catálogo: `/account/contacts/proposal?project=…`, misma pantalla
+> (`ProposalView`) y mismo envío, con `listId` nulo. Sin lista no se exige pertenencia;
+> cada destinatario se comprueba como una solicitud suelta. Ver docs/comparator.md.
+
 1. **Entrada.** Desde una lista, el selector «Comparar o pedir propuesta» toma 2–3
    proyectos y ofrece «Comparar» o «Pedir propuesta». Desde el comparador, «Pedir
    propuesta a estos N» aparece si al menos dos de los comparados reciben solicitudes.

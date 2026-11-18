@@ -14,6 +14,11 @@ export const contactBatch = {
     invalidTitle: 'Choose two or three projects from your list',
     invalidBody: 'The selection changed or does not belong to this list.',
     backToList: 'Back to the list →',
+    /** SHCWS-53: proposals straight from a temporary comparison. */
+    backToComparison: '← Back to the comparison',
+    invalidComparisonTitle: 'Choose two to three published listings',
+    invalidComparisonBody: 'The selection repeats a listing or one is no longer published.',
+    backToCatalog: 'Back to the catalog →',
     noneTitle: 'None of these projects can receive a new request',
     noneBody: 'The reason for each one is below.',
     excludedTitle: 'Not included',

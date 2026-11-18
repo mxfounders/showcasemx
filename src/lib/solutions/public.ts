@@ -98,6 +98,8 @@ const fetchPublishedRows = unstable_cache(
   s.published_data->>'priceUnit' AS price_unit,
   s.published_data->>'setupTime' AS setup_time,s.published_data->'compliance' AS compliance,
   s.published_data->>'scope' AS scope,s.published_at,
+  s.published_data->'serviceCountries' AS service_countries,s.published_data->'billingCountries' AS billing_countries,
+  s.published_data->'supportLanguages' AS support_languages,
   s.published_data->>'problem' AS problem,s.published_data->>'audience' AS audience,
   s.published_data->>'website' AS website,
   s.published_data->'screenshots'->0->>'id' AS cover_id,
@@ -204,6 +206,16 @@ export async function publicProducts(): Promise<PublishedProduct[]> {
         setupTime: row.setup_time ? String(row.setup_time) : undefined,
         compliance: Array.isArray(row.compliance) ? (row.compliance as string[]) : undefined,
         scope: row.scope ? String(row.scope) : undefined,
+        // SHCWS-56: tri-state kept ([] = any country), like industries above.
+        serviceCountries: Array.isArray(row.service_countries)
+          ? (row.service_countries as string[])
+          : undefined,
+        billingCountries: Array.isArray(row.billing_countries)
+          ? (row.billing_countries as string[])
+          : undefined,
+        supportLanguages: Array.isArray(row.support_languages)
+          ? (row.support_languages as string[])
+          : undefined,
         publishedAt: row.published_at ? String(row.published_at) : null,
         // The first approval, not the latest: an approved update must not make an old
         // listing «new» again (/nuevo, SHCWS-125).
