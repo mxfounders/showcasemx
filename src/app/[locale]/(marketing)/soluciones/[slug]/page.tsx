@@ -298,6 +298,7 @@ export default async function PublicSolution(props: {
             <ReviewBadge summary={reviews.summary} locale={params.locale} dict={dict.reviews} />
           )
         }
+        reviewSections={{ reviews: !!reviews, questions: !!questions }}
         reviews={
           <>
             {updates && (

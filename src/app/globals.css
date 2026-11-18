@@ -448,3 +448,8 @@ input[type='checkbox']:not(.sr-only):active {
     transform: none;
   }
 }
+
+/* Ficha sections land below the navbar and the section bar (solution-presentation.tsx). */
+article[data-ficha] [id] {
+  scroll-margin-top: 7.5rem;
+}

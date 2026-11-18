@@ -9,6 +9,7 @@ import { SimilarSolutions, type SimilarSection } from './similar-solutions';
 import { ShareSolution } from './share-solution';
 import { ContactBar } from './contact-bar';
 import { OfferSections } from './offer-sections';
+import { SectionNav } from './section-nav';
 import type { ReactNode } from 'react';
 import Link from '@/i18n/navigation';
 import {
@@ -32,7 +33,7 @@ import { outboundRel, outboundUrl, type OutboundMedium } from '@/lib/solutions/o
 import { solutionChecklist } from '@/lib/solutions/completeness';
 import { formatPriceFrom, pricingModelLabels } from '@/lib/solutions/pricing';
 import { providerRows } from '@/lib/solutions/provider';
-import { tryLabels } from '@/lib/solutions/offer';
+import { offerSections, tryLabels } from '@/lib/solutions/offer';
 import { actionButtonStyle, brandColors, solutionCategoryTones } from '@/lib/brand-colors';
 import {
   industries as industryOptions,
@@ -81,6 +82,7 @@ export function SolutionPresentation({
   recognition,
   verified,
   reviews,
+  reviewSections = {},
   compliance,
   responseSignal,
   locale,
@@ -124,6 +126,8 @@ export function SolutionPresentation({
   /** Draws the verified check after the name; the pill below explains it. */
   verified?: { label: string } | null;
   reviews?: ReactNode;
+  /** Which of the blocks in `reviews` render, for the section bar (their ids: resenas, preguntas). */
+  reviewSections?: { reviews?: boolean; questions?: boolean };
   /** Public registry result (src/components/compliance), under the domain check. */
   compliance?: ReactNode;
   /** Public ficha only: how the founder answers contact requests (SHCWS-52), under the CTA. */
@@ -185,8 +189,26 @@ export function SolutionPresentation({
   // the private preview here, and the account's guide (decided by the owner on
   // 14 Nov 2026; it used to show on the public listing). The public page never lists it.
   const missing = preview ? solutionChecklist(data, locale).filter(item => !item.done) : [];
+  const shownOffer = offerSections(data);
+  const sectionLinks = [
+    { id: 'que-hace', label: dict.nav.what },
+    { id: 'para-quien', label: dict.nav.who },
+    ...(shownOffer.plans ? [{ id: 'planes', label: dict.nav.plans }] : []),
+    ...(shownOffer.service ? [{ id: 'soporte', label: dict.nav.support }] : []),
+    ...(shownOffer.technical ? [{ id: 'tecnico', label: dict.nav.technical }] : []),
+    { id: 'antes-de-decidir', label: dict.nav.decide },
+    { id: 'su-trabajo', label: dict.nav.work },
+    ...(data.founders?.some(person => person.name.trim()) || publisher
+      ? [{ id: 'equipo', label: dict.nav.team }]
+      : []),
+    ...(!preview && reviewSections.reviews ? [{ id: 'resenas', label: dict.nav.reviews }] : []),
+    ...(!preview && reviewSections.questions
+      ? [{ id: 'preguntas', label: dict.nav.questions }]
+      : []),
+  ];
   return (
     <article
+      data-ficha
       className={
         preview
           ? 'account-page'
@@ -239,23 +261,6 @@ export function SolutionPresentation({
         <p className="mt-5 max-w-3xl whitespace-pre-wrap break-words text-lg leading-relaxed text-stone-600">
           {data.problem || dict.descriptionPending}
         </p>
-        {!!data.capabilities?.length && (
-          <div className="mt-5 flex flex-wrap gap-2">
-            {data.capabilities.map(capId => {
-              const tone =
-                brandColors[solutionCategoryTones[capabilityCategories[capId] ?? ''] ?? 'blue'];
-              return (
-                <span
-                  key={capId}
-                  className="rounded-full px-3 py-1.5 text-xs"
-                  style={{ backgroundColor: tone.soft, color: tone.solid }}
-                >
-                  {localizedCapabilityLabel(capId, locale)}
-                </span>
-              );
-            })}
-          </div>
-        )}
         <p className="mt-5 text-xs text-stone-400">
           {dict.declaredBy} ·{' '}
           {preview
@@ -293,7 +298,7 @@ export function SolutionPresentation({
         data.priceBand ||
         data.setupTime ||
         data.integrationKeys !== undefined) && (
-        <dl className="mt-6 flex flex-wrap gap-6 border-t border-stone-200 pt-6 text-sm">
+        <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-5 rounded-2xl border border-stone-200 bg-white p-6 text-sm sm:grid-cols-3">
           {priceFrom && (
             <div>
               <dt className="text-xs text-stone-400">{dict.priceFrom}</dt>
@@ -368,65 +373,97 @@ export function SolutionPresentation({
         </details>
       )}
 
+      <SectionNav items={sectionLinks} label={dict.nav.label} />
+
       <div className="mt-10 grid items-start gap-12 lg:grid-cols-[minmax(0,1fr)_280px]">
         <div className="min-w-0 space-y-10">
-          <section>
-            <h2 className="text-xl font-medium">{dict.audienceTitle}</h2>
-            <p className="mt-4 whitespace-pre-wrap break-words leading-relaxed text-stone-600">
-              {data.audience || dict.audienceFallback}
-            </p>
-            {(data.industries !== undefined || data.companySizes !== undefined) && (
-              <div className="mt-5 flex flex-wrap gap-2">
-                {data.industries !== undefined &&
-                  (data.industries.length ? (
-                    data.industries.map(value => {
-                      const tone = brandColors[industryTones[value] ?? 'blue'];
-                      return (
-                        <span
-                          key={value}
-                          className="rounded-full px-3 py-1.5 text-xs"
-                          style={{ backgroundColor: tone.soft, color: tone.solid }}
-                        >
-                          {industryLabels[value] ?? value}
-                        </span>
-                      );
-                    })
-                  ) : (
-                    <span className="rounded-full bg-stone-100 px-3 py-1.5 text-xs text-stone-600">
-                      {dict.anyIndustry}
-                    </span>
-                  ))}
-                {data.companySizes !== undefined &&
-                  (data.companySizes.length ? (
-                    data.companySizes.map(value => (
-                      <span
-                        key={value}
-                        className="rounded-full bg-stone-100 px-3 py-1.5 text-xs text-stone-600"
-                      >
-                        {companySizeLabels[value] ?? value}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="rounded-full bg-stone-100 px-3 py-1.5 text-xs text-stone-600">
-                      {dict.anyCompanySize}
-                    </span>
-                  ))}
-              </div>
-            )}
-          </section>
-          <section className="border-t border-stone-200 pt-8">
-            <h2 className="text-xl font-medium">{dict.notForTitle}</h2>
-            <p className="mt-4 whitespace-pre-wrap break-words leading-relaxed text-stone-600">
-              {data.notFor || dict.notForFallback}
-            </p>
-          </section>
-          <section className="border-t border-stone-200 pt-8">
-            <h2 className="text-xl font-medium">{dict.scopeTitle}</h2>
+          <section id="que-hace">
+            <h2 className="text-xl font-medium">{dict.whatTitle}</h2>
             <p className="mt-4 whitespace-pre-wrap break-words leading-relaxed text-stone-600">
               {data.scope || dict.scopeFallback}
             </p>
+            {!!data.capabilities?.length && (
+              <div className="mt-5 flex flex-wrap gap-2">
+                {data.capabilities.map(capId => {
+                  const tone =
+                    brandColors[solutionCategoryTones[capabilityCategories[capId] ?? ''] ?? 'blue'];
+                  return (
+                    <span
+                      key={capId}
+                      className="rounded-full px-3 py-1.5 text-xs"
+                      style={{ backgroundColor: tone.soft, color: tone.solid }}
+                    >
+                      {localizedCapabilityLabel(capId, locale)}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
           </section>
-          <section className="border-t border-stone-200 pt-8">
+          <section
+            id="para-quien"
+            aria-label={dict.nav.who}
+            className="grid gap-4 border-t border-stone-200 pt-8 sm:grid-cols-2"
+          >
+            <div className="rounded-2xl border border-stone-200 bg-white p-6">
+              <h2 className="text-lg font-medium">{dict.audienceTitle}</h2>
+              <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-stone-600">
+                {data.audience || dict.audienceFallback}
+              </p>
+              {(data.industries !== undefined || data.companySizes !== undefined) && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {data.industries !== undefined &&
+                    (data.industries.length ? (
+                      data.industries.map(value => {
+                        const tone = brandColors[industryTones[value] ?? 'blue'];
+                        return (
+                          <span
+                            key={value}
+                            className="rounded-full px-3 py-1.5 text-xs"
+                            style={{ backgroundColor: tone.soft, color: tone.solid }}
+                          >
+                            {industryLabels[value] ?? value}
+                          </span>
+                        );
+                      })
+                    ) : (
+                      <span className="rounded-full bg-stone-100 px-3 py-1.5 text-xs text-stone-600">
+                        {dict.anyIndustry}
+                      </span>
+                    ))}
+                  {data.companySizes !== undefined &&
+                    (data.companySizes.length ? (
+                      data.companySizes.map(value => (
+                        <span
+                          key={value}
+                          className="rounded-full bg-stone-100 px-3 py-1.5 text-xs text-stone-600"
+                        >
+                          {companySizeLabels[value] ?? value}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="rounded-full bg-stone-100 px-3 py-1.5 text-xs text-stone-600">
+                        {dict.anyCompanySize}
+                      </span>
+                    ))}
+                </div>
+              )}
+            </div>
+            <div className="rounded-2xl border border-stone-200 bg-white p-6">
+              <h2 className="text-lg font-medium">{dict.notForTitle}</h2>
+              <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-stone-600">
+                {data.notFor || dict.notForFallback}
+              </p>
+            </div>
+          </section>
+          <OfferSections
+            data={data}
+            locale={locale ?? 'es'}
+            dict={dict.offer}
+            otherTab={dict.otherTab}
+            out={out}
+          />
+          <section id="antes-de-decidir" className="border-t border-stone-200 pt-8">
             <h2 className="text-xl font-medium">{dict.beforeDecidingTitle}</h2>
             <dl className="mt-6 grid gap-x-8 gap-y-7 sm:grid-cols-2">
               {evaluation.map(field => (
@@ -493,14 +530,7 @@ export function SolutionPresentation({
               </dl>
             </section>
           )}
-          <OfferSections
-            data={data}
-            locale={locale ?? 'es'}
-            dict={dict.offer}
-            otherTab={dict.otherTab}
-            out={out}
-          />
-          <section className="border-t border-stone-200 pt-8">
+          <section id="su-trabajo" className="border-t border-stone-200 pt-8">
             <h2 className="text-xl font-medium">{dict.workTitle}</h2>
             <p className="mt-4 whitespace-pre-wrap break-words leading-relaxed text-stone-600">
               {data.evidence || dict.workFallback}
@@ -566,7 +596,7 @@ export function SolutionPresentation({
             </section>
           )}
           {(!!data.founders?.length || publisher) && (
-            <section className="border-t border-stone-200 pt-8">
+            <section id="equipo" className="border-t border-stone-200 pt-8">
               <h2 className="text-xl font-medium">{dict.teamTitle}</h2>
               {publisher && (
                 <p className="mt-3 text-sm text-stone-600">
@@ -619,7 +649,7 @@ export function SolutionPresentation({
             </section>
           )}
         </div>
-        <aside className="border-t border-stone-200 pt-6 lg:sticky lg:top-24 lg:border-t-0 lg:pt-0">
+        <aside className="border-t border-stone-200 pt-6 lg:sticky lg:top-[132px] lg:border-t-0 lg:pt-0">
           <h2 className="text-lg font-medium">{dict.fitTitle}</h2>
           <p className="mt-3 text-sm leading-relaxed text-stone-500">{dict.fitDesc}</p>
           {/* Contact is the main action (SHCWS-50): the buyer leaves context and the founder

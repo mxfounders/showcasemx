@@ -180,74 +180,61 @@ export function LandingFeatures({
                     <Link
                       key={`prod-${i}`}
                       href={product.detailUrl || '#'}
-                      className={`relative overflow-hidden rounded-3xl p-6 flex flex-col h-48 sm:h-52 ${product.ogImage ? 'border-none' : 'bg-white/95 border border-stone-200/60'} shadow-lg transition-all hover:shadow-xl group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800`}
+                      className="group relative flex h-60 flex-col overflow-hidden rounded-3xl border border-stone-200/60 bg-white shadow-lg transition-all hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800 sm:h-64"
                     >
-                      {product.ogImage && (
-                        <>
+                      {/* The cover sits above the text, never under it: a cover often carries
+                          its own headline, and text laid over it became unreadable. */}
+                      <div
+                        className="relative h-[46%] shrink-0 overflow-hidden"
+                        style={{ backgroundColor: activeTab.color.soft }}
+                      >
+                        {product.ogImage && (
                           <Image
                             src={product.ogImage}
                             alt=""
                             fill
                             sizes="(max-width: 640px) 90vw, 400px"
-                            className="object-cover transition-transform duration-700 group-hover:scale-105"
+                            className="object-cover transition-transform duration-700 group-hover:scale-105 motion-reduce:transform-none"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/20" />
-                        </>
-                      )}
-                      <div className="relative z-10 flex justify-between items-center mb-auto">
-                        <span
-                          className={`text-[10px] font-bold tracking-widest uppercase ${product.ogImage ? 'text-white/80' : 'text-stone-500'}`}
-                        >
-                          {product.category || 'Software'}
-                        </span>
-                        <div
-                          className={`flex items-center gap-2 px-2 py-1 rounded-full text-[11px] font-semibold ${product.ogImage ? 'bg-black/30 backdrop-blur-md text-white/90 border border-white/10' : 'bg-stone-100 text-stone-700'}`}
-                        >
-                          <span className="inline-flex items-center gap-0.5">
-                            <HeartIcon className="size-3 text-red-500" aria-hidden="true" />
-                            {product.likes ?? 0}
+                        )}
+                        <div className="absolute inset-x-3 top-3 flex items-center justify-between gap-2">
+                          <span className="truncate rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-stone-700 shadow-sm backdrop-blur-md">
+                            {product.category || 'Software'}
                           </span>
-                          <span className="inline-flex items-center gap-0.5">
-                            <BookmarkIcon
-                              className={`size-3 ${product.ogImage ? 'text-white/70' : 'text-stone-500'}`}
-                              aria-hidden="true"
-                            />
-                            {product.saves ?? 0}
-                          </span>
-                          <span className="inline-flex items-center gap-0.5">
-                            <CommentIcon
-                              className={`size-3 ${product.ogImage ? 'text-white/70' : 'text-stone-500'}`}
-                              aria-hidden="true"
-                            />
-                            {product.comments ?? 0}
+                          <span className="flex shrink-0 items-center gap-2 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-stone-700 shadow-sm backdrop-blur-md">
+                            <span className="inline-flex items-center gap-0.5">
+                              <HeartIcon className="size-3 text-red-500" aria-hidden="true" />
+                              {product.likes ?? 0}
+                            </span>
+                            <span className="inline-flex items-center gap-0.5">
+                              <BookmarkIcon className="size-3 text-stone-500" aria-hidden="true" />
+                              {product.saves ?? 0}
+                            </span>
+                            <span className="inline-flex items-center gap-0.5">
+                              <CommentIcon className="size-3 text-stone-500" aria-hidden="true" />
+                              {product.comments ?? 0}
+                            </span>
                           </span>
                         </div>
                       </div>
-                      <div className="relative z-10">
-                        <div className="flex items-center gap-3 mb-2">
+                      <div className="flex min-h-0 flex-1 flex-col justify-center px-5 py-4">
+                        <div className="mb-1.5 flex items-center gap-2.5">
                           <ProjectMark
                             name={product.name}
                             favicon={product.favicon}
                             size={24}
-                            className="w-6 h-6 rounded-md"
+                            className="h-6 w-6 shrink-0 rounded-md"
                             imageClassName="object-contain bg-white shadow-sm"
                             fallbackClassName="bg-stone-900 text-white flex items-center justify-center text-[10px] font-bold"
                           />
-                          <h4
-                            className={`text-lg font-bold truncate ${product.ogImage ? 'text-white' : 'text-stone-900'}`}
-                          >
+                          <h4 className="truncate text-lg font-bold text-stone-900">
                             {product.name}
                           </h4>
                           {product.verified && (
-                            <VerifiedMark
-                              locale={locale}
-                              className={`size-4 ${product.ogImage ? '!text-white' : ''}`}
-                            />
+                            <VerifiedMark locale={locale} className="size-4 shrink-0" />
                           )}
                         </div>
-                        <p
-                          className={`text-[13px] line-clamp-2 leading-relaxed ${product.ogImage ? 'text-white/80' : 'text-stone-600'}`}
-                        >
+                        <p className="line-clamp-2 text-[13px] leading-relaxed text-stone-600">
                           {product.description || product.feature}
                         </p>
                       </div>
@@ -256,7 +243,7 @@ export function LandingFeatures({
                   {showBrief && (
                     <Link
                       href={briefHref('', conceptCategories[activeTab.id]?.[0])}
-                      className="group rounded-3xl p-6 flex flex-col h-48 sm:h-52 bg-white/80 shadow-sm transition-all hover:bg-white hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800"
+                      className="group rounded-3xl p-6 flex flex-col h-60 sm:h-64 bg-white/80 shadow-sm transition-all hover:bg-white hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800"
                     >
                       <span
                         className="text-[10px] font-bold tracking-widest uppercase mb-auto"
@@ -284,7 +271,7 @@ export function LandingFeatures({
                         aria-label={explorerDict.applySpaceLabel
                           .replace('{category}', dict.features.tabs[activeTab.id])
                           .replace('{slot}', String(slot))}
-                        className="rounded-3xl p-6 flex flex-col h-48 sm:h-52 bg-white/60 border border-dashed border-stone-300 backdrop-blur-md transition-all hover:bg-white hover:shadow-sm group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800"
+                        className="rounded-3xl p-6 flex flex-col h-60 sm:h-64 bg-white/60 border border-dashed border-stone-300 backdrop-blur-md transition-all hover:bg-white hover:shadow-sm group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800"
                       >
                         <div className="flex justify-between text-[10px] font-bold text-stone-400 tracking-widest uppercase mb-auto">
                           <span>{explorerDict.availableSpace}</span>

@@ -70,7 +70,7 @@ function ResourceButtons({
 function PlansSection({ data, locale, dict }: Props) {
   const values = offerValues(data, locale);
   return (
-    <section className="border-t border-stone-200 pt-8" aria-labelledby="plans-title">
+    <section id="planes" className="border-t border-stone-200 pt-8" aria-labelledby="plans-title">
       <h2 id="plans-title" className="text-xl font-medium">
         {values.plans.length ? dict.plansTitle : dict.tryTitle}
       </h2>
@@ -126,7 +126,11 @@ function ServiceSection({ data, locale, dict, out, otherTab }: Props) {
     { key: 'onboarding', label: dict.onboarding, value: values.onboarding.join(', ') },
   ].filter(row => row.value);
   return (
-    <section className="border-t border-stone-200 pt-8" aria-labelledby="service-title">
+    <section
+      id="soporte"
+      className="border-t border-stone-200 pt-8"
+      aria-labelledby="service-title"
+    >
       <h2 id="service-title" className="text-xl font-medium">
         {dict.serviceTitle}
       </h2>
@@ -168,7 +172,11 @@ function ServiceSection({ data, locale, dict, out, otherTab }: Props) {
 function TechnicalSection({ data, locale, dict, out, otherTab }: Props) {
   const values = offerValues(data, locale);
   return (
-    <section className="border-t border-stone-200 pt-8" aria-labelledby="technical-title">
+    <section
+      id="tecnico"
+      className="border-t border-stone-200 pt-8"
+      aria-labelledby="technical-title"
+    >
       <h2 id="technical-title" className="text-xl font-medium">
         {dict.technicalTitle}
       </h2>

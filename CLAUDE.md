@@ -3935,3 +3935,33 @@ docs/research/cord-flouvia-2026-11.md y docs/research/cord-flouvia-sources.md.
   repositorios y las sube con el OK del propietario. No forman parte de este repositorio.
 - **Verificación al integrar**: formato, lint, tipos, 495 pruebas (incluida
   `tests/offer.test.ts`) y builds del producto y de ops.
+
+## 90. Carrusel, primera imagen y estructura de la ficha — 18 noviembre 2026
+
+Pedido del propietario: «arregla el carrusel de imgs en las fichas», «que la estructura
+sea fácil de leer», «la primera img siempre la og:img a menos que decidan lo contrario los
+founders» y «quiero que se vea el carrusel, no solo una tarjeta de img». Detalle en
+docs/listings.md («Carrusel, portada y estructura de la ficha»). Sustituye lo que §53
+decía del carrusel y del orden contrario de la portada.
+
+- **Imágenes rotas en producción**: el cargador pide `?w=1600` en pantallas grandes y
+  retina, y la ruta de capturas solo aceptaba 400 y 800, así que respondía 404. Venía
+  fallando desde §58 (Fase B). `mediaWidth()` sirve 1600 como imagen completa, con una
+  prueba que cruza cargador y ruta. Desplegado el 18 de noviembre (`3ccf17b6`).
+- **Primera imagen**: la og:image del sitio va primero en el carrusel y es la portada
+  de todas las tarjetas, salvo que el fundador elija su primera imagen
+  (`coverSource: 'screenshot'`) u oculte la del sitio (`hideSiteImage`). La portada es
+  siempre la primera diapositiva, y una og:image oculta ya no puede ser portada.
+  La elección está junto a la vista previa de la tarjeta en el editor, en el asistente MCP
+  y en la revisión de ops. Sin migración.
+- **Carrusel**: fila a todo el ancho con dos imágenes y la tercera asomándose, flechas,
+  puntos, teclado y vista ampliada con posición. Antes era una sola imagen de 448 px.
+- **Ficha**: el carrusel en la primera pantalla (las capacidades bajaron a «Qué hace»),
+  tarjeta «De un vistazo», barra de secciones fija que marca la sección actual, «Para
+  quién» y «Cuándo no encaja» lado a lado, y Planes, Soporte y Técnico antes de «Antes de
+  decidir».
+- **Tarjetas del inicio**: imagen arriba y texto abajo sobre blanco; antes el texto iba
+  encima de la imagen y chocaba con su titular.
+- Verificación: 501 pruebas, lint, tipos y formato de producto y ops; recorrido en
+  navegador a 1440 px y en móvil con una ficha de prueba en `neondb` (cuenta
+  `@example.invalid` con los datos y las 8 imágenes de Cord).

@@ -168,30 +168,64 @@ primeros 2 MB y se busca primero en el `<head>` y después en el resto de la pá
 Comprobado el 14 de noviembre con cordhq.app, flouvia.com, linear.app, stripe.com,
 github.com, notion.so, vercel.com y hubspot.com: los ocho dan portada y logo.
 
-## Carrusel de la ficha y portadas — 3 septiembre 2026
+## Carrusel, portada y estructura de la ficha — 18 noviembre 2026
 
-`src/lib/solutions/gallery.ts` es la fuente única de dos reglas de orden que
-antes vivían duplicadas, con criterios distintos, en `public.ts`,
-`library/server.ts` y `account/page.tsx`:
+Sustituye la versión del 3 de septiembre. Pedido del propietario: «la primera imagen
+siempre la og:image a menos que decidan lo contrario los founders», un carrusel que se
+vea como carrusel y una ficha fácil de leer.
 
-- `solutionSlides()` — el carrusel de la ficha pública. **og:image primero**,
-  luego las capturas del fundador en su orden declarado. Es la imagen ancha,
-  tipo hero.
-- `solutionCover()` — la portada de una tarjeta pequeña (catálogo, biblioteca,
-  Inicio del fundador). Orden **opuesto a propósito**: captura del fundador
-  primero, og:image después, arte local de Cord/Flouvia al final. Una
-  og:image de marketing rara vez sobrevive el recorte a una miniatura
-  cuadrada; una captura del producto sí.
+### Primera imagen
 
-El fundador puede ocultar la og:image de su ficha con `hideSiteImage` en
-`SolutionData` (interruptor en `site-image-card.tsx`). Como cualquier otro
-campo, el cambio pasa por revisión antes de llegar a la ficha pública — no es
-instantáneo, y la interfaz lo dice.
+`src/lib/solutions/gallery.ts` es la única regla:
 
-Un solo ratio para toda imagen del carrusel: `aspect-[16/10]` +
-`object-contain` sobre fondo blanco. `object-cover` en una captura de interfaz
-recorta justo lo que debía enseñarse; 16/10 es el punto medio entre el 4:3 de
-las capturas y el 1.905 de una og:image 1200×630.
+- `solutionSlides()`: la og:image del sitio va primero y luego las imágenes del fundador
+  en su orden. Si el fundador eligió `coverSource: 'screenshot'`, va primero su primera
+  imagen y la og:image queda al final. `hideSiteImage` la quita.
+- `solutionCover()`: la portada de las tarjetas (catálogo, inicio, biblioteca, Inicio del
+  fundador) es siempre la primera diapositiva; sin imágenes, el arte local de Cord y
+  Flouvia. Una og:image oculta nunca es portada (antes sí podía serlo).
+
+El fundador lo elige junto a la vista previa de su tarjeta en el editor: «La imagen de tu
+sitio (recomendada)», «Tu primera imagen de la galería» o «Solo tus imágenes, sin la de tu
+sitio». Como todo campo de `data`, llega al público al aprobarse. También lo leen el
+asistente MCP (`coverSource`) y la revisión en ops («Primera imagen»).
+
+### Carrusel (`solution-gallery.tsx`)
+
+Una fila a todo el ancho de la ficha: dos imágenes completas y la tercera asomándose en
+escritorio, una y media en móvil. Marco 16:10 para todas; las imágenes del fundador con
+`object-contain` (no se recorta una interfaz) y la og:image con `object-cover` (por
+especificación es 1.91:1 y centra su contenido). Flechas a los lados, puntos debajo,
+desplazamiento táctil y flechas del teclado. Al tocar una imagen se abre en un `<dialog>`
+con posición («3 de 9»), pie, anterior/siguiente, flechas del teclado y Escape; el foco
+vuelve a la imagen que lo abrió.
+
+`?w=1600` de una captura es la imagen completa: el cargador pide 400, 800 o 1600 y la ruta
+antes respondía 404 al tercero, así que las pantallas grandes y retina veían imágenes
+rotas (corregido el 18 de noviembre, `src/lib/images/media-width.ts`).
+
+### Estructura de la ficha pública
+
+1. Tipo y categorías, nombre, descripción del problema.
+2. Carrusel, en la primera pantalla también en móvil.
+3. «De un vistazo»: precio, cómo probarlo, modelo, rango, arranque e integraciones en una
+   tarjeta.
+4. Barra de secciones fija bajo el menú del sitio (`section-nav.tsx`), solo con las
+   secciones que la ficha muestra, marcando la que se está leyendo.
+5. «Qué hace» (alcance y capacidades), «Para quién está pensada» y «Cuándo puede no
+   encajar» lado a lado, Planes, Soporte y contrato, Para equipos técnicos, Antes de
+   decidir, Dónde opera, Conoce su trabajo, Quién está detrás, Novedades, Reseñas y
+   Preguntas.
+
+Las secciones con ancla (`que-hace`, `para-quien`, `planes`, `soporte`, `tecnico`,
+`antes-de-decidir`, `su-trabajo`, `equipo`, `resenas`, `preguntas`) tienen
+`scroll-margin-top` para no quedar bajo las dos barras.
+
+### Tarjetas del inicio (`landing-features.tsx`)
+
+La portada va arriba y el texto abajo sobre blanco, nunca encima de la imagen: una portada
+suele traer su propio titular y el nombre superpuesto no se leía. Categoría y contadores
+van en pastillas blancas sobre la imagen.
 
 ## Capacidades y filtros derivados del resultado — 5 septiembre 2026
 
