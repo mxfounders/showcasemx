@@ -68,6 +68,7 @@ export function NotificationPreferences({
   communityEmail,
   weeklyEmail,
   alertEmail,
+  briefEmail,
   verified,
   emailAvailable,
   dict,
@@ -77,6 +78,7 @@ export function NotificationPreferences({
   communityEmail: boolean;
   weeklyEmail: boolean;
   alertEmail: boolean;
+  briefEmail: boolean;
   verified: boolean;
   emailAvailable: boolean;
   dict: Pick<Dictionary['notifications'], 'preferences' | 'action'>;
@@ -86,7 +88,8 @@ export function NotificationPreferences({
     [solutions, setSolutions] = useState(solutionEmail),
     [community, setCommunity] = useState(communityEmail),
     [weekly, setWeekly] = useState(weeklyEmail),
-    [alerts, setAlerts] = useState(alertEmail);
+    [alerts, setAlerts] = useState(alertEmail),
+    [briefs, setBriefs] = useState(briefEmail);
   const [beforeLink, afterLink] = text.verifyHint.split('{link}');
   return (
     <div className="max-w-xl">
@@ -142,6 +145,16 @@ export function NotificationPreferences({
           />
           {text.alerts}
         </label>
+        <label className="flex items-center gap-3 text-sm">
+          <input
+            type="checkbox"
+            checked={briefs}
+            disabled={!verified && !briefs}
+            onChange={e => setBriefs(e.target.checked)}
+            className="size-4 accent-[#365DC4]"
+          />
+          {text.briefs}
+        </label>
         <NotificationAction
           body={{
             action: 'preferences',
@@ -150,6 +163,7 @@ export function NotificationPreferences({
             communityEmail: community,
             weeklyEmail: weekly,
             alertEmail: alerts,
+            briefEmail: briefs,
           }}
           label={text.save}
           dict={dict.action}

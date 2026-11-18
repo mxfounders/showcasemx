@@ -52,6 +52,10 @@ export const auth = {
     hasAccount: '¿Ya tienes cuenta?',
     actionRegister: 'Regístrate',
     actionLogin: 'Inicia sesión',
+    passkeySignIn: 'Entrar con passkey',
+    passkeyWaiting: 'Confirma en tu dispositivo…',
+    passkeyCancelled:
+      'No se completó el acceso con passkey. Puedes intentarlo de nuevo o entrar con tu contraseña.',
   },
   passwordForm: {
     doneForgotTitle: 'Revisa tu correo.',
@@ -133,5 +137,13 @@ export const auth = {
     googleTryLater: 'Intenta más tarde.',
     googleStartUnavailable: 'No pudimos iniciar Google.',
     googleInvalidOrigin: 'Origen inválido.',
+    passkeyUnavailable:
+      'Las passkeys no están disponibles en esta dirección. Entra con tu contraseña.',
+    passkeyTooMany: 'Demasiados intentos con passkey. Espera un momento o entra con tu contraseña.',
+    passkeyExpired: 'La solicitud venció. Vuelve a intentarlo.',
+    passkeyUnknown:
+      'Esta passkey ya no está registrada en shwcs. Entra con tu contraseña y, si quieres, crea otra en Configuración › Seguridad.',
+    passkeyFailed:
+      'No pudimos entrar con esta passkey. Inténtalo de nuevo o entra con tu contraseña.',
   },
 } as const;

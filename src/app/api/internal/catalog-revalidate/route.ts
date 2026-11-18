@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse, after } from 'next/server';
 import { deliverNotifications } from '@/lib/notifications/server';
 import { matchSearchAlerts } from '@/lib/alerts/server';
+import { matchBriefs } from '@/lib/briefs/server';
 import { revalidateTag } from 'next/cache';
 import { authorizedCatalogRevalidate } from '@/lib/catalog-revalidate';
 
@@ -23,7 +24,11 @@ export async function POST(request: NextRequest) {
   // buyers whose saved search the listing now matches (SHCWS-47).
   after(async () => {
     await matchSearchAlerts().catch(() => console.error('Search alerts failed.'));
-    await deliverNotifications({ categories: ['solution', 'alert'] }).catch(() => undefined);
+    // Open briefs reach a listing published after them (SHCWS-58).
+    await matchBriefs().catch(() => console.error('Brief matching failed.'));
+    await deliverNotifications({ categories: ['solution', 'alert', 'brief'] }).catch(
+      () => undefined,
+    );
   });
   return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
 }

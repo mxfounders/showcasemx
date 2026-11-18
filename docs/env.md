@@ -7,7 +7,7 @@ variables. Separar bases de desarrollo, preview y producción.
 | Variable | Uso |
 | --- | --- |
 | NEON_DATABASE_URL, DATABASE_URL o POSTGRES_URL | URL de servidor; prioridad en ese orden. Basta una. Necesaria para catálogo aprobado, cuentas, biblioteca, contactos y avisos. |
-| AUTH_APP_ORIGIN | Origen canónico HTTPS sin ruta, query, fragmento ni credenciales. Se usa en enlaces de correo y callback Google. |
+| AUTH_APP_ORIGIN | Origen canónico HTTPS sin ruta, query, fragmento ni credenciales. Se usa en enlaces de correo y callback Google. También fija el dominio de las passkeys (rpID = su host, p. ej. `shwcs.site`): en producción solo hay passkeys en ese origen exacto; en previews y otros hosts la opción no aparece. En desarrollo se usa `localhost` con el puerto del servidor (SHCWS-158). |
 | RESEND_API_KEY | Envío transaccional (recuperación, verificación y avisos) y campañas del newsletter con la API de lotes ([newsletter.md](newsletter.md)). |
 | AUTH_EMAIL_FROM | Remitente con dominio autorizado en Resend. |
 | CONTACT_EMAIL_TO | Destino opcional del formulario público. Por defecto `contacto@shwcs.site`. |

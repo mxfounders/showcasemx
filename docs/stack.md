@@ -5,7 +5,7 @@
 | Aplicación | Next.js 15.5.24, React 19.2.8, App Router, TypeScript estricto |
 | Interfaz | Tailwind 3, GSAP, Gota (íconos de Flouvia, `npm run gota:sync`), piezas propias; cinco acentos suaves |
 | Datos | Neon HTTP parametrizado; db/*.sql es el esquema operativo |
-| Auth | Scrypt, sesiones opacas hash, cookies HttpOnly, recuperación/verificación; OAuth Google con jose |
+| Auth | Scrypt, sesiones opacas hash, cookies HttpOnly, recuperación/verificación; OAuth Google con jose; passkeys (WebAuthn) con @simplewebauthn/server y /browser |
 | Imágenes | Sharp, WebP; bytes en Vercel Blob privado, metadatos y permisos en Neon |
 | Correo | API Resend + outbox transaccional; falta activar proveedor/scheduler |
 | IA | Ninguna: la búsqueda es léxica y local (src/lib/search) |

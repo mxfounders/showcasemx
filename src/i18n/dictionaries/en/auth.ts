@@ -54,6 +54,10 @@ export const auth = {
     hasAccount: 'Already have an account?',
     actionRegister: 'Sign up',
     actionLogin: 'Sign in',
+    passkeySignIn: 'Sign in with a passkey',
+    passkeyWaiting: 'Confirm on your device…',
+    passkeyCancelled:
+      "The passkey sign-in didn't finish. You can try again or sign in with your password.",
   },
   passwordForm: {
     doneForgotTitle: 'Check your email.',
@@ -132,5 +136,12 @@ export const auth = {
     googleTryLater: 'Try again later.',
     googleStartUnavailable: "We couldn't start Google sign-in.",
     googleInvalidOrigin: 'Invalid origin.',
+    passkeyUnavailable: "Passkeys aren't available at this address. Sign in with your password.",
+    passkeyTooMany: 'Too many passkey attempts. Wait a moment or sign in with your password.',
+    passkeyExpired: 'The request expired. Please try again.',
+    passkeyUnknown:
+      'This passkey is no longer registered on shwcs. Sign in with your password and, if you like, create another one in Settings › Security.',
+    passkeyFailed:
+      "We couldn't sign you in with this passkey. Try again or sign in with your password.",
   },
 } as const satisfies Dictionary['auth'];

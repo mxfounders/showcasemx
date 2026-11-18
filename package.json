@@ -27,6 +27,8 @@
     "@formatjs/intl-localematcher": "^0.8.13",
     "@gsap/react": "^2.1.2",
     "@neondatabase/serverless": "^1.1.0",
+    "@simplewebauthn/browser": "14.0.0",
+    "@simplewebauthn/server": "14.0.3",
     "@stripe/react-stripe-js": "7.0.1",
     "@stripe/stripe-js": "10.2.1",
     "@vercel/analytics": "^2.0.1",
