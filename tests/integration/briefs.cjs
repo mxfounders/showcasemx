@@ -9,7 +9,13 @@
 //     RUN_BRIEFS_INTEGRATION=1 node --env-file=.env.local tests/integration/briefs.cjs
 //
 // Without OPS_ORIGIN the ops part is skipped. Refuses to run against production.
+//
+// On a machine that can only hold one dev server, run it in three phases sharing a state
+// file: BRIEFS_PHASE=product (product server only), then BRIEFS_PHASE=ops (ops server only,
+// the product down), then BRIEFS_PHASE=finish (product only), each with
+// BRIEFS_STATE=<file>. Only `finish`, or any failure, deletes the data.
 const assert = require('node:assert/strict'),
+  fs = require('node:fs'),
   { randomUUID, randomBytes, createHash } = require('node:crypto');
 if (process.env.RUN_BRIEFS_INTEGRATION !== '1') {
   console.log('Set RUN_BRIEFS_INTEGRATION=1 against a local running app.');
@@ -24,7 +30,10 @@ if (!url || /production/i.test(new URL(url).pathname)) {
 const sql = neon(url, { fetchOptions: { cache: 'no-store' } }),
   origin = process.env.APP_ORIGIN || 'http://localhost:3000',
   opsOrigin = process.env.OPS_ORIGIN || '',
-  tag = randomUUID().slice(0, 8),
+  phase = process.env.BRIEFS_PHASE || 'all',
+  stateFile = process.env.BRIEFS_STATE || '',
+  saved = ['ops', 'finish'].includes(phase) ? JSON.parse(fs.readFileSync(stateFile, 'utf8')) : null,
+  tag = saved?.tag ?? randomUUID().slice(0, 8),
   password = 'Temporary briefs integration passphrase';
 const hash = value => createHash('sha256').update(value).digest('hex');
 // Who receives email: buyer and the two matching founders, at Resend's test inbox.
@@ -36,10 +45,10 @@ const people = {
   outsider: `brief-outsider-${tag}@example.invalid`,
   ops: `brief-ops-${tag}@example.invalid`,
 };
-const ids = {},
-  cookies = {};
-const listings = { a: randomUUID(), b: randomUUID(), c: randomUUID() };
-const briefs = {
+const ids = saved?.ids ?? {},
+  cookies = saved?.cookies ?? {};
+const listings = saved?.listings ?? { a: randomUUID(), b: randomUUID(), c: randomUUID() };
+const briefs = saved?.briefs ?? {
   main: randomUUID(),
   closed: randomUUID(),
   other: randomUUID(),
@@ -51,7 +60,15 @@ const markers = {
   contact: `CONTACT-SECRET-${tag}`,
   company: `Empresa Secreta ${tag}`,
 };
-const opsToken = randomBytes(32).toString('hex');
+const opsToken = saved?.opsToken ?? randomBytes(32).toString('hex');
+const shortlistId = saved?.shortlistId ?? randomUUID();
+let keep = false;
+const save = () =>
+  fs.writeFileSync(
+    stateFile,
+    JSON.stringify({ tag, ids, cookies, listings, briefs, opsToken, shortlistId }),
+  );
+const bearer = { authorization: `Bearer ${process.env.CATALOG_REVALIDATE_SECRET}` };
 const demandQuery = `cobranza atrasada ${tag}`;
 
 async function post(route, data, who, from = origin) {
@@ -118,6 +135,36 @@ const proposal = (briefId, solutionId, message, id = randomUUID()) => ({
 (async () => {
   const step = text => console.log('✔', text);
   try {
+    if (phase === 'all' || phase === 'product') await productPart(step);
+    if (opsOrigin && (phase === 'all' || phase === 'ops')) await opsPart(step);
+    else if (phase === 'all') console.log('… OPS_ORIGIN not set: ops part skipped');
+    if (phase === 'finish') await finishPart(step);
+    if (phase === 'product' || phase === 'ops') {
+      save();
+      keep = true;
+      console.log(`Phase ${phase} passed; state kept in ${stateFile}.`);
+    } else console.log('All brief checks passed.');
+  } catch (error) {
+    console.error(error);
+    process.exitCode = 1;
+  } finally {
+    const accounts = Object.values(ids);
+    if (!keep && accounts.length) {
+      await sql`DELETE FROM search_demand WHERE query=${demandQuery}`;
+      await sql`DELETE FROM auth_accounts WHERE id = ANY(${accounts}::uuid[])`;
+      const scopes = ['brief-create', 'brief-update', 'brief-propose', 'contact-create'];
+      const keys = scopes.flatMap(scope => accounts.map(id => `${scope}:${hash(id)}`));
+      await sql`DELETE FROM auth_rate_limits WHERE key = ANY(${keys})`;
+      const [left] =
+        await sql`SELECT count(*)::int AS n FROM buyer_briefs WHERE id = ANY(${Object.values(briefs)}::uuid[])`;
+      console.log(`Cleaned up ${accounts.length} accounts; briefs left: ${left.n}.`);
+      if (stateFile && fs.existsSync(stateFile)) fs.unlinkSync(stateFile);
+    }
+  }
+})();
+
+async function productPart(step) {
+  {
     for (const [role, email] of Object.entries(people)) {
       const response = await post('/api/auth/register', { email, password });
       assert.equal(response.status, 200, `register ${role}`);
@@ -392,121 +439,150 @@ const proposal = (briefId, solutionId, message, id = randomUUID()) => ({
     assert.ok(exportA.includes(markers.proposalA));
     assert.ok(!exportA.includes(ids.buyer));
     step('both exports carry their own side');
+    // The ops session and a search that found nothing, for the ops part.
+    await sql`INSERT INTO solution_reviewers(account_id,level) VALUES(${ids.ops},'reviewer')`;
+    await sql`INSERT INTO ops_sessions(token_hash,account_id,expires_at) VALUES(${hash(opsToken)},${ids.ops},now()+interval '1 hour')`;
+    await sql`INSERT INTO search_demand(day,query,surface,searches,empty) VALUES(current_date,${demandQuery},'search',3,3)`;
+  }
+}
 
-    if (opsOrigin) {
-      await sql`INSERT INTO solution_reviewers(account_id,level) VALUES(${ids.ops},'reviewer')`;
-      await sql`INSERT INTO ops_sessions(token_hash,account_id,expires_at) VALUES(${hash(opsToken)},${ids.ops},now()+interval '1 hour')`;
-      await sql`INSERT INTO search_demand(day,query,surface,searches,empty) VALUES(current_date,${demandQuery},'search',3,3)`;
-      const board = await opsFetch('/panel/necesidades?estado=all');
-      assert.equal(board.status, 200);
-      const boardHtml = await board.text();
-      assert.ok(boardHtml.includes(`/panel/necesidades/${briefs.main}`));
+/** Ops part. With the product down (BRIEFS_PHASE=ops), what needs it moves to `finish`. */
+async function opsPart(step) {
+  const productUp = phase === 'all';
+  {
+    const board = await opsFetch('/panel/necesidades?estado=all');
+    assert.equal(board.status, 200);
+    const boardHtml = await board.text();
+    assert.ok(boardHtml.includes(`/panel/necesidades/${briefs.main}`));
+    if (productUp) {
       assert.ok(boardHtml.includes(demandQuery), 'zero-result searches grouped by topic');
       assert.ok(boardHtml.includes('Cobros'), 'the search falls under Cobros');
-      const detail = await opsFetch(`/panel/necesidades/${briefs.main}`);
-      assert.equal(detail.status, 200);
-      const detailHtml = await detail.text();
-      assert.ok(detailHtml.includes('control de vencimientos'), 'ops reads the brief');
-      for (const secret of [markers.proposalA, markers.proposalB, markers.contact])
-        assert.ok(!detailHtml.includes(secret), `ops page leaks ${secret}`);
-      step('ops sees briefs and grouped demand, never proposals or conversations');
+    } else assert.ok(boardHtml.includes('No se pudo consultar el producto'), 'says why');
+    const detail = await opsFetch(`/panel/necesidades/${briefs.main}`);
+    assert.equal(detail.status, 200);
+    const detailHtml = await detail.text();
+    assert.ok(detailHtml.includes('control de vencimientos'), 'ops reads the brief');
+    for (const secret of [markers.proposalA, markers.proposalB, markers.contact])
+      assert.ok(!detailHtml.includes(secret), `ops page leaks ${secret}`);
+    step('ops sees briefs and grouped demand, never proposals or conversations');
 
-      const shortlistId = randomUUID();
-      const shortlist = {
-        action: 'shortlist',
-        id: shortlistId,
-        briefId: briefs.main,
-        solutionIds: [listings.b, listings.c],
-        note: `Estas dos opciones llevan contratos para retail. NOTE-${tag}`,
-      };
-      const sent = await opsFetch('/api/briefs', {
-        method: 'POST',
-        body: JSON.stringify(shortlist),
-      });
-      assert.equal(sent.status, 200, await sent.clone().text());
-      assert.equal(
-        (await opsFetch('/api/briefs', { method: 'POST', body: JSON.stringify(shortlist) })).status,
-        200,
-        'same short list again',
-      );
-      assert.equal(
-        (
-          await opsFetch('/api/briefs', {
-            method: 'POST',
-            body: JSON.stringify({ ...shortlist, id: randomUUID() }),
-          })
-        ).status,
-        409,
-        'one short list per brief',
-      );
-      const [audit] =
-        await sql`SELECT count(*)::int AS n FROM ops_audit_log WHERE action='brief_shortlist' AND subject_id=${briefs.main} AND actor_id=${ids.ops}`;
-      assert.equal(audit.n, 1);
-      await until(async () => {
-        const [row] =
-          await sql`SELECT email_state FROM account_notifications WHERE source_key=${'brief-shortlist:' + shortlistId}`;
-        return row?.email_state === 'sent';
-      }, 'short list email');
-      const withShortlist = await page(`/es/account/briefs/${briefs.main}`, 'buyer');
-      assert.ok(withShortlist.html.includes(`NOTE-${tag}`));
-      step('ops sent a short list: audited, in the buyer’s account and by email');
+    const shortlist = {
+      action: 'shortlist',
+      id: shortlistId,
+      briefId: briefs.main,
+      solutionIds: [listings.b, listings.c],
+      note: `Estas dos opciones llevan contratos para retail. NOTE-${tag}`,
+    };
+    const sent = await opsFetch('/api/briefs', {
+      method: 'POST',
+      body: JSON.stringify(shortlist),
+    });
+    assert.equal(sent.status, 200, await sent.clone().text());
+    assert.equal(
+      (await opsFetch('/api/briefs', { method: 'POST', body: JSON.stringify(shortlist) })).status,
+      200,
+      'same short list again',
+    );
+    assert.equal(
+      (
+        await opsFetch('/api/briefs', {
+          method: 'POST',
+          body: JSON.stringify({ ...shortlist, id: randomUUID() }),
+        })
+      ).status,
+      409,
+      'one short list per brief',
+    );
+    const [audit] =
+      await sql`SELECT count(*)::int AS n FROM ops_audit_log WHERE action='brief_shortlist' AND subject_id=${briefs.main} AND actor_id=${ids.ops}`;
+    assert.equal(audit.n, 1);
+    const [notice] =
+      await sql`SELECT owner_id::text FROM account_notifications WHERE source_key=${'brief-shortlist:' + shortlistId}`;
+    assert.equal(notice?.owner_id, ids.buyer);
+    if (productUp) await shortlistReachedBuyer();
+    step('ops sent a short list, audited, with the buyer’s notice');
 
-      const hide = await opsFetch('/api/briefs', {
+    const hide = await opsFetch('/api/briefs', {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'hide',
+        id: briefs.closed,
+        reason: 'Prueba de ocultar una necesidad.',
+      }),
+    });
+    assert.equal(hide.status, 200);
+    const [hidden] =
+      await sql`SELECT count(*)::int AS n FROM ops_audit_log WHERE action='brief_hide' AND subject_id=${briefs.closed}`;
+    assert.equal(hidden.n, 1);
+    if (productUp) await hiddenForEveryone();
+    // Hide and show another one: both audited.
+    for (const action of ['hide', 'unhide']) {
+      const response = await opsFetch('/api/briefs', {
         method: 'POST',
-        body: JSON.stringify({
-          action: 'hide',
-          id: briefs.closed,
-          reason: 'Prueba de ocultar una necesidad.',
-        }),
+        body: JSON.stringify({ action, id: briefs.other, reason: 'Prueba de moderación.' }),
       });
-      assert.equal(hide.status, 200);
-      const [hidden] =
-        await sql`SELECT count(*)::int AS n FROM ops_audit_log WHERE action='brief_hide' AND subject_id=${briefs.closed}`;
-      assert.equal(hidden.n, 1);
-      const buyerHidden = await page(`/es/account/briefs/${briefs.closed}`, 'buyer');
-      assert.ok(buyerHidden.html.includes('Prueba de ocultar una necesidad.'));
-      assert.equal((await page(`/es/account/needs/${briefs.closed}`, 'a')).status, 404);
-      const unhide = await opsFetch('/api/briefs', {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'unhide',
-          id: briefs.closed,
-          reason: 'Fue un error de prueba.',
-        }),
-      });
-      assert.equal(unhide.status, 200);
-      // Cross-site posts are refused before anything else.
-      const foreign = await fetch(opsOrigin + '/api/briefs', {
-        method: 'POST',
-        headers: {
-          cookie: `ops-session=${opsToken}`,
-          origin: 'https://evil.test',
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'hide',
-          id: briefs.main,
-          reason: 'Intento desde otro sitio.',
-        }),
-      });
-      assert.equal(foreign.status, 403);
-      step('ops hides and shows a brief with audit; foreign origins are refused');
-    } else console.log('… OPS_ORIGIN not set: ops part skipped');
-    console.log('All brief checks passed.');
-  } catch (error) {
-    console.error(error);
-    process.exitCode = 1;
-  } finally {
-    const accounts = Object.values(ids);
-    if (accounts.length) {
-      await sql`DELETE FROM search_demand WHERE query=${demandQuery}`;
-      await sql`DELETE FROM auth_accounts WHERE id = ANY(${accounts}::uuid[])`;
-      const scopes = ['brief-create', 'brief-update', 'brief-propose', 'contact-create'];
-      const keys = scopes.flatMap(scope => accounts.map(id => `${scope}:${hash(id)}`));
-      await sql`DELETE FROM auth_rate_limits WHERE key = ANY(${keys})`;
-      const [left] =
-        await sql`SELECT count(*)::int AS n FROM buyer_briefs WHERE id = ANY(${Object.values(briefs)}::uuid[])`;
-      console.log(`Cleaned up ${accounts.length} accounts; briefs left: ${left.n}.`);
+      assert.equal(response.status, 200, action);
     }
+    const [moderated] =
+      await sql`SELECT count(*)::int AS n FROM ops_audit_log WHERE action IN ('brief_hide','brief_unhide') AND subject_id=${briefs.other}`;
+    assert.equal(moderated.n, 2);
+    // Cross-site posts are refused before anything else.
+    const foreign = await fetch(opsOrigin + '/api/briefs', {
+      method: 'POST',
+      headers: {
+        cookie: `ops-session=${opsToken}`,
+        origin: 'https://evil.test',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'hide',
+        id: briefs.main,
+        reason: 'Intento desde otro sitio.',
+      }),
+    });
+    assert.equal(foreign.status, 403);
+    step('ops hides and shows briefs with audit; foreign origins are refused');
   }
-})();
+}
+
+/** The short list's email went out and the buyer reads it in their account. */
+async function shortlistReachedBuyer() {
+  await until(async () => {
+    const [row] =
+      await sql`SELECT email_state FROM account_notifications WHERE source_key=${'brief-shortlist:' + shortlistId}`;
+    return row?.email_state === 'sent';
+  }, 'short list email');
+  const withShortlist = await page(`/es/account/briefs/${briefs.main}`, 'buyer');
+  assert.ok(withShortlist.html.includes(`NOTE-${tag}`));
+}
+
+/** A hidden brief: the buyer reads ops' reason, the founder it matched gets a 404. */
+async function hiddenForEveryone() {
+  const buyerHidden = await page(`/es/account/briefs/${briefs.closed}`, 'buyer');
+  assert.ok(buyerHidden.html.includes('Prueba de ocultar una necesidad.'));
+  assert.equal((await page(`/es/account/needs/${briefs.closed}`, 'a')).status, 404);
+}
+
+/** Product back up after the ops phase: what ops asked of it. */
+async function finishPart(step) {
+  // What ops calls after a short list (its own server was the one up then).
+  const delivered = await fetch(origin + '/api/internal/brief-notices', {
+    method: 'POST',
+    headers: bearer,
+  });
+  assert.equal(delivered.status, 200);
+  await shortlistReachedBuyer();
+  step('the short list reached the buyer’s account and inbox');
+  await hiddenForEveryone();
+  step('the hidden brief shows ops’ reason to the buyer and is gone for the founder');
+  assert.equal((await fetch(origin + '/api/internal/demand-topics')).status, 401);
+  const topics = await fetch(origin + '/api/internal/demand-topics', { headers: bearer }).then(
+    response => response.json(),
+  );
+  const cobros = topics.topics.find(topic => topic.value === 'Cobros');
+  assert.ok(
+    cobros?.queries.some(item => item.query === demandQuery),
+    'grouped under Cobros',
+  );
+  step('zero-result searches come back grouped by topic, only with the ops credential');
+}
