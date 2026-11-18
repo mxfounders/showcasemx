@@ -9,6 +9,9 @@ import {
   solutionPriceBands,
   solutionSetupTimes,
   solutionCompliance,
+  solutionPaymentMethods,
+  solutionTeamSizes,
+  solutionCustomerCounts,
 } from './solutions/model';
 import { matchIndustry, isRealMatch } from './search/facets';
 import {
@@ -25,6 +28,9 @@ import {
   complianceEn,
   collectionEn,
   publicLinkKindEn,
+  paymentMethodEn,
+  teamSizeEn,
+  customerCountEn,
 } from './taxonomy-en';
 
 /**
@@ -540,6 +546,35 @@ const complianceLabels: Record<string, string> = {
   'factura-fiscal-mx': 'Factura fiscal local',
 };
 
+const paymentMethodLabels: Record<string, string> = {
+  tarjeta: 'Tarjeta de crédito o débito',
+  transferencia: 'Transferencia bancaria',
+  domiciliacion: 'Domiciliación',
+  efectivo: 'Efectivo',
+  paypal: 'PayPal',
+  billeteras: 'Billeteras digitales',
+  credito: 'Factura con crédito',
+  cripto: 'Criptomonedas',
+};
+
+const teamSizeLabels: Record<string, string> = {
+  uno: 'Una persona',
+  'de-2-a-10': 'De 2 a 10 personas',
+  'de-11-a-50': 'De 11 a 50 personas',
+  'de-51-a-200': 'De 51 a 200 personas',
+  'de-201-a-1000': 'De 201 a 1,000 personas',
+  'mas-1000': 'Más de 1,000 personas',
+};
+
+const customerCountLabels: Record<string, string> = {
+  'hasta-10': 'Hasta 10 clientes',
+  'de-11-a-50': 'De 11 a 50 clientes',
+  'de-51-a-200': 'De 51 a 200 clientes',
+  'de-201-a-1000': 'De 201 a 1,000 clientes',
+  'de-1001-a-10000': 'De 1,001 a 10,000 clientes',
+  'mas-10000': 'Más de 10,000 clientes',
+};
+
 /** A product matches a declarative rule instead of `products.slice(0, 8)`. */
 export type CollectionRule = { categories?: SolutionCategory[]; industries?: Industry[] };
 export type CollectionEntry = {
@@ -705,6 +740,26 @@ export function localizedComplianceOptions(locale?: string) {
         ? (complianceEn[id] ?? complianceLabels[id] ?? id)
         : (complianceLabels[id] ?? id),
   }));
+}
+// Provider facts (SHCWS-56): same shape as the option lists above.
+const localizedList = (
+  ids: readonly string[],
+  labels: Record<string, string>,
+  en: Record<string, string>,
+  locale?: string,
+) =>
+  ids.map(id => ({
+    value: id,
+    label: (locale === 'en' ? en[id] : undefined) ?? labels[id] ?? id,
+  }));
+export function localizedPaymentMethodOptions(locale?: string) {
+  return localizedList(solutionPaymentMethods, paymentMethodLabels, paymentMethodEn, locale);
+}
+export function localizedTeamSizeOptions(locale?: string) {
+  return localizedList(solutionTeamSizes, teamSizeLabels, teamSizeEn, locale);
+}
+export function localizedCustomerCountOptions(locale?: string) {
+  return localizedList(solutionCustomerCounts, customerCountLabels, customerCountEn, locale);
 }
 export function localizedCollections(locale?: string): CollectionEntry[] {
   if (locale !== 'en') return collections;

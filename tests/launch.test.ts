@@ -132,7 +132,9 @@ test('navigation uses dedicated catalog pages, prefixes every route with the loc
   assert.equal(navigationHref('/explorar/nomina', 'es'), '/es/explorar/nomina');
   assert.equal(navigationHref('/leads', 'es'), '/es/account/opportunities');
   assert.equal(navigationHref('/explorar', 'en'), '/en#catalogo');
-  assert.equal(availableNavigation('/fundadores'), false);
+  // The founders directory exists since SHCWS-120; «Selección shwcs» is still pending.
+  assert.equal(availableNavigation('/fundadores'), true);
+  assert.equal(availableNavigation('/destacados'), false);
   assert.equal(availableNavigation('/nuevo'), true);
   assert.equal(availableNavigation('/colecciones/test'), true);
   assert.equal(availableNavigation('/criterios'), true);

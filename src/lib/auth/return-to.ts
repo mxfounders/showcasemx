@@ -1,5 +1,6 @@
 import { isSolutionId } from '@/lib/solutions/model';
 import { validProjectKey } from '@/lib/library/model';
+import { selectionKeys } from '@/lib/library/comparison';
 export function authReturnTo(value: unknown): string {
   if (typeof value !== 'string') return '/account';
   if (
@@ -45,6 +46,15 @@ export function authReturnTo(value: unknown): string {
     isSolutionId(value.slice('/account/reviews/'.length))
   )
     return value;
+  // A temporary comparison and its «ask all of them» form (SHCWS-53): 2–3 valid keys only,
+  // rebuilt here so nothing else in the query survives.
+  for (const base of ['/comparar', '/account/contacts/proposal'])
+    if (value.startsWith(base + '?')) {
+      const keys = selectionKeys(
+        new URLSearchParams(value.slice(base.length + 1)).getAll('project'),
+      );
+      if (keys) return `${base}?${new URLSearchParams(keys.map(key => ['project', key]))}`;
+    }
   if (value.startsWith('/account/saved?')) {
     const params = new URLSearchParams(value.slice(value.indexOf('?') + 1));
     const key = params.get('project');

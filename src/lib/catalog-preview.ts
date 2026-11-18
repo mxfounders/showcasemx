@@ -56,6 +56,13 @@ export type PreviewProduct = {
   setupTime?: string;
   compliance?: string[];
   scope?: string;
+  /**
+   * Where it serves and invoices (SHCWS-56, ISO 3166-1), same tri-state as industries:
+   * absent = never answered, [] = any country. And the languages it supports in.
+   */
+  serviceCountries?: string[];
+  billingCountries?: string[];
+  supportLanguages?: string[];
   publishedAt?: string | null;
   // Extra hand-authored search terms for the two real static entries, when a
   // concept a buyer would type ("tienda online", "automatización") isn't

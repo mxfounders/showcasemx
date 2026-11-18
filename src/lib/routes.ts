@@ -2,6 +2,7 @@ import { getBlogSlugs } from './blog';
 import { infoSlugs } from './info-pages';
 import { categories, collections, industries } from './taxonomy';
 import { isSolutionSlug } from './solutions/slug';
+import { isHandleShape } from './profiles/handle-shape';
 
 // What a path under /[locale] can be, checked by the middleware before anything
 // renders. Bots and vulnerability scanners probe thousands of paths a day
@@ -31,11 +32,19 @@ const routes = new Map<string, Rest>([
   ['anunciate', leaf],
   ['blog', rest => leaf(rest) || blogPost(rest)],
   ['buscar', leaf],
+  // A public profile by its handle (SHCWS-120); which handles exist is
+  // src/lib/profiles/routing.ts, also run by the middleware. Any letter case: the
+  // middleware sends other cases to the lowercase handle.
+  ['c', rest => rest.length === 1 && isHandleShape(rest[0].toLowerCase())],
   ['colecciones', oneOf(collections.map(item => item.slug))],
   ['comunidad', rest => leaf(rest) || idPage(rest)],
+  // A temporary comparison of 2–3 listings (SHCWS-53); its keys live in the query.
+  ['comparar', leaf],
   ['contacto', leaf],
   ['explorar', oneOf(categories.map(item => item.slug))],
   ['forgot-password', leaf],
+  // The founders directory: profiles that show a published listing (SHCWS-120).
+  ['fundadores', leaf],
   ['industria', oneOf(industries.map(item => item.slug))],
   [
     'newsletter',

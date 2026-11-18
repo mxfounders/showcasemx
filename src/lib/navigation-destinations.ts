@@ -13,9 +13,9 @@ export function navigationHref(href: string, locale: string) {
 // tied to the issue that builds it (SHCWS-131). They stay in the dictionaries so the
 // copy is ready, and come back by removing them from here once the route exists.
 // tests/navigation.test.ts fails if a visible link 404s. Weekly Drops became
-// «Nuevo esta semana» (/nuevo, SHCWS-125) and the invented events were removed.
+// «Nuevo esta semana» (/nuevo, SHCWS-125) and the invented events were removed. The
+// founders directory exists since SHCWS-120 (/fundadores, public profiles).
 const pendingDestinations = [
-  '/fundadores', // public creator profiles: SHCWS-120
   '/destacados', // «Selección shwcs», today only in ops: SHCWS-165
   '/colecciones', // index of the collections; each /colecciones/[slug] exists
 ];

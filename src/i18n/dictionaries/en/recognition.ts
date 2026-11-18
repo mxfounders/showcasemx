@@ -20,6 +20,8 @@ export const recognition = {
     verified: 'Verified by',
     editorial: 'Team pick',
     title: '{name} on shwcs',
+    rating: '{rating} ★ · {count} reviews',
+    ratingTitle: '{rating} out of 5 from {count} verified reviews',
     seal: {
       featured: 'Listed',
       featuredBy: 'In the catalog',

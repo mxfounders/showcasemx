@@ -18,6 +18,8 @@ import { requireOps } from '@/lib/auth';
 import { isUuid } from '@/lib/http';
 import { accountDetail, type AccountDetail } from '@/lib/data/accounts';
 import { accountFlags } from '@/lib/data/fraud';
+import { accountProfile } from '@/lib/data/profiles';
+import { ProfileModeration } from './ProfileModeration';
 import { daysSince, fmtDate, fmtDateTime, fmtNumber } from '@/lib/format';
 import { LEVEL, PROFILE, ROLE } from '@/lib/labels';
 import { choice, type SearchParams } from '@/lib/url';
@@ -237,7 +239,11 @@ export default async function AccountPage({
   const user = await requireOps();
   const { id } = await params;
   if (!isUuid(id)) notFound();
-  const [d, flags] = await Promise.all([accountDetail(id), accountFlags(id)]);
+  const [d, flags, publicProfile] = await Promise.all([
+    accountDetail(id),
+    accountFlags(id),
+    accountProfile(id),
+  ]);
   if (!d) notFound();
   const query = await searchParams;
   const tab = choice(query, 'tab', TABS, 'resumen');
@@ -300,6 +306,20 @@ export default async function AccountPage({
                 </Badge>
               )}
               {a.profile && <Badge tone="lavender">{PROFILE[a.profile] ?? a.profile}</Badge>}
+              {publicProfile && (
+                <Badge
+                  tone={
+                    publicProfile.hiddenAt
+                      ? 'terracotta'
+                      : publicProfile.active
+                        ? 'blue'
+                        : 'neutral'
+                  }
+                >
+                  Perfil /c/{publicProfile.handle}
+                  {publicProfile.hiddenAt ? ' · oculto' : publicProfile.active ? '' : ' · apagado'}
+                </Badge>
+              )}
               <Badge>Registrada hace {daysSince(a.createdAt)} días</Badge>
               <IdChip value={a.id} display={a.id.slice(0, 8)} />
             </div>
@@ -414,7 +434,7 @@ export default async function AccountPage({
               confirm={{
                 title: 'Despublicar todo su contenido',
                 description:
-                  'Retira del catálogo todas sus fichas publicadas y vuelve privadas sus listas públicas. Los borradores se conservan.',
+                  'Retira del catálogo todas sus fichas publicadas, vuelve privadas sus listas públicas y oculta su perfil público. Los borradores se conservan.',
                 destructive: true,
                 confirmLabel: 'Despublicar todo',
                 typeToConfirm: a.email,
@@ -725,6 +745,62 @@ export default async function AccountPage({
 
       {tab === 'comunidad' && (
         <div className="grid items-start gap-6 lg:grid-cols-3">
+          <Card className="lg:col-span-3">
+            <CardHeader
+              title="Perfil público"
+              description="Lo que la persona publica en /c/<enlace> (SHCWS-120). Ops puede ocultarlo o cambiar su enlace; nunca edita su nombre, bio ni enlaces."
+            />
+            <CardBody>
+              {publicProfile ? (
+                <div className="space-y-4">
+                  <DescriptionList
+                    items={[
+                      { label: 'Enlace', value: `/c/${publicProfile.handle}` },
+                      { label: 'Nombre público', value: publicProfile.displayName },
+                      {
+                        label: 'Estado',
+                        value: publicProfile.hiddenAt
+                          ? `Oculto por ops: ${publicProfile.hiddenReason ?? ''}`
+                          : publicProfile.active
+                            ? 'Activo'
+                            : 'Apagado por su dueño',
+                      },
+                      {
+                        label: 'Muestra',
+                        value: `${fmtNumber(publicProfile.shownProjects)} fichas · ${fmtNumber(publicProfile.shownLists)} listas públicas`,
+                      },
+                      { label: 'Seguidores', value: fmtNumber(publicProfile.followers) },
+                      {
+                        label: 'Enlaces anteriores',
+                        value: publicProfile.previousHandles.length
+                          ? publicProfile.previousHandles.map(handle => `/c/${handle}`).join(', ')
+                          : 'Ninguno',
+                      },
+                      ...(publicProfile.bio ? [{ label: 'Bio', value: publicProfile.bio }] : []),
+                      ...(publicProfile.links.length
+                        ? [
+                            {
+                              label: 'Enlaces',
+                              value: publicProfile.links
+                                .map(link => `${link.label}: ${link.url}`)
+                                .join(' · '),
+                            },
+                          ]
+                        : []),
+                    ]}
+                  />
+                  <ProfileModeration
+                    accountId={a.id}
+                    handle={publicProfile.handle}
+                    hidden={!!publicProfile.hiddenAt}
+                    admin={admin}
+                  />
+                </div>
+              ) : (
+                <p className="text-[13px] text-muted">No tiene perfil público.</p>
+              )}
+            </CardBody>
+          </Card>
           <Card className="lg:col-span-2">
             <CardHeader title={`Comentarios públicos (${commentsCount})`} />
             <CardBody>

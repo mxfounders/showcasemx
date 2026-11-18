@@ -1,0 +1,99 @@
+{
+  "$comment": "Vercel WAF custom rules per project (SHCWS-3, docs/operations.md «Firewall de Vercel»). Staged with `npm run firewall -- --project <name> --stage log|enforce`; the script never publishes. Hobby allows 3 custom rules per project, at most 1 of them a rate limit, and no persistent actions: `hobby` fits that; `pro` is added on top after moving to Pro.",
+  "patterns": {
+    "machine": "^/(api/(webhooks|internal|health|badge)(/|$)|llms\\.txt$|robots\\.txt$|sitemap\\.xml$|soluciones/[^/]+\\.md$)",
+    "scanner": "^/(wp-|wordpress|\\.env|\\.git|\\.aws|\\.ssh|\\.vscode|xmlrpc|phpmyadmin|pma/|cgi-bin|vendor/phpunit|server-status)|\\.(php[0-9]?|phtml|asp|aspx|jsp|cgi|env|ini|sql|bak|old|swp)$",
+    "sensitivePost": "^/api/(auth|contact|newsletter)(/|$)",
+    "opsAuth": "^/api/auth(/|$)",
+    "communityCombos": "(%2C|,).*(%2C|,)"
+  },
+  "projects": {
+    "shwcs": {
+      "hobby": [
+        {
+          "name": "Endpoints de máquinas",
+          "description": "Webhooks firmados, cron con secreto, salud, insignias y archivos para buscadores e IA: sin reto de bots.",
+          "groups": [[{ "type": "path", "op": "re", "pattern": "machine" }]],
+          "action": "bypass"
+        },
+        {
+          "name": "Escáneres de vulnerabilidades",
+          "description": "Rutas de WordPress, PHP y archivos secretos que shwcs no sirve (§79).",
+          "groups": [[{ "type": "path", "op": "re", "pattern": "scanner" }]],
+          "action": "deny"
+        },
+        {
+          "name": "Límite en acceso, contacto y newsletter",
+          "description": "POST de registro, acceso, recuperación, contacto y newsletter: 20 por minuto por IP.",
+          "groups": [
+            [
+              { "type": "path", "op": "re", "pattern": "sensitivePost" },
+              { "type": "method", "op": "eq", "value": "POST" }
+            ]
+          ],
+          "action": "rate_limit",
+          "rateLimit": { "window": 60, "requests": 20, "keys": ["ip"], "action": "rate_limit" }
+        }
+      ],
+      "pro": [
+        {
+          "name": "Límite general de la API",
+          "description": "Toda la API: 300 por minuto por IP.",
+          "groups": [[{ "type": "path", "op": "pre", "value": "/api/" }]],
+          "action": "rate_limit",
+          "rateLimit": { "window": 60, "requests": 300, "keys": ["ip"], "action": "rate_limit" }
+        },
+        {
+          "name": "Combinaciones de filtros de comunidad",
+          "description": "Tres o más valores en un filtro de /comunidad: robots.txt ya las excluye; reto a quien lo ignora.",
+          "groups": [
+            [
+              { "type": "path", "op": "re", "value": "^/(es|en)/comunidad$" },
+              { "type": "query", "key": "category", "op": "re", "pattern": "communityCombos" }
+            ],
+            [
+              { "type": "path", "op": "re", "value": "^/(es|en)/comunidad$" },
+              { "type": "query", "key": "industria", "op": "re", "pattern": "communityCombos" }
+            ]
+          ],
+          "action": "challenge"
+        }
+      ]
+    },
+    "shwcs-ops": {
+      "hobby": [
+        {
+          "name": "Sonda de disponibilidad",
+          "description": "GET /login de la sonda externa (scripts/uptime-check.mjs): sin reto de bots, para que no cuente como caída.",
+          "groups": [
+            [
+              { "type": "path", "op": "eq", "value": "/login" },
+              { "type": "method", "op": "eq", "value": "GET" },
+              { "type": "user_agent", "op": "eq", "value": "shwcs-uptime/1.0" }
+            ]
+          ],
+          "action": "bypass"
+        },
+        {
+          "name": "Escáneres de vulnerabilidades",
+          "description": "Rutas de WordPress, PHP y archivos secretos que ops no sirve.",
+          "groups": [[{ "type": "path", "op": "re", "pattern": "scanner" }]],
+          "action": "deny"
+        },
+        {
+          "name": "Límite en el acceso a ops",
+          "description": "POST de contraseña, código y alta de ops: 10 por minuto por IP.",
+          "groups": [
+            [
+              { "type": "path", "op": "re", "pattern": "opsAuth" },
+              { "type": "method", "op": "eq", "value": "POST" }
+            ]
+          ],
+          "action": "rate_limit",
+          "rateLimit": { "window": 60, "requests": 10, "keys": ["ip"], "action": "rate_limit" }
+        }
+      ],
+      "pro": []
+    }
+  }
+}

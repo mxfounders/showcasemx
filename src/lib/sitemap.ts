@@ -29,6 +29,7 @@ export function staticPages(): SitemapPage[] {
   return [
     { path: '' },
     { path: '/comunidad' },
+    { path: '/fundadores' },
     { path: '/nuevo' },
     { path: '/blog' },
     { path: '/newsletter' },

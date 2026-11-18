@@ -49,6 +49,9 @@ export async function GET(request: NextRequest) {
       alerts,
       followedLists,
       followedCurators,
+      publicProfile,
+      previousHandles,
+      followedProfiles,
     ] = await Promise.all([
       sql`SELECT id::text, email, name, organization, profile, role, dashboard_mode, created_at::text, email_verified_at::text, (avatar_key IS NOT NULL OR avatar_data IS NOT NULL) AS has_avatar, totp_confirmed_at IS NOT NULL AS two_step_enabled FROM auth_accounts WHERE id = ${account.id}`,
       sql`SELECT id::text, catalog_key, status, step, version, data, published_data, published_at::text, updated_at::text FROM founder_solutions WHERE owner_id = ${account.id} ORDER BY updated_at`,
@@ -74,6 +77,17 @@ export async function GET(request: NextRequest) {
       sql`SELECT id::text, scope, topic, query, filters, created_at::text, last_matched_at::text FROM search_alerts WHERE owner_id = ${account.id} ORDER BY created_at`,
       sql`SELECT f.list_id::text, CASE WHEN l.visibility = 'public' THEN l.name END AS name, f.created_at::text FROM community_list_follows f JOIN buyer_lists l ON l.id = f.list_id WHERE f.follower_id = ${account.id} ORDER BY f.created_at`,
       sql`SELECT curator_name, created_at::text FROM community_curator_follows WHERE follower_id = ${account.id} ORDER BY created_at`,
+      // The public profile (SHCWS-120): what the person wrote, what it hides, its previous
+      // handles and how many follow it (never who); profiles followed by their handle only.
+      sql`SELECT handle, display_name, bio, links, hidden_solutions::text[] AS hidden_solutions, hidden_lists::text[] AS hidden_lists, active, activated_at::text, hidden_at::text, hidden_reason, created_at::text, updated_at::text, (SELECT count(*)::int FROM profile_follows f WHERE f.profile_id = p.account_id) AS followers FROM public_profiles p WHERE account_id = ${account.id}`.catch(
+        () => [],
+      ),
+      sql`SELECT handle, retired_at::text FROM profile_handle_history WHERE account_id = ${account.id} ORDER BY retired_at`.catch(
+        () => [],
+      ),
+      sql`SELECT CASE WHEN profile_visible(p.account_id) THEN p.handle END AS handle, f.created_at::text FROM profile_follows f JOIN public_profiles p ON p.account_id = f.profile_id WHERE f.follower_id = ${account.id} ORDER BY f.created_at`.catch(
+        () => [],
+      ),
     ]);
 
     const payload = {
@@ -89,7 +103,10 @@ export async function GET(request: NextRequest) {
       billing: { profile: billingProfile[0] ?? null, bookings, documents: billingDocuments },
       published: { reviews, reviewProofs, solutionComments, listComments, questions },
       alerts,
-      following: { lists: followedLists, curators: followedCurators },
+      following: { lists: followedLists, curators: followedCurators, profiles: followedProfiles },
+      publicProfile: publicProfile[0]
+        ? { ...publicProfile[0], previousHandles: previousHandles }
+        : null,
     };
 
     return new NextResponse(JSON.stringify(payload, null, 2), {

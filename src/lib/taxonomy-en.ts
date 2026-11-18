@@ -392,6 +392,36 @@ export const complianceEn: Record<string, string> = {
   'factura-fiscal-mx': 'Local tax invoice',
 };
 
+// Provider facts (SHCWS-56).
+export const paymentMethodEn: Record<string, string> = {
+  tarjeta: 'Credit or debit card',
+  transferencia: 'Bank transfer',
+  domiciliacion: 'Direct debit',
+  efectivo: 'Cash',
+  paypal: 'PayPal',
+  billeteras: 'Digital wallets',
+  credito: 'Invoice with payment terms',
+  cripto: 'Cryptocurrency',
+};
+
+export const teamSizeEn: Record<string, string> = {
+  uno: 'One person',
+  'de-2-a-10': '2 to 10 people',
+  'de-11-a-50': '11 to 50 people',
+  'de-51-a-200': '51 to 200 people',
+  'de-201-a-1000': '201 to 1,000 people',
+  'mas-1000': 'Over 1,000 people',
+};
+
+export const customerCountEn: Record<string, string> = {
+  'hasta-10': 'Up to 10 customers',
+  'de-11-a-50': '11 to 50 customers',
+  'de-51-a-200': '51 to 200 customers',
+  'de-201-a-1000': '201 to 1,000 customers',
+  'de-1001-a-10000': '1,001 to 10,000 customers',
+  'mas-10000': 'Over 10,000 customers',
+};
+
 // Only the four generic publicLinkKinds (src/lib/solutions/profile.ts) need a
 // translation — the other seven are proper nouns (LinkedIn, X, TikTok...).
 // The icon lookup in social-icons.tsx stays keyed on the canonical Spanish

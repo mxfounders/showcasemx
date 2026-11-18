@@ -60,3 +60,19 @@ Verificación actual: 37 pruebas unitarias, lint, TypeScript y build aislado. In
 `SavedGallery` filtra en el cliente únicamente los guardados privados entregados por el servidor: búsqueda por palabras sin distinguir acentos o mayúsculas (nombre, descripción, tipo y categorías), tipo, categoría y lista, incluida Sin organizar. Los filtros se intersectan; categorías secundarias también coinciden. Orden por guardado reciente/antiguo o nombre A–Z. Muestra cantidad de resultados, limpiar y estado sin coincidencias. Sin red por pulsación ni mutación de guardados al filtrar. `/account/saved?list=none` abre el filtro Sin organizar; también admite un ID de lista propia. Los demás filtros son locales y se reinician al recargar. Proyectos no disponibles conservan acciones para eliminarlos.
 
 Pruebas de `library-filters.test.ts`: intersecciones, acentos, pertenencia múltiple, sin organizar, orden sin mutar entrada y proyectos retirados; total 39 unitarias.
+
+### Encabezado y barra (14 de noviembre de 2026)
+
+Sustituye lo que §26–§28 de CLAUDE.md decían de la composición de Guardados y Mis listas.
+
+- **Encabezado**: título a la izquierda con una línea de resumen debajo; la acción de la página a la derecha. Guardados: «7 proyectos guardados · solo tú los ves» con candado, y «Mis alertas». Mis listas: «3 listas · 1 pública» y «Crear lista». Sin conteos repetidos más abajo. Guardados ya no repite «Mis listas», que está en la barra lateral (§27).
+- **Barra de Guardados**, solo cuando sirve:
+  - de 1 a 3 guardados, sin barra;
+  - de 4 en adelante, orden y búsqueda a la derecha;
+  - de 6 en adelante, también Tipo, Categoría, Industria, Tamaño y Lista a la izquierda.
+- Cada menú muestra el nombre del eje hasta que se elige un valor y entonces muestra el valor (azul). Un filtro activo siempre se ve aunque haya pocos guardados (por ejemplo «Sin organizar» desde Inicio), para poder quitarlo.
+- Con filtros activos aparecen «2 de 7 proyectos» y «Limpiar» junto al orden. En móvil, el orden queda bajo los menús y la lupa a la derecha; el conteo se anuncia, pero no se dibuja.
+- Mientras el primer menú es texto, la fila se corre 16 px para que su texto quede alineado con el título; cuando es una pastilla azul, la pastilla queda en el borde.
+- **Mis listas**: pestañas Todas/Privadas/Públicas solo si hay listas de los dos tipos; búsqueda desde 6 listas. El tile «Crear lista» sigue en la cuadrícula sin filtros.
+- **Sin líneas**: ni bajo la barra ni alrededor de los estados vacíos. `LibraryEmpty` (`src/components/library/library-empty.tsx`) es el único estado vacío y sin coincidencias de las dos páginas: superficie discontinua, ícono, título sin punto, texto y acción. Sin listas, Mis listas muestra «Crea tu primera lista» en lugar de «No hay listas con estos filtros», y el botón del encabezado se oculta para no repetirlo.
+- La tarjeta «El proyecto que querías guardar» es una tarjeta blanca, no un bloque entre dos líneas.

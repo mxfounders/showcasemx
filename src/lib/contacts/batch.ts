@@ -26,7 +26,11 @@ export type BatchRecipient = {
 
 export type BatchInput = {
   id: string;
-  listId: string;
+  /**
+   * The buyer's list the projects were chosen from, or null for a temporary comparison
+   * from the catalog (SHCWS-53): then nothing ties them together but this grouping.
+   */
+  listId: string | null;
   details: ContactDetails;
   recipients: BatchRecipient[];
 };
@@ -61,8 +65,9 @@ export function readBatch(body: Record<string, unknown>): BatchInput | null {
     !details ||
     typeof body.id !== 'string' ||
     !isSolutionId(body.id) ||
-    typeof body.listId !== 'string' ||
-    !isSolutionId(body.listId) ||
+    (body.listId !== undefined &&
+      body.listId !== null &&
+      (typeof body.listId !== 'string' || !isSolutionId(body.listId))) ||
     body.consentVersion !== consentVersion ||
     !Array.isArray(body.recipients) ||
     body.recipients.length < 1 ||
@@ -81,7 +86,8 @@ export function readBatch(body: Record<string, unknown>): BatchInput | null {
     !valid.some(item => item.consent)
   )
     return null;
-  return { id: body.id, listId: body.listId, details, recipients: valid };
+  const listId = typeof body.listId === 'string' ? body.listId : null;
+  return { id: body.id, listId, details, recipients: valid };
 }
 
 /** What the server does for each recipient before writing anything. */

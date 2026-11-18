@@ -1,6 +1,7 @@
 'use client';
 
 import { SaveProjectButton } from '@/components/library/save-project-button';
+import { CompareToggle } from '@/components/compare/compare-toggle';
 import { projectKey } from '@/lib/library/model';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
@@ -103,6 +104,7 @@ export function CategoryExplorer({
   onClear,
   dict,
   saveDict,
+  compareDict,
   locale,
 }: {
   categories?: PreviewCategory[];
@@ -113,6 +115,8 @@ export function CategoryExplorer({
   onClear: () => void;
   dict: Dictionary['categoryExplorer'];
   saveDict: Dictionary['solutionUi'];
+  /** «Comparar» on published listings (SHCWS-53); examples never get it. */
+  compareDict: Dictionary['catalog']['compare'];
   locale: string;
 }) {
   const displayed = selected;
@@ -343,9 +347,21 @@ export function CategoryExplorer({
                         fallbackClassName="flex items-center justify-center text-sm font-semibold text-white"
                         fallbackStyle={{ backgroundColor: palette.solid }}
                       />
-                      <span className="text-[20px] font-semibold tracking-[-0.03em] text-stone-900">
-                        {product.name}
-                      </span>
+                      {product.detailUrl ? (
+                        // The card's link, stretched over it (::after), so «Comparar» can be a
+                        // sibling button rather than a button nested inside a link.
+                        <Link
+                          href={product.detailUrl}
+                          aria-label={label}
+                          className="text-[20px] font-semibold tracking-[-0.03em] text-stone-900 outline-none after:absolute after:inset-0 after:rounded-[20px] focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-stone-800"
+                        >
+                          {product.name}
+                        </Link>
+                      ) : (
+                        <span className="text-[20px] font-semibold tracking-[-0.03em] text-stone-900">
+                          {product.name}
+                        </span>
+                      )}
                       {product.verified && <VerifiedMark locale={locale} />}
                       <ArrowUpRightIcon
                         aria-hidden="true"
@@ -372,7 +388,16 @@ export function CategoryExplorer({
                         </span>
                       )}
                       {product.detailUrl ? (
-                        <span className="shrink-0 text-stone-600">{dict.seeSolution}</span>
+                        product.solutionId ? (
+                          <CompareToggle
+                            projectKey={projectKey(product) ?? `solution:${product.solutionId}`}
+                            name={product.name}
+                            dict={compareDict}
+                            className="relative z-10 shrink-0"
+                          />
+                        ) : (
+                          <span className="shrink-0 text-stone-600">{dict.seeSolution}</span>
+                        )
                       ) : (
                         <span className="inline-flex shrink-0 items-center gap-1 text-stone-600">
                           {dict.seeExample} <PlusIcon aria-hidden="true" className="size-3" />
@@ -384,9 +409,9 @@ export function CategoryExplorer({
                 // Real published solutions navigate straight to their ficha; static
                 // examples (no detailUrl) open the preview dialog instead.
                 return product.detailUrl ? (
-                  <Link key={key} href={product.detailUrl} aria-label={label} className={className}>
+                  <article key={key} className={`relative ${className}`}>
                     {content}
-                  </Link>
+                  </article>
                 ) : (
                   <button
                     key={key}
