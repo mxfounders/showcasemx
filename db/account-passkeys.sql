@@ -11,7 +11,9 @@ CREATE TABLE IF NOT EXISTS auth_passkeys (
   account_id uuid NOT NULL REFERENCES auth_accounts(id) ON DELETE CASCADE,
   rp_id text NOT NULL CHECK (char_length(rp_id) BETWEEN 1 AND 253),
   -- base64url, as the browser reports it. WebAuthn caps the raw id at 1023 bytes.
-  credential_id text NOT NULL UNIQUE CHECK (credential_id ~ '^[A-Za-z0-9_-]{16,1366}$'),
+  -- (Length apart: Postgres regex repeat counts stop at 255.)
+  credential_id text NOT NULL UNIQUE
+    CHECK (char_length(credential_id) BETWEEN 16 AND 1366 AND credential_id ~ '^[A-Za-z0-9_-]+$'),
   public_key text NOT NULL,
   -- The authenticator's signature counter. Synced passkeys always report 0; a hardware key
   -- counts up, and a value that goes backwards means a cloned key (the sign-in refuses it).

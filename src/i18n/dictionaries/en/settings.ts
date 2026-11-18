@@ -198,7 +198,7 @@ export const settings = {
         "Two-step verification isn't enabled in this environment yet. The encryption key {key} still needs to be configured on the server.",
       active: 'On',
       activeDesc:
-        "When you sign in, we'll ask for a code from your authenticator app in addition to your password, also when you sign in with Google.",
+        "When you sign in, we'll ask for a code from your authenticator app in addition to your password, also when you sign in with Google. A passkey doesn't ask for it: it already uses your device's fingerprint, face or PIN.",
       regenerate: 'Generate new backup codes',
       disable: 'Turn off',
       previousInvalid: 'Your previous codes no longer work.',

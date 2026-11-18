@@ -79,6 +79,7 @@ export async function POST(request: NextRequest) {
 
     return failure(t.checkForm, 400);
   } catch {
+    console.error('Passkey sign-in failed.');
     return failure(t.unavailable, 503);
   }
 }

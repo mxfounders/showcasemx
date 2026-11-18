@@ -133,6 +133,8 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch {
+    // Generic on purpose: no account, credential or connection detail in the logs.
+    console.error('Passkey change failed.');
     return failure(t.passkeyUnavailableNow, 503);
   }
 }

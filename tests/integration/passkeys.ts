@@ -55,11 +55,14 @@ async function call(
     },
     body: JSON.stringify(body),
   });
-  return {
-    status: response.status,
-    body: (await response.json()) as Record<string, unknown>,
-    cookie: cookieOf(response),
-  };
+  const text = await response.text();
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    throw new Error(`${path} answered ${response.status} without JSON: ${text.slice(0, 200)}`);
+  }
+  return { status: response.status, body: parsed, cookie: cookieOf(response) };
 }
 type Options = { challenge: string; rp: { id: string }; user: { name: string } };
 

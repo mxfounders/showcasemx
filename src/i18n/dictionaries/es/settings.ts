@@ -198,7 +198,7 @@ export const settings = {
         'La verificación en dos pasos no está habilitada en este entorno todavía. Falta configurar la clave de cifrado {key} en el servidor.',
       active: 'Activa',
       activeDesc:
-        'Al entrar te pediremos un código de tu aplicación de autenticación además de tu contraseña, también si entras con Google.',
+        'Al entrar te pediremos un código de tu aplicación de autenticación además de tu contraseña, también si entras con Google. Una passkey no lo pide: ya usa la huella, el rostro o el PIN de tu dispositivo.',
       regenerate: 'Generar códigos de respaldo nuevos',
       disable: 'Desactivar',
       previousInvalid: 'Los códigos anteriores dejaron de servir.',

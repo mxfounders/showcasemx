@@ -146,9 +146,10 @@ export function AuthForm({
           ? failure.message
           : text.genericError,
       );
+      // Not relaunched right away: an authenticator that answers on its own would loop. The
+      // periodic refresh or the button starts the next one.
       busy.current = false;
       setPasskeyPending(false);
-      if (run === autofillRun.current) void runAutofill();
     }
   }
   // Leaving the form (signed in, or on to the code step) drops whatever ceremony is waiting.
