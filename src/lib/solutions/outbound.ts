@@ -8,7 +8,9 @@
  *
  * `ref=` is deliberately not added: many sites read it as an affiliate code.
  */
-export type OutboundMedium = 'listing' | 'sponsored';
+import { outbound } from '@/lib/attribution/conventions';
+
+export type OutboundMedium = (typeof outbound.media)[number];
 
 /** `rel` for every outbound link that should show shwcs as the referrer. */
 export const outboundRel = 'noopener';
@@ -36,7 +38,7 @@ export function outboundUrl(href: string, medium: OutboundMedium = 'listing'): s
   }
   if (url.protocol !== 'https:' && url.protocol !== 'http:') return href;
   if ([...url.searchParams.keys()].some(key => key.toLowerCase().startsWith('utm_'))) return href;
-  url.searchParams.set('utm_source', 'shwcs');
+  url.searchParams.set('utm_source', outbound.source);
   url.searchParams.set('utm_medium', medium);
   return url.href;
 }

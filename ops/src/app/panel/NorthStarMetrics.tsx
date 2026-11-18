@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { northStar } from '@/lib/data/north';
-import { delta, fmtSpan, rate } from '@/lib/north';
+import { delta, fmtSpan, localToday as localDay, rate } from '@/lib/north';
 import { fmtDate, fmtMoney, fmtNumber } from '@/lib/format';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { cn } from '@/components/ui/cn';
@@ -120,8 +120,16 @@ export async function NorthStarMetrics() {
               against={lastMonth}
             />
           }
-          detail={`Briefs atendidos: ${fmtNumber(m.briefs.handledCur)} (de ${fmtNumber(m.briefs.receivedCur)} recibidos; antes ${fmtNumber(m.briefs.handledPrev)})`}
-          definition="Solicitudes cuya primera respuesta del fundador llegó en el periodo. Brief: «Cuéntanos qué necesitas» atendido en Mensajes."
+          detail={
+            <>
+              {m.buyerBriefs === null
+                ? 'Briefs atendidos: sin datos todavía'
+                : `Briefs atendidos: ${fmtNumber(m.buyerBriefs.attendedCur)} (de ${fmtNumber(m.buyerBriefs.receivedCur)} publicados; antes ${fmtNumber(m.buyerBriefs.attendedPrev)})`}
+              <br />
+              {`«Cuéntanos qué necesitas» atendidos: ${fmtNumber(m.briefs.handledCur)} (de ${fmtNumber(m.briefs.receivedCur)}; antes ${fmtNumber(m.briefs.handledPrev)})`}
+            </>
+          }
+          definition="Solicitudes cuya primera respuesta del fundador llegó en el periodo. Brief atendido: con su primera propuesta de un fundador o la lista corta del equipo en el periodo. «Cuéntanos qué necesitas»: mensaje atendido en Mensajes."
           href="/panel/contactos"
         />
         <Tile
@@ -165,12 +173,35 @@ export async function NorthStarMetrics() {
           detail={`${fmtNumber(m.founders.everyWeekCur)} activos las 4 semanas · ${fmtNumber(m.founders.activeCur)} al menos una`}
           definition="Dueños de una ficha activos en 2 o más de las últimas 4 semanas. Señales con fecha: inicios de sesión, último uso de cada sesión, respuestas, envíos a revisión y avisos leídos. Subestima: una sesión solo guarda su último uso."
         />
-        <Tile
-          index={5}
-          label="Visitas desde buscadores e IA"
-          value="Sin fuente"
-          definition="La base guarda vistas y clics por ficha y día, sin su origen. El origen solo lo ve PostHog (con consentimiento) y ops no tiene acceso a PostHog. Falta decidir cómo medirlo."
-        />
+        {m.discovery === null ? (
+          <Tile
+            index={5}
+            label="Visitas desde buscadores e IA"
+            value="Sin datos todavía"
+            definition="Esta base todavía no tiene db/traffic-attribution.sql, que cuenta las visitas por canal."
+          />
+        ) : (
+          <Tile
+            index={5}
+            label="Visitas desde buscadores e IA"
+            value={fmtNumber(m.discovery.organicCur + m.discovery.aiCur)}
+            change={
+              <Change
+                current={m.discovery.organicCur + m.discovery.aiCur}
+                // Before counting started, last month's zero is not a real zero.
+                previous={
+                  m.discovery.since !== null && m.discovery.since <= localDay(p.prevStart)
+                    ? m.discovery.organicPrev + m.discovery.aiPrev
+                    : null
+                }
+                against={lastMonth}
+              />
+            }
+            detail={`Buscadores ${fmtNumber(m.discovery.organicCur)} · IA ${fmtNumber(m.discovery.aiCur)} (antes ${fmtNumber(m.discovery.organicPrev)} · ${fmtNumber(m.discovery.aiPrev)}) · ${fmtNumber(m.discovery.listingCur)} llegaron directo a una ficha · ${rate(m.discovery.organicCur + m.discovery.aiCur, m.discovery.allCur) ?? 0} % de todas las visitas`}
+            definition={`Primeras páginas de una visita cuyo origen es un buscador o un asistente de IA (por el sitio que enlazó o su etiqueta utm), contadas por día sin identificar a nadie y sin DNT/GPC.${m.discovery.since ? ` Contamos desde el ${fmtDate(m.discovery.since + 'T12:00:00Z')}.` : ' Aún no hay visitas contadas.'}`}
+            href="/panel/canales"
+          />
+        )}
         <Tile
           index={6}
           label="Fichas publicadas"

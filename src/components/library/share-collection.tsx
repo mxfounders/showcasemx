@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Link from '@/i18n/navigation';
 import { ArrowUpRightIcon, CheckIcon, LinkIcon } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
+import { shareUrl } from '@/lib/attribution/conventions';
 import type { Dictionary } from '@/i18n/dictionary';
 export function ShareCollection({
   id,
@@ -22,7 +23,11 @@ export function ShareCollection({
         style={actionButtonStyle}
         className="action-button inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm"
         onClick={async () => {
-          const url = new URL(`/comunidad/${id}`, window.location.origin).href;
+          const url = shareUrl(
+            new URL(`/comunidad/${id}`, window.location.origin).href,
+            'link',
+            'list',
+          );
           try {
             await navigator.clipboard.writeText(url);
             setCopied(true);

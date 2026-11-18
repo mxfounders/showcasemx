@@ -3,6 +3,7 @@ import { randomBytes, createHash } from 'node:crypto';
 import { authSql } from './security';
 import { hashToken } from './password';
 import { authReturnTo } from './return-to';
+import { storableSignupOrigin } from '@/lib/attribution/classify';
 // Prefixed __Host- in production so a sibling subdomain (ops.shwcs.site) can't plant a
 // state of its own and sign someone into another account (SHCWS-174). The old name is
 // still read for ten minutes' worth of flows started before the rename (§20).
@@ -97,6 +98,8 @@ export async function googleIdentity(
 export async function beginGoogle(
   next: unknown,
   link?: { accountId: string; sessionHash: string; passwordHash: string },
+  /** Where the visit came from, if this sign-in creates the account (SHCWS-111). */
+  signupOrigin?: unknown,
 ) {
   const config = googleConfig();
   if (!config) throw Error('Google unavailable');
@@ -105,7 +108,27 @@ export async function beginGoogle(
     nonce = randomBytes(32).toString('hex'),
     verifier = randomBytes(32).toString('base64url');
   const sql = authSql();
-  await sql`INSERT INTO auth_google_states(state_hash,cookie_hash,nonce,verifier,account_id,session_hash,password_hash_at_issue,return_to,expires_at) VALUES(${hashToken(state)},${hashToken(cookie)},${nonce},${verifier},${link?.accountId ?? null},${link?.sessionHash ?? null},${link?.passwordHash ?? null},${link ? '/account/settings/connections' : authReturnTo(typeof next === 'string' ? next : undefined)},now()+interval '10 minutes')`;
+  const returnTo = link
+    ? '/account/settings/connections'
+    : authReturnTo(typeof next === 'string' ? next : undefined);
+  const params = [
+    hashToken(state),
+    hashToken(cookie),
+    nonce,
+    verifier,
+    link?.accountId ?? null,
+    link?.sessionHash ?? null,
+    link?.passwordHash ?? null,
+    returnTo,
+  ] as const;
+  const origin = link ? null : storableSignupOrigin(signupOrigin);
+  // The origin column comes with db/traffic-attribution.sql; until then Google works as before.
+  try {
+    await sql`INSERT INTO auth_google_states(state_hash,cookie_hash,nonce,verifier,account_id,session_hash,password_hash_at_issue,return_to,expires_at,signup_origin) VALUES(${params[0]},${params[1]},${params[2]},${params[3]},${params[4]},${params[5]},${params[6]},${params[7]},now()+interval '10 minutes',${origin ? JSON.stringify(origin) : null}::jsonb)`;
+  } catch (error) {
+    if ((error as { code?: string })?.code !== '42703') throw error;
+    await sql`INSERT INTO auth_google_states(state_hash,cookie_hash,nonce,verifier,account_id,session_hash,password_hash_at_issue,return_to,expires_at) VALUES(${params[0]},${params[1]},${params[2]},${params[3]},${params[4]},${params[5]},${params[6]},${params[7]},now()+interval '10 minutes')`;
+  }
   const query = new URLSearchParams({
     client_id: config.clientId,
     redirect_uri: config.redirectUri,

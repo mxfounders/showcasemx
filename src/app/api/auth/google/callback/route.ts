@@ -21,6 +21,7 @@ import {
 import { issueLoginChallenge } from '@/lib/auth/challenge';
 import { securityNotice, signInNotice } from '@/lib/auth/security-notices';
 import { authReturnTo } from '@/lib/auth/return-to';
+import { saveSignupOrigin } from '@/lib/attribution/server';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { requestLocale } from '@/i18n/negotiate';
 export async function GET(request: NextRequest) {
@@ -104,6 +105,9 @@ export async function GET(request: NextRequest) {
         ]);
         if (!result[2].length) return fail();
         accountId = String(result[2][0].account_id);
+        // A new account only: where its visit came from, kept in the state (SHCWS-111).
+        if (result[0].length)
+          await saveSignupOrigin(accountId, flow.signup_origin, request.headers, sql);
       }
     }
     const userAgent = readUserAgent(request.headers);

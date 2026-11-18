@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authSql, requestIdentity, securityLimit } from '@/lib/auth/security';
+import { noticeUrl } from '@/lib/attribution/conventions';
 
 /**
  * Counted link in the weekly summary (SHCWS-21): adds one to that week's aggregate click
@@ -20,7 +21,8 @@ export async function GET(request: NextRequest) {
   } catch {
     // Counting never blocks the way in.
   }
-  return NextResponse.redirect(new URL(target, request.nextUrl.origin), {
+  // The landing page knows the visit came from this email (SHCWS-111).
+  return NextResponse.redirect(new URL(noticeUrl(target, 'weekly'), request.nextUrl.origin), {
     status: 303,
     headers: { 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' },
   });

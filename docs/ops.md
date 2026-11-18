@@ -294,3 +294,19 @@ Contrato completo en [newsletter.md](newsletter.md). Lo que toca a ops:
 - **Privacidad:** ops ve correos, estado, motivo de baja y totales; nunca quién hizo clic (no se
   registra). Fuera de producción el producto solo escribe a `@resend.dev` y la vista previa lo
   dice.
+
+## Canales y embudos — 17 noviembre 2026 (SHCWS-109/110/111)
+
+- `/panel/canales`: visitas por canal (buscadores, IA, redes, newsletter, correos,
+  insignia, compartido, invitación, otros sitios, pago, otras campañas, directo), fuentes
+  y campañas, sitios que muestran la insignia (`ref=badge`, por dominio), otros sitios que
+  enlazan y dónde aterrizan buscadores e IA, con los registros de cada canal.
+- `/panel/embudos`: embudos del comprador y del fundador por semana y canal, con la
+  conversión de cada paso. Pasos de visitas: totales de `traffic_daily`; pasos de cuentas:
+  la cohorte de la semana y hasta dónde llegó hasta hoy.
+- Métricas norte: la 5 (buscadores e IA) ya sale de `traffic_daily`; la 1 muestra los
+  briefs atendidos cuando existe `buyer_briefs` y «sin datos todavía» si no.
+- Ficha de cuenta: «Origen de alta».
+- Solo metadatos (§44): si una cuenta guardó, escribió o recibió respuesta, nunca qué.
+  Contrato completo: docs/attribution.md. Sin `db/traffic-attribution.sql` ambas
+  pantallas dicen que falta la migración.

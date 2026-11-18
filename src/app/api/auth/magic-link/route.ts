@@ -20,6 +20,7 @@ import { failure, solutionBody } from '@/lib/solutions/http';
 import { captureServerEvent } from '@/lib/analytics/server';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { requestLocale } from '@/i18n/negotiate';
+import { saveInvitationOrigin } from '@/lib/attribution/server';
 export const runtime = 'nodejs';
 
 const ok = (data: Record<string, unknown> = {}) =>
@@ -124,6 +125,8 @@ export async function POST(request: NextRequest) {
       ]);
       if (!opened[2].length) return failure(t.magicInvalid, 400);
       const accountId = result.accountId;
+      // An account created from a review invitation came through that invitation (SHCWS-111).
+      if (result.created) await saveInvitationOrigin(accountId, request.headers, sql);
       captureServerEvent(request, accountId, result.created ? 'account_registered' : 'signed_in', {
         method: 'magic_link',
       });

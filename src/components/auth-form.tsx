@@ -22,6 +22,7 @@ import {
 import { authReturnTo, pendingSave } from '@/lib/auth/return-to';
 import { credentialErrors, type CredentialErrors } from '@/lib/auth/validation';
 import { actionButtonStyle } from '@/lib/brand-colors';
+import { signupOrigin } from '@/lib/attribution/visit';
 import type { Dictionary } from '@/i18n/dictionary';
 
 export function AuthForm({
@@ -262,10 +263,13 @@ export function AuthForm({
     busy.current = true;
     setPending(true);
     try {
+      // A sign-up also says where its visit came from (SHCWS-111): the channel of the
+      // visit's first page, never an identifier. Nothing with DNT/GPC.
+      const origin = mode === 'register' ? signupOrigin(returnTo) : undefined;
       const response = await fetch(`/api/auth/${mode}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(origin ? { ...data, origin } : data),
         signal: AbortSignal.timeout(20000),
       });
       const result = await response.json();
@@ -398,11 +402,14 @@ export function AuthForm({
               <button
                 type="button"
                 disabled={pending}
-                onClick={() =>
+                onClick={() => {
+                  // Google can create the account too: its visit's origin goes along.
+                  const origin = mode === 'register' ? signupOrigin(returnTo) : undefined;
                   window.location.assign(
-                    `/api/auth/google/start?next=${encodeURIComponent(returnTo)}`,
-                  )
-                }
+                    `/api/auth/google/start?next=${encodeURIComponent(returnTo)}` +
+                      (origin ? `&origin=${encodeURIComponent(JSON.stringify(origin))}` : ''),
+                  );
+                }}
                 className="flex w-full disabled:cursor-not-allowed items-center justify-center gap-3 rounded-xl border border-stone-300 bg-transparent px-5 py-4 text-base font-medium text-stone-700"
               >
                 <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 shrink-0">

@@ -53,6 +53,7 @@ export async function GET(request: NextRequest) {
       previousHandles,
       followedProfiles,
       passkeys,
+      signupOrigin,
     ] = await Promise.all([
       sql`SELECT id::text, email, name, organization, profile, role, dashboard_mode, created_at::text, email_verified_at::text, (avatar_key IS NOT NULL OR avatar_data IS NOT NULL) AS has_avatar, totp_confirmed_at IS NOT NULL AS two_step_enabled FROM auth_accounts WHERE id = ${account.id}`,
       sql`SELECT id::text, catalog_key, status, step, version, data, published_data, published_at::text, updated_at::text FROM founder_solutions WHERE owner_id = ${account.id} ORDER BY updated_at`,
@@ -94,6 +95,11 @@ export async function GET(request: NextRequest) {
       sql`SELECT name, backed_up AS synced, created_at::text, last_used_at::text FROM auth_passkeys WHERE account_id = ${account.id} ORDER BY created_at`.catch(
         () => [],
       ),
+      // Where the visit that created the account came from (SHCWS-111). Optional table:
+      // an export never fails because db/traffic-attribution.sql is missing.
+      sql`SELECT channel, source, medium, campaign, site, landing, intent, created_at::text FROM account_signup_origins WHERE account_id = ${account.id}`.catch(
+        () => [],
+      ),
     ]);
 
     // «Publica tu necesidad» (SHCWS-58): the buyer's briefs with what they received, and
@@ -117,6 +123,7 @@ export async function GET(request: NextRequest) {
       exportedAt: new Date().toISOString(),
       about: t.exportAbout,
       account: profile[0] ?? null,
+      signupOrigin: signupOrigin[0] ?? null,
       solutions,
       taxIdentities,
       library: { saved, lists, listItems },

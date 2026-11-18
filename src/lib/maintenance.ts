@@ -12,6 +12,8 @@ export const maintenancePolicy = {
   unusedScreenshotDays: 30,
   /** Aggregate search counts (search_demand, SHCWS-107): no person in them, kept for trends. */
   searchDemandDays: 400,
+  /** Aggregate visits per channel and funnel step (traffic_daily, SHCWS-111): same reason. */
+  trafficDays: 400,
 } as const;
 
 async function count(run: () => Promise<Record<string, unknown>[]>) {
@@ -32,6 +34,7 @@ export async function runMaintenance() {
     contactInquiries,
     searchDemand,
     passkeyChallenges,
+    traffic,
   ] = await Promise.all([
     count(
       () =>
@@ -73,6 +76,10 @@ export async function runMaintenance() {
       () =>
         sql`WITH gone AS (DELETE FROM auth_passkey_challenges WHERE expires_at<now() RETURNING 1) SELECT count(*)::int AS n FROM gone`,
     ),
+    count(
+      () =>
+        sql`WITH gone AS (DELETE FROM traffic_daily WHERE day<current_date-${maintenancePolicy.trafficDays}::int RETURNING 1) SELECT count(*)::int AS n FROM gone`,
+    ),
   ]);
   return {
     sessions,
@@ -81,5 +88,6 @@ export async function runMaintenance() {
     contactInquiries,
     searchDemand,
     passkeyChallenges,
+    traffic,
   };
 }

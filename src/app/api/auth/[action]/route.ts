@@ -28,6 +28,7 @@ import { rememberDevice, securityNotice, signInNotice } from '@/lib/auth/securit
 import { existingAccountNotice } from '@/lib/auth/existing-account';
 import { recoveryConfig } from '@/lib/auth/recovery';
 import { issueLoginChallenge } from '@/lib/auth/challenge';
+import { saveSignupOrigin } from '@/lib/attribution/server';
 export const runtime = 'nodejs';
 
 const MAX_CHALLENGE_ATTEMPTS = 5;
@@ -264,6 +265,13 @@ export async function POST(request: NextRequest, props: { params: Promise<{ acti
       if (created) {
         const accountId = String(created.id);
         captureServerEvent(request, accountId, 'account_registered');
+        // Where the visit came from (SHCWS-111), once; never blocks the sign-up.
+        await saveSignupOrigin(
+          accountId,
+          (body as { origin?: unknown })?.origin,
+          request.headers,
+          sql,
+        );
         // The confirmation link goes out with the new account (SHCWS-27), after the
         // response. Best-effort: Ajustes › Seguridad and Inicio can always send it again.
         if (recoveryConfig())

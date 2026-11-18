@@ -315,10 +315,27 @@ export async function accountDetail(id: string) {
     createdAt: iso(c.created_at),
   });
 
+  // Where the visit that created the account came from (SHCWS-111). Optional table: a
+  // base without db/traffic-attribution.sql shows «Sin dato».
+  const [origin] = await sql`SELECT channel, source, medium, campaign, site, intent
+    FROM account_signup_origins WHERE account_id = ${id}`.catch(
+    () => [] as Record<string, unknown>[],
+  );
+
   return {
     account: {
       id: String(a.id),
       email: String(a.email),
+      signupOrigin: origin
+        ? {
+            channel: String(origin.channel),
+            source: String(origin.source ?? ''),
+            medium: String(origin.medium ?? ''),
+            campaign: String(origin.campaign ?? ''),
+            site: String(origin.site ?? ''),
+            intent: String(origin.intent ?? ''),
+          }
+        : null,
       name: a.name ? String(a.name) : null,
       organization: a.organization ? String(a.organization) : null,
       profile: a.profile ? String(a.profile) : null,

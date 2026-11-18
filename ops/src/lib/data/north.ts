@@ -1,5 +1,5 @@
 import { getDb } from '../db';
-import { periods, type Periods } from '../north';
+import { localToday, periods, type Periods } from '../north';
 
 const num = (value: unknown) => (value === null || value === undefined ? 0 : Number(value));
 const seconds = (value: unknown) =>
@@ -166,6 +166,79 @@ export async function northStar(now: Date = new Date()) {
       decidedCur: num(l.decided_cur),
     },
     ads: await adsNorth(p),
+    discovery: await discoveryNorth(p),
+    buyerBriefs: await buyerBriefsNorth(p),
+  };
+}
+
+/**
+ * 1b. Briefs attended (SHCWS-58/60, db/buyer-briefs.sql, built in parallel): a brief
+ * counts in the period its first founder proposal or ops short list arrived. Null until
+ * that migration exists here — the tile then says «sin datos todavía». This is the hook:
+ * if the briefs contract changes what «atendido» means, change it here only.
+ */
+async function buyerBriefsNorth(p: Periods) {
+  const sql = getDb();
+  const at = (d: Date) => d.toISOString();
+  const [table] = await sql`SELECT to_regclass('buyer_briefs') IS NOT NULL
+    AND to_regclass('buyer_brief_proposals') IS NOT NULL
+    AND to_regclass('buyer_brief_shortlists') IS NOT NULL AS ok`;
+  if (!table?.ok) return null;
+  try {
+    const [row] = await sql`
+      WITH attended AS (
+        SELECT b.created_at, least(
+          (SELECT min(x.created_at) FROM buyer_brief_proposals x WHERE x.brief_id = b.id),
+          (SELECT min(l.created_at) FROM buyer_brief_shortlists l WHERE l.brief_id = b.id)) AS at
+        FROM buyer_briefs b
+      )
+      SELECT
+        count(*) FILTER (WHERE at >= ${at(p.curStart)} AND at < ${at(p.now)}) AS attended_cur,
+        count(*) FILTER (WHERE at >= ${at(p.prevStart)} AND at < ${at(p.prevEnd)}) AS attended_prev,
+        count(*) FILTER (WHERE created_at >= ${at(p.curStart)} AND created_at < ${at(p.now)}) AS received_cur,
+        count(*) FILTER (WHERE created_at >= ${at(p.prevStart)} AND created_at < ${at(p.prevEnd)}) AS received_prev
+      FROM attended`;
+    return {
+      attendedCur: num(row?.attended_cur),
+      attendedPrev: num(row?.attended_prev),
+      receivedCur: num(row?.received_cur),
+      receivedPrev: num(row?.received_prev),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 5. Visits from search engines and AI assistants (SHCWS-110/111): the product's daily
+ * aggregate per channel (traffic_daily), month to date against the same days of last
+ * month. Null when db/traffic-attribution.sql is not applied here.
+ */
+async function discoveryNorth(p: Periods) {
+  const sql = getDb();
+  const [table] = await sql`SELECT to_regclass('traffic_daily') IS NOT NULL AS ok`;
+  if (!table?.ok) return null;
+  const curStart = p.today.slice(0, 8) + '01';
+  const prevStart = localToday(p.prevStart);
+  const [row] = await sql`
+    SELECT
+      COALESCE(sum(sessions) FILTER (WHERE day >= ${curStart}::date AND day <= ${p.today}::date AND channel = 'organic'), 0)::int AS organic_cur,
+      COALESCE(sum(sessions) FILTER (WHERE day >= ${curStart}::date AND day <= ${p.today}::date AND channel = 'ai'), 0)::int AS ai_cur,
+      COALESCE(sum(sessions) FILTER (WHERE day >= ${prevStart}::date AND day <= ${p.prevToday}::date AND channel = 'organic'), 0)::int AS organic_prev,
+      COALESCE(sum(sessions) FILTER (WHERE day >= ${prevStart}::date AND day <= ${p.prevToday}::date AND channel = 'ai'), 0)::int AS ai_prev,
+      COALESCE(sum(sessions) FILTER (WHERE day >= ${curStart}::date AND day <= ${p.today}::date AND channel IN ('organic', 'ai') AND landing = 'listing'), 0)::int AS listing_cur,
+      COALESCE(sum(sessions) FILTER (WHERE day >= ${curStart}::date AND day <= ${p.today}::date), 0)::int AS all_cur,
+      (SELECT min(day)::text FROM traffic_daily) AS since
+    FROM traffic_daily WHERE step = 'visit' AND day >= ${prevStart}::date`;
+  return {
+    organicCur: num(row?.organic_cur),
+    aiCur: num(row?.ai_cur),
+    organicPrev: num(row?.organic_prev),
+    aiPrev: num(row?.ai_prev),
+    listingCur: num(row?.listing_cur),
+    allCur: num(row?.all_cur),
+    /** First day anything was counted: before it, «last month» is not a real zero. */
+    since: row?.since ? String(row.since) : null,
   };
 }
 

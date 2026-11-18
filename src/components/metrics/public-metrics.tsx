@@ -1,6 +1,9 @@
 'use client';
 import { useEffect, useRef } from 'react';
-// Aggregate events only: no visitor ID, cookie, fingerprint, referrer or buyer list data.
+import { takeSteps } from '@/lib/attribution/visit';
+// Aggregate events only: no visitor ID, cookie, fingerprint or buyer list data. The view
+// carries the visit's funnel steps (SHCWS-109/111): only the channel of the visit (the
+// linking site's host, never its path), once per visit.
 export function PublicMetrics({ solutionId }: { solutionId: string }) {
   const fired = useRef(false);
   useEffect(() => {
@@ -10,10 +13,12 @@ export function PublicMetrics({ solutionId }: { solutionId: string }) {
     )
       return;
     function record(event: 'view' | 'click') {
+      // Reaching a listing also counts as exploring: the funnel never skips a step.
+      const funnel = event === 'view' ? takeSteps(['browse', 'listing']) : null;
       void fetch('/api/metrics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ solutionId, event }),
+        body: JSON.stringify({ solutionId, event, ...(funnel ? { funnel } : {}) }),
         keepalive: true,
       }).catch(() => {});
     }

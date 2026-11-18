@@ -68,6 +68,12 @@ devuelve `undefined`: todo flag debe tener un comportamiento por defecto sensato
 - `src/components/analytics/`: banner, botón de preferencias e identidad de cuenta.
 - Políticas: privacidad `#analitica` y cookies `#analitica`, en los dos idiomas.
 
+## Canales y embudos sin PostHog
+
+De dónde llegan las visitas (UTM, insignia, buscadores, IA) y los embudos del comprador y
+del fundador no dependen de PostHog ni del consentimiento: se cuentan en totales por día
+y canal en la base, sin identificador, y ops los lee de ahí. Ver docs/attribution.md.
+
 ## Fuera de alcance
 
 `ops/` no tiene PostHog: su CSP es estricta y maneja datos que ni la analítica debe ver.

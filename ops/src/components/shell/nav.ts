@@ -1,6 +1,7 @@
 import {
   AppsIcon,
   ChartBarIcon,
+  ChartLineIcon,
   SearchIcon,
   ClientsIcon,
   ClipboardCheckIcon,
@@ -154,6 +155,18 @@ export const NAV: Array<{ section: string; items: NavItem[] }> = [
         label: 'Métricas',
         Icon: ChartBarIcon,
         keywords: 'vistas clics analytics',
+      },
+      {
+        href: '/panel/embudos',
+        label: 'Embudos',
+        Icon: ChartLineIcon,
+        keywords: 'conversión comprador fundador registro solicitud respuesta semanas',
+      },
+      {
+        href: '/panel/canales',
+        label: 'Canales',
+        Icon: GlobeIcon,
+        keywords: 'utm atribución origen buscadores ia insignia badge newsletter redes referidos',
       },
       {
         href: '/panel/demanda',
