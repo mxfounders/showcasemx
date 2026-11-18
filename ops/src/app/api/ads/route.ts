@@ -203,6 +203,47 @@ async function retryRefund({ body, sql, user, ip }: Ctx, reason: string) {
     SELECT * FROM pending
   `;
   if (!row) return failure('No hay un reembolso pendiente de confirmar en esta reserva.', 409);
+
+  // A day refunded for an outage (SHCWS-179) is reissued exactly as the product sent it:
+  // its own amount and key, and no customer reason, or Stripe rejects the reused key.
+  const [outage] = await sql`
+    SELECT day::text AS day, refund_amount, refund_requested_total FROM ad_outage_credits
+    WHERE campaign_id = ${body.bookingId} AND refund_status IN ('pending', 'failed')
+      AND refund_amount > 0
+    ORDER BY day LIMIT 1
+  `.catch(() => []);
+  if (outage) {
+    const outageAmount = fmtMoney(Number(outage.refund_amount), String(row.currency));
+    try {
+      const refundId = await createRefund({
+        bookingId: body.bookingId,
+        paymentIntent: String(row.stripe_payment_intent_id),
+        amount: Number(outage.refund_amount),
+        requestedTotal: Number(outage.refund_requested_total),
+      });
+      await sql`UPDATE ad_outage_credits SET refund_status = 'issued', refund_error = NULL,
+          updated_at = now()
+        WHERE campaign_id = ${body.bookingId} AND day = ${String(outage.day)}::date`;
+      await audit({
+        actorId: user.id,
+        actorEmail: user.email,
+        action: 'ad_refund_issued',
+        subjectType: 'ad_campaign',
+        subjectId: body.bookingId,
+        metadata: {
+          refund: Number(outage.refund_amount),
+          currency: String(row.currency),
+          stripeRefund: refundId,
+          outageDay: String(outage.day),
+        },
+        ip,
+      });
+      return ok({ message: `Reembolso por caída de ${outageAmount} enviado a Stripe.` });
+    } catch (err) {
+      return refundFailed(err, body.bookingId, outageAmount, user, ip);
+    }
+  }
+
   const pending = Number(row.refund_requested_amount) - Number(row.refunded_amount);
   const amount = fmtMoney(pending, String(row.currency));
   try {

@@ -9,6 +9,8 @@ import { refreshSat69b } from '@/lib/compliance/server';
 import { runWeeklyRecognition } from '@/lib/recognition/server';
 import { runMaintenance } from '@/lib/maintenance';
 import { renewDomainProofs } from '@/lib/trust/renewal';
+import { processOutages, retryOutageRefunds } from '@/lib/ads/outages';
+import { stripeClient } from '@/lib/ads/stripe';
 
 export const dynamic = 'force-dynamic';
 // The 69-B list is a 4.5 MB download on the days it changes (docs/compliance.md).
@@ -46,6 +48,18 @@ export async function GET(request: NextRequest) {
   // Domain proofs two weeks from lapsing (SHCWS-134): renewed if the TXT record is still
   // there, otherwise one notice to the founder. Counts only; failures retry tomorrow.
   const domains = await renewDomainProofs().catch(() => ({ status: 'failed' as const }));
+  // Outage make-goods (SHCWS-179): reports the webhook could not settle right away, and day
+  // refunds Stripe did not accept, reissued with the key they were recorded with. Never
+  // detects an outage itself: this cron runs on the deployment that would be down.
+  const outages = await processOutages(stripeClient())
+    .then(async run => ({
+      windows: run.windows,
+      days: run.days.length,
+      makegoods: run.makegoods,
+      refunds: run.refunds,
+      retried: (await retryOutageRefunds(stripeClient())).issued,
+    }))
+    .catch(() => ({ status: 'failed' as const }));
   const config = recoveryConfig();
 
   // Orphaned blob sweep. Runs first (and only when explicitly enabled) so a slow
@@ -116,6 +130,11 @@ export async function GET(request: NextRequest) {
       } catch {
         // Non-fatal; see comment above.
       }
+      // Same for the sponsored-slot reach (SHCWS-112, db/ad-placements-outages.sql), in its
+      // own statement so a database without that table still cleans the one above.
+      await sql`DELETE FROM ad_placement_view_visitors WHERE day < current_date - 3`.catch(
+        () => undefined,
+      );
     }
   } catch {
     // The result below remains false and produces a single bounded alert.
@@ -132,6 +151,7 @@ export async function GET(request: NextRequest) {
         recognition,
         maintenance,
         domains,
+        outages,
       },
       { headers: { 'Cache-Control': 'no-store' } },
     );
@@ -163,6 +183,7 @@ export async function GET(request: NextRequest) {
           recognition,
           maintenance,
           domains,
+          outages,
         },
         { status: 503, headers: { 'Cache-Control': 'no-store' } },
       );
@@ -180,6 +201,7 @@ export async function GET(request: NextRequest) {
       recognition,
       maintenance,
       domains,
+      outages,
     },
     { status: 503, headers: { 'Cache-Control': 'no-store' } },
   );

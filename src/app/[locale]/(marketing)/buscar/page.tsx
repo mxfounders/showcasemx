@@ -14,6 +14,10 @@ import { readAlertCriteria } from '@/lib/alerts/model';
 import { priceSummary } from '@/lib/solutions/pricing';
 import { CompareToggle } from '@/components/compare/compare-toggle';
 import { projectKey } from '@/lib/library/model';
+import { inferQueryCategory } from '@/lib/search/topics';
+import { sponsoredProducts } from '@/lib/ads/sponsored';
+import { SponsoredSlots } from '@/components/ads/sponsored-slots';
+import { PlacementBeacon } from '@/components/ads/beacons';
 
 // One page for the whole site's search (SHCWS-44): listings, public lists, articles and
 // topic pages for the same words. Query URLs are kept out of crawling by robots.ts; a
@@ -43,12 +47,20 @@ export default async function SearchPage(props: Props) {
   const query = readQuery(q);
   const dictionary = await getDictionary(locale);
   const t = dictionary.catalog.searchPage;
-  const results = await globalSearch(query, locale);
+  // The sponsored search slot (SHCWS-79) is scoped by the one category the query points
+  // at; a query that points at none has no slot. It never touches the results below.
+  const sponsorScope = query ? inferQueryCategory(query, locale) : null;
+  const [results, sponsored] = await Promise.all([
+    globalSearch(query, locale),
+    sponsorScope ? sponsoredProducts('search', sponsorScope) : Promise.resolve([]),
+  ]);
   // «Avísame» for these words (SHCWS-47); null when the query has no words that search.
   const alertCriteria = readAlertCriteria({ scope: 'search', query });
   return (
     <section className="mx-auto w-full max-w-[1500px] px-5 pb-24 pt-14 sm:px-10 sm:pt-20 lg:px-16">
       <SearchDemandBeacon query={query} results={results.total} surface="search" />
+      {/* Searches that could carry the slot, for its reach estimate (SHCWS-72/79). */}
+      {sponsorScope && <PlacementBeacon placement="search" scope={sponsorScope} />}
       <h1 className="max-w-4xl break-words text-4xl font-semibold tracking-[-0.04em] sm:text-6xl">
         {query ? t.title.replace('{query}', query) : t.titleEmpty}
       </h1>
@@ -82,6 +94,12 @@ export default async function SearchPage(props: Props) {
           dict={dictionary.alerts.button}
           className="mt-5"
         />
+      )}
+
+      {sponsored.length > 0 && (
+        <div className="mt-12">
+          <SponsoredSlots items={sponsored} locale={locale} dict={dictionary.ads.slot} />
+        </div>
       )}
 
       {query && results.total === 0 && (

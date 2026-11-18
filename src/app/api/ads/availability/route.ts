@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession, sessionCookie } from '@/lib/auth/session';
 import { failure } from '@/lib/solutions/http';
-import { categories } from '@/lib/taxonomy';
-import { isAdPlacement } from '@/lib/ads/model';
+import { isAdPlacement, isPlacementScope } from '@/lib/ads/model';
 import { adAvailability } from '@/lib/ads/server';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { requestLocale } from '@/i18n/negotiate';
@@ -16,9 +15,7 @@ export async function GET(request: NextRequest) {
     const placement = request.nextUrl.searchParams.get('placement');
     const scope = request.nextUrl.searchParams.get('scope') ?? '';
     if (!isAdPlacement(placement)) return failure(t.codes.placement, 400);
-    const scopeValid =
-      placement === 'category' ? categories.some(entry => entry.slug === scope) : scope === '';
-    if (!scopeValid) return failure(t.codes.scope, 400);
+    if (!isPlacementScope(placement, scope)) return failure(t.codes.scope, 400);
     return NextResponse.json(await adAvailability(placement, scope), {
       headers: { 'Cache-Control': 'no-store' },
     });

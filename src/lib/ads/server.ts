@@ -1,7 +1,8 @@
 import type Stripe from 'stripe';
 import { solutionsSql } from '@/lib/solutions/server';
 import type { BillingProfile } from '@/lib/billing/model';
-import { categories } from '@/lib/taxonomy';
+import type { SolutionData } from '@/lib/solutions/model';
+import { listingScopes } from './scopes';
 import {
   addDays,
   attributionDays,
@@ -101,11 +102,31 @@ export async function placementReach(): Promise<Record<string, PlacementReach>> 
   return reach;
 }
 
-/** Counts one view of a placement's page, as a daily total. */
-export async function recordPlacementView(placement: AdPlacement, scope: string) {
-  await solutionsSql()`INSERT INTO ad_placement_daily_views (placement, scope, day, views)
-    SELECT p.id, ${scope}, (now() AT TIME ZONE ${adTimeZone})::date, 1
-    FROM ad_placements p WHERE p.id = ${placement}
+/**
+ * Counts one view of a placement's page, as a daily total. With a visitor hash
+ * (src/lib/solutions/view-visitor.ts, SHCWS-112) a visitor counts once per placement, scope
+ * and day: the total only grows when their row is new. Without one (no VIEW_HASH_SECRET),
+ * every view counts, as before. `day` is the Mexico City day the hash was made for.
+ */
+export async function recordPlacementView(
+  placement: AdPlacement,
+  scope: string,
+  visitor: { hash: string; day: string } | null = null,
+) {
+  if (!visitor) {
+    await solutionsSql()`INSERT INTO ad_placement_daily_views (placement, scope, day, views)
+      SELECT p.id, ${scope}, (now() AT TIME ZONE ${adTimeZone})::date, 1
+      FROM ad_placements p WHERE p.id = ${placement}
+      ON CONFLICT (placement, scope, day) DO UPDATE SET views = ad_placement_daily_views.views + 1`;
+    return;
+  }
+  await solutionsSql()`WITH first AS (
+      INSERT INTO ad_placement_view_visitors (placement, scope, day, visitor_hash)
+      SELECT p.id, ${scope}, ${visitor.day}::date, ${visitor.hash}
+      FROM ad_placements p WHERE p.id = ${placement}
+      ON CONFLICT DO NOTHING RETURNING placement)
+    INSERT INTO ad_placement_daily_views (placement, scope, day, views)
+    SELECT placement, ${scope}, ${visitor.day}::date, 1 FROM first
     ON CONFLICT (placement, scope, day) DO UPDATE SET views = ad_placement_daily_views.views + 1`;
 }
 
@@ -182,8 +203,17 @@ export async function reserveBooking(
   const sql = solutionsSql();
   const id = crypto.randomUUID();
   const endsOn = addDays(request.startsOn, request.days);
-  const category = categories.find(entry => entry.slug === request.scope)?.label ?? '';
   const holdUntil = new Date(Date.now() + (checkoutHoldMinutes + 1) * 60_000).toISOString();
+
+  // A slot only runs where the listing belongs by what it declared (src/lib/ads/scopes.ts).
+  // Checked against the approved version, which only an editorial decision changes.
+  const [listing] = await sql`SELECT published_data FROM founder_solutions
+    WHERE id = ${request.solutionId} AND owner_id = ${account.id} AND published_data IS NOT NULL`;
+  const scopeAllowed =
+    !!listing &&
+    listingScopes(request.placement, listing.published_data as SolutionData).includes(
+      request.scope,
+    );
 
   const [, inserted] = await sql.transaction([
     sql`SELECT pg_advisory_xact_lock(hashtext(${`ad:${request.placement}:${request.scope}`}))`,
@@ -196,10 +226,8 @@ export async function reserveBooking(
       FROM founder_solutions s
       JOIN ad_placements p ON p.id = ${request.placement} AND p.enabled
       JOIN ad_rates r ON r.placement = p.id AND r.currency = ${request.currency}
-      WHERE s.id = ${request.solutionId} AND s.owner_id = ${account.id}
+      WHERE ${scopeAllowed} AND s.id = ${request.solutionId} AND s.owner_id = ${account.id}
         AND s.published_data IS NOT NULL
-        AND (p.id <> 'category' OR s.published_data->'categories' ? ${category}
-             OR s.published_data->>'category' = ${category})
         AND r.daily_amount::bigint * ${request.days} <= ${maxChargeAmount}
         AND NOT EXISTS (SELECT 1 FROM ad_campaigns d
           WHERE d.owner_id = ${account.id} AND d.dispute_status = 'open')
@@ -231,9 +259,8 @@ export async function reserveBooking(
       EXISTS (SELECT 1 FROM founder_solutions s
         JOIN ad_placements p ON p.id = ${request.placement} AND p.enabled
         JOIN ad_rates r ON r.placement = p.id AND r.currency = ${request.currency}
-        WHERE s.id = ${request.solutionId} AND s.owner_id = ${account.id} AND s.published_data IS NOT NULL
-          AND (p.id <> 'category' OR s.published_data->'categories' ? ${category}
-               OR s.published_data->>'category' = ${category})
+        WHERE ${scopeAllowed} AND s.id = ${request.solutionId} AND s.owner_id = ${account.id}
+          AND s.published_data IS NOT NULL
           AND r.daily_amount::bigint * ${request.days} <= ${maxChargeAmount}) AS allowed`;
   if (why?.disputed) return { ok: false, reason: 'disputed' };
   return { ok: false, reason: why?.allowed ? 'soldOut' : 'notAllowed' };
@@ -401,6 +428,9 @@ export type OwnedBooking = {
   invoiceUrl: string | null;
   discount: number;
   promotionCode: string | null;
+  /** A free make-good day (SHCWS-179): the paid booking it makes up for, and the day it replaces. */
+  makegoodOf: string | null;
+  makegoodDay: string | null;
   impressions: number;
   clicks: number;
   visits: number;
@@ -417,7 +447,8 @@ export async function ownedBookings(
       to_char(c.starts_on, 'YYYY-MM-DD') AS starts_on, to_char(c.ends_on, 'YYYY-MM-DD') AS ends_on,
       to_char(c.served_until, 'YYYY-MM-DD') AS served_until, c.currency, c.subtotal_amount,
       c.total_amount, c.refunded_amount, c.status, c.canceled_at, c.paused_at, c.dispute_status,
-      c.invoice_url, c.discount_amount, c.promotion_code,
+      c.invoice_url, c.discount_amount, c.promotion_code, c.makegood_of,
+      to_char(c.makegood_day, 'YYYY-MM-DD') AS makegood_day,
       coalesce(sum(m.impressions), 0)::int AS impressions, coalesce(sum(m.clicks), 0)::int AS clicks,
       coalesce(sum(m.visits), 0)::int AS visits, coalesce(sum(m.site_clicks), 0)::int AS site_clicks,
       (SELECT count(*) FROM ad_contact_attributions a WHERE a.campaign_id = c.id)::int AS contacts
@@ -448,6 +479,8 @@ function ownedBooking(row: Record<string, unknown>): OwnedBooking {
     invoiceUrl: row.invoice_url ? String(row.invoice_url) : null,
     discount: Number(row.discount_amount ?? 0),
     promotionCode: row.promotion_code ? String(row.promotion_code) : null,
+    makegoodOf: row.makegood_of ? String(row.makegood_of) : null,
+    makegoodDay: row.makegood_day ? String(row.makegood_day) : null,
     impressions: Number(row.impressions),
     clicks: Number(row.clicks),
     visits: Number(row.visits),
@@ -553,7 +586,8 @@ export async function liveBookings(placement: AdPlacement, scope: string) {
       AND c.paused_at IS NULL
       AND c.starts_on <= (now() AT TIME ZONE ${adTimeZone})::date
       AND (now() AT TIME ZONE ${adTimeZone})::date < coalesce(c.served_until, c.ends_on)
-    ORDER BY c.paid_at, c.id LIMIT 2`;
+    ORDER BY c.paid_at, c.id
+    LIMIT (SELECT slots FROM ad_placements WHERE id = ${placement})`;
   return rows.map(row => ({ bookingId: String(row.id), solutionId: String(row.solution_id) }));
 }
 
@@ -656,7 +690,8 @@ export async function bookingReport(
       to_char(c.starts_on, 'YYYY-MM-DD') AS starts_on, to_char(c.ends_on, 'YYYY-MM-DD') AS ends_on,
       to_char(c.served_until, 'YYYY-MM-DD') AS served_until, c.currency, c.subtotal_amount,
       c.total_amount, c.refunded_amount, c.status, c.canceled_at, c.paused_at, c.dispute_status,
-      c.invoice_url, c.discount_amount, c.promotion_code,
+      c.invoice_url, c.discount_amount, c.promotion_code, c.makegood_of,
+      to_char(c.makegood_day, 'YYYY-MM-DD') AS makegood_day,
       coalesce(sum(m.impressions), 0)::int AS impressions, coalesce(sum(m.clicks), 0)::int AS clicks,
       coalesce(sum(m.visits), 0)::int AS visits, coalesce(sum(m.site_clicks), 0)::int AS site_clicks,
       (SELECT count(*) FROM ad_contact_attributions a WHERE a.campaign_id = c.id)::int AS contacts
@@ -749,7 +784,11 @@ export async function pendingRefund(bookingId: string, ownerId: string) {
     FROM ad_campaigns
     WHERE id = ${bookingId} AND owner_id = ${ownerId} AND status = 'paid'
       AND refund_requested_amount > refunded_amount AND stripe_payment_intent_id IS NOT NULL
-      AND dispute_status IS DISTINCT FROM 'open'`;
+      AND dispute_status IS DISTINCT FROM 'open'
+      -- A day refunded for an outage is reissued by the daily cron with its own key and
+      -- no customer reason (src/lib/ads/outages.ts); reissuing it from here would clash.
+      AND NOT EXISTS (SELECT 1 FROM ad_outage_credits k
+        WHERE k.campaign_id = ad_campaigns.id AND k.refund_status IN ('pending','failed'))`;
   if (!row) return null;
   return {
     paymentIntent: String(row.stripe_payment_intent_id),

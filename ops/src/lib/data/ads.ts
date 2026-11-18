@@ -34,6 +34,8 @@ export async function adsOverview(filter: AdFilter, q = '', page = 1, pageSize =
             c.tax_amount, c.total_amount, c.refund_requested_amount, c.refunded_amount, c.status, c.served_until::text AS served_until,
             c.canceled_at, c.paused_at, c.pause_reason, c.dispute_status, c.created_at, c.paid_at,
             right(COALESCE(c.stripe_payment_intent_id, ''), 8) AS payment_ref,
+            -- A free make-good day (SHCWS-179); to_jsonb works before that migration too.
+            to_jsonb(c) ->> 'makegood_of' AS makegood_of,
             COALESCE((SELECT sum(impressions) FROM ad_campaign_daily_metrics m WHERE m.campaign_id = c.id), 0)::int AS impressions,
             COALESCE((SELECT sum(clicks) FROM ad_campaign_daily_metrics m WHERE m.campaign_id = c.id), 0)::int AS clicks,
             count(*) OVER () AS total
@@ -115,6 +117,7 @@ export async function adsOverview(filter: AdFilter, q = '', page = 1, pageSize =
         createdAt: iso(r.created_at),
         paidAt: iso(r.paid_at),
         paymentRef: r.payment_ref ? String(r.payment_ref) : null,
+        makegoodOf: r.makegood_of ? String(r.makegood_of) : null,
         impressions: Number(r.impressions),
         clicks: Number(r.clicks),
       })),
@@ -222,4 +225,75 @@ export async function adBooking(id: string) {
     if (isMissingTable(err)) return null;
     throw err;
   }
+}
+
+/**
+ * Outage windows reported from outside Vercel and what they led to (SHCWS-179,
+ * db/ad-placements-outages.sql). Read on its own, never inside the transactions above: a
+ * database without that migration still shows its bookings, just no outages.
+ */
+export async function adOutages(limit = 20) {
+  const sql = getDb();
+  const rows = await sql`
+    SELECT o.id, o.source, o.external_id, o.started_at, o.ended_at, o.received_at, o.processed_at,
+      (SELECT count(*) FROM ad_outage_credits k WHERE o.id = ANY(k.outage_ids) AND k.outcome = 'makegood')::int AS makegoods,
+      (SELECT count(*) FROM ad_outage_credits k WHERE o.id = ANY(k.outage_ids) AND k.outcome = 'refund')::int AS refunds,
+      (SELECT count(*) FROM ad_outage_credits k WHERE o.id = ANY(k.outage_ids)
+        AND k.refund_status IN ('pending', 'failed'))::int AS pending_refunds
+    FROM site_outages o ORDER BY o.started_at DESC LIMIT ${limit}
+  `.catch(() => null);
+  if (!rows) return null;
+  return rows.map(r => ({
+    id: String(r.id),
+    source: String(r.source),
+    externalId: String(r.external_id),
+    startedAt: iso(r.started_at) ?? '',
+    endedAt: iso(r.ended_at) ?? '',
+    receivedAt: iso(r.received_at),
+    processedAt: iso(r.processed_at),
+    makegoods: Number(r.makegoods),
+    refunds: Number(r.refunds),
+    pendingRefunds: Number(r.pending_refunds),
+  }));
+}
+
+/**
+ * What outages did to one booking: each undelivered day with its decision and why, and,
+ * when the booking is itself a free make-good day, the paid booking it makes up for.
+ */
+export async function adBookingOutages(id: string) {
+  const sql = getDb();
+  const [credits, relation] = await Promise.all([
+    sql`
+      SELECT k.day::text AS day, k.unserved_minutes, k.outcome, k.reason, k.makegood_campaign_id,
+        m.starts_on::text AS makegood_day, k.refund_amount, k.refund_status, k.refund_error,
+        k.created_at,
+        (SELECT string_agg(DISTINCT o.source, ', ') FROM site_outages o
+          WHERE o.id = ANY(k.outage_ids)) AS sources
+      FROM ad_outage_credits k LEFT JOIN ad_campaigns m ON m.id = k.makegood_campaign_id
+      WHERE k.campaign_id = ${id} ORDER BY k.day
+    `.catch(() => []),
+    // to_jsonb keeps this readable on a database without the makegood columns.
+    sql`
+      SELECT to_jsonb(c) ->> 'makegood_of' AS makegood_of, to_jsonb(c) ->> 'makegood_day' AS makegood_day
+      FROM ad_campaigns c WHERE c.id = ${id}
+    `.catch(() => []),
+  ]);
+  return {
+    makegoodOf: relation[0]?.makegood_of ? String(relation[0].makegood_of) : null,
+    makegoodDay: relation[0]?.makegood_day ? String(relation[0].makegood_day) : null,
+    credits: credits.map(k => ({
+      day: String(k.day),
+      unservedMinutes: Number(k.unserved_minutes),
+      outcome: String(k.outcome) as 'makegood' | 'refund',
+      reason: String(k.reason),
+      makegoodBookingId: k.makegood_campaign_id ? String(k.makegood_campaign_id) : null,
+      makegoodDay: k.makegood_day ? String(k.makegood_day) : null,
+      refundAmount: Number(k.refund_amount),
+      refundStatus: String(k.refund_status),
+      refundError: k.refund_error ? String(k.refund_error) : null,
+      sources: k.sources ? String(k.sources) : '',
+      createdAt: iso(k.created_at),
+    })),
+  };
 }

@@ -39,6 +39,11 @@ export type MediaKit = {
   /** Active subscribers, only from {@link audienceMinimum} up. */
   subscribers: number | null;
   readAt: string;
+  /**
+   * Whether views count once per visitor, page and day (SHCWS-112): only with
+   * VIEW_HASH_SECRET; without it every view counts, and the page says so.
+   */
+  deduplicated: boolean;
 };
 
 async function read(): Promise<MediaKit> {
@@ -86,6 +91,7 @@ async function read(): Promise<MediaKit> {
     },
     subscribers: subscribers >= audienceMinimum ? subscribers : null,
     readAt: new Date().toISOString(),
+    deduplicated: Boolean(process.env.VIEW_HASH_SECRET),
   };
 }
 

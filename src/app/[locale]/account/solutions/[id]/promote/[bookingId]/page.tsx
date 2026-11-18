@@ -3,8 +3,8 @@ import { notFound } from 'next/navigation';
 import { ArrowLeftIcon } from '@/components/icons/gota';
 import { requireFounder } from '@/lib/solutions/server';
 import { isSolutionId } from '@/lib/solutions/model';
-import { categories, localizedCategoryDisplayLabel } from '@/lib/taxonomy';
-import { addDays, adToday, bookingState } from '@/lib/ads/model';
+import { addDays, adToday, bookingState, isScopedPlacement } from '@/lib/ads/model';
+import { scopeLabel } from '@/lib/ads/scopes';
 import { formatDay } from '@/lib/ads/format';
 import { bookingReport } from '@/lib/ads/server';
 import { BookingReportView } from '@/components/ads/booking-report';
@@ -33,13 +33,9 @@ export default async function BookingReportPage(props: {
 
   const { booking } = report;
   const today = adToday();
-  const place =
-    booking.placement === 'category'
-      ? `${dict.placements.category.label} · ${localizedCategoryDisplayLabel(
-          categories.find(entry => entry.slug === booking.scope)?.label ?? booking.scope,
-          locale,
-        )}`
-      : dict.placements[booking.placement].label;
+  const place = isScopedPlacement(booking.placement)
+    ? `${dict.placements[booking.placement].label} · ${scopeLabel(booking.placement, booking.scope, locale)}`
+    : dict.placements[booking.placement].label;
   const state = bookingState(booking, today);
 
   return (

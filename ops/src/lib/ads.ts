@@ -4,8 +4,34 @@
 // tests/ops-ads.test.ts compares them on the same inputs.
 
 export const AD_TIME_ZONE = 'America/Mexico_City';
-export const AD_PLACEMENTS = ['category', 'home', 'newsletter'] as const;
+export const AD_PLACEMENTS = [
+  'category',
+  'industry',
+  'collection',
+  'search',
+  'home',
+  'newsletter',
+] as const;
 export type AdPlacement = (typeof AD_PLACEMENTS)[number];
+
+/** How ops names each placement (SHCWS-79). The product's copy lives in its dictionaries. */
+export const PLACEMENT_LABEL: Record<string, string> = {
+  category: 'Categoría',
+  industry: 'Industria',
+  collection: 'Colección',
+  search: 'Búsqueda',
+  home: 'Inicio',
+  newsletter: 'Newsletter',
+};
+
+/** Why an outage day went the way it did (db/ad-placements-outages.sql, SHCWS-179). */
+export const OUTAGE_REASON_LABEL: Record<string, string> = {
+  room: 'El día siguiente a la reserva tenía cupo.',
+  noRoom: 'El día siguiente a la reserva estaba lleno.',
+  ended: 'La reserva ya no tenía días por delante.',
+  stopped: 'La reserva estaba cancelada o retirada.',
+  unlisted: 'La ficha ya no estaba publicada.',
+};
 export const AD_CURRENCIES = ['usd', 'mxn'] as const;
 export type AdCurrency = (typeof AD_CURRENCIES)[number];
 

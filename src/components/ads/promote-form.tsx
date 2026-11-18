@@ -10,12 +10,14 @@ import {
   daysBetween,
   discountAmount,
   estimatedTaxRate,
+  isScopedPlacement,
   lastBookableDay,
   preferredCurrency,
   presetDays,
   type AdCurrency,
   type AdPlacement,
   type PromoDiscount,
+  type ScopedPlacement,
 } from '@/lib/ads/model';
 import { formatDay, formatMoney } from '@/lib/ads/format';
 import type { PlacementReach, PlacementStatus } from '@/lib/ads/server';
@@ -51,7 +53,7 @@ type Billing = {
 export function PromoteForm({
   solutionId,
   placements,
-  categories,
+  scopes,
   reach,
   product,
   today,
@@ -66,8 +68,11 @@ export function PromoteForm({
 }: {
   solutionId: string;
   placements: PlacementStatus[];
-  /** Categories the listing declares: slug for the request, label for display. */
-  categories: { slug: string; label: string }[];
+  /**
+   * The pages each scoped placement can run on for this listing (src/lib/ads/scopes.ts):
+   * slug for the request, label for display.
+   */
+  scopes: Record<ScopedPlacement, { slug: string; label: string }[]>;
   /** Page views per `placement:scope` (src/lib/ads/server.ts, placementReach). */
   reach: Record<string, PlacementReach>;
   product: SponsoredCardContent;
@@ -90,11 +95,18 @@ export function PromoteForm({
     Boolean(publishableKey) &&
     Boolean(status(id)?.enabled) &&
     hasRates(id) &&
-    (id !== 'category' || categories.length > 0);
+    (!isScopedPlacement(id) || scopes[id].length > 0);
   const open = adPlacements.filter(purchasable);
 
   const [placement, setPlacement] = useState<AdPlacement>(open[0] ?? 'category');
-  const [scope, setScope] = useState(categories[0]?.slug ?? '');
+  // The page chosen for each scoped placement; the first one it can run on until then.
+  const [scopeChoice, setScopeChoice] = useState<Partial<Record<ScopedPlacement, string>>>({});
+  const scopeFor = (id: AdPlacement) => {
+    if (!isScopedPlacement(id)) return '';
+    const options = scopes[id];
+    return options.find(option => option.slug === scopeChoice[id])?.slug ?? options[0]?.slug ?? '';
+  };
+  const scope = scopeFor(placement);
   const [currency, setCurrency] = useState<AdCurrency>(preferredCurrency(billing.country, locale));
   const tomorrow = addDays(today, 1);
   const [start, setStart] = useState(tomorrow);
@@ -131,7 +143,7 @@ export function PromoteForm({
   const currencies = (Object.keys(offer?.rates ?? {}) as AdCurrency[]).sort();
   const activeCurrency = currencies.includes(currency) ? currency : (currencies[0] ?? currency);
   const rate = offer?.rates[activeCurrency] ?? 0;
-  const requestScope = placement === 'category' ? scope : '';
+  const requestScope = scope;
   const days = daysBetween(start, end) + 1;
   const full = availability !== 'loading' && availability !== 'error' ? availability.full : null;
   const money = (minor: number, code: AdCurrency = activeCurrency) =>
@@ -345,12 +357,14 @@ export function PromoteForm({
 
   const reachText = (id: AdPlacement) => {
     if (id === 'newsletter') return null;
-    const found = reach[`${id}:${id === 'category' ? scope : ''}`];
-    if (!found || found.views === 0) return t.reachNone;
-    return (found.since ? t.reachSince.replace('{date}', day(found.since)) : t.reach).replace(
-      '{views}',
-      number.format(found.views),
-    );
+    // Search counts searches that point at the category, not views of one page.
+    const search = id === 'search';
+    const found = reach[`${id}:${scopeFor(id)}`];
+    if (!found || found.views === 0) return search ? t.reachSearchNone : t.reachNone;
+    const since = search ? t.reachSearchSince : t.reachSince;
+    return (
+      found.since ? since.replace('{date}', day(found.since)) : search ? t.reachSearch : t.reach
+    ).replace('{views}', number.format(found.views));
   };
   const priceText = (id: AdPlacement) => {
     const rates = status(id)?.rates ?? {};
@@ -358,7 +372,20 @@ export function PromoteForm({
       AdCurrency | undefined;
     return code && rates[code] ? t.perDay.replace('{rate}', money(rates[code], code)) : null;
   };
-  const scopeLabel = categories.find(category => category.slug === scope)?.label ?? '';
+  const scopeOptions = isScopedPlacement(placement) ? scopes[placement] : [];
+  const scopeLabel = scopeOptions.find(option => option.slug === scope)?.label ?? '';
+  const previewLabel =
+    placement === 'category'
+      ? t.previewCategory.replace('{category}', scopeLabel)
+      : placement === 'industry'
+        ? t.previewIndustry.replace('{name}', scopeLabel)
+        : placement === 'collection'
+          ? t.previewCollection.replace('{name}', scopeLabel)
+          : placement === 'search'
+            ? t.previewSearch.replace('{name}', scopeLabel)
+            : placement === 'home'
+              ? t.previewHome
+              : dict.placements.newsletter.label;
   const ready = open.length > 0;
 
   return (
@@ -370,7 +397,7 @@ export function PromoteForm({
             <div className="min-w-0 space-y-9">
               <fieldset>
                 <legend className="text-sm font-medium text-stone-600">{t.placement}</legend>
-                <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-3">
                   {adPlacements.map(id => {
                     const available = purchasable(id);
                     const checked = available && placement === id;
@@ -451,19 +478,24 @@ export function PromoteForm({
                 {!ready && <p className="mt-4 text-sm text-stone-600">{dict.page.closed}</p>}
               </fieldset>
 
-              {ready && placement === 'category' && categories.length > 1 && (
+              {ready && isScopedPlacement(placement) && scopeOptions.length > 1 && (
                 <fieldset>
-                  <legend className="text-sm font-medium text-stone-600">{t.category}</legend>
+                  <legend className="text-sm font-medium text-stone-600">
+                    {t.scopes[placement]}
+                  </legend>
                   <div className="selector-tabs mt-2">
-                    {categories.map(category => (
+                    {scopeOptions.map(option => (
                       <button
-                        key={category.slug}
+                        key={option.slug}
                         type="button"
-                        aria-pressed={scope === category.slug}
-                        onClick={() => setScope(category.slug)}
+                        aria-pressed={scope === option.slug}
+                        onClick={() => {
+                          setScopeChoice(current => ({ ...current, [placement]: option.slug }));
+                          setError('');
+                        }}
                         className="selector-tab"
                       >
-                        {category.label}
+                        {option.label}
                       </button>
                     ))}
                   </div>
@@ -602,11 +634,7 @@ export function PromoteForm({
                 </h2>
                 <div className="mt-3 rounded-[24px] border border-stone-200 bg-[#f5f5f4] p-4">
                   <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-stone-400">
-                    {placement === 'category'
-                      ? t.previewCategory.replace('{category}', scopeLabel)
-                      : placement === 'home'
-                        ? t.previewHome
-                        : dict.placements.newsletter.label}
+                    {previewLabel}
                   </p>
                   <SponsoredSlotHeader dict={dict.slot} />
                   <div className={sponsoredCardClass}>

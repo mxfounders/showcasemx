@@ -45,6 +45,9 @@ const fill = (template: string, values: Record<string, string | number>) =>
 const tones: Record<AdPlacement, keyof typeof brandColors> = {
   home: 'blue',
   category: 'sage',
+  industry: 'terracotta',
+  collection: 'amber',
+  search: 'blue',
   newsletter: 'lavender',
 };
 
@@ -206,7 +209,14 @@ export default async function MediaKitPage(props: { params: Promise<{ locale: st
     mediaKitData().catch(() => null),
   ]);
   const categoryTitles = new Map(localizedCategories(locale).map(item => [item.slug, item.title]));
-  const order: AdPlacement[] = ['home', 'category', 'newsletter'];
+  const order: AdPlacement[] = [
+    'home',
+    'category',
+    'industry',
+    'collection',
+    'search',
+    'newsletter',
+  ];
   const placements = [...(data?.placements ?? [])].sort(
     (a, b) => order.indexOf(a.placement) - order.indexOf(b.placement),
   );
@@ -276,7 +286,8 @@ export default async function MediaKitPage(props: { params: Promise<{ locale: st
               </div>
             )}
             <p className="mt-4 max-w-3xl text-xs leading-relaxed text-stone-500">
-              {dict.audience.note} {dict.placements.taxes}
+              {data.deduplicated ? dict.audience.noteDeduped : dict.audience.note}{' '}
+              {dict.placements.taxes}
             </p>
           </section>
 

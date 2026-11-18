@@ -9,6 +9,9 @@ import { industries, localizedIndustries } from '@/lib/taxonomy';
 import { matchIndustry, isRealMatch } from '@/lib/search/facets';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { localeAlternates, pageOpenGraph } from '@/lib/seo';
+import { sponsoredProducts } from '@/lib/ads/sponsored';
+import { SponsoredSlots } from '@/components/ads/sponsored-slots';
+import { PlacementBeacon } from '@/components/ads/beacons';
 
 // See explorar/[slug]/page.tsx for why {locale, slug} pairs (not just slug)
 // and dynamicParams=false both matter here.
@@ -47,8 +50,13 @@ export default async function IndustriaCategoryPage(props: {
   if (!info) return notFound();
   const localizedInfo = localizedIndustries(params.locale).find(item => item.slug === params.slug)!;
 
-  const products = await publicProducts();
-  const dict = await getDictionary(params.locale);
+  // The sponsored slot reads through a cached, tagged query (src/lib/ads/sponsored.ts),
+  // like /explorar: the page stays prerendered and refreshes with the catalog.
+  const [products, dict, sponsored] = await Promise.all([
+    publicProducts(),
+    getDictionary(params.locale),
+    sponsoredProducts('industry', params.slug),
+  ]);
 
   // Matches the founder-declared `industries` field (src/lib/solutions/model.ts)
   // through matchIndustry/isRealMatch, not a raw includes(): a product that
@@ -62,6 +70,8 @@ export default async function IndustriaCategoryPage(props: {
 
   return (
     <Suspense fallback={<CategoryPageSkeleton />}>
+      {/* Page views for this page's sponsored slot reach estimate (SHCWS-72/79). */}
+      <PlacementBeacon placement="industry" scope={params.slug} />
       <CategoryPageLayout
         title={localizedInfo.title}
         description={localizedInfo.description}
@@ -71,6 +81,11 @@ export default async function IndustriaCategoryPage(props: {
         locale={params.locale}
         dict={dict.catalog}
         alertDict={dict.alerts.button}
+        sponsored={
+          sponsored.length > 0 && (
+            <SponsoredSlots items={sponsored} locale={params.locale} dict={dict.ads.slot} />
+          )
+        }
       />
     </Suspense>
   );

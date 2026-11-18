@@ -1,8 +1,8 @@
 import { requireFounder } from '@/lib/solutions/server';
 import { billingCountries } from '@/lib/billing/model';
 import { getBillingProfile, paymentHistory } from '@/lib/billing/server';
-import { categories, localizedCategoryDisplayLabel } from '@/lib/taxonomy';
-import { isAdPlacement } from '@/lib/ads/model';
+import { isAdPlacement, isScopedPlacement } from '@/lib/ads/model';
+import { scopeLabel } from '@/lib/ads/scopes';
 import { BillingProfileForm } from '@/components/billing/billing-profile-form';
 import { PaymentHistory } from '@/components/billing/payment-history';
 import { getDictionary } from '@/i18n/get-dictionary';
@@ -30,9 +30,11 @@ export default async function BillingSettings(props: { params: Promise<{ locale:
   const regionName = new Intl.DisplayNames([locale], { type: 'region' });
   const countries = billingCountries.map(code => ({ code, name: regionName.of(code) ?? code }));
   const placementLabel = (placement: string, scope: string) => {
-    const label = isAdPlacement(placement) ? dictionary.ads.placements[placement].label : placement;
-    const category = categories.find(entry => entry.slug === scope)?.label;
-    return category ? `${label} · ${localizedCategoryDisplayLabel(category, locale)}` : label;
+    if (!isAdPlacement(placement)) return placement;
+    const label = dictionary.ads.placements[placement].label;
+    return isScopedPlacement(placement) && scope
+      ? `${label} · ${scopeLabel(placement, scope, locale)}`
+      : label;
   };
   const card = 'rounded-2xl border border-stone-200 bg-white p-6 shadow-sm';
 

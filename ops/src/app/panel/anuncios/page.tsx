@@ -2,8 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { MegaphoneIcon } from '@/components/icons/gota';
 import { requireOps } from '@/lib/auth';
-import { AD_FILTERS, adsOverview, type AdFilter } from '@/lib/data/ads';
-import { fmtDate, fmtMoney, fmtNumber, fmtPercent } from '@/lib/format';
+import { AD_FILTERS, adOutages, adsOverview, type AdFilter } from '@/lib/data/ads';
+import { PLACEMENT_LABEL } from '@/lib/ads';
+import { fmtDate, fmtDateTime, fmtMoney, fmtNumber, fmtPercent } from '@/lib/format';
 import { choice, hrefWith, pageParam, param, type SearchParams } from '@/lib/url';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Segmented } from '@/components/ui/Tabs';
@@ -39,12 +40,6 @@ const STATUS: Record<string, { label: string; tone: Tone }> = {
   failed: { label: 'Fallida', tone: 'terracotta' },
 };
 
-const PLACEMENT: Record<string, string> = {
-  category: 'Categoría',
-  home: 'Inicio',
-  newsletter: 'Newsletter',
-};
-
 export default async function AnunciosPage({
   searchParams,
 }: {
@@ -54,7 +49,10 @@ export default async function AnunciosPage({
   const params = await searchParams;
   const filter = choice(params, 'filtro', AD_FILTERS, 'all');
   const page = pageParam(params);
-  const data = await adsOverview(filter, param(params, 'q'), page);
+  const [data, outages] = await Promise.all([
+    adsOverview(filter, param(params, 'q'), page),
+    adOutages().catch(() => null),
+  ]);
 
   if (!data)
     return (
@@ -122,7 +120,7 @@ export default async function AnunciosPage({
                 <li key={placement.id} className="rounded-xl border border-line p-4">
                   <div className="flex items-center justify-between">
                     <p className="text-[14px] font-semibold">
-                      {PLACEMENT[placement.id] ?? placement.id}
+                      {PLACEMENT_LABEL[placement.id] ?? placement.id}
                     </p>
                     {placement.enabled ? (
                       <Badge tone="sage" dot>
@@ -155,6 +153,66 @@ export default async function AnunciosPage({
           )}
         </CardBody>
       </Card>
+
+      {outages && outages.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader
+            title="Caídas reportadas"
+            description="Ventanas que reportó el monitor externo. Cada día de una reserva con 4 h o más sin servir se repone con un día más al final o, si no hay cupo, se reembolsa sin intervención. Abre una reserva para ver el detalle."
+          />
+          <Table label="Caídas reportadas">
+            <THead>
+              <TH>Desde</TH>
+              <TH>Hasta</TH>
+              <TH align="right">Duración</TH>
+              <TH>Fuente</TH>
+              <TH align="right">Resultado</TH>
+            </THead>
+            <TBody>
+              {outages.map(outage => {
+                const minutes = Math.round(
+                  (Date.parse(outage.endedAt) - Date.parse(outage.startedAt)) / 60_000,
+                );
+                return (
+                  <TR key={outage.id}>
+                    <TD className="whitespace-nowrap text-[13px]">
+                      {fmtDateTime(outage.startedAt)}
+                    </TD>
+                    <TD className="whitespace-nowrap text-[13px]">{fmtDateTime(outage.endedAt)}</TD>
+                    <TD align="right" className="text-[13px]">
+                      {Math.floor(minutes / 60)} h {minutes % 60} min
+                    </TD>
+                    <TD className="text-[13px] text-muted">
+                      {outage.source}
+                      <span className="block font-mono text-[11.5px]">
+                        {outage.externalId.slice(0, 40)}
+                      </span>
+                    </TD>
+                    <TD align="right" className="text-[13px]">
+                      {!outage.processedAt ? (
+                        <Badge tone="amber">Por procesar</Badge>
+                      ) : outage.makegoods + outage.refunds === 0 ? (
+                        <span className="text-muted">Sin días afectados</span>
+                      ) : (
+                        <>
+                          {outage.makegoods}{' '}
+                          {outage.makegoods === 1 ? 'reposición' : 'reposiciones'} ·{' '}
+                          {outage.refunds} {outage.refunds === 1 ? 'reembolso' : 'reembolsos'}
+                          {outage.pendingRefunds > 0 && (
+                            <p className="text-[11.5px] text-terracotta">
+                              {outage.pendingRefunds} sin confirmar en Stripe
+                            </p>
+                          )}
+                        </>
+                      )}
+                    </TD>
+                  </TR>
+                );
+              })}
+            </TBody>
+          </Table>
+        </Card>
+      )}
 
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <Segmented
@@ -212,7 +270,7 @@ export default async function AnunciosPage({
                     </p>
                   </TD>
                   <TD className="text-[13px]">
-                    {PLACEMENT[item.placement] ?? item.placement}
+                    {PLACEMENT_LABEL[item.placement] ?? item.placement}
                     {item.scope && <span className="text-muted"> · {item.scope}</span>}
                   </TD>
                   <TD className="whitespace-nowrap text-[13px] text-muted">
@@ -234,6 +292,11 @@ export default async function AnunciosPage({
                         </Badge>
                       )}
                       {item.canceledAt && <Badge tone="terracotta">Cancelada</Badge>}
+                      {item.makegoodOf && (
+                        <Badge tone="blue" title="Día gratis por una caída de shwcs">
+                          Reposición
+                        </Badge>
+                      )}
                       {item.disputeStatus && (
                         <Badge tone={item.disputeStatus === 'won' ? 'sage' : 'terracotta'}>
                           Disputa{' '}
