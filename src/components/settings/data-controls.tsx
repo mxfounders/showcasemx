@@ -76,10 +76,13 @@ export function DeleteAccount({
   publications,
   conversations,
   twoStep,
+  profileNotice = null,
   dict,
 }: {
   publications: number;
   conversations: number;
+  /** The line about the public profile (SHCWS-120), already filled in; null without one. */
+  profileNotice?: string | null;
   /** Two-step verification is on: the server also asks for a code (SHCWS-173). */
   twoStep: boolean;
   dict: Dictionary['settings']['data']['delete'];
@@ -102,6 +105,7 @@ export function DeleteAccount({
       (conversations === 1
         ? dict.conversationOne
         : dict.conversationMany.replace('{count}', String(conversations))),
+    profileNotice,
     dict.library,
     dict.noRecovery,
   ].filter(Boolean) as string[];

@@ -56,7 +56,9 @@ function samplePaths(file: string): string[][] {
             ? [uuid]
             : segment === '[token]'
               ? ['0123456789abcdef0123456789abcdef']
-              : [segment];
+              : segment === '[handle]'
+                ? ['ana-lopez']
+                : [segment];
     paths = paths.flatMap(path => values.map(value => [...path, value]));
   });
   return paths;

@@ -4,6 +4,7 @@ import { requireBuyer } from '@/lib/library/server';
 import { getPublicCollections } from '@/lib/library/community';
 import { followedCurators, followerCounts } from '@/lib/library/follows';
 import { followedSolutions } from '@/lib/solutions/updates';
+import { followedProfiles, profileFollowerCount } from '@/lib/profiles/server';
 import { UnfollowButton } from '@/components/library/follow-controls';
 import { BoardCard } from '@/components/library/board-card';
 import { actionButtonStyle } from '@/lib/brand-colors';
@@ -31,7 +32,15 @@ export default async function SavedCommunityListsPage({
   const t = dictionary.library.communitySaved;
   const f = dictionary.follows.page;
   // Saved lists page through; what the account follows (SHCWS-121) shows on page 1 only.
-  const [{ collections, hasMore }, followed, curators, followers, projects] = await Promise.all([
+  const [
+    { collections, hasMore },
+    followed,
+    curators,
+    followers,
+    projects,
+    people,
+    profileFollowers,
+  ] = await Promise.all([
     getPublicCollections({ savedBy: account.id, viewer: account.id, page }),
     page === 1
       ? getPublicCollections({ followedBy: account.id, viewer: account.id })
@@ -40,7 +49,11 @@ export default async function SavedCommunityListsPage({
     page === 1 ? followerCounts(account.id) : Promise.resolve(null),
     // Listings the account follows (SHCWS-24); an outage hides only that section.
     page === 1 ? followedSolutions(account.id).catch(() => null) : Promise.resolve(null),
+    // Public profiles (SHCWS-120); an outage hides only these two pieces.
+    page === 1 ? followedProfiles(account.id).catch(() => null) : Promise.resolve(null),
+    page === 1 ? profileFollowerCount(account.id).catch(() => null) : Promise.resolve(null),
   ]);
+  const pf = dictionary.profiles.follows;
   const count = (template: string, value: number, name = '') =>
     template.replace('{count}', String(value)).replace('{name}', name);
   const [beforeLink, afterLink] = f.emailNote.split('{link}');
@@ -268,15 +281,63 @@ export default async function SavedCommunityListsPage({
           </p>
         </section>
       )}
-      {followers?.curator && (
+      {people && (
+        <section className="mt-14" aria-labelledby="followed-profiles">
+          <h2 id="followed-profiles" className="text-2xl font-semibold tracking-tight">
+            {pf.pageTitle}
+          </h2>
+          {people.length ? (
+            <ul className="mt-5 divide-y divide-stone-200 border-y border-stone-200">
+              {people.map(person => (
+                <li
+                  key={person.id}
+                  className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  {person.handle ? (
+                    <Link
+                      href={`/c/${person.handle}`}
+                      className="min-w-0 font-medium text-[#365DC4] underline-offset-4 hover:underline"
+                    >
+                      {person.name}
+                      <span className="ml-2 text-sm font-normal text-stone-500">
+                        @{person.handle}
+                      </span>
+                    </Link>
+                  ) : (
+                    <p className="text-stone-500">{pf.unavailable}</p>
+                  )}
+                  <UnfollowButton
+                    action="unfollow-profile"
+                    id={person.id}
+                    dict={dictionary.follows}
+                  />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-4 text-sm text-stone-500">{pf.pageEmpty}</p>
+          )}
+        </section>
+      )}
+      {(followers?.curator || profileFollowers !== null) && (
         <section className="mt-14" aria-labelledby="followers">
           <h2 id="followers" className="text-2xl font-semibold tracking-tight">
             {f.followersTitle}
           </h2>
           <p className="mt-2 text-sm text-stone-500">{f.followersBody}</p>
-          {followers.signatures.length || followers.lists.length ? (
+          {(followers?.signatures.length ?? 0) +
+            (followers?.lists.length ?? 0) +
+            (profileFollowers ?? 0) >
+          0 ? (
             <ul className="mt-5 space-y-2 text-sm text-stone-700">
-              {followers.signatures.map(item => (
+              {!!profileFollowers && (
+                <li>
+                  {profileFollowers === 1
+                    ? pf.followersOne
+                    : pf.followersMany.replace('{count}', String(profileFollowers))}
+                </li>
+              )}
+              {followers?.signatures.map(item => (
                 <li key={`signature:${item.name}`}>
                   {count(
                     item.count === 1 ? f.curatorFollowersSingular : f.curatorFollowersPlural,
@@ -285,7 +346,7 @@ export default async function SavedCommunityListsPage({
                   )}
                 </li>
               ))}
-              {followers.lists.map(item => (
+              {followers?.lists.map(item => (
                 <li key={item.id}>
                   {count(
                     item.count === 1 ? f.listFollowersSingular : f.listFollowersPlural,

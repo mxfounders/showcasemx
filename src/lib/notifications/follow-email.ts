@@ -5,8 +5,8 @@ import { escapeHtml } from './email-template';
 
 /**
  * The weekly summary of what someone follows (SHCWS-121): new projects in the lists they
- * follow, new lists from the curators they follow and updates of the listings they
- * follow (SHCWS-24), for the week named in the notice
+ * follow, new lists from the curators they follow, updates of the listings they
+ * follow (SHCWS-24) and what the public profiles they follow published (SHCWS-120), for the week named in the notice
  * (`follow:<account>:<monday>`, db/community-follows.sql). Sent the Monday after, only
  * with community emails on. Public lists and public signatures only; nothing about who
  * else follows them. Spanish until accounts store a language (SHCWS-25).
@@ -19,18 +19,30 @@ export type FollowedUpdateNews = {
   name: string;
   updates: Array<{ kind: SolutionUpdateKind; body: string }>;
 };
+/**
+ * What a followed public profile published that week (SHCWS-120): listings approved for
+ * the first time and lists that became visible, minus what the profile hides.
+ */
+export type FollowedProfileNews = {
+  handle: string;
+  name: string;
+  projects: Array<{ path: string; name: string }>;
+  lists: Array<{ id: string; name: string }>;
+};
 
 export function followDigestEmail({
   title,
   lists,
   curatorLists,
   projects = [],
+  profiles = [],
   origin,
 }: {
   title: string;
   lists: FollowedListNews[];
   curatorLists: CuratorListNews[];
   projects?: FollowedUpdateNews[];
+  profiles?: FollowedProfileNews[];
   origin: string;
 }) {
   const url = (id: string) => `${origin}/es/comunidad/${id}`;
@@ -91,6 +103,39 @@ export function followDigestEmail({
       '',
     );
   }
+  if (profiles.length) {
+    const profileUrl = (handle: string) => `${origin}/es/c/${handle}`;
+    const items = (profile: FollowedProfileNews) => [
+      ...profile.projects.map(project => ({
+        url: `${origin}/es${project.path}`,
+        text: `Proyecto: ${project.name}`,
+      })),
+      ...profile.lists.map(list => ({ url: url(list.id), text: `Lista: ${list.name}` })),
+    ];
+    paragraphs.push(
+      `<strong>De los perfiles que sigues</strong><br>${profiles
+        .map(
+          profile =>
+            `<a href="${escapeHtml(profileUrl(profile.handle))}" style="color:#365DC4;">${escapeHtml(profile.name)}</a><br>${items(
+              profile,
+            )
+              .map(
+                item =>
+                  `<a href="${escapeHtml(item.url)}" style="color:#365DC4;">${escapeHtml(item.text)}</a>`,
+              )
+              .join('<br>')}`,
+        )
+        .join('<br><br>')}`,
+    );
+    text.push(
+      'De los perfiles que sigues:',
+      ...profiles.flatMap(profile => [
+        `- ${profile.name} (${profileUrl(profile.handle)})`,
+        ...items(profile).map(item => `  ${item.text} (${item.url})`),
+      ]),
+      '',
+    );
+  }
   if (!paragraphs.length) {
     paragraphs.push('Hubo novedades en lo que sigues.');
     text.push('Hubo novedades en lo que sigues.');
@@ -120,7 +165,7 @@ export async function loadFollowDigestEmail({
 }) {
   const week = /^follow:[0-9a-f-]{36}:(\d{4}-\d{2}-\d{2})$/.exec(sourceKey)?.[1] ?? null;
   const sql = authSql();
-  const [lists, curatorLists, projects] = week
+  const [lists, curatorLists, projects, profiles] = week
     ? await Promise.all([
         sql`SELECT l.id::text, l.name, jsonb_agg(DISTINCT s.published_data->>'name') AS projects
           FROM community_list_follows f
@@ -157,8 +202,30 @@ export async function loadFollowDigestEmail({
            AND u.created_at >= f.created_at
           WHERE f.follower_id = ${owner}
           GROUP BY s.id, name ORDER BY max(u.created_at) DESC LIMIT 10`.catch(() => []),
+        // Followed public profiles (SHCWS-120), only while visible, minus what they hide.
+        sql`SELECT p.handle, p.display_name,
+            COALESCE((SELECT jsonb_agg(jsonb_build_object('id', s.id, 'slug', s.slug, 'name', s.published_data->>'name')
+                ORDER BY a.announced_at DESC)
+              FROM profile_project_announcements a JOIN founder_solutions s ON s.id = a.solution_id
+               AND s.owner_id = p.account_id AND s.published_data IS NOT NULL AND NOT (s.id = ANY (p.hidden_solutions))
+              WHERE a.account_id = p.account_id
+                AND a.announced_at >= ${week}::date::timestamp AT TIME ZONE 'UTC'
+                AND a.announced_at < (${week}::date + 7)::timestamp AT TIME ZONE 'UTC'
+                AND a.announced_at >= f.created_at), '[]'::jsonb) AS projects,
+            COALESCE((SELECT jsonb_agg(jsonb_build_object('id', l.id, 'name', l.name) ORDER BY a.announced_at DESC)
+              FROM community_list_announcements a JOIN buyer_lists l ON l.id = a.list_id
+               AND l.visibility = 'public' AND NOT (l.id = ANY (p.hidden_lists))
+              WHERE a.curator_id = p.account_id
+                AND a.announced_at >= ${week}::date::timestamp AT TIME ZONE 'UTC'
+                AND a.announced_at < (${week}::date + 7)::timestamp AT TIME ZONE 'UTC'
+                AND a.announced_at >= f.created_at), '[]'::jsonb) AS lists
+          FROM profile_follows f JOIN public_profiles p ON p.account_id = f.profile_id
+          WHERE f.follower_id = ${owner} AND profile_visible(p.account_id)
+          ORDER BY f.created_at DESC LIMIT 20`.catch(() => []),
       ])
-    : [[], [], []];
+    : [[], [], [], []];
+  // A list already listed under the curators followed isn't repeated under the profile.
+  const curatorListIds = new Set(curatorLists.map(row => String(row.id)));
   return followDigestEmail({
     title,
     lists: lists.map(row => ({
@@ -176,6 +243,22 @@ export async function loadFollowDigestEmail({
       name: String(row.name ?? ''),
       updates: (row.updates as Array<{ kind: SolutionUpdateKind; body: string }>).slice(0, 3),
     })),
+    profiles: profiles
+      .map(row => ({
+        handle: String(row.handle),
+        name: String(row.display_name),
+        projects: (row.projects as Array<{ id: string; slug: string | null; name: string }>)
+          .slice(0, 5)
+          .map(project => ({
+            path: `/soluciones/${project.slug || project.id}`,
+            name: String(project.name ?? ''),
+          })),
+        lists: (row.lists as Array<{ id: string; name: string }>)
+          .filter(list => !curatorListIds.has(String(list.id)))
+          .slice(0, 5)
+          .map(list => ({ id: String(list.id), name: String(list.name) })),
+      }))
+      .filter(profile => profile.projects.length || profile.lists.length),
     origin,
   });
 }

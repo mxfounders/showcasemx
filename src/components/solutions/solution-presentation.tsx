@@ -72,6 +72,7 @@ export function SolutionPresentation({
   viewerVerified = false,
   hasSiteImage = false,
   similar,
+  publisher = null,
   outboundMedium = 'listing',
   sponsoredBooking = null,
   reviewBadge,
@@ -102,6 +103,11 @@ export function SolutionPresentation({
   hasSiteImage?: boolean;
   /** Public listing only: similar listings and the exits after them (SHCWS-55). */
   similar?: SimilarSection;
+  /**
+   * The owner's public profile (SHCWS-120), only when they turned it on and it shows this
+   * listing. Never derived from the creators the listing declares (§17).
+   */
+  publisher?: { handle: string; name: string; label: string } | null;
   /** `utm_medium` of the project's links: `sponsored` when the visit came from a paid slot. */
   outboundMedium?: OutboundMedium;
   /**
@@ -540,12 +546,25 @@ export function SolutionPresentation({
               </div>
             </section>
           )}
-          {!!data.founders?.length && (
+          {(!!data.founders?.length || publisher) && (
             <section className="border-t border-stone-200 pt-8">
               <h2 className="text-xl font-medium">{dict.teamTitle}</h2>
-              <p className="mt-2 text-xs text-stone-400">{dict.teamNote}</p>
+              {publisher && (
+                <p className="mt-3 text-sm text-stone-600">
+                  {publisher.label}{' '}
+                  <Link
+                    href={`/c/${publisher.handle}`}
+                    className="font-medium text-[#365DC4] underline-offset-4 hover:underline"
+                  >
+                    {publisher.name}
+                  </Link>
+                </p>
+              )}
+              {!!data.founders?.length && (
+                <p className="mt-2 text-xs text-stone-400">{dict.teamNote}</p>
+              )}
               <div className="mt-6 space-y-7">
-                {data.founders
+                {(data.founders ?? [])
                   .filter(person => person.name.trim())
                   .map((person, index) => (
                     <article key={index}>
