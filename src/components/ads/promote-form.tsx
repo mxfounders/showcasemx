@@ -397,7 +397,7 @@ export function PromoteForm({
             <div className="min-w-0 space-y-9">
               <fieldset>
                 <legend className="text-sm font-medium text-stone-600">{t.placement}</legend>
-                <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-3">
                   {adPlacements.map(id => {
                     const available = purchasable(id);
                     const checked = available && placement === id;
