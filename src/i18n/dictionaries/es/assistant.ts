@@ -218,6 +218,8 @@ export const assistant = {
             'Hasta 3 personas del equipo, con su consentimiento: nombre, rol, bio y enlaces.',
           projectLinks: 'Enlaces oficiales del proyecto (máximo 6).',
           hideSiteImage: 'true para no mostrar la imagen que publica el sitio como portada.',
+          coverSource:
+            "'site' (predeterminado): la imagen del sitio va primero. 'screenshot': la primera imagen de la galería va primero.",
           otherCategory: 'Una categoría que no está en la lista, en palabras del fundador.',
         },
       },

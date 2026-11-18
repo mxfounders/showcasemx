@@ -334,6 +334,12 @@ export const solutionEditor = {
     previewNamePlaceholder: 'Your project',
     previewDescriptionPlaceholder: 'The description will appear here.',
     useSiteCover: 'Use my site’s image as the cover',
+    leadImage: {
+      legend: 'First image of your listing',
+      site: 'Your site’s image (recommended)',
+      screenshot: 'Your first gallery image',
+      hidden: 'Only your images, without your site’s',
+    },
     openPreview: 'See the full listing',
     autosaveNote:
       'We save every time you move forward. Nothing is published until you submit it and the team approves it.',

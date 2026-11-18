@@ -1098,11 +1098,23 @@ export function SolutionEditor({
 
   // ── Layout ─────────────────────────────────────────────────────────────────────
   const requiredIndex = requiredQuestions.findIndex(item => item.id === question.id);
-  const cover = data.screenshots?.[0]
-    ? `/api/solutions/${solution.id}/media/${data.screenshots[0].id}`
-    : hasCover && !data.hideSiteImage
+  // Same rule as solutionCover() (src/lib/solutions/gallery.ts): the site's og:image
+  // leads unless the founder picked their own first image or hid it; the version keeps
+  // the browser from showing a cover the founder just re-read.
+  const siteCover =
+    hasCover && !data.hideSiteImage
       ? `/api/solutions/${solution.id}/site-image?v=${coverVersion}`
       : null;
+  const shotCover = data.screenshots?.[0]
+    ? `/api/solutions/${solution.id}/media/${data.screenshots[0].id}`
+    : null;
+  const cover =
+    data.coverSource === 'screenshot' ? (shotCover ?? siteCover) : (siteCover ?? shotCover);
+  const leadImage = data.hideSiteImage
+    ? 'hidden'
+    : data.coverSource === 'screenshot'
+      ? 'screenshot'
+      : 'site';
 
   return (
     <form
@@ -1324,6 +1336,35 @@ export function SolutionEditor({
               />
               {text.useSiteCover}
             </label>
+          )}
+          {hasCover && !!data.screenshots?.length && (
+            <fieldset className="mt-4 max-w-[340px]">
+              <legend className="text-xs font-medium text-stone-700">
+                {text.leadImage.legend}
+              </legend>
+              <div className="mt-2 space-y-2">
+                {(['site', 'screenshot', 'hidden'] as const).map(value => (
+                  <label
+                    key={value}
+                    className="flex cursor-pointer items-start gap-2 text-xs leading-relaxed text-stone-500"
+                  >
+                    <input
+                      type="radio"
+                      name="lead-image"
+                      checked={leadImage === value}
+                      onChange={() =>
+                        update({
+                          hideSiteImage: value === 'hidden',
+                          coverSource: value === 'screenshot' ? 'screenshot' : undefined,
+                        })
+                      }
+                      className="mt-0.5 accent-[#365DC4]"
+                    />
+                    {text.leadImage[value]}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
           )}
           <Link
             href={`/account/solutions/${solution.id}/preview`}

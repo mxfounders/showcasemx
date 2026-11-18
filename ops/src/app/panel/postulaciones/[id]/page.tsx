@@ -440,6 +440,14 @@ function FichaTab({
               },
               { label: 'Leída', value: fmtDateTime(site.fetchedAt) },
               { label: 'Oculta por el fundador', value: d.hideSiteImage ? 'Sí' : 'No' },
+              {
+                label: 'Primera imagen',
+                value: d.hideSiteImage
+                  ? 'Galería (sin la del sitio)'
+                  : d.coverSource === 'screenshot'
+                    ? 'Primera de la galería'
+                    : 'La del sitio',
+              },
             ]}
           />
         )}

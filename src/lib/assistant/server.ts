@@ -138,6 +138,7 @@ function changesSchema(text: Record<string, string>) {
       ),
       projectLinks: optional(z.array(link), text.projectLinks),
       hideSiteImage: optional(z.boolean(), text.hideSiteImage),
+      coverSource: optional(z.enum(['site', 'screenshot']), text.coverSource),
       otherCategory: optional(z.string(), text.otherCategory),
     })
     .describe(text.changes);

@@ -24,6 +24,7 @@ export const FIELD_LABELS: Record<string, string> = {
   founders: 'Creadores',
   projectLinks: 'Enlaces del proyecto',
   hideSiteImage: 'Ocultar portada del sitio',
+  coverSource: 'Primera imagen',
   industries: 'Industrias',
   companySizes: 'Tamaños de empresa',
   capabilities: 'Capacidades',

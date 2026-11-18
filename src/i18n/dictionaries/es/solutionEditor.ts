@@ -352,6 +352,12 @@ export const solutionEditor = {
     previewNamePlaceholder: 'Tu proyecto',
     previewDescriptionPlaceholder: 'Aquí aparecerá la descripción.',
     useSiteCover: 'Usar la imagen de mi sitio como portada',
+    leadImage: {
+      legend: 'Primera imagen de tu ficha',
+      site: 'La imagen de tu sitio (recomendada)',
+      screenshot: 'Tu primera imagen de la galería',
+      hidden: 'Solo tus imágenes, sin la de tu sitio',
+    },
     openPreview: 'Ver la ficha completa',
     autosaveNote:
       'Guardamos cada vez que avanzas. Nada se publica hasta que lo envías y el equipo lo aprueba.',

@@ -149,6 +149,7 @@ export function SolutionPresentation({
     screenshots: data.screenshots,
     hasSiteImage,
     hideSiteImage: data.hideSiteImage,
+    coverSource: data.coverSource,
     labels: uiDict.gallery,
   });
   const industryLabels = Object.fromEntries(

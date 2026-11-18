@@ -214,6 +214,8 @@ export const assistant = {
           founders: 'Up to 3 team members, with their consent: name, role, bio and links.',
           projectLinks: 'The project’s official links (at most 6).',
           hideSiteImage: 'true to stop showing the image the website publishes as a cover.',
+          coverSource:
+            "'site' (default): the website's image leads. 'screenshot': the first gallery image leads.",
           otherCategory: 'A category that isn’t in the list, in the founder’s own words.',
         },
       },
