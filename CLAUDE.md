@@ -3850,3 +3850,50 @@ paralelas (cada una en su worktree) y los integra en `main` conforme terminan.
   (79/179/112), necesidades (58/60), perfiles (120), atribución (111/109/110), ficha y
   comparador (56/53), MCP (152) y passkeys (158). Se integran en `main` al terminar.
 
+## 88. Ronda de sesiones paralelas del 17 y 18 de noviembre
+
+Continuación de §87: ocho sesiones, cada una en su worktree, integradas en `main` de dos en
+dos (la Mac del propietario tiene 8 GB y se trababa con más). Cada una dejó su contrato en
+`docs/`, su comentario en Linear y el issue en «In Review». Orden de migraciones nuevo:
+57 a 63 en docs/database.md.
+
+- **Ficha y comparador (SHCWS-56/53)**: país, mercados donde opera y factura, idiomas y
+  horario de soporte, pagos, año, equipo, clientes y casos «declarados» en `SolutionData`
+  (jsonb, sin migración), con filtros por país e idioma. Comparador con filas estructuradas
+  y comparación temporal desde tarjetas, ficha y búsqueda (`/comparar`), sin crear lista.
+  docs/provider-facts.md y docs/comparator.md.
+- **Perfiles públicos (SHCWS-120)**: `/c/<handle>` opt-in con proyectos y listas públicas,
+  seguir perfiles, directorio de fundadores, moderación en ops. Migración 57
+  `public-profiles`. docs/public-profiles.md.
+- **«Publica tu necesidad» (SHCWS-58/60, parte de 148)**: brief del comprador con
+  consentimiento `brief-v1`, propuestas de fundadores que encajan, comparación y elección que
+  abre una conversación normal; bandeja de necesidades y listas cortas en ops. Migración 58
+  `buyer-briefs`. docs/briefs.md.
+- **Passkeys (SHCWS-158)**: registrar y entrar con WebAuthn (`@simplewebauthn` 14), acceso
+  fuerte sin TOTP encima, aviso de seguridad. Migración 59 `account-passkeys`.
+  docs/account-settings.md.
+- **Anuncios (SHCWS-79/179/112)**: ubicaciones `industry`, `collection` y `search` cerradas y
+  sin tarifa; ventanas de caída desde fuera de Vercel (`OUTAGE_WEBHOOK_SECRET`) que reponen o
+  reembolsan días de más de 4 h; vistas por ubicación deduplicadas con `visitorHash`.
+  Migración 60 `ad-placements-outages`. docs/ads.md.
+- **Newsletter (SHCWS-124/125)**: doble opt-in, campañas por segmento con prueba obligatoria,
+  clics propios sin píxel, webhook de Resend firmado (`RESEND_WEBHOOK_SECRET`), envío desde
+  ops (`OPS_NEWSLETTER_SECRET`) y borrador semanal de «Nuevo esta semana». Migración 61
+  `newsletter-sending`, aplicada en `shwcs_production` por la propia sesión a pedido del
+  propietario; el webhook de Resend existe pero desactivado. Cuenta de Resend en plan
+  gratuito: su cuota la comparten todos los correos del sitio. docs/newsletter.md.
+- **Atribución, embudos y métricas norte (SHCWS-111/109/110)**: canal por día sin cookies ni
+  identificadores (`traffic_daily`), origen de alta en la cuenta, `/panel/canales`,
+  `/panel/embudos` y métricas norte en `/panel`. Migración 62 `traffic-attribution`.
+  docs/attribution.md.
+- **Servidor MCP (SHCWS-152)**: `/api/mcp` con tokens personales (solo SHA-256, alcance,
+  caducidad, revocación), herramientas sobre fichas propias con las mismas validaciones del
+  editor y bitácora por token. Migración 63 `assistant-tokens`. docs/assistant-mcp.md.
+- Integración: conflictos solo en el orden de migraciones, docs/ops.md, la exportación de
+  datos (orden de consultas comprobado) y la ficha (casos de clientes + enlace al perfil).
+  Verificado sobre `main` 4d18fc83: formato, lint, tipos, 487 pruebas y los builds del
+  producto y de ops.
+- **Pendiente para desplegar**: migraciones 57–60, 62 y 63 en `shwcs_production` antes del
+  push; variables `OPS_NEWSLETTER_SECRET` (igual en `shwcs` y `shwcs-ops`),
+  `RESEND_WEBHOOK_SECRET` y `OUTAGE_WEBHOOK_SECRET` en Vercel (acción del propietario).
+
