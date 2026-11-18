@@ -91,6 +91,53 @@ lo comprueba contra un servidor aislado.
 - Restablecer contraseña y confirmar correo limitan por red: el token lo elige quien
   llama. El inicio con Google limita por red (30/h) en vez de una clave fija para todos.
 
+### Passkeys (SHCWS-158, 17 de noviembre de 2026)
+
+Entrar con la huella, el rostro o el PIN del dispositivo, sin escribir la contraseña.
+Librerías `@simplewebauthn/server@14.0.3` y `@simplewebauthn/browser@14.0.0` (versiones
+exactas); lógica en `src/lib/auth/passkeys.ts`, con las mismas ideas que el acceso de Flouvia.
+
+- **Dónde viven**: el rpID sale de `AUTH_APP_ORIGIN` (`shwcs.site` en producción) y solo hay
+  ceremonias si la petición llega de ese origen exacto; en previews u otros hosts la opción
+  no aparece. En desarrollo, `localhost` con el puerto del servidor. Nunca una IP.
+- **Añadir** (Seguridad › Passkeys): sesión, mismo origen, correo confirmado (misma razón que
+  la verificación en dos pasos, SHCWS-173) y la contraseña otra vez; con la verificación en
+  dos pasos activa, también un código (de la app o de respaldo). Se pide verificación de
+  usuario y passkey descubrible; sin atestación. Nombre opcional de hasta 60 caracteres; si
+  falta, el del gestor (por AAGUID: Llavero de iCloud, Google, 1Password…) o «Passkey ·
+  Chrome en macOS». Máximo 20 por cuenta; el navegador no crea una segunda en el mismo
+  dispositivo (`excludeCredentials`).
+- **Entrar** (`/sign-in`): botón «Entrar con passkey» y, donde el navegador lo ofrece,
+  sugerencias en el campo de correo (`autocomplete="email webauthn"`, mediación
+  condicional). Abre la misma sesión que la contraseña (dispositivo, aviso de dispositivo
+  nuevo, `next` de `authReturnTo`) y **no pide el código de la verificación en dos pasos**:
+  la passkey ya exige el dispositivo y su desbloqueo. Una cuenta suspendida recibe la misma
+  respuesta que una firma inválida.
+- **Retos**: de un uso, 5 minutos, guardados solo como SHA-256 del reto en
+  `auth_passkey_challenges`. La fila se borra antes de revisar la firma: cada reto tiene un
+  intento, salga bien o mal. Los de registro quedan atados a la cuenta y a la sesión que los
+  pidió. El autocompletado renueva el suyo cada 4 minutos. El cron diario borra los caducados.
+- **Contador**: se guarda y se actualiza con compare-and-set en la misma sentencia que abre la
+  sesión; uno que no avanza (llave clonada) se rechaza. Las passkeys sincronizadas siempre
+  reportan 0.
+- **Quitar**: con la contraseña. Cierra en la misma sentencia las sesiones que se abrieron con
+  esa passkey (`auth_sessions.passkey_id`), salvo la actual. La contraseña siempre queda, así
+  que también se puede quitar la última. Después se manda la señal
+  `allAcceptedCredentials` para que el gestor deje de ofrecerla; si una passkey borrada se
+  intenta usar, el servidor responde «ya no está registrada» y el navegador recibe
+  `unknownCredential`.
+- **Avisos**: añadir y quitar mandan un aviso de seguridad (siempre activo). El de «se añadió
+  una passkey» no dice «elige una contraseña nueva» como los demás: una passkey sobrevive a
+  un cambio de contraseña, así que su botón lleva a Seguridad para quitarla.
+- **Datos**: la exportación incluye `security.passkeys` (nombre, sincronizada, fechas), sin
+  clave pública, id de credencial ni contador. Todo se borra en cascada con la cuenta.
+  Privacidad (es/en) describe qué se guarda y que la huella o el rostro no salen del
+  dispositivo.
+
+Restablecer la contraseña por correo no quita las passkeys (igual que no desvincula Google):
+quien recupera una cuenta debe revisar la lista de passkeys, y el aviso de «se añadió» se lo
+indica. Migración `db/account-passkeys.sql`.
+
 ### Sesiones abiertas
 
 `auth_sessions` guarda `created_at`, `last_seen_at` y `user_agent`.
