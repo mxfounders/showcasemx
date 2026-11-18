@@ -42,6 +42,8 @@ export const settings = {
     security: {
       title: 'Seguridad y acceso',
       twoStepOn: 'Verificación en dos pasos activa',
+      passkeysOne: '{count} passkey',
+      passkeysOther: '{count} passkeys',
       passwordOnly: 'Solo contraseña',
       sessionsOne: '{count} sesión abierta',
       sessionsOther: '{count} sesiones abiertas',
@@ -110,6 +112,10 @@ export const settings = {
     twoStepTitle: 'Verificación en dos pasos',
     twoStepDesc: 'Un código temporal de tu teléfono, además de tu contraseña.',
     twoStepLoadError: 'No pudimos leer el estado de tu verificación. Recarga la página.',
+    passkeysTitle: 'Passkeys',
+    passkeysDesc:
+      'Entra con la huella, el rostro o el PIN de tu dispositivo, sin escribir tu contraseña. Tu huella o tu rostro nunca salen de tu dispositivo.',
+    passkeysLoadError: 'No pudimos leer tus passkeys. Recarga la página.',
     passwordTitle: 'Cambiar contraseña',
     passwordDesc:
       'Necesitas tu contraseña actual. Al cambiarla, cerraremos tus sesiones en todos los dispositivos por seguridad.',
@@ -138,6 +144,49 @@ export const settings = {
       closeOthersMany: 'Cerrar las otras {count} sesiones',
       noOthers: 'No hay otras sesiones abiertas.',
     },
+    passkeys: {
+      callError: 'No pudimos completar el cambio.',
+      genericError: 'No pudimos completar el cambio. Intenta de nuevo.',
+      cancelled: 'No se creó la passkey. Puedes intentarlo de nuevo cuando quieras.',
+      alreadyOnDevice:
+        'Este dispositivo o gestor de contraseñas ya tiene una passkey de tu cuenta. Usa esa o quítala de la lista antes de crear otra.',
+      unsupported:
+        'Este navegador no admite passkeys. Prueba con Safari, Chrome, Edge o Firefox actualizados.',
+      unavailable:
+        'Las passkeys solo funcionan en la dirección principal de shwcs. Abre Configuración desde ahí para añadir una.',
+      verifyEmailFirst:
+        'Para añadir una passkey, primero confirma tu correo con el enlace de arriba. Así nadie puede dejar una forma de entrar en una cuenta con un correo que no es suyo.',
+      empty: 'Todavía no tienes passkeys. Tu contraseña sigue siendo tu forma de entrar.',
+      synced: 'Sincronizada',
+      syncedHint: 'Tu gestor de contraseñas la guarda en tus otros dispositivos.',
+      created: 'Creada el {date}',
+      lastUsed: 'Último uso el {date}',
+      neverUsed: 'Sin usar todavía',
+      add: 'Añadir passkey',
+      addPrompt:
+        'Confirma tu contraseña para crear una passkey. Después, tu dispositivo te pedirá tu huella, tu rostro o tu PIN.',
+      addPromptCode:
+        'Confirma tu contraseña y un código de verificación para crear una passkey. Después, tu dispositivo te pedirá tu huella, tu rostro o tu PIN.',
+      nameLabel: 'Nombre (opcional)',
+      namePlaceholder: 'Por ejemplo: MacBook de trabajo',
+      nameHint:
+        'Si lo dejas vacío, usamos el nombre de tu gestor de contraseñas o de tu dispositivo.',
+      currentPassword: 'Contraseña actual',
+      codeLabel: 'Código de tu aplicación o de respaldo',
+      noPassword: '¿No tienes contraseña? Crea una →',
+      cancel: 'Cancelar',
+      creating: 'Esperando a tu dispositivo…',
+      createSubmit: 'Crear passkey',
+      added: 'Listo: ya puedes entrar con «{name}».',
+      remove: 'Quitar',
+      removeLabel: 'Quitar la passkey {name}',
+      removeDesc:
+        'Ya no podrás entrar con «{name}», y se cerrarán las sesiones que se abrieron con ella. Tu contraseña sigue funcionando. Confirma con tu contraseña.',
+      removing: 'Quitando…',
+      removeSubmit: 'Quitar passkey',
+      removed: 'Quitamos «{name}».',
+      limit: 'Puedes tener hasta {count} passkeys.',
+    },
     twoFactor: {
       callError: 'No pudimos completar el cambio.',
       genericError: 'No pudimos completar el cambio. Intenta de nuevo.',
@@ -149,7 +198,7 @@ export const settings = {
         'La verificación en dos pasos no está habilitada en este entorno todavía. Falta configurar la clave de cifrado {key} en el servidor.',
       active: 'Activa',
       activeDesc:
-        'Al entrar te pediremos un código de tu aplicación de autenticación además de tu contraseña, también si entras con Google.',
+        'Al entrar te pediremos un código de tu aplicación de autenticación además de tu contraseña, también si entras con Google. Una passkey no lo pide: ya usa la huella, el rostro o el PIN de tu dispositivo.',
       regenerate: 'Generar códigos de respaldo nuevos',
       disable: 'Desactivar',
       previousInvalid: 'Los códigos anteriores dejaron de servir.',
@@ -236,6 +285,8 @@ export const settings = {
         'Se borrará la conversación de contacto en la que participas, también para la otra persona.',
       conversationMany:
         'Se borrarán las {count} conversaciones de contacto en las que participas, también para la otra persona.',
+      briefs:
+        'Se borrarán tus necesidades publicadas con las propuestas que recibieron, y las propuestas que enviaste.',
       library: 'Se borrarán tus guardados, listas y notas privadas.',
       noRecovery: 'No hay periodo de recuperación: no podremos restaurar nada después.',
       intro: 'Elimina tu cuenta y todo lo asociado a ella de forma permanente.',
@@ -255,7 +306,7 @@ export const settings = {
   },
   languageSelector,
   exportAbout:
-    'Copia de los datos que shwcs guarda de esta cuenta. No incluye contraseñas, secretos de verificación en dos pasos ni datos privados de otras personas.',
+    'Copia de los datos que shwcs guarda de esta cuenta. No incluye contraseñas, secretos de verificación en dos pasos, las claves de tus passkeys ni datos privados de otras personas.',
   /** Messages returned by the /api/account/* routes. */
   errors: {
     useAccountForm: 'Usa el formulario de tu cuenta.',
@@ -343,5 +394,16 @@ export const settings = {
       'Confirma tu correo antes de activar la verificación en dos pasos. Pide el enlace en Seguridad.',
     secondFactorMissing: 'Escribe el código de tu aplicación o uno de respaldo.',
     secondFactorWrong: 'El código no es correcto o ya se usó.',
+    passkeyUnavailable:
+      'Las passkeys solo funcionan en la dirección principal de shwcs. Abre Configuración desde ahí.',
+    passkeyEmailFirst:
+      'Confirma tu correo antes de añadir una passkey. Pide el enlace en Seguridad.',
+    passkeyLimit: 'Ya tienes el máximo de passkeys. Quita una antes de añadir otra.',
+    passkeyName: 'El nombre puede tener hasta 60 caracteres.',
+    passkeyExpired: 'La solicitud venció. Empieza de nuevo para crear la passkey.',
+    passkeyDuplicate: 'Esa passkey ya estaba registrada.',
+    passkeyFailed: 'No pudimos confirmar la passkey. Intenta de nuevo.',
+    passkeyGone: 'Esa passkey ya no existe. Recarga la página.',
+    passkeyUnavailableNow: 'No pudimos completar el cambio de passkeys. Intenta de nuevo.',
   },
 } as const;

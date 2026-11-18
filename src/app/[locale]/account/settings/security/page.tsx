@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import Link from '@/i18n/navigation';
 import { EmailVerification } from '@/components/notifications/verification';
 import { notificationPreferences } from '@/lib/notifications/server';
@@ -7,6 +7,13 @@ import { requireFounder } from '@/lib/solutions/server';
 import { PasswordForm } from '@/components/settings/password-form';
 import { TwoFactor } from '@/components/settings/two-factor';
 import { SessionList, type ActiveSession } from '@/components/settings/session-list';
+import { Passkeys, type PasskeyRow } from '@/components/settings/passkeys';
+import {
+  listPasskeys,
+  maxPasskeysPerAccount,
+  originFromHeaders,
+  relyingParty,
+} from '@/lib/auth/passkeys';
 import { authSql } from '@/lib/auth/security';
 import { hashToken } from '@/lib/auth/password';
 import { deviceLabel, sessionCookie } from '@/lib/auth/session';
@@ -24,14 +31,19 @@ export default async function SecuritySettings(props: { params: Promise<{ locale
   const current = hashToken((await cookies()).get(sessionCookie)?.value ?? '');
   let twoStep = false,
     sessions: ActiveSession[] = [],
+    passkeys: PasskeyRow[] = [],
     storageFailed = false;
+  // Passkeys only exist on shwcs's own address (SHCWS-158); elsewhere the card says so.
+  const passkeysAvailable = Boolean(relyingParty(originFromHeaders(await headers())));
   try {
     const sql = authSql();
-    const [[row], rows] = await Promise.all([
+    const [[row], rows, keys] = await Promise.all([
       sql`SELECT totp_confirmed_at FROM auth_accounts WHERE id=${account.id}`,
       sql`SELECT token_hash,user_agent,created_at::text,last_seen_at::text,expires_at::text FROM auth_sessions WHERE account_id=${account.id} AND expires_at>now() ORDER BY created_at DESC LIMIT 25`,
+      listPasskeys(account.id),
     ]);
     twoStep = Boolean(row?.totp_confirmed_at);
+    passkeys = keys;
     // Only the hash travels to the client; it identifies a row without ever being
     // a usable session token.
     sessions = rows.map(item => ({
@@ -75,6 +87,26 @@ export default async function SecuritySettings(props: { params: Promise<{ locale
             available={totpConfigured()}
             emailVerified={prefs.verified}
             dict={dict.twoFactor}
+          />
+        )}
+      </div>
+
+      <div className={card}>
+        <h2 className="mb-2 text-lg font-medium text-stone-900">{dict.passkeysTitle}</h2>
+        <p className="mb-6 text-sm leading-relaxed text-stone-500">{dict.passkeysDesc}</p>
+        {storageFailed ? (
+          <p role="alert" className="text-sm text-[#A94E35]">
+            {dict.passkeysLoadError}
+          </p>
+        ) : (
+          <Passkeys
+            passkeys={passkeys}
+            available={passkeysAvailable}
+            emailVerified={prefs.verified}
+            twoStep={twoStep}
+            max={maxPasskeysPerAccount}
+            dict={dict.passkeys}
+            dateLocale={dictionary.settings.dateLocale}
           />
         )}
       </div>

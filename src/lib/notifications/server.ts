@@ -11,13 +11,14 @@ import { reviewRequestEmail } from '@/lib/notifications/review-request-email';
 import { loadSearchAlertEmail } from '@/lib/notifications/alert-email';
 import { loadFollowDigestEmail } from '@/lib/notifications/follow-email';
 import { loadContactReminderEmail } from '@/lib/notifications/contact-reminder-email';
+import { loadBriefNoticeEmail } from '@/lib/notifications/brief-email';
 import { readContactReminderKey } from '@/lib/contacts/reminder-model';
 import { getDictionary } from '@/i18n/get-dictionary';
 export async function notificationPreferences(owner: string) {
   const sql = authSql();
   const [row] =
     // Contact alerts are on unless turned off (SHCWS-13, db/contact-alerts-default.sql).
-    await sql`SELECT a.email_verified_at,COALESCE(p.contact_email,true) AS contact_email,COALESCE(p.solution_email,true) AS solution_email,COALESCE(p.community_email,false) AS community_email,COALESCE(p.weekly_email,true) AS weekly_email,COALESCE(p.alert_email,true) AS alert_email FROM auth_accounts a LEFT JOIN notification_preferences p ON p.owner_id=a.id WHERE a.id=${owner}`;
+    await sql`SELECT a.email_verified_at,COALESCE(p.contact_email,true) AS contact_email,COALESCE(p.solution_email,true) AS solution_email,COALESCE(p.community_email,false) AS community_email,COALESCE(p.weekly_email,true) AS weekly_email,COALESCE(p.alert_email,true) AS alert_email,COALESCE(p.brief_email,true) AS brief_email FROM auth_accounts a LEFT JOIN notification_preferences p ON p.owner_id=a.id WHERE a.id=${owner}`;
   return {
     verified: !!row?.email_verified_at,
     contactEmail: !!row?.contact_email,
@@ -25,6 +26,7 @@ export async function notificationPreferences(owner: string) {
     communityEmail: !!row?.community_email,
     weeklyEmail: !!row?.weekly_email,
     alertEmail: !!row?.alert_email,
+    briefEmail: !!row?.brief_email,
     emailAvailable: !!recoveryConfig(),
   };
 }
@@ -102,6 +104,7 @@ export async function deliverNotifications({
           AND (CASE WHEN ${row.category} IN ('security','account') THEN true
             WHEN ${row.category}='contact' THEN a.email_verified_at IS NOT NULL AND COALESCE(p.contact_email,true)
             WHEN ${row.category}='community' THEN a.email_verified_at IS NOT NULL AND COALESCE(p.community_email,false)
+            WHEN ${row.category}='brief' THEN a.email_verified_at IS NOT NULL AND COALESCE(p.brief_email,true)
             WHEN ${row.category}='alert' THEN a.email_verified_at IS NOT NULL AND COALESCE(p.alert_email,true)
               AND EXISTS(SELECT 1 FROM search_alert_matches m JOIN founder_solutions s ON s.id=m.solution_id AND s.published_data IS NOT NULL WHERE m.notice_key=${row.source_key})
             ELSE a.email_verified_at IS NOT NULL AND COALESCE(p.solution_email,true) END)`;
@@ -153,8 +156,15 @@ export async function deliverNotifications({
         footerNote = 'Te escribimos una sola vez, al terminar de crear tu cuenta.';
       }
       if (row.category === 'security') {
-        email = securityNotice(title, String(row.created_at));
-        buttonHref = `${config.origin}/es/forgot-password`;
+        const passkeyAdded = String(row.source_key).startsWith('security:passkey-added:');
+        email = securityNotice(
+          title,
+          String(row.created_at),
+          passkeyAdded ? 'passkey-added' : 'default',
+        );
+        buttonHref = passkeyAdded
+          ? `${config.origin}/es/account/settings/security`
+          : `${config.origin}/es/forgot-password`;
         footerNote = 'Los avisos de seguridad siempre se envían; no se pueden desactivar.';
       }
       if (row.category === 'community') {
@@ -196,6 +206,23 @@ export async function deliverNotifications({
           buttonHref = built.button.href;
           footerNote = built.footerNote;
         }
+      }
+      if (row.category === 'brief') {
+        // «Publica tu necesidad» (SHCWS-58/60, brief-email.ts): a brief that fits, a
+        // proposal or the team's short list. Gone since (hidden, closed): skipped.
+        const built = await loadBriefNoticeEmail({
+          title,
+          sourceKey: String(row.source_key),
+          origin: config.origin,
+        });
+        if (!built) {
+          await sql`UPDATE account_notifications SET email_state='skipped',locked_at=NULL WHERE id=${row.id}`;
+          skipped++;
+          continue;
+        }
+        email = { ...built, button: built.button.label };
+        buttonHref = built.button.href;
+        footerNote = built.footerNote;
       }
       if (row.category === 'solution') {
         // Listing notices link to /account/solutions/<id>…, except «on a public list»

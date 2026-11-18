@@ -18,6 +18,7 @@ export default async function DataSettings(props: { params: Promise<{ locale: st
   let publications = 0,
     conversations = 0,
     twoStep = false,
+    briefs = false,
     storageFailed = false,
     profileHandle: string | null = null;
   try {
@@ -36,6 +37,14 @@ export default async function DataSettings(props: { params: Promise<{ locale: st
     profileHandle = profile ? String(profile.handle) : null;
   } catch {
     storageFailed = true;
+  }
+  // Posted needs and sent proposals (SHCWS-58); a base without db/buyer-briefs.sql has none.
+  try {
+    const [row] =
+      await authSql()`SELECT EXISTS(SELECT 1 FROM buyer_briefs WHERE buyer_id=${account.id}) OR EXISTS(SELECT 1 FROM buyer_brief_proposals WHERE founder_id=${account.id}) AS any`;
+    briefs = row?.any === true;
+  } catch {
+    briefs = false;
   }
 
   const current = (i18n.locales as readonly string[]).includes(locale)
@@ -87,6 +96,7 @@ export default async function DataSettings(props: { params: Promise<{ locale: st
           <DeleteAccount
             publications={publications}
             conversations={conversations}
+            briefs={briefs}
             twoStep={twoStep}
             profileNotice={
               profileHandle

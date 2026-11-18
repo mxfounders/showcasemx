@@ -50,25 +50,29 @@ export function ContactForm({
   email,
   defaults,
   listingSizes,
+  briefId,
   dict: t,
 }: {
   solutionId: string;
   recipientId: string;
   projectName: string;
   email: string;
-  defaults: { name: string; company: string };
+  /** Name and company from the profile; a brief's proposal also brings the rest (SHCWS-58). */
+  defaults: { name: string; company: string } & Partial<ContactDetails>;
   /** Company sizes the listing declares: undefined if it never said, [] for any size. */
   listingSizes?: string[];
+  /** The brief whose proposal the buyer is choosing: recorded with the request. */
+  briefId?: string;
   dict: ContactsDict;
 }) {
   const locale = useLocale();
   const sizes = localizedCompanySizes(locale);
   const [details, setDetails] = useState<ContactDetails>({
-      ...defaults,
       size: '',
       timeline: '',
       budget: '',
       need: '',
+      ...defaults,
     }),
     [consent, setConsent] = useState(false),
     [review, setReview] = useState(false),
@@ -120,6 +124,7 @@ export function ContactForm({
               recipientId,
               consent,
               consentVersion,
+              ...(briefId ? { briefId } : {}),
             },
             t.clientErrors.fallback,
           );

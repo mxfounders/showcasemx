@@ -5,7 +5,7 @@ import { ArrowRightIcon, SearchIcon } from '@/components/icons/gota';
 import { BoardCard } from '@/components/library/board-card';
 import { ProjectMark } from '@/components/project-mark';
 import { actionButtonStyle } from '@/lib/brand-colors';
-import { contactBriefHref } from '@/lib/contact-inquiry';
+import { briefHref } from '@/lib/briefs/links';
 import { globalSearch } from '@/lib/search/global';
 import { localizedCategoryDisplayLabel } from '@/lib/taxonomy';
 import { getDictionary } from '@/i18n/get-dictionary';
@@ -110,7 +110,7 @@ export default async function SearchPage(props: Props) {
           <p className="mt-3 max-w-md text-sm leading-relaxed text-stone-500">{t.noResultsDesc}</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
-              href={contactBriefHref(query)}
+              href={briefHref(query)}
               style={actionButtonStyle}
               className="action-button inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium"
             >

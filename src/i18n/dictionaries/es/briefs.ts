@@ -1,0 +1,217 @@
+/**
+ * «Publica tu necesidad» (SHCWS-58): el brief del comprador, las propuestas de los
+ * fundadores que encajan, la comparación y la elección, y la lista corta del equipo.
+ */
+export const briefs = {
+  meta: {
+    list: 'Mis necesidades',
+    new: 'Publica tu necesidad',
+    detail: 'Tu necesidad',
+    needs: 'Necesidades',
+    need: 'Necesidad que encaja',
+    choose: 'Elegir propuesta',
+  },
+  entry: {
+    cta: 'Publica tu necesidad',
+    searchEmpty: 'Cuéntanos qué necesitas y los proyectos que encajan te envían una propuesta.',
+    listing: '¿No es lo que buscas? Publica tu necesidad',
+    categoryPrefill: 'Busco una solución de {category}',
+  },
+  states: {
+    open: 'Recibiendo propuestas',
+    closed: 'Cerrada',
+    expired: 'Vencida',
+    hidden: 'Oculta por el equipo de shwcs',
+  },
+  facts: {
+    problem: 'Qué necesitas',
+    categories: 'Categorías',
+    capabilities: 'Qué debe hacer',
+    industry: 'Industria',
+    size: 'Tamaño de la empresa',
+    timeline: 'Plazo',
+    budget: 'Presupuesto',
+    country: 'País',
+    notSpecified: 'Sin especificar',
+    published: 'Publicada el {date}',
+    expires: 'Recibe propuestas hasta el {date}',
+    expired: 'Dejó de recibir propuestas el {date}',
+  },
+  form: {
+    title: 'Publica tu necesidad',
+    intro:
+      'Describe qué necesitas resolver. Los proyectos publicados que encajan te envían una propuesta y tú eliges con quién hablar. Nadie ve tu nombre, tu empresa ni tu correo hasta que elijas.',
+    aria: 'Publicar una necesidad',
+    problem: 'Qué necesitas resolver',
+    problemHint:
+      'Cuenta el problema, cómo lo resuelves hoy y qué esperas. No escribas nombres, correos ni teléfonos: los fundadores leen este texto antes de que elijas.',
+    problemPlaceholder:
+      'Ej.: Cobramos a 60 distribuidores por transferencia y conciliamos a mano en Excel. Buscamos algo que mande recordatorios y concilie pagos con el banco.',
+    categories: 'Categorías (hasta 3)',
+    suggestedCategories: 'Por lo que escribiste, esto parece de',
+    capabilitiesIntro:
+      'Opcional: marca lo que tiene que hacer (hasta 8) para llegar a quien mejor encaja.',
+    capabilitiesLegend: 'En {category}',
+    suggestedCapabilities: 'Detectamos esto en lo que escribiste',
+    industry: 'Industria de tu empresa',
+    suggestedIndustries: 'Tu industria podría ser',
+    size: 'Tamaño de tu empresa',
+    timeline: 'Para cuándo',
+    budget: 'Presupuesto',
+    budgetPlaceholder: 'Ej.: hasta 500 USD al mes',
+    country: 'País de tu empresa',
+    optional: '(opcional)',
+    selectOption: 'Elige una opción',
+    review: 'Revisar antes de publicar',
+    reviewTitle: 'Así la verán los proyectos que encajan',
+    reviewNote:
+      'La mandamos a los proyectos publicados cuyas fichas encajan con las categorías, lo que debe hacer, tu industria y tu tamaño. Recibe propuestas 30 días; puedes cerrarla antes.',
+    consent:
+      'Autorizo que shwcs muestre esta necesidad a los fundadores cuyas fichas publicadas encajan con ella y que el equipo de shwcs la lea para ayudarme a encontrar opciones. Antes de que elija una propuesta, los fundadores no ven mi nombre, mi empresa ni mi correo. Al elegir una, envío a ese proyecto una solicitud de contacto que reviso antes de enviarla.',
+    consentRequired: 'Marca la casilla para autorizar la publicación.',
+    incomplete:
+      'Completa qué necesitas (al menos 20 caracteres), una categoría, el tamaño de tu empresa y el plazo.',
+    tooManyCategories: 'Elige hasta 3 categorías.',
+    tooManyCapabilities: 'Elige hasta 8 capacidades.',
+    publish: 'Publicar necesidad',
+    publishing: 'Publicando…',
+    edit: 'Editar',
+    verifyTitle: 'Confirma tu correo para publicar',
+    verifyBody:
+      'Una necesidad llega a varios proyectos a la vez, así que pedimos un correo confirmado. Confírmalo en {link} y vuelve aquí.',
+    verifyLink: 'Seguridad',
+    myBriefs: 'Mis necesidades →',
+  },
+  list: {
+    title: 'Mis necesidades',
+    subtitle: 'Lo que publicaste y las propuestas que recibiste. Compara y elige con quién hablar.',
+    new: 'Publicar una necesidad',
+    empty:
+      'Todavía no publicas ninguna. Describe qué necesitas y los proyectos que encajan te escriben.',
+    proposals: '{count} propuestas',
+    proposalsOne: '1 propuesta',
+    proposalsNone: 'Sin propuestas todavía',
+    matches: 'Enviada a {count} proyectos',
+    matchesNone: 'Ningún proyecto encaja todavía',
+    shortlist: 'Lista corta del equipo',
+    open: 'Ver propuestas',
+  },
+  detail: {
+    back: '← Mis necesidades',
+    title: 'Tu necesidad',
+    matches:
+      'La enviamos a {count} proyectos que encajan. Cuando uno te proponga algo, te avisamos.',
+    matchesOne: 'La enviamos a 1 proyecto que encaja. Cuando te proponga algo, te avisamos.',
+    matchesNone:
+      'Todavía ningún proyecto publicado encaja. El equipo de shwcs la revisa y, si se publica uno que encaje mientras esté abierta, se la enviamos.',
+    hiddenNote: 'El equipo de shwcs la ocultó y ya no recibe propuestas. Motivo: {reason}',
+    close: 'Cerrar necesidad',
+    closeConfirm:
+      'Al cerrarla, nadie más puede enviarte propuestas. Las que ya recibiste se quedan aquí.',
+    closeYes: 'Sí, cerrarla',
+    cancel: 'Cancelar',
+    closing: 'Cerrando…',
+    proposalsTitle: 'Propuestas',
+    proposalsEmpty: 'Aún no llegan propuestas.',
+    proposalsLimit: 'Recibe hasta {max} propuestas.',
+    shortlistTitle: 'Lista corta del equipo de shwcs',
+    shortlistIntro:
+      'Revisamos tu necesidad y te sugerimos estos proyectos. No saben que te los recomendamos: escríbeles si te interesan.',
+    viewListing: 'Ver ficha',
+    contactListing: 'Pedir contacto',
+  },
+  compare: {
+    caption: 'Propuestas recibidas, lado a lado',
+    project: 'Proyecto',
+    message: 'Propuesta',
+    price: 'Precio estimado',
+    timeline: 'Plazo',
+    sizeFit: 'Tu tamaño',
+    sent: 'Recibida',
+    action: 'Siguiente paso',
+    unavailable: 'Proyecto no disponible',
+    choose: 'Elegir y escribirle',
+    chosen: 'Elegida',
+    openConversation: 'Ir a la conversación',
+    alreadyTalking: 'Elegir y seguir la conversación',
+    sizeFitLabels: {
+      declared: 'Atiende a tu tamaño',
+      any: 'Atiende a cualquier tamaño',
+      other: 'Declara otros tamaños',
+      unknown: 'No lo declaró',
+    },
+    scrollHint: 'Desliza para ver todas las propuestas.',
+  },
+  choose: {
+    back: '← Volver a las propuestas',
+    title: 'Escríbele a {project}',
+    intro:
+      'Al enviar, {project} recibe una solicitud de contacto con tu nombre, tu empresa, tu correo y lo que escribas aquí, y se abre una conversación. Los demás proyectos no se enteran.',
+    existingTitle: 'Ya tienes una conversación con {project}',
+    existingBody:
+      'No enviamos otra solicitud: marca esta propuesta como elegida y sigue en la misma conversación.',
+    existingButton: 'Elegir y abrir la conversación',
+    existingWorking: 'Abriendo…',
+  },
+  needs: {
+    title: 'Necesidades',
+    subtitle:
+      'Empresas que publicaron lo que necesitan y una de tus fichas encaja. Envía una propuesta; si te eligen, se abre una conversación en Oportunidades.',
+    empty:
+      'Todavía ninguna necesidad encaja con tus fichas publicadas. Te avisamos cuando llegue una.',
+    noListings:
+      'Las necesidades llegan a proyectos con ficha publicada. Publica la tuya para empezar a recibirlas.',
+    publish: 'Postular solución',
+    matchedWith: 'Encaja con {listings}',
+    proposed: 'Propuesta enviada',
+    chosen: 'Te eligieron',
+    notProposed: 'Sin propuesta',
+    view: 'Ver necesidad',
+    back: '← Necesidades',
+    detailTitle: 'Necesidad que encaja con {listings}',
+    privacy:
+      'No ves quién es la empresa ni sus datos de contacto. Si elige tu propuesta, recibes una solicitud con su nombre, empresa y correo en Oportunidades.',
+    closedNote: 'Ya no recibe propuestas.',
+    fullNote: 'Ya recibió el máximo de propuestas.',
+    chosenNote: 'Te eligieron: la conversación sigue en Oportunidades.',
+    openOpportunity: 'Abrir la oportunidad',
+    yourProposal: 'Tu propuesta',
+    sentOn: 'Enviada el {date}',
+  },
+  proposalForm: {
+    title: 'Envía tu propuesta',
+    intro: 'Una sola por necesidad: no se puede editar después de enviarla.',
+    aria: 'Enviar una propuesta',
+    listing: 'Desde qué ficha',
+    message: 'Cómo lo resolverías',
+    messagePlaceholder:
+      'Qué harías, en cuánto tiempo y qué necesitas de su lado. Sin enlaces de pago ni datos de terceros.',
+    price: 'Precio estimado',
+    pricePlaceholder: 'Ej.: desde 199 USD al mes',
+    timeline: 'Plazo',
+    timelinePlaceholder: 'Ej.: 2 semanas para arrancar',
+    incomplete:
+      'Escribe cómo lo resolverías (al menos 20 caracteres), un precio estimado y un plazo.',
+    send: 'Enviar propuesta',
+    sending: 'Enviando…',
+    sent: 'Propuesta enviada. Te avisamos si la empresa te elige.',
+  },
+  errors: {
+    origin: 'Usa la cuenta de shwcs para hacer este cambio.',
+    signIn: 'Inicia sesión otra vez para continuar.',
+    invalid: 'La solicitud no es válida.',
+    incomplete: 'Revisa los datos de la necesidad y la autorización.',
+    proposalIncomplete:
+      'Escribe cómo lo resolverías (al menos 20 caracteres), un precio estimado y un plazo.',
+    verifyEmail: 'Confirma tu correo en Seguridad para publicar una necesidad.',
+    limit: 'Llegaste al límite por ahora: hasta 3 necesidades al día y 10 abiertas a la vez.',
+    notFound: 'Esta necesidad ya no está disponible.',
+    closed: 'Esta necesidad ya no recibe propuestas.',
+    full: 'Esta necesidad ya recibió el máximo de propuestas.',
+    alreadyProposed: 'Ya enviaste una propuesta a esta necesidad.',
+    conflict: 'Algo cambió mientras tanto. Recarga la página y revisa antes de repetir.',
+    unavailable:
+      'No pudimos completar la acción. Revisa en unos minutos si se guardó antes de repetirla.',
+    network: 'No pudimos conectar. Revisa tu conexión y vuelve a intentarlo.',
+  },
+} as const;

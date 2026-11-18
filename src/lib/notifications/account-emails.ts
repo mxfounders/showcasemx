@@ -49,12 +49,29 @@ export function resetEmail(origin: string, link: string): BuiltEmail {
  * adds when. «No fui yo» leads to choosing a new password, which closes every open
  * session (consumeReset); a GET link must never change anything by itself (CLAUDE.md §5).
  */
-export function securityNotice(title: string, createdAt: string | Date) {
+export function securityNotice(
+  title: string,
+  createdAt: string | Date,
+  kind: 'default' | 'passkey-added' = 'default',
+) {
   const when = new Date(createdAt).toLocaleString('es-MX', {
     dateStyle: 'long',
     timeStyle: 'short',
     timeZone: 'America/Mexico_City',
   });
+  // A new passkey outlives a password change (SHCWS-158): «No fui yo» there means removing
+  // it in Seguridad, which also closes the sessions opened with it.
+  if (kind === 'passkey-added')
+    return {
+      subject: title,
+      heading: title,
+      button: 'Revisar mis passkeys',
+      paragraphs: [
+        `<strong>Cuándo:</strong> ${escapeHtml(when)} (hora del centro de México).`,
+        'Una passkey permite entrar sin contraseña. Si fuiste tú, no tienes que hacer nada. Si no, quítala en Configuración › Seguridad (eso cierra las sesiones que se abrieron con ella) y elige una contraseña nueva. Si ya no puedes entrar, recupera primero tu contraseña.',
+      ],
+      text: `${title}.\nCuándo: ${when} (hora del centro de México).\n\nSi no fuiste tú, quita esa passkey en Configuración › Seguridad y elige una contraseña nueva.`,
+    };
   return {
     subject: title,
     heading: title,

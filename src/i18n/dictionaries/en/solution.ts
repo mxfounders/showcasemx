@@ -68,10 +68,10 @@ export const solution = {
     categoryTitle: 'Everything in {category}',
     categoryDesc: 'Approved solutions in this category, ordered by real interaction.',
     categoryCta: 'View category',
-    briefTitle: 'Tell us what you need',
+    briefTitle: 'Post your need',
     briefDesc:
-      "If none of these fits, write to us about what you're looking for. A person on the shwcs team reads it.",
-    briefCta: 'Write to us',
+      'If none of these fits, describe what you are looking for: the projects that fit send you a proposal and a person on the shwcs team reads it.',
+    briefCta: 'Post a need',
     briefNeed: "I'm looking for something like {name}",
   },
   share: {

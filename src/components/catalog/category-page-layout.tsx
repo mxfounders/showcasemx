@@ -32,7 +32,7 @@ import {
   languageFit,
 } from '@/lib/search/facets';
 import type { PublishedProduct } from '@/lib/solutions/public';
-import { contactBriefHref } from '@/lib/contact-inquiry';
+import { briefHref } from '@/lib/briefs/links';
 import { makeQueryScorer } from '@/lib/search/score';
 import { commonText } from '@/i18n/common';
 import { isFastResponder } from '@/lib/solutions/response-model';
@@ -468,7 +468,12 @@ export function CategoryPageLayout({
             {filtering ? dict.noResultsDesc : dict.emptyPageDesc}
           </p>
           <Link
-            href={contactBriefHref(query.trim() || title)}
+            href={briefHref(
+              query.trim(),
+              basePath === '/explorar'
+                ? categories.find(item => item.slug === categorySlug)?.label
+                : undefined,
+            )}
             style={actionButtonStyle}
             className="action-button mt-6 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium"
           >

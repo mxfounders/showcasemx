@@ -27,6 +27,13 @@ Google, Resend o Neon ni sustituye una prueba de penetración independiente.
   si no, quien registrara primero el correo de otra persona podría vincular su
   propio Google y seguir entrando después de que el dueño recuperara la cuenta.
 
+- Passkeys (WebAuthn, SHCWS-158; detalle en docs/account-settings.md): rpID y origen fijados
+  por `AUTH_APP_ORIGIN`, verificación de usuario obligatoria, retos de un uso de 5 minutos
+  guardados como hash y consumidos antes de revisar la firma, contador con compare-and-set,
+  user handle que debe coincidir con la cuenta. Añadir pide contraseña (y código con la
+  verificación en dos pasos) y correo confirmado; quitar cierra las sesiones que abrió. Una
+  passkey cuenta como acceso fuerte: no pide además el código TOTP.
+
 ## API, navegador y archivos
 
 - Las mutaciones exigen `Origin` exacto, sesión cuando corresponde, tipo y tamaño

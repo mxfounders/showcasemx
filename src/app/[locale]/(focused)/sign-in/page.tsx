@@ -1,7 +1,8 @@
 import { getDictionary } from '@/i18n/get-dictionary';
 import { googleConfig } from '@/lib/auth/google';
 import { authReturnTo } from '@/lib/auth/return-to';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
+import { originFromHeaders, relyingParty } from '@/lib/auth/passkeys';
 import { localeRedirect } from '@/i18n/redirect';
 import { challengeCookie, getSession, sessionCookie } from '@/lib/auth/session';
 import type { Metadata } from 'next';
@@ -55,6 +56,7 @@ export default async function SignInPage(props: {
         returnTo={returnTo}
         mode="login"
         awaitingCode={awaitingCode}
+        passkeysAvailable={Boolean(relyingParty(originFromHeaders(await headers())))}
       />
     </section>
   );
