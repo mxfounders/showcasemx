@@ -4,6 +4,7 @@ import { solutionsSql } from '@/lib/solutions/server';
 import { isSolutionId } from '@/lib/solutions/model';
 import { failure } from '@/lib/solutions/http';
 import { getObject } from '@/lib/storage/blob';
+import { mediaWidth } from '@/lib/images/media-width';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { requestLocale } from '@/i18n/negotiate';
 type Params = { id: string; assetId: string };
@@ -13,10 +14,10 @@ export async function GET(request: NextRequest, props: { params: Promise<Params>
   const t = (await getDictionary(requestLocale(request))).solutionEditor.errors;
   if (!isSolutionId(params.id) || !isSolutionId(params.assetId))
     return failure(t.screenshotUnavailable, 404);
-  // ?w= selects a rendition (Fase B). Only 400/800 exist; anything else is a
-  // uniform 404, never a distinct error, and never pollutes the CDN cache key.
-  const wRaw = request.nextUrl.searchParams.get('w');
-  const w = wRaw === null ? null : wRaw === '400' || wRaw === '800' ? Number(wRaw) : NaN;
+  // ?w= selects a rendition (Fase B): 400/800 have their own file, and 1600 (what the
+  // loader asks for on wide and retina screens) is the full image itself. Anything else
+  // is a uniform 404, never a distinct error, and never pollutes the CDN cache key.
+  const w = mediaWidth(request.nextUrl.searchParams.get('w'));
   if (Number.isNaN(w)) return failure(t.screenshotUnavailable, 404);
   try {
     const account = await getSession(request.cookies.get(sessionCookie)?.value),
