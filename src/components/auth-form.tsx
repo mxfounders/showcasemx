@@ -1,8 +1,18 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import {
+  browserSupportsWebAuthn,
+  browserSupportsWebAuthnAutofill,
+  sendSignal,
+  startAuthentication,
+  WebAuthnAbortService,
+  type AuthenticationResponseJSON,
+  type PublicKeyCredentialRequestOptionsJSON,
+} from '@simplewebauthn/browser';
 import Link, { useRouter } from '@/i18n/navigation';
 import {
   ArrowRightIcon,
+  FingerprintIcon,
   EyeIcon,
   EyeOffIcon,
   LockIcon,
@@ -20,9 +30,12 @@ export function AuthForm({
   returnTo = '/account',
   googleAvailable = false,
   awaitingCode = false,
+  passkeysAvailable = false,
   dict,
 }: {
   googleAvailable?: boolean;
+  /** shwcs's own address, where passkeys work (SHCWS-158); the browser must support them too. */
+  passkeysAvailable?: boolean;
   /** A sign-in already passed its first step elsewhere (Google) and waits for the code. */
   awaitingCode?: boolean;
   mode: 'login' | 'register';
@@ -62,6 +75,145 @@ export function AuthForm({
   // exists yet: the server holds a short-lived challenge until the code checks out.
   const [challenge, setChallenge] = useState(awaitingCode);
   const [code, setCode] = useState('');
+
+  // Passkeys (SHCWS-158): a button for a modal prompt and, where the browser offers it, the
+  // email field's autofill suggestions. Either way the server opens the same session as a
+  // password, with no code on top, and the person continues to what brought them here.
+  const [passkeys, setPasskeys] = useState(false);
+  const [passkeyPending, setPasskeyPending] = useState(false);
+  const autofillRun = useRef(0);
+  async function passkeyOptions() {
+    const response = await fetch('/api/auth/passkey', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'options' }),
+      signal: AbortSignal.timeout(20000),
+    });
+    const result = await response.json();
+    if (!response.ok || result.ok !== true) throw new Error(result.error || text.passkeyCancelled);
+    return result.options as PublicKeyCredentialRequestOptionsJSON;
+  }
+  async function finishPasskey(credential: AuthenticationResponseJSON) {
+    const response = await fetch('/api/auth/passkey', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'verify', credential }),
+      signal: AbortSignal.timeout(20000),
+    });
+    const result = await response.json();
+    if (!response.ok || result.ok !== true) {
+      // A passkey shwcs no longer knows (removed in Seguridad): the browser can stop offering it.
+      if (result.unknownCredential && typeof result.rpID === 'string')
+        sendSignal({
+          signalName: 'unknownCredential',
+          rpID: result.rpID,
+          credentialID: credential.id,
+        }).catch(() => undefined);
+      throw new Error(result.error || text.passkeyCancelled);
+    }
+    await continueSignedIn();
+  }
+  // The autofill ceremony waits quietly behind the email field. A newer one (the button, or
+  // the refresh before its challenge expires) replaces it; only the latest reports anything.
+  async function runAutofill() {
+    const run = ++autofillRun.current;
+    let optionsJSON: PublicKeyCredentialRequestOptionsJSON;
+    try {
+      optionsJSON = await passkeyOptions();
+    } catch {
+      return; // The password form still works; the button reports problems if used.
+    }
+    if (run !== autofillRun.current) return;
+    let credential: AuthenticationResponseJSON;
+    try {
+      credential = await startAuthentication({ optionsJSON, useBrowserAutofill: true });
+    } catch (failure) {
+      // Replaced by a newer ceremony, or the person dismissed their device's prompt. Not
+      // restarted here (a browser that refuses at once would loop); the refresh does it.
+      const aborted = (failure as { code?: string } | null)?.code === 'ERROR_CEREMONY_ABORTED';
+      if (run === autofillRun.current && !aborted) setError(text.passkeyCancelled);
+      return;
+    }
+    if (run !== autofillRun.current) return;
+    busy.current = true;
+    setPasskeyPending(true);
+    setError('');
+    try {
+      await finishPasskey(credential);
+    } catch (failure) {
+      setError(
+        failure instanceof Error &&
+          !['TimeoutError', 'TypeError', 'SyntaxError'].includes(failure.name)
+          ? failure.message
+          : text.genericError,
+      );
+      // Not relaunched right away: an authenticator that answers on its own would loop. The
+      // periodic refresh or the button starts the next one.
+      busy.current = false;
+      setPasskeyPending(false);
+    }
+  }
+  // Leaving the form (signed in, or on to the code step) drops whatever ceremony is waiting.
+  function stopPasskeys() {
+    autofillRun.current++;
+    WebAuthnAbortService.cancelCeremony();
+  }
+  useEffect(() => {
+    if (mode !== 'login' || !passkeysAvailable || challenge) return;
+    if (!browserSupportsWebAuthn()) return;
+    setPasskeys(true);
+    let live = true;
+    // Challenges last five minutes: renew the waiting one before it expires.
+    const refresh = window.setInterval(
+      () => {
+        if (!busy.current) void runAutofill();
+      },
+      4 * 60 * 1000,
+    );
+    browserSupportsWebAuthnAutofill()
+      .then(ok => {
+        if (ok && live) void runAutofill();
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+      window.clearInterval(refresh);
+      stopPasskeys();
+    };
+    // Runs once per form shown; the functions it calls only read refs and stable props.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, passkeysAvailable, challenge]);
+  async function passkeyButton() {
+    if (busy.current) return;
+    // Supersedes the autofill ceremony: starting a new one cancels it.
+    const run = ++autofillRun.current;
+    busy.current = true;
+    setPasskeyPending(true);
+    setError('');
+    try {
+      const optionsJSON = await passkeyOptions();
+      let credential: AuthenticationResponseJSON;
+      try {
+        credential = await startAuthentication({ optionsJSON });
+      } catch {
+        throw new Error(text.passkeyCancelled);
+      }
+      await finishPasskey(credential);
+    } catch (failure) {
+      setError(
+        failure instanceof Error &&
+          !['TimeoutError', 'TypeError', 'SyntaxError'].includes(failure.name)
+          ? failure.message
+          : text.genericError,
+      );
+      busy.current = false;
+      setPasskeyPending(false);
+      if (run === autofillRun.current)
+        void browserSupportsWebAuthnAutofill().then(ok => {
+          if (ok) void runAutofill();
+        });
+    }
+  }
   async function submitCode(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy.current) return;
@@ -228,44 +380,60 @@ export function AuthForm({
       aria-label={mode === 'login' ? text.ariaLogin : text.ariaRegister}
       aria-busy={pending}
     >
-      {/* Hidden until Google sign-in is configured: a button that can't work is noise (SHCWS-26). */}
-      {googleAvailable && (
+      {(googleAvailable || passkeys) && (
         <>
-          <div>
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => {
-                // Google can create the account too: its visit's origin goes along.
-                const origin = mode === 'register' ? signupOrigin(returnTo) : undefined;
-                window.location.assign(
-                  `/api/auth/google/start?next=${encodeURIComponent(returnTo)}` +
-                    (origin ? `&origin=${encodeURIComponent(JSON.stringify(origin))}` : ''),
-                );
-              }}
-              className="flex w-full disabled:cursor-not-allowed items-center justify-center gap-3 rounded-xl border border-stone-300 bg-transparent px-5 py-4 text-base font-medium text-stone-700"
-            >
-              <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 shrink-0">
-                <path
-                  fill="#4285F4"
-                  d="M21.6 12.23c0-.71-.06-1.39-.18-2.05H12v3.88h5.38a4.6 4.6 0 0 1-1.99 3.02v2.51h3.23c1.89-1.74 2.98-4.3 2.98-7.36Z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 22c2.7 0 4.96-.9 6.62-2.41l-3.23-2.51c-.9.6-2.05.96-3.39.96-2.61 0-4.82-1.76-5.61-4.13H3.05v2.59A10 10 0 0 0 12 22Z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M6.39 13.91a6 6 0 0 1 0-3.82V7.5H3.05a10 10 0 0 0 0 9l3.34-2.59Z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.96c1.47 0 2.79.5 3.83 1.5l2.87-2.87A9.61 9.61 0 0 0 12 2a10 10 0 0 0-8.95 5.5l3.34 2.59C7.18 7.72 9.39 5.96 12 5.96Z"
-                />
-              </svg>
-              {text.loginGoogle}
-            </button>
-          </div>
+          {/* Shown where passkeys work and the browser supports them (SHCWS-158). */}
+          {passkeys && (
+            <div>
+              <button
+                type="button"
+                disabled={pending || passkeyPending}
+                onClick={passkeyButton}
+                className="flex w-full items-center justify-center gap-3 rounded-xl border border-stone-300 bg-transparent px-5 py-4 text-base font-medium text-stone-700 transition-colors hover:border-stone-400 disabled:cursor-wait disabled:opacity-60"
+              >
+                <FingerprintIcon aria-hidden="true" className="size-5 shrink-0 text-[#365DC4]" />
+                {passkeyPending ? text.passkeyWaiting : text.passkeySignIn}
+              </button>
+            </div>
+          )}
+          {/* Hidden until Google sign-in is configured: a button that can't work is noise (SHCWS-26). */}
+          {googleAvailable && (
+            <div>
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => {
+                  // Google can create the account too: its visit's origin goes along.
+                  const origin = mode === 'register' ? signupOrigin(returnTo) : undefined;
+                  window.location.assign(
+                    `/api/auth/google/start?next=${encodeURIComponent(returnTo)}` +
+                      (origin ? `&origin=${encodeURIComponent(JSON.stringify(origin))}` : ''),
+                  );
+                }}
+                className="flex w-full disabled:cursor-not-allowed items-center justify-center gap-3 rounded-xl border border-stone-300 bg-transparent px-5 py-4 text-base font-medium text-stone-700"
+              >
+                <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 shrink-0">
+                  <path
+                    fill="#4285F4"
+                    d="M21.6 12.23c0-.71-.06-1.39-.18-2.05H12v3.88h5.38a4.6 4.6 0 0 1-1.99 3.02v2.51h3.23c1.89-1.74 2.98-4.3 2.98-7.36Z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 22c2.7 0 4.96-.9 6.62-2.41l-3.23-2.51c-.9.6-2.05.96-3.39.96-2.61 0-4.82-1.76-5.61-4.13H3.05v2.59A10 10 0 0 0 12 22Z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M6.39 13.91a6 6 0 0 1 0-3.82V7.5H3.05a10 10 0 0 0 0 9l3.34-2.59Z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M12 5.96c1.47 0 2.79.5 3.83 1.5l2.87-2.87A9.61 9.61 0 0 0 12 2a10 10 0 0 0-8.95 5.5l3.34 2.59C7.18 7.72 9.39 5.96 12 5.96Z"
+                  />
+                </svg>
+                {text.loginGoogle}
+              </button>
+            </div>
+          )}
           <div className="flex items-center gap-4 py-2 text-xs text-stone-400">
             <span aria-hidden="true" className="h-px flex-1 bg-stone-200" />
             <span>{text.orEmail}</span>
@@ -285,7 +453,8 @@ export function AuthForm({
           id="account-email"
           name="email"
           type="email"
-          autoComplete="email"
+          // `webauthn` lets the browser offer this site's passkeys as suggestions (SHCWS-158).
+          autoComplete={mode === 'login' && passkeysAvailable ? 'email webauthn' : 'email'}
           required
           maxLength={254}
           aria-invalid={Boolean(fields.email)}

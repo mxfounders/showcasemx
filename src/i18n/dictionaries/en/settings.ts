@@ -43,6 +43,8 @@ export const settings = {
     security: {
       title: 'Security and access',
       twoStepOn: 'Two-step verification on',
+      passkeysOne: '{count} passkey',
+      passkeysOther: '{count} passkeys',
       passwordOnly: 'Password only',
       sessionsOne: '{count} open session',
       sessionsOther: '{count} open sessions',
@@ -112,6 +114,10 @@ export const settings = {
     twoStepTitle: 'Two-step verification',
     twoStepDesc: 'A temporary code from your phone, on top of your password.',
     twoStepLoadError: "We couldn't read your verification status. Reload the page.",
+    passkeysTitle: 'Passkeys',
+    passkeysDesc:
+      "Sign in with your device's fingerprint, face or PIN, without typing your password. Your fingerprint or face never leaves your device.",
+    passkeysLoadError: "We couldn't read your passkeys. Reload the page.",
     passwordTitle: 'Change password',
     passwordDesc:
       "You'll need your current password. When you change it, we'll sign you out on every device for security.",
@@ -139,6 +145,48 @@ export const settings = {
       closeOthersMany: 'Close the other {count} sessions',
       noOthers: 'There are no other open sessions.',
     },
+    passkeys: {
+      callError: "We couldn't complete the change.",
+      genericError: "We couldn't complete the change. Please try again.",
+      cancelled: "The passkey wasn't created. You can try again whenever you like.",
+      alreadyOnDevice:
+        'This device or password manager already has a passkey for your account. Use that one or remove it from the list before creating another.',
+      unsupported:
+        "This browser doesn't support passkeys. Try an up-to-date Safari, Chrome, Edge or Firefox.",
+      unavailable:
+        "Passkeys only work at shwcs's main address. Open Settings from there to add one.",
+      verifyEmailFirst:
+        "To add a passkey, first confirm your email with the link above. That way nobody can leave a way in on an account with an email that isn't theirs.",
+      empty: "You don't have any passkeys yet. Your password is still how you sign in.",
+      synced: 'Synced',
+      syncedHint: 'Your password manager keeps it on your other devices.',
+      created: 'Created on {date}',
+      lastUsed: 'Last used on {date}',
+      neverUsed: 'Not used yet',
+      add: 'Add a passkey',
+      addPrompt:
+        'Confirm your password to create a passkey. Then your device will ask for your fingerprint, face or PIN.',
+      addPromptCode:
+        'Confirm your password and a verification code to create a passkey. Then your device will ask for your fingerprint, face or PIN.',
+      nameLabel: 'Name (optional)',
+      namePlaceholder: 'For example: Work MacBook',
+      nameHint: "If you leave it empty, we use your password manager's or your device's name.",
+      currentPassword: 'Current password',
+      codeLabel: 'Code from your app or a backup code',
+      noPassword: "Don't have a password? Create one →",
+      cancel: 'Cancel',
+      creating: 'Waiting for your device…',
+      createSubmit: 'Create passkey',
+      added: 'Done: you can now sign in with “{name}”.',
+      remove: 'Remove',
+      removeLabel: 'Remove the passkey {name}',
+      removeDesc:
+        "You won't be able to sign in with “{name}” anymore, and the sessions opened with it will be closed. Your password keeps working. Confirm with your password.",
+      removing: 'Removing…',
+      removeSubmit: 'Remove passkey',
+      removed: 'We removed “{name}”.',
+      limit: 'You can have up to {count} passkeys.',
+    },
     twoFactor: {
       callError: "We couldn't complete the change.",
       genericError: "We couldn't complete the change. Please try again.",
@@ -150,7 +198,7 @@ export const settings = {
         "Two-step verification isn't enabled in this environment yet. The encryption key {key} still needs to be configured on the server.",
       active: 'On',
       activeDesc:
-        "When you sign in, we'll ask for a code from your authenticator app in addition to your password, also when you sign in with Google.",
+        "When you sign in, we'll ask for a code from your authenticator app in addition to your password, also when you sign in with Google. A passkey doesn't ask for it: it already uses your device's fingerprint, face or PIN.",
       regenerate: 'Generate new backup codes',
       disable: 'Turn off',
       previousInvalid: 'Your previous codes no longer work.',
@@ -238,6 +286,8 @@ export const settings = {
         'The contact conversation you take part in will be deleted, for the other person too.',
       conversationMany:
         'The {count} contact conversations you take part in will be deleted, for the other person too.',
+      briefs:
+        'Your posted needs and the proposals they received, and the proposals you sent, will be deleted.',
       library: 'Your saved projects, lists and private notes will be deleted.',
       noRecovery: "There's no recovery period: we won't be able to restore anything afterwards.",
       intro: 'Permanently delete your account and everything associated with it.',
@@ -257,7 +307,7 @@ export const settings = {
   },
   languageSelector,
   exportAbout:
-    "A copy of the data shwcs keeps for this account. It doesn't include passwords, two-step verification secrets or other people's private data.",
+    "A copy of the data shwcs keeps for this account. It doesn't include passwords, two-step verification secrets, your passkeys' keys or other people's private data.",
   errors: {
     useAccountForm: 'Use the form in your account.',
     useAccount: 'Use your account.',
@@ -344,5 +394,15 @@ export const settings = {
       'Confirm your email before turning on two-step verification. Ask for the link in Security.',
     secondFactorMissing: 'Enter the code from your app or a backup code.',
     secondFactorWrong: 'The code is wrong or was already used.',
+    passkeyUnavailable: "Passkeys only work at shwcs's main address. Open Settings from there.",
+    passkeyEmailFirst: 'Confirm your email before adding a passkey. Request the link in Security.',
+    passkeyLimit:
+      'You already have the maximum number of passkeys. Remove one before adding another.',
+    passkeyName: 'The name can be up to 60 characters.',
+    passkeyExpired: 'The request expired. Start again to create the passkey.',
+    passkeyDuplicate: 'That passkey was already registered.',
+    passkeyFailed: "We couldn't confirm the passkey. Please try again.",
+    passkeyGone: 'That passkey no longer exists. Reload the page.',
+    passkeyUnavailableNow: "We couldn't complete the passkey change. Please try again.",
   },
 } as const satisfies Dictionary['settings'];

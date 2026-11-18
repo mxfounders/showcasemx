@@ -85,6 +85,50 @@ export function matchCapability(subject: FacetSubject, id: string): FacetMatch {
   return countVocabularyHits(words, vocabulary) >= MIN_INFERENCE_HITS ? 'inferred' : 'none';
 }
 
+/**
+ * Markets (SHCWS-56): a listing fits a country when it both serves and invoices there.
+ * Each list keeps the tri-state of industries: [] means any country, a list means those.
+ * - 'real': both lists include the country (or are «any»);
+ * - 'fail': a declared list leaves the country out — declaring closes the question;
+ * - 'soft': nothing declared against it, but one list (or both) was never answered, so
+ *   it lands in «También podrían servir», never in the main results.
+ */
+export type FitLevel = 'real' | 'soft' | 'fail';
+export interface MarketSubject {
+  serviceCountries?: string[];
+  billingCountries?: string[];
+  supportLanguages?: string[];
+}
+const listFit = (list: string[] | undefined, value: string): FitLevel =>
+  list === undefined ? 'soft' : !list.length || list.includes(value) ? 'real' : 'fail';
+export function marketFit(subject: MarketSubject, country: string): FitLevel {
+  const levels = [
+    listFit(subject.serviceCountries, country),
+    listFit(subject.billingCountries, country),
+  ];
+  return levels.includes('fail') ? 'fail' : levels.includes('soft') ? 'soft' : 'real';
+}
+/** Support languages have no «any»: a declared list is the answer, absence is the gap. */
+export function languageFit(subject: MarketSubject, language: string): FitLevel {
+  if (subject.supportLanguages === undefined) return 'soft';
+  return subject.supportLanguages.includes(language) ? 'real' : 'fail';
+}
+/**
+ * Countries a filter can offer: the ones listings named explicitly (serving and invoicing
+ * there). A listing that serves «any country» matches any choice, but does not by itself
+ * turn all ~250 countries into options.
+ */
+export function declaredMarkets(subjects: readonly MarketSubject[]): string[] {
+  const codes = new Set<string>();
+  for (const subject of subjects)
+    for (const code of [...(subject.serviceCountries ?? []), ...(subject.billingCountries ?? [])])
+      if (marketFit(subject, code) === 'real') codes.add(code);
+  return [...codes];
+}
+export function declaredLanguages(subjects: readonly MarketSubject[]): string[] {
+  return [...new Set(subjects.flatMap(subject => subject.supportLanguages ?? []))];
+}
+
 // Reads what the founder has already typed (problem/audience/scope/name) and
 // proposes capabilities they haven't marked yet, scoped to categories they
 // already declared. Never auto-selects anything — the editor renders these

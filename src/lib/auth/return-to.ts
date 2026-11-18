@@ -1,5 +1,7 @@
 import { isSolutionId } from '@/lib/solutions/model';
 import { validProjectKey } from '@/lib/library/model';
+import { briefHref, readBriefPrefill } from '@/lib/briefs/links';
+import { selectionKeys } from '@/lib/library/comparison';
 export function authReturnTo(value: unknown): string {
   if (typeof value !== 'string') return '/account';
   if (
@@ -12,6 +14,9 @@ export function authReturnTo(value: unknown): string {
       '/account/contacts',
       '/account/opportunities',
       '/account/alerts',
+      '/account/briefs',
+      '/account/briefs/new',
+      '/account/needs',
     ].includes(value)
   )
     return value;
@@ -34,6 +39,19 @@ export function authReturnTo(value: unknown): string {
     isSolutionId(value.slice('/account/contacts/'.length))
   )
     return value;
+  // «Publica tu necesidad» from a search or category (SHCWS-58): only the bounded need and
+  // a known category survive, rebuilt from scratch.
+  if (value.startsWith('/account/briefs/new?')) {
+    const params = new URLSearchParams(value.slice(value.indexOf('?') + 1));
+    const prefill = readBriefPrefill({
+      necesidad: params.get('necesidad') ?? undefined,
+      categoria: params.get('categoria') ?? undefined,
+    });
+    return briefHref(prefill.problem, prefill.categories[0]);
+  }
+  // A brief or a matched need from a notice email (SHCWS-58).
+  const brief = /^\/account\/(briefs|needs)\/([a-f0-9-]+)$/i.exec(value);
+  if (brief && isSolutionId(brief[2])) return value;
   // A public listing, to follow it after signing in (SHCWS-24). By UUID: it redirects to
   // the listing's current address, and nothing else is accepted.
   if (/^\/soluciones\/[a-f0-9-]+$/i.test(value) && isSolutionId(value.slice('/soluciones/'.length)))
@@ -45,6 +63,15 @@ export function authReturnTo(value: unknown): string {
     isSolutionId(value.slice('/account/reviews/'.length))
   )
     return value;
+  // A temporary comparison and its «ask all of them» form (SHCWS-53): 2–3 valid keys only,
+  // rebuilt here so nothing else in the query survives.
+  for (const base of ['/comparar', '/account/contacts/proposal'])
+    if (value.startsWith(base + '?')) {
+      const keys = selectionKeys(
+        new URLSearchParams(value.slice(base.length + 1)).getAll('project'),
+      );
+      if (keys) return `${base}?${new URLSearchParams(keys.map(key => ['project', key]))}`;
+    }
   if (value.startsWith('/account/saved?')) {
     const params = new URLSearchParams(value.slice(value.indexOf('?') + 1));
     const key = params.get('project');

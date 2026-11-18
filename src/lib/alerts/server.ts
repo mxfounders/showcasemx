@@ -68,6 +68,9 @@ export async function alertCandidates(): Promise<AlertCandidate[]> {
         priceUnit: text('priceUnit'),
         setupTime: text('setupTime'),
         scope: text('scope'),
+        serviceCountries: asList(data.serviceCountries),
+        billingCountries: asList(data.billingCountries),
+        supportLanguages: asList(data.supportLanguages),
         response: responses.get(String(row.id)) ?? null,
       },
     };

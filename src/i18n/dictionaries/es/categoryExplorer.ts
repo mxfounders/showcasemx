@@ -1,16 +1,16 @@
 export const categoryExplorer = {
   emptyTitle: 'Todavía no tenemos una solución para eso.',
   emptyDesc: 'El catálogo está creciendo. Prueba con otras palabras o explora una categoría.',
-  briefCta: 'Cuéntanos qué necesitas',
-  briefNote: 'Tu búsqueda va en el mensaje. Lo lee una persona del equipo de shwcs.',
+  briefCta: 'Publica tu necesidad',
+  briefNote:
+    'Tu búsqueda va en la necesidad. Los proyectos que encajan te envían una propuesta y una persona del equipo de shwcs la lee.',
   /** The card a category with few projects ends with (SHCWS-38). Heading: no final period (§37). */
-  briefCardTitle: 'Cuéntanos qué necesitas',
+  briefCardTitle: 'Publica tu necesidad',
   briefCardEmpty:
-    'Todavía no hay proyectos de {category} publicados. Escríbenos qué buscas: lo lee una persona del equipo de shwcs y te ayuda a encontrarlo.',
+    'Todavía no hay proyectos de {category} publicados. Describe qué buscas: una persona del equipo de shwcs la lee y, cuando se publique uno que encaje, te envía una propuesta.',
   briefCardFew:
-    '¿No ves lo que buscas en {category}? Escríbenos qué necesitas: lo lee una persona del equipo de shwcs.',
-  briefPrefill: 'Busco una solución de {category}:',
-  briefCardCta: 'Escribir mi necesidad',
+    '¿No ves lo que buscas en {category}? Publica tu necesidad y los proyectos que encajan te envían una propuesta.',
+  briefCardCta: 'Publicar mi necesidad',
   /** «Espacio disponible» cards that fill the grid up to its fixed size (§24). */
   availableSpace: 'Espacio disponible',
   applySpaceTitle: 'Tu solución puede estar aquí',

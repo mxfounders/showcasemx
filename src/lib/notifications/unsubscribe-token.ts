@@ -7,7 +7,13 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
  * prefix, so none of their tokens works here and none of these works there.
  * Security notices and the one-off welcome never carry one.
  */
-export const unsubscribableCategories = ['contact', 'solution', 'community', 'alert'] as const;
+export const unsubscribableCategories = [
+  'contact',
+  'solution',
+  'community',
+  'alert',
+  'brief',
+] as const;
 export type UnsubscribableCategory = (typeof unsubscribableCategories)[number];
 
 export const isUnsubscribable = (value: unknown): value is UnsubscribableCategory =>

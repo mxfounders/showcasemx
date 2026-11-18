@@ -194,3 +194,31 @@ test('suggestions read roots, ignore generic words and never promote a weak runn
     [],
   );
 });
+
+test('the «Publicado en» badge shows the public rating from three reviews up', async () => {
+  const { badgeOptions, badgeRating } = await import('../src/lib/recognition/badges');
+  const { getDictionary } = await import('../src/i18n/get-dictionary');
+  const [es, en] = await Promise.all([getDictionary('es'), getDictionary('en')]);
+  const none = { verifiedAt: null, awards: [] } as unknown as Parameters<typeof badgeOptions>[1];
+
+  assert.equal(badgeRating({ count: 2, average: 5 }, 'es', es.recognition), null);
+  assert.equal(badgeRating({ count: 9, average: null }, 'es', es.recognition), null);
+  assert.equal(badgeRating(null, 'es', es.recognition), null);
+  assert.deepEqual(badgeRating({ count: 12, average: 4.8333 }, 'es', es.recognition), {
+    short: '4.8 ★ · 12 reseñas',
+    long: '4.8 de 5 en 12 reseñas verificadas',
+  });
+  assert.equal(
+    badgeRating({ count: 3, average: 4 }, 'en', en.recognition)?.short,
+    '4.0 ★ · 3 reviews',
+  );
+
+  const [plain] = badgeOptions('Cord', none, 'es', es.recognition);
+  const [rated] = badgeOptions('Cord', none, 'es', es.recognition, { count: 12, average: 4.8 });
+  assert.equal(plain.date, undefined);
+  assert.equal(rated.date, '4.8 ★ · 12 reseñas');
+  assert.match(rated.title, /12 reseñas verificadas/);
+  // The snippet declares the width: it has to grow with the rating.
+  assert.ok(rated.width > plain.width);
+  assert.match(badgeSvg({ ...rated, theme: 'light' }), /4\.8 ★ · 12 RESEÑAS/);
+});

@@ -21,6 +21,14 @@ export type BadgeOption = {
 };
 
 /**
+ * Reviews needed before the «Publicado en» badge shows a rating. With one or two, a
+ * friend's five stars would read as the project's standing on someone else's site.
+ */
+export const badgeRatingMinimum = 3;
+
+export type BadgeReviews = { count: number; average: number | null };
+
+/**
  * Every badge a published listing can show right now. «Publicado en shwcs» always;
  * «Verificado» only while the verification stands; one per standing award. The route and
  * the founder's card read this same list, so neither can offer what the other refuses.
@@ -30,9 +38,11 @@ export function badgeOptions(
   recognition: Recognition,
   locale: string,
   dict: Dictionary['recognition'],
+  reviews: BadgeReviews | null = null,
 ): BadgeOption[] {
   const title = (label: string) => `${dict.badge.title.replace('{name}', name)} · ${label}`;
   const seal = dict.badge.seal;
+  const rating = badgeRating(reviews, locale, dict);
   const options: BadgeOption[] = [
     {
       key: 'featured',
@@ -40,9 +50,10 @@ export function badgeOptions(
       tone: 'featured',
       label: dict.badge.featured,
       seal: { line1: seal.featured, line2: seal.featuredBy },
-      title: title(dict.badge.featured),
+      ...(rating && { date: rating.short }),
+      title: title(rating ? `${dict.badge.featured} · ${rating.long}` : dict.badge.featured),
       pick: dict.founder.kinds.featured,
-      width: badgeWidth(dict.badge.featured),
+      width: badgeWidth(dict.badge.featured, rating?.short),
     },
   ];
   if (recognition.verifiedAt) {
@@ -91,6 +102,25 @@ export function badgeOptions(
     });
   }
   return options;
+}
+
+/**
+ * «4.8 ★ · 12 reseñas» for the badge and its accessible name, from the listing's public
+ * reviews (verified email, not the owner's), or null below {@link badgeRatingMinimum}.
+ */
+export function badgeRating(
+  reviews: BadgeReviews | null,
+  locale: string,
+  dict: Dictionary['recognition'],
+) {
+  if (!reviews || reviews.average == null || reviews.count < badgeRatingMinimum) return null;
+  const average = new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'es-MX', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(reviews.average);
+  const fill = (template: string) =>
+    template.replace('{rating}', average).replace('{count}', String(reviews.count));
+  return { short: fill(dict.badge.rating), long: fill(dict.badge.ratingTitle) };
 }
 
 export function badgeSrc(

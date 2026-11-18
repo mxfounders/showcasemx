@@ -27,6 +27,10 @@ export const recognition = {
     editorial: 'Selección del equipo',
     /** Accessible name of the image, with {name}. */
     title: '{name} en shwcs',
+    /** On «Publicado en» from three public reviews up; {rating} as «4.8». */
+    rating: '{rating} ★ · {count} reseñas',
+    /** The same in the image's accessible name. */
+    ratingTitle: '{rating} de 5 en {count} reseñas verificadas',
     /** The shield («seal») layout: two short lines under the emblem. */
     seal: {
       featured: 'Publicado',

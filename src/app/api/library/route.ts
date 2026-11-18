@@ -13,6 +13,7 @@ import {
   reservedCurator,
 } from '@/lib/library/model';
 import { resolveProjects } from '@/lib/library/server';
+import { publishedSelection, selectionKeys } from '@/lib/library/comparison';
 import { getDictionary } from '@/i18n/get-dictionary';
 import { requestLocale } from '@/i18n/negotiate';
 import { captureServerEvent } from '@/lib/analytics/server';
@@ -61,6 +62,41 @@ export async function POST(request: NextRequest) {
       ]);
       if (!results[2].length) return failure(t.listLimit, 409);
       captureServerEvent(request, owner, 'list_created', { visibility: publication.visibility });
+      return ok({ id: body.id });
+    }
+    // A temporary comparison saved as a private list (SHCWS-53): the list, the saved
+    // projects and their membership in one transaction, so a partial failure never leaves
+    // a list without its projects. Idempotent: a retry with the same id adds nothing.
+    if (body.action === 'save-comparison') {
+      const details = listDetails({ name: body.name, purpose: '' });
+      const candidates = selectionKeys(body.projectKeys);
+      if (!details || !candidates || typeof body.id !== 'string' || !isSolutionId(body.id))
+        return failure(t.comparisonInvalid, 400);
+      // Only listings published right now, resolved by the server (never trusted from the page).
+      const keys = publishedSelection(candidates, Object.keys(await resolveProjects(candidates)));
+      if (!keys) return failure(t.comparisonInvalid, 409);
+      const results = await sql.transaction([
+        sql`SELECT id FROM auth_accounts WHERE id=${owner} FOR UPDATE`,
+        // Created only if both the list and the not-yet-saved projects fit their limits.
+        sql`INSERT INTO buyer_lists(id,owner_id,name,purpose) SELECT ${body.id},${owner},${details.name},''
+          WHERE (SELECT count(*) FROM buyer_lists WHERE owner_id=${owner})<30
+            AND (SELECT count(*) FROM buyer_saved_projects WHERE owner_id=${owner} AND NOT (project_key=ANY(${keys}::text[])))+${keys.length}<=200
+          ON CONFLICT(id) DO NOTHING`,
+        sql`INSERT INTO buyer_saved_projects(owner_id,project_key) SELECT ${owner},key FROM unnest(${keys}::text[]) AS key
+          WHERE EXISTS(SELECT 1 FROM buyer_lists WHERE id=${body.id} AND owner_id=${owner})
+          ON CONFLICT DO NOTHING`,
+        sql`INSERT INTO buyer_list_items(owner_id,list_id,project_key) SELECT ${owner},l.id,s.project_key
+          FROM buyer_lists l JOIN buyer_saved_projects s ON s.owner_id=l.owner_id
+          WHERE l.id=${body.id} AND l.owner_id=${owner} AND s.project_key=ANY(${keys}::text[])
+          ON CONFLICT(owner_id,list_id,project_key) DO NOTHING`,
+        sql`SELECT count(*)::int AS items FROM buyer_list_items WHERE owner_id=${owner} AND list_id=${body.id}`,
+      ]);
+      if (Number(results[4][0]?.items) < keys.length) return failure(t.comparisonLimit, 409);
+      revalidateTag('catalog');
+      captureServerEvent(request, owner, 'list_created', {
+        visibility: 'private',
+        from: 'comparison',
+      });
       return ok({ id: body.id });
     }
     if (['update-list', 'delete-list'].includes(body.action)) {

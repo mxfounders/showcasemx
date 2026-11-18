@@ -1,7 +1,7 @@
 'use client';
 import { ExpandingSearch } from '@/components/search/expanding-search';
 import { useState } from 'react';
-import { PlusIcon } from '@/components/icons/gota';
+import { FilterLinesIcon, FolderPlusIcon, PlusIcon } from '@/components/icons/gota';
 import type { BuyerBoard } from '@/lib/library/model';
 import { normalizeText } from '@/lib/search/normalize';
 import { actionButtonStyle } from '@/lib/brand-colors';
@@ -10,6 +10,7 @@ import { BoardCard } from './board-card';
 export { BoardCard } from './board-card';
 import { LibraryDialog } from './library-dialog';
 import { ListForm } from './list-form';
+import { LibraryEmpty } from './library-empty';
 import { commonText } from '@/i18n/common';
 export function CreateBoard({
   tile = false,
@@ -66,27 +67,42 @@ export function BoardGallery({
     { value: 'private', label: t.private },
     { value: 'public', label: t.public },
   ] as const;
+  if (!boards.length)
+    return (
+      <LibraryEmpty icon={<FolderPlusIcon />} title={t.emptyTitle} text={t.emptyText}>
+        <CreateBoard dict={libraryDict} locale={locale} />
+      </LibraryEmpty>
+    );
+  // Visibility tabs only split something when both kinds exist, and a search box is
+  // worth it from six lists on; below that the toolbar would be empty furniture.
+  const publicCount = boards.filter(board => board.visibility === 'public').length;
+  const showTabs = publicCount > 0 && publicCount < boards.length;
+  const showSearch = boards.length >= 6 || !!query;
+  const filtered = !!query || visibility !== 'all';
+  function reset() {
+    setQuery('');
+    setVisibility('all');
+  }
   return (
     <>
-      <div className="mb-9 border-b border-stone-200 pb-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <nav aria-label={t.visibilityLabel} className="selector-tabs">
-            {filters.map(filter => {
-              const active = visibility === filter.value;
-              return (
+      {(showTabs || showSearch) && (
+        <div className="mb-8 flex flex-wrap items-center gap-3">
+          {showTabs && (
+            <nav aria-label={t.visibilityLabel} className="selector-tabs">
+              {filters.map(filter => (
                 <button
                   key={filter.value}
                   type="button"
-                  aria-pressed={active}
+                  aria-pressed={visibility === filter.value}
                   onClick={() => setVisibility(filter.value)}
                   className="selector-tab"
                 >
                   {filter.label}
                 </button>
-              );
-            })}
-          </nav>
-          <div className="ml-auto flex items-center gap-3">
+              ))}
+            </nav>
+          )}
+          {showSearch && (
             <ExpandingSearch
               clearLabel={commonText(locale).clearSearch}
               label={t.searchLabel}
@@ -94,39 +110,33 @@ export function BoardGallery({
               value={query}
               onChange={setQuery}
             />
-            <CreateBoard dict={libraryDict} locale={locale} />
-          </div>
+          )}
         </div>
-        <p role="status" className="mt-4 text-xs text-stone-500">
-          {(boards.length === 1 ? t.countSingular : t.countPlural)
+      )}
+      <p role="status" className="sr-only">
+        {filtered &&
+          (boards.length === 1 ? t.countSingular : t.countPlural)
             .replace('{visible}', String(visible.length))
             .replace('{total}', String(boards.length))}
-        </p>
-      </div>
+      </p>
       {visible.length ? (
         <div className="grid gap-x-6 gap-y-9 sm:grid-cols-2 xl:grid-cols-3">
           {visible.map(board => (
             <BoardCard key={board.id} board={board} dict={dict} />
           ))}
-          {!query && visibility === 'all' && (
-            <CreateBoard tile dict={libraryDict} locale={locale} />
-          )}
+          {!filtered && <CreateBoard tile dict={libraryDict} locale={locale} />}
         </div>
       ) : (
-        <div className="border-y border-stone-200 py-14">
-          <h2 className="text-xl font-medium">{t.emptyFiltered}</h2>
+        <LibraryEmpty icon={<FilterLinesIcon />} title={t.emptyFiltered}>
           <button
             type="button"
-            onClick={() => {
-              setQuery('');
-              setVisibility('all');
-            }}
+            onClick={reset}
             style={actionButtonStyle}
-            className="action-button mt-5 rounded-full px-5 py-3 text-sm"
+            className="action-button rounded-full px-5 py-3 text-sm font-medium"
           >
             {t.reset}
           </button>
-        </div>
+        </LibraryEmpty>
       )}
     </>
   );

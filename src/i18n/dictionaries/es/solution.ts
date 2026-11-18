@@ -72,10 +72,11 @@ export const solution = {
     categoryTitle: 'Todo en {category}',
     categoryDesc: 'Las soluciones aprobadas de esta categoría, ordenadas por interacción real.',
     categoryCta: 'Ver categoría',
-    briefTitle: 'Cuéntanos qué necesitas',
-    briefDesc: 'Si ninguna encaja, escríbenos qué buscas. Lo lee una persona del equipo de shwcs.',
-    briefCta: 'Escribirnos',
-    /** Prefilled in the contact form; {name} is this listing. */
+    briefTitle: 'Publica tu necesidad',
+    briefDesc:
+      'Si ninguna encaja, describe qué buscas: los proyectos que encajan te envían una propuesta y una persona del equipo de shwcs la lee.',
+    briefCta: 'Publicar necesidad',
+    /** Prefilled in «Publica tu necesidad» (SHCWS-58); {name} is this listing. */
     briefNeed: 'Busco algo parecido a {name}',
   },
   /** Share button on the listing (SHCWS-54). */
@@ -93,6 +94,29 @@ export const solution = {
   },
   teamNote: 'Personas presentadas por el proyecto. Identidad no verificada por shwcs.',
   teamTitle: 'Quién está detrás',
+  /** SHCWS-56: where the provider operates and its track record, as declared. */
+  provider: {
+    title: 'Dónde opera',
+    note: 'Datos declarados por el proyecto.',
+    origin: 'País de origen',
+    serves: 'Atiende en',
+    bills: 'Factura en',
+    anyCountry: 'Cualquier país',
+    currencies: 'Monedas en que cobra',
+    languages: 'Idiomas de soporte',
+    hours: 'Horario de soporte',
+    payment: 'Formas de pago',
+    founded: 'Fundado en',
+    team: 'Equipo',
+    customers: 'Clientes',
+  },
+  cases: {
+    title: 'Casos de clientes',
+    declared: 'Declarado por el proyecto · el cliente aún no lo confirma',
+    before: 'Antes',
+    after: 'Qué cambió',
+    readMore: 'Leer el caso',
+  },
   toolsCount: 'herramientas',
   verifyLink: 'verificas tu correo',
   verifyNote: 'Tu actividad se guarda, pero solo cuenta para el orden del catálogo si',

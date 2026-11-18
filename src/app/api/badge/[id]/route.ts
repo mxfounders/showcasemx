@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { solutionsSql } from '@/lib/solutions/server';
 import { isSolutionId } from '@/lib/solutions/model';
 import { getRecognition } from '@/lib/recognition/server';
+import { getOwnerReviewDigest } from '@/lib/reviews/server';
 import { badgeOptions } from '@/lib/recognition/badges';
 import { badgeSvg } from '@/lib/recognition/badge';
 import { getDictionary } from '@/i18n/get-dictionary';
@@ -16,8 +17,9 @@ export const runtime = 'nodejs';
  *
  * Only published listings have one. A verification or award that is no longer standing
  * falls back to «Publicado en shwcs» instead of breaking the image on someone's site,
- * and the short cache makes a withdrawal show within the hour. Nothing about who loads
- * the image is recorded.
+ * and the short cache makes a withdrawal show within the hour. «Publicado en» carries the
+ * public rating from three reviews up (SHCWS-17). Nothing about who loads the image is
+ * recorded.
  */
 export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
@@ -34,11 +36,19 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
       await sql`SELECT published_data->>'name' AS name, published_data->>'website' AS website
       FROM founder_solutions WHERE id = ${id} AND published_data IS NOT NULL`;
     if (!row) return notFound();
-    const [recognition, dictionary] = await Promise.all([
+    const [recognition, dictionary, reviews] = await Promise.all([
       getRecognition(id, String(row.website ?? '')),
       getDictionary(locale),
+      // The rating is extra: without it the badge still says «Publicado en shwcs».
+      getOwnerReviewDigest(id).catch(() => null),
     ]);
-    const options = badgeOptions(String(row.name), recognition, locale, dictionary.recognition);
+    const options = badgeOptions(
+      String(row.name),
+      recognition,
+      locale,
+      dictionary.recognition,
+      reviews,
+    );
     const option =
       (kind === 'verified' && options.find(item => item.variant === 'verified')) ||
       (kind === 'award' && awardId && options.find(item => item.key === awardId)) ||

@@ -14,6 +14,7 @@ import {
   localizedSetupTimeOptions,
 } from '@/lib/taxonomy';
 import { formatPriceFrom, pricingModelLabels } from '@/lib/solutions/pricing';
+import { providerRows } from '@/lib/solutions/provider';
 
 /**
  * Plain-text views of shwcs for assistants and crawlers (/llms.txt and
@@ -158,6 +159,45 @@ export function solutionMarkdown({
     [text(data.evidence), evidenceUrl && `Fuente: ${evidenceUrl}`],
     'evidencia',
   );
+  // SHCWS-56: where it operates and its track record, only what the project declared.
+  section(
+    'Dónde opera',
+    [
+      list(
+        providerRows(data, 'es', {
+          origin: 'País de origen',
+          serves: 'Atiende en',
+          bills: 'Factura en',
+          anyCountry: 'Cualquier país',
+          currencies: 'Monedas en que cobra',
+          languages: 'Idiomas de soporte',
+          hours: 'Horario de soporte',
+          payment: 'Formas de pago',
+          founded: 'Fundado en',
+          team: 'Equipo',
+          customers: 'Clientes',
+        }).map(row => `${row.label}: ${row.value}`),
+      ),
+    ],
+    'dónde opera',
+  );
+  section('Casos de clientes declarados por el proyecto (sin confirmar por el cliente)', [
+    list(
+      (data.cases ?? [])
+        .filter(item => text(item.client) && text(item.result))
+        .map(item => {
+          const url = safeSolutionUrl(item.url ?? '');
+          return [
+            `**${text(item.client)}**`,
+            text(item.problem) && `Antes: ${text(item.problem).replace(/\n+/g, ' ')}`,
+            `Qué cambió: ${text(item.result).replace(/\n+/g, ' ')}`,
+            url && `Fuente: ${url}`,
+          ]
+            .filter(Boolean)
+            .join(' · ');
+        }),
+    ),
+  ]);
   section('Creadores', [
     list(
       (data.founders ?? [])

@@ -25,6 +25,11 @@ export type PublicCollection = {
   /** The viewer follows this list / the signature behind it (SHCWS-121). */
   following: boolean;
   followingCurator: boolean;
+  /**
+   * The curator's public profile (SHCWS-120), only when they turned it on and it shows
+   * this list: the signature then links to it and «Seguir» follows the person.
+   */
+  profile: { handle: string; name: string; following: boolean } | null;
   own: boolean;
   covers: Pick<BuyerProject, 'key' | 'name' | 'image'>[];
   projects: BuyerProject[];
@@ -57,6 +62,8 @@ export async function getPublicCollections({
   viewer = '',
   savedBy = '',
   followedBy = '',
+  ownedBy = '',
+  exclude = [],
 }: {
   id?: string;
   categories?: readonly string[];
@@ -69,6 +76,10 @@ export async function getPublicCollections({
   savedBy?: string;
   /** Lists this account follows; resolved from the session, never from the URL. */
   followedBy?: string;
+  /** Lists of one account, for its public profile; resolved on the server, never sent. */
+  ownedBy?: string;
+  /** List ids left out (the ones a profile hides). */
+  exclude?: readonly string[];
 } = {}): Promise<{ collections: PublicCollection[]; hasMore: boolean; total: number }> {
   const sql = solutionsSql(),
     offset = (Math.max(1, Math.min(1000, page)) - 1) * communityPageSize,
@@ -79,7 +90,8 @@ export async function getPublicCollections({
     searching = Boolean(query.trim());
   const cats = [...categories],
     inds = [...industries],
-    szs = [...sizes];
+    szs = [...sizes],
+    excluded = [...exclude];
   const rows = await sql`WITH matched AS (
   SELECT l.id,l.owner_id,l.name,l.public_description,l.curator_name,l.categories,l.created_at,
    -- «Populares» (communityRank in community-model.ts): only verified accounts not marked
@@ -104,6 +116,8 @@ export async function getPublicCollections({
    AND (cardinality(${cats}::text[])=0 OR l.categories && ${cats}::text[])
    AND (${savedBy}='' OR EXISTS(SELECT 1 FROM community_saved_lists x WHERE x.list_id=l.id AND x.owner_id=${savedBy || null}::uuid))
    AND (${followedBy}='' OR EXISTS(SELECT 1 FROM community_list_follows x WHERE x.list_id=l.id AND x.follower_id=${followedBy || null}::uuid))
+   AND (${ownedBy}='' OR l.owner_id=${ownedBy || null}::uuid)
+   AND NOT (l.id = ANY(${excluded}::uuid[]))
    AND (cardinality(${inds}::text[])=0 OR EXISTS(SELECT 1 FROM buyer_list_items i JOIN founder_solutions s
      ON (i.project_key='solution:'||s.id::text OR (s.catalog_key IS NOT NULL AND i.project_key='catalog:'||s.catalog_key))
      WHERE i.list_id=l.id AND i.owner_id=l.owner_id AND s.published_data IS NOT NULL
@@ -125,6 +139,10 @@ export async function getPublicCollections({
   EXISTS(SELECT 1 FROM community_curator_follows x WHERE x.curator_id=c.owner_id
    AND x.curator_key=curator_key(c.curator_name) AND x.follower_id=${viewer || null}::uuid) following_curator,
   c.owner_id=${viewer || null}::uuid own,
+  (SELECT jsonb_build_object('handle',p.handle,'name',p.display_name,
+     'following',EXISTS(SELECT 1 FROM profile_follows f WHERE f.profile_id=p.account_id AND f.follower_id=${viewer || null}::uuid))
+    FROM public_profiles p WHERE p.account_id=c.owner_id AND profile_visible(p.account_id)
+     AND NOT (c.id = ANY(p.hidden_lists))) AS profile,
   COALESCE((SELECT jsonb_agg(available.project_key ORDER BY available.created_at DESC,available.project_key) FROM (
    SELECT i.project_key,i.created_at FROM buyer_list_items i JOIN founder_solutions s ON (i.project_key='solution:'||s.id::text OR i.project_key='catalog:'||s.catalog_key)
    WHERE i.list_id=c.id AND i.owner_id=c.owner_id AND s.published_data IS NOT NULL
@@ -174,6 +192,7 @@ export async function getPublicCollections({
         saved: !!row.saved,
         following: !!row.following,
         followingCurator: !!row.following_curator,
+        profile: readListProfile(row.profile),
         own: !!row.own,
         covers: items.slice(0, 4).map(({ key, name, image }) => ({ key, name, image })),
         projects: items,
@@ -181,6 +200,14 @@ export async function getPublicCollections({
     }),
   };
 }
+function readListProfile(value: unknown): PublicCollection['profile'] {
+  if (!value || typeof value !== 'object') return null;
+  const { handle, name, following } = value as Record<string, unknown>;
+  return typeof handle === 'string' && typeof name === 'string'
+    ? { handle, name, following: following === true }
+    : null;
+}
+
 export async function getPublicComments(listId: string, viewer = ''): Promise<PublicComment[]> {
   const sql = solutionsSql();
   const rows =
