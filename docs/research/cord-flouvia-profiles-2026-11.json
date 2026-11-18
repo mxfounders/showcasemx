@@ -1,0 +1,167 @@
+{
+  "checkedAt": "2026-11-18",
+  "note": "Propuesta de datos de ficha para Cord y Flouvia, sacada de sus páginas públicas (fuentes en cord-flouvia-2026-11.md). No es un seed: se aplica una vez, como borrador de la cuenta dueña, con control de versión y aprobación en ops. contactEmail y screenshots no van aquí: el correo privado se conserva del borrador y las imágenes se suben aparte.",
+  "cord": {
+    "name": "Cord",
+    "kind": "Software",
+    "website": "https://cordhq.app/",
+    "categories": ["Finanzas", "Ventas", "Cobros", "Operación"],
+    "problem": "Cord junta la cotización, la aprobación, el cobro, la factura y la cobranza en un solo link. El cliente revisa, aprueba y paga sin crear cuenta, y el negocio factura desde la cotización aprobada y da seguimiento al cobro sin recapturar nada.",
+    "audience": "Negocios que venden con cotización: distribuidoras y comercializadoras, agencias, empresas de servicios, startups y SaaS B2B. Sirve desde una persona que hoy cotiza por WhatsApp o PDF hasta equipos con roles, aprobaciones y varias empresas. Alta disponible en 12 países.",
+    "capabilities": [
+      "cotizaciones-propuestas",
+      "catalogo-precios",
+      "pronostico",
+      "contratos-cierre",
+      "mayoreo-b2b",
+      "facturacion-cfdi",
+      "cobranza-recordatorios",
+      "portal-pagos",
+      "suscripciones",
+      "cartera-antiguedad",
+      "flujo-efectivo",
+      "reportes-tableros",
+      "automatizacion-procesos"
+    ],
+    "industries": [],
+    "companySizes": [],
+    "scope": "Editor de cotizaciones con catálogo, precios negociados y por volumen, márgenes, anticipos y planes de pago por hitos; borradores con IA desde texto, PDF o fotos. Link público para aprobar y pagar sin cuenta, con seguimiento en vivo, comentarios y contraofertas. Cobro en línea con Cord Payments o Mercado Pago. Factura en el formato de cada país donde ya está activa (CFDI 4.0 en México). Cobranza con agente de IA, flujo de caja a 90 días, 15 reportes, Cord Workflows sin código y Cord Studio para diseñar el link.",
+    "notFor": "No es un CRM, un ERP ni un procesador de pagos: se conecta a ellos. No está pensado para venta B2C con carrito ni punto de venta. Fuera de México y España, la factura registrada ante la autoridad fiscal está en activación, y en Brasil, Colombia, Argentina, Chile y Perú el cobro en línea es solo con tu propia cuenta de Mercado Pago. Hoy no tiene SOC 2 ni ISO 27001.",
+    "pricing": "Plan Free sin vencimiento ni tarjeta (5 envíos al mes). Starter 12, Professional 30 y Scale 70 USD al mes; Developer a la medida. En México se cobra en MXN (240, 590 y 1,390 con IVA incluido) y en España, Alemania y Francia en EUR. El pago anual equivale a 10 mensualidades. Las comisiones del cobro en línea van aparte.",
+    "pricingModel": ["suscripcion-mensual", "suscripcion-anual"],
+    "priceFrom": 0,
+    "priceBand": "menos-1000",
+    "tryOptions": ["plan-gratis", "sin-tarjeta", "demo-publica", "demo-guiada"],
+    "plans": [
+      {
+        "name": "Free",
+        "price": 0,
+        "includes": "5 envíos al mes y 5 cotizaciones activas, 1 usuario, 10 facturas estándar al mes y 3 borradores con IA. Sin vencimiento ni tarjeta."
+      },
+      {
+        "name": "Starter",
+        "price": 12,
+        "currency": "USD",
+        "unit": "suscripcion-mensual",
+        "includes": "Envíos ilimitados, 50 cotizaciones activas, sin «Powered by Cord», 30 facturas fiscales al mes y 20 borradores con IA. 1 usuario."
+      },
+      {
+        "name": "Professional",
+        "price": 30,
+        "currency": "USD",
+        "unit": "suscripcion-mensual",
+        "includes": "Cotizaciones ilimitadas, 5 usuarios con roles, cobranza con IA, facturas recurrentes, flujo de caja a 90 días, bitácora y Cord Domains."
+      },
+      {
+        "name": "Scale",
+        "price": 70,
+        "currency": "USD",
+        "unit": "suscripcion-mensual",
+        "includes": "15 usuarios, aprobaciones de descuento y margen, SSO/SAML, intereses moratorios automáticos y 500 facturas fiscales al mes."
+      },
+      {
+        "name": "Developer",
+        "includes": "Capacidad, condiciones y arranque a la medida de la integración, con 200 llaves de API y 100 endpoints de webhooks. Contacto con ventas."
+      }
+    ],
+    "setupTime": "mismo-dia",
+    "implementation": "La cuenta se crea gratis y la IA propone la configuración (perfil, marca, impuestos, catálogo y plantillas) que una persona aprueba. El catálogo se importa desde un archivo o desde Shopify. Para facturar en México se sube el CSD; para cobrar con Cord Payments, el negocio completa la verificación de identidad.",
+    "support": "Soporte técnico incluido en todos los planes, por correo, con centro de ayuda, documentación y comunidad pública. Atención en español e inglés. El equipo de ventas da demos personalizadas.",
+    "integrationKeys": [
+      "sat-cfdi",
+      "quickbooks",
+      "xero",
+      "shopify",
+      "mercado-pago",
+      "google-workspace",
+      "microsoft-365",
+      "slack",
+      "whatsapp-business",
+      "zapier-make",
+      "api-publica",
+      "webhooks"
+    ],
+    "integrations": "HubSpot, Shopify, Mercado Pago, Slack, Microsoft Teams, WhatsApp Business, Gmail, Google Sheets, Excel, QuickBooks Online, Xero, Zapier, Make, n8n y Claude, incluidas en todos los planes. Para cualquier otro sistema: API REST, webhooks firmados y servidor MCP. CONTPAQi y Aspel todavía no.",
+    "compliance": ["cfdi-4-0", "factura-fiscal-mx", "lfpdppp", "gdpr", "soporte-espanol"],
+    "demoUrl": "https://cordhq.app/q/demo",
+    "evidenceUrl": "https://flouvia.com/work/cord/",
+    "originCountry": "MX",
+    "serviceCountries": ["MX", "US", "CA", "BR", "ES", "GB", "DE", "FR", "CO", "AR", "CL", "PE"],
+    "currencies": ["MXN", "USD", "EUR"],
+    "supportLanguages": ["es", "en"],
+    "paymentMethods": ["tarjeta"],
+    "supportChannels": ["correo", "centro-ayuda", "comunidad"],
+    "onboarding": ["autoservicio", "configuracion-asistida", "importacion-datos"],
+    "exitTerms": ["cancela-cuando-quieras", "sin-plazo-forzoso", "exporta-tus-datos", "borra-tu-cuenta"],
+    "developerTools": ["api-rest", "webhooks", "openapi", "sdks", "cli", "mcp", "sandbox", "embebibles", "oauth"],
+    "resources": {
+      "docs": "https://docs.cordhq.app/docs",
+      "api": "https://docs.cordhq.app/docs/desarrolladores/referencia",
+      "changelog": "https://docs.cordhq.app/docs/desarrolladores/registro-de-cambios",
+      "status": "https://status.cordhq.app/",
+      "roadmap": "https://cordhq.app/roadmap",
+      "help": "https://cordhq.app/soporte",
+      "community": "https://community.cordhq.app/"
+    }
+  },
+  "flouvia": {
+    "name": "Flouvia",
+    "kind": "Agencia",
+    "website": "https://flouvia.com/",
+    "categories": ["Desarrollo", "Comercio electrónico", "Ventas", "Operación"],
+    "capabilities": [
+      "apis-integraciones",
+      "tienda-online",
+      "checkout-pagos-online",
+      "catalogo-online",
+      "mayoreo-b2b",
+      "cotizaciones-propuestas",
+      "catalogo-precios",
+      "automatizacion-procesos"
+    ],
+    "industries": [],
+    "companySizes": [],
+    "notFor": "No trabaja con plantillas ni con apps genéricas encimadas: lo crítico lo construye en código propio, no en Make, Zapier o n8n. Si lo que te conviene es comprar un SaaS en lugar de construir, te lo dice. Su cartera es deliberadamente acotada, así que el arranque depende de su calendario.",
+    "integrationKeys": ["shopify", "stripe", "webhooks"],
+    "integrations": "Conectores API bidireccionales a la medida entre tu tienda, tu ERP y tu facturación: inventario, pedidos, precios y clientes sincronizados, con reintentos y registro de cada mensaje. Cobros y suscripciones con Stripe. Make, Zapier o n8n solo para validar una idea rápido.",
+    "serviceCountries": [],
+    "tryOptions": ["diagnostico-gratis"],
+    "supportChannels": ["correo", "portal-clientes"],
+    "supportResponse": "menos-24-horas",
+    "onboarding": ["acompanamiento", "capacitacion", "importacion-datos"],
+    "exitTerms": ["codigo-es-tuyo"],
+    "teamSize": "de-2-a-10",
+    "evidence": "Portafolio público con cinco proyectos de 2026: Cord y shwcs, productos propios, y El Zarco, Masuma y Anter House, clientes. Cada caso explica qué se construyó, con qué tecnología y cómo se ve.",
+    "evidenceUrl": "https://flouvia.com/work/",
+    "cases": [
+      {
+        "client": "Distribuidora El Zarco · alimentos al mayoreo en la Central de Abasto, desde 1992",
+        "problem": "Su sitio vivía en Webflow, su portal leía los pedidos de una hoja de cálculo y los precios cambian cada día.",
+        "result": "Sitio, catálogo, portal B2B y panel nuevos: cada requisición queda registrada con su folio y un total calculado en el servidor, el cliente sigue y repite sus pedidos, y el equipo actualiza los precios del día subiendo un CSV. La cotización formal sale con Cord.",
+        "url": "https://flouvia.com/work/el-zarco/"
+      },
+      {
+        "client": "Masuma · limpieza, obra y mantenimiento de espacios de trabajo en la Ciudad de México, desde 2005",
+        "problem": "Necesitaba un sitio que cargara rápido, apareciera cuando alguien busca cada uno de sus servicios y convirtiera visitas en cotizaciones.",
+        "result": "Sitio rehecho de punta a punta: una página por servicio con datos estructurados, cotización protegida contra bots y páginas servidas desde la red de Cloudflare, con las fotos reales de sus obras.",
+        "url": "https://flouvia.com/work/masuma/"
+      },
+      {
+        "client": "Anter House · taller de moda a la medida en Monterrey",
+        "problem": "Necesitaba una página que se viera como su trabajo y poder cambiar su colección sin depender de nadie.",
+        "result": "Página a la medida con su colección por color y talla, y un panel desde donde el taller cambia el sold out, los precios, las fotos y los textos. Código, publicación y panel quedaron a su nombre.",
+        "url": "https://flouvia.com/work/anter-house/"
+      }
+    ],
+    "founders": [
+      { "name": "André Valle Ortega", "role": "Fundador", "bio": "", "links": [] },
+      { "name": "Emilio Rubio Pérez Ulloa", "role": "Socio", "bio": "", "links": [] }
+    ],
+    "projectLinks": [
+      { "label": "Instagram", "url": "https://www.instagram.com/flouviahq/" },
+      { "label": "X", "url": "https://x.com/flouviahq" },
+      { "label": "LinkedIn", "url": "https://www.linkedin.com/company/flouvia/" },
+      { "label": "Contacto", "url": "https://flouvia.com/contacto/" }
+    ]
+  }
+}

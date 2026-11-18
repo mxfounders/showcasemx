@@ -1,5 +1,9 @@
 # Fuentes de las fichas de Cord y Flouvia
 
+> Histórico (30 de agosto). Fuente vigente: `cord-flouvia-2026-11.md` y la propuesta de datos
+> `cord-flouvia-profiles-2026-11.json` (18 de noviembre). Varias cifras de abajo ya no están
+> en los sitios (el presupuesto mínimo de Flouvia, los plazos de 8–14 semanas).
+
 Consulta: 30/08/2026. Copy original resumido en `cord-flouvia-profiles.json`, preparado
 por petición expresa del propietario. Se aplicó **solo a sus dos borradores**,
 con comprobación de versión y evento de historial. No se modificó published_data,
