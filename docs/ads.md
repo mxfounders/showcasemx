@@ -9,10 +9,12 @@ Stripe (14 nov 2026, ver «Pago en la página»).
 ## Reglas de producto (no negociables)
 
 1. Siempre etiquetado «Patrocinado / Sponsored» y separado de los resultados orgánicos.
-2. Máximo 2 por categoría y día (`ad_placements.slots`), 1 en inicio y 1 en newsletter.
+2. Cupos por página y día (`ad_placements.slots`): 2 en cada categoría, industria y
+   colección; 1 en los resultados de búsqueda de una categoría, 1 en inicio y 1 en newsletter.
 3. Nunca se mezcla con el orden orgánico: `publicProducts()` y `solutionScore()` no
    leen ninguna tabla de anuncios. El espacio se dibuja aparte (`sponsored` en
-   `CategoryPageLayout`, bloque propio en la home).
+   `CategoryPageLayout`, bloque propio en la home y en `/buscar`), nunca en comparativas,
+   datos estructurados, sitemap, «Soluciones parecidas» ni alertas.
 4. Solo fichas con `published_data`: pagar no compra la aprobación. Si la ficha
    pierde la publicación, el espacio deja de mostrarse en la siguiente lectura.
 5. Métricas propias y agregadas (`ad_campaign_daily_metrics`): sin cookies, sin
@@ -20,9 +22,23 @@ Stripe (14 nov 2026, ver «Pago en la página»).
 
 ## Compra
 
-- Ubicaciones: `category` (alcance = slug de una categoría que la ficha declara),
-  `home`, `newsletter`. Newsletter no se puede abrir hasta que se envíen campañas
-  (`scripts/ad-rates.cjs` exige `--newsletter-is-sending`).
+- Ubicaciones (`adPlacements`, src/lib/ads/model.ts) y su alcance, que es siempre una
+  página donde la ficha ya pertenece por lo que declaró (`listingScopes`,
+  src/lib/ads/scopes.ts; el servidor lo vuelve a comprobar al reservar):
+  - `category`: slug de una categoría que la ficha declara (`/explorar/<slug>`).
+  - `industry` (SHCWS-79): slug de una industria que declara, o cualquiera si declaró que
+    sirve a todas (`industries: []`, la misma regla de `/industria/<slug>`); nada inferido.
+  - `collection` (SHCWS-79): slug de una colección cuya regla cumple (`/colecciones/<slug>`).
+  - `search` (SHCWS-79): slug de una categoría que declara; se muestra en `/buscar` cuando
+    la consulta apunta a esa categoría (`inferQueryCategory`, src/lib/search/topics.ts: el
+    título, el vocabulario y las capacidades de la categoría, nunca su descripción; gana la
+    que responde más palabras, y un empate va a la primera de la taxonomía).
+  - `home` y `newsletter`, sin alcance. Newsletter no se puede abrir hasta que se envíen
+    campañas (`scripts/ad-rates.cjs` exige `--newsletter-is-sending`).
+  Las tres nuevas nacen cerradas y sin tarifa: ops las abre con su tarifa
+  (`/panel/anuncios`, «Tarifas» y «Abrir»). `/industria` y `/colecciones` siguen
+  prerenderizadas: el espacio se lee con la misma consulta en caché y etiquetada que
+  `/explorar` (`sponsoredProducts`).
 - Días naturales completos en `America/Mexico_City` (`adTimeZone`), de 1 a 90 días,
   con inicio hasta 180 días adelante. `ends_on` es exclusivo.
 - Monedas USD y MXN; tarifas en unidades menores en `ad_rates`. La reserva guarda la
@@ -56,10 +72,16 @@ total en vivo: precio × días, descuento, IVA estimado, total y la regla de ree
   (`lastBookableDay`); mientras el comprador no toque las fechas, la ventana por defecto
   se mueve sola a días con espacio. Teclado: flechas, Re Pág/Av Pág, Enter. El cupo se
   vuelve a comprobar en `reserveBooking`, que responde 409 si alguien ganó el día.
-- **Alcance**: visitas de los últimos 30 días a la página donde sale el espacio (inicio o
-  la categoría), sin contar hoy; si la medición empezó hace menos, «desde el …». Se mide
-  con `PlacementBeacon` → `POST /api/ads/reach` → `ad_placement_daily_views`: totales
-  diarios, DNT/GPC respetados, sin identificadores. Newsletter no tiene página: sin alcance.
+- **Alcance**: visitas de los últimos 30 días a la página donde sale el espacio (inicio, la
+  categoría, la industria o la colección; en búsqueda, las búsquedas que apuntan a esa
+  categoría), sin contar hoy; si la medición empezó hace menos, «desde el …». Se mide con
+  `PlacementBeacon` → `POST /api/ads/reach` → `ad_placement_daily_views`: totales diarios,
+  DNT/GPC respetados. Con `VIEW_HASH_SECRET` (SHCWS-112) cuenta una vez por visitante,
+  ubicación, alcance y día: `ad_placement_view_visitors` guarda un HMAC de la dirección y
+  el día (`visitorHash`, src/lib/solutions/view-visitor.ts), nunca la dirección, y el cron
+  de monitor borra esas filas a los 3 días, como `solution_view_visitors` (§55). Sin el
+  secreto cuenta cada vista, como antes, y el media kit lo dice. Newsletter no tiene
+  página: sin alcance.
 - **Lista de espera**: una ubicación cerrada muestra «Avisarme cuando abra»
   (`POST /api/ads/waitlist`, tabla `ad_waitlist`). Al abrirla (`enabled` de falso a
   verdadero, por `ads:rates` u ops), un trigger deja un aviso `ad:waitlist:…` con enlace a
@@ -164,8 +186,9 @@ lo más una vez por hora:
   `/terminos#publicidad`, y dos acciones: «Promocionar mi ficha» (`/account/solutions`) y
   «Hablar con nosotros» (`/contacto?motivo=partnership`).
 
-Pendiente: los suscriptores por segmento cuando el newsletter envíe (SHCWS-124), y
-deduplicar las visitas por visitante y día con `VIEW_HASH_SECRET` (SHCWS-112).
+Las visitas cuentan una vez por visitante, página y día cuando `VIEW_HASH_SECRET` está
+configurada (SHCWS-112); la nota de la página dice cuál de las dos reglas aplica.
+Pendiente: los suscriptores por segmento cuando el newsletter envíe (SHCWS-124).
 
 ## Cancelación, retiros y reembolsos
 
@@ -204,6 +227,78 @@ IAB (investigación del 9 de octubre de 2026). Implementada en `firstRefundableD
   registrado y ops lo termina con «Reintentar reembolso»; el mensaje del panel lo dice.
   Cada parada y cada reembolso quedan en la bitácora con `automatic: true`.
 
+## Caídas y días de reposición (SHCWS-179)
+
+Regla de los términos (`/terminos#publicidad`): un día reservado en que shwcs no sirvió
+**cuatro horas o más, sumadas** (hora de Ciudad de México) no se entregó, y se compensa sin
+que nadie lo pida. Los términos ya decían «cuatro horas o más»; esa es la regla aplicada
+(`outageThresholdMinutes`).
+
+**Por qué desde fuera.** El cron diario vive en el mismo despliegue que se cae, y las
+impresiones no distinguen una caída de un día flojo. Las ventanas llegan de un monitor
+externo, solo cuando el sitio vuelve (es el único momento en que se sabe cuánto duró):
+
+- `POST /api/internal/outages` con `Authorization: Bearer <OUTAGE_WEBHOOK_SECRET>` (≥ 32
+  caracteres, distinto de `CRON_SECRET`; quien lo tenga puede provocar reembolsos). Cuerpo
+  (src/lib/ads/outage-report.ts): `{ "source", "incident", "event", "startedAt",
+  "endedAt", "durationSeconds" }`; bastan dos de los tres tiempos, en ISO o segundos Unix,
+  también como texto (las plantillas de webhook rellenan variables como texto). Un
+  `event` de caída («down») se ignora con 202. Rechaza ventanas futuras, de más de 45 días
+  o que empiezan hace más de 60. Responde en cuanto guarda y procesa con `after()`.
+  - Un servicio de uptime con webhook de recuperación (por ejemplo, el cuerpo
+    `{"source":"uptime","incident":"<id del monitor>-<fecha>","event":"<Up/Down>","endedAt":"<fecha del aviso>","durationSeconds":"<duración>"}`)
+    que sondee `https://shwcs.site/api/health` cada pocos minutos. Elegir el servicio y
+    su plan (que permita webhooks con encabezado propio) es decisión del propietario.
+  - O `.github/workflows/uptime-probe.yml` + `scripts/outage-probe.mjs`: sondea cada 30
+    minutos (tres intentos), guarda en la caché de Actions desde cuándo está caído y, al
+    volver, reporta la ventana con la hora en que lo vio volver (un reporte atrasado no
+    alarga la caída). Apagado hasta poner la variable de repositorio `OUTAGE_PROBE=on`
+    (un job omitido no gasta minutos); necesita el secreto `OUTAGE_WEBHOOK_SECRET`. En un
+    repositorio privado son ~1,440 minutos de Actions al mes.
+  - Los dos pueden convivir: las ventanas se unen por día, así que un mismo apagón
+    reportado dos veces cuenta una sola vez. El mismo incidente reenviado es la misma fila
+    (`UNIQUE (source, external_id)`) y solo puede ensancharse.
+  - `/api/health` no consulta la base (sondearlo no despierta Neon): detecta caídas de
+    Vercel, despliegues rotos o el sitio pausado, no una caída de la base de datos sola.
+
+**Qué se hace con cada día** (`processOutages`, src/lib/ads/outages.ts). Para cada reserva
+de página (no newsletter) que se servía ese día — pagada, sin disputa abierta o perdida,
+no pausada antes de que terminara el día — una sola decisión por reserva y día
+(`ad_outage_credits`, clave primaria):
+
+| Caso | Qué pasa | `reason` |
+| --- | --- | --- |
+| El día siguiente al último de la reserva (y de sus reposiciones) tiene cupo y aún no empieza | Día de reposición gratis | `room` |
+| Ese día está lleno | Reembolso de ese día | `noRoom` |
+| La reserva ya terminó (no queda un día entero por delante) | Reembolso | `ended` |
+| La reserva fue cancelada o retirada | Reembolso | `stopped` |
+| La ficha ya no está publicada | Reembolso | `unlisted` |
+
+- El día de reposición es **su propia reserva** (`makegood_of`, `makegood_day`): pagada,
+  total 0, en la misma ubicación y alcance, escrita bajo el mismo candado consultivo que
+  una compra, así que nunca rebasa el cupo. La reserva pagada conserva sus días tal como se
+  vendieron, y con ellos cualquier reembolso futuro. Una segunda caída repone después de
+  la primera reposición. No aparece en el historial de pagos ni lleva CFDI.
+- El reembolso usa la misma fórmula y la misma clave que un retiro: `⌊total × 1 / días
+  reservados⌋` (`dayRefundAmount`, nunca más de lo no reembolsado) y
+  `refund:<reserva>:<total pedido>`. La decisión y `refund_requested_amount` se escriben
+  juntas, con la versión de la reserva, **antes** de llamar a Stripe; si Stripe no lo
+  confirma, el cron diario lo reintenta con el mismo importe y la misma clave (nunca
+  duplica), y «Reintentar reembolso» de ops hace lo mismo con los parámetros originales.
+- Aviso al anunciante por reserva y día (`ad:<reserva>:outage:<día>`), con la fecha, la
+  duración y lo que se hizo; el reembolso además manda su aviso cuando Stripe lo confirma.
+  «Promocionar» muestra bajo cada reserva sus días compensados y por qué.
+- Ops: «Caídas reportadas» en `/panel/anuncios` (ventana, duración, fuente, resultado) y,
+  en cada reserva, «Días afectados por caídas» con la decisión, el motivo, el importe y el
+  estado en Stripe; un día de reposición enlaza a la reserva pagada que repone.
+- Días de más de 60 días atrás no se procesan. Un día con una disputa abierta se deja al
+  proceso de Stripe, como dicen los términos.
+
+Verificación: `tests/ads-placements-outages.test.ts` (minutos por día con ventanas
+solapadas y que cruzan la medianoche, umbral, monto de un día, plan de reposición,
+lectura del reporte, endpoint sin secreto) y el recorrido contra `neondb`, Stripe en modo
+prueba y el dev server descrito en el comentario de SHCWS-179.
+
 ## Webhook
 
 `POST /api/webhooks/stripe` verifica la firma sobre el cuerpo crudo y procesa cada
@@ -231,7 +326,10 @@ Crear el endpoint con la versión de API `2026-09-30.endive` (la que fija el SDK
 `db/ad-self-serve.sql` (después de `contact-requests.sql` y `listing-notices.sql`):
 `discount_amount`/`promotion_code`, `visits`/`site_clicks` diarios,
 `ad_contact_intents`, `ad_contact_attributions` y su trigger, `ad_placement_daily_views`,
-`ad_waitlist` y el trigger que avisa al abrir una ubicación. El estado de
+`ad_waitlist` y el trigger que avisa al abrir una ubicación.
+`db/ad-placements-outages.sql`: las ubicaciones `industry`, `collection` y `search`,
+`makegood_of`/`makegood_day`, `site_outages`, `ad_outage_credits` y
+`ad_placement_view_visitors`. El estado de
 `ad_campaigns` solo sigue el pago (`checkout`, `processing`, `paid`, `expired`,
 `failed`); cancelación, pausas, reembolsos y disputas tienen columnas propias.
 
@@ -239,7 +337,7 @@ Crear el endpoint con la versión de API `2026-09-30.endive` (la que fija el SDK
 
 - API: `/api/ads/checkout`, `/api/ads/cancel`, `/api/ads/availability`,
   `/api/ads/events`, `/api/ads/promo`, `/api/ads/reach`, `/api/ads/waitlist`,
-  `/api/webhooks/stripe`.
+  `/api/webhooks/stripe`, `/api/internal/outages` (caídas, con secreto).
 - Páginas: `/[locale]/account/solutions/[id]/promote` (compra en una pantalla, lista de
   reservas, regreso de Checkout) y `/promote/[bookingId]` (reporte). Botón «Promocionar»
   en la ficha propia y en Mis soluciones.
@@ -339,8 +437,10 @@ Cada pago y cada reembolso encolan su documento fiscal (CFDI o nota de crédito)
 
 ## Pendiente
 
-- Detección automática de caídas (regla de 4 h) y días de reposición (SHCWS-179):
-  necesita un monitor externo, porque el cron vive en el mismo despliegue que se cae.
+- Caídas (SHCWS-179): elegir y configurar el monitor externo en producción (servicio de
+  uptime con webhook de recuperación, o el workflow de GitHub con `OUTAGE_PROBE=on`) y
+  poner `OUTAGE_WEBHOOK_SECRET` en Vercel y en el monitor. Sin eso nada se compensa solo.
+- Tarifas de industria, colección y búsqueda en producción (decisión del propietario).
 - CFDI para clientes mexicanos: construido con Cord ([billing.md](billing.md)); falta
   `CORD_API_KEY` de la cuenta emisora en Vercel.
 - Envío del newsletter con menciones patrocinadas.
