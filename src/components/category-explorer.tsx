@@ -22,7 +22,7 @@ import {
   type PreviewCategory,
 } from '@/lib/catalog-preview';
 import { localizedCategoryDisplayLabel, localizedOfferingOptions } from '@/lib/taxonomy';
-import { contactBriefHref } from '@/lib/contact-inquiry';
+import { briefHref } from '@/lib/briefs/links';
 import { priceSummary } from '@/lib/solutions/pricing';
 import type { Dictionary } from '@/i18n/dictionary';
 import { ProjectMark } from '@/components/project-mark';
@@ -272,9 +272,9 @@ export function CategoryExplorer({
                 <p className="mt-3 max-w-md text-sm leading-relaxed text-stone-500">
                   {dict.emptyDesc}
                 </p>
-                {/* The need doesn't get lost: it travels to the contact form (SHCWS-39). */}
+                {/* The need doesn't get lost: it becomes a brief (SHCWS-39, SHCWS-58). */}
                 <Link
-                  href={contactBriefHref(query)}
+                  href={briefHref(query)}
                   style={actionButtonStyle}
                   className="action-button mt-6 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium"
                 >
@@ -426,7 +426,7 @@ export function CategoryExplorer({
               })}
               {showBrief && (
                 <Link
-                  href={contactBriefHref(dict.briefPrefill.replace('{category}', categoryLabel))}
+                  href={briefHref('', category.label)}
                   className="group flex h-[328px] min-w-0 flex-col justify-between rounded-[20px] p-5 text-left transition-[background-color,transform] duration-300 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800 motion-reduce:transform-none sm:h-[340px]"
                   style={{ backgroundColor: palette.soft, color: palette.solid }}
                 >

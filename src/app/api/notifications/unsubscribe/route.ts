@@ -34,6 +34,10 @@ export async function POST(request: NextRequest) {
       await sql`INSERT INTO notification_preferences(owner_id, community_email)
         SELECT id, false FROM auth_accounts WHERE id = ${accountId}
         ON CONFLICT (owner_id) DO UPDATE SET community_email = false, updated_at = now()`;
+    else if (target.category === 'brief')
+      await sql`INSERT INTO notification_preferences(owner_id, brief_email)
+        SELECT id, false FROM auth_accounts WHERE id = ${accountId}
+        ON CONFLICT (owner_id) DO UPDATE SET brief_email = false, updated_at = now()`;
     else
       await sql`INSERT INTO notification_preferences(owner_id, alert_email)
         SELECT id, false FROM auth_accounts WHERE id = ${accountId}

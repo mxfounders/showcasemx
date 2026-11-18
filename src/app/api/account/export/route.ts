@@ -10,8 +10,8 @@ export const runtime = 'nodejs';
  * Portability export (LFPDPPP / GDPR): everything this account holds, as JSON.
  *
  * Scope is deliberate. It carries the account's own profile, publications,
- * library, collections, what it published in public (reviews and comments) and the
- * contact conversations it takes part in — which
+ * library, collections, what it published in public (reviews and comments), its posted
+ * needs and proposals (SHCWS-58) and the contact conversations it takes part in — which
  * includes what a buyer chose to send to this account, because that content was
  * shared with it and already appears in its inbox. It never carries another
  * person's private notes, list purposes or password material, and the avatar
@@ -90,6 +90,23 @@ export async function GET(request: NextRequest) {
       ),
     ]);
 
+    // «Publica tu necesidad» (SHCWS-58): the buyer's briefs with what they received, and
+    // the proposals this account sent as a founder. Never the buyer behind a brief it
+    // proposed to. Its own read, so a base without db/buyer-briefs.sql still exports.
+    const briefs = await Promise.all([
+      sql`SELECT id::text, problem, budget, timeline, company_size, industry, country, categories, capabilities, consent_version, consent_at::text, created_at::text, expires_at::text, closed_at::text, hidden_at::text, hidden_reason FROM buyer_briefs WHERE buyer_id = ${account.id} ORDER BY created_at`,
+      sql`SELECT p.brief_id::text, s.published_data->>'name' AS project, p.message, p.price, p.timeline, p.created_at::text, p.chosen_at::text FROM buyer_brief_proposals p JOIN buyer_briefs b ON b.id = p.brief_id LEFT JOIN founder_solutions s ON s.id = p.solution_id WHERE b.buyer_id = ${account.id} ORDER BY p.created_at`,
+      sql`SELECT l.brief_id::text, l.note, l.solution_ids::text[] AS solution_ids, l.created_at::text FROM buyer_brief_shortlists l JOIN buyer_briefs b ON b.id = l.brief_id WHERE b.buyer_id = ${account.id} ORDER BY l.created_at`,
+      sql`SELECT p.brief_id::text, p.solution_id::text, p.message, p.price, p.timeline, p.created_at::text, p.chosen_at::text FROM buyer_brief_proposals p WHERE p.founder_id = ${account.id} ORDER BY p.created_at`,
+    ])
+      .then(([posted, proposals, shortlists, sentProposals]) => ({
+        posted,
+        proposals,
+        shortlists,
+        sentProposals,
+      }))
+      .catch(() => null);
+
     const payload = {
       exportedAt: new Date().toISOString(),
       about: t.exportAbout,
@@ -107,6 +124,7 @@ export async function GET(request: NextRequest) {
       publicProfile: publicProfile[0]
         ? { ...publicProfile[0], previousHandles: previousHandles }
         : null,
+      briefs,
     };
 
     return new NextResponse(JSON.stringify(payload, null, 2), {

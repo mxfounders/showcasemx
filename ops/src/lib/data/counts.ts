@@ -1,8 +1,11 @@
 import { getDb } from '../db';
 import type { CountKey } from '@/components/shell/nav';
+import { lateBriefCount } from './briefs';
 
 /** Live badges for the sidebar. One round trip; failures degrade to zeros. */
 export async function navCounts(): Promise<Record<CountKey, number>> {
+  // Its own query: a base without db/buyer-briefs.sql must not zero every other badge.
+  const briefs = lateBriefCount();
   try {
     const sql = getDb();
     const [row] = await sql`
@@ -23,9 +26,10 @@ export async function navCounts(): Promise<Record<CountKey, number>> {
       inquiries: Number(row?.inquiries ?? 0),
       mail: Number(row?.mail ?? 0),
       billing: Number(row?.billing ?? 0),
+      briefs: await briefs,
     };
   } catch (err) {
     console.error('[ops/counts]', err);
-    return { reviews: 0, reports: 0, inquiries: 0, mail: 0, billing: 0 };
+    return { reviews: 0, reports: 0, inquiries: 0, mail: 0, billing: 0, briefs: await briefs };
   }
 }

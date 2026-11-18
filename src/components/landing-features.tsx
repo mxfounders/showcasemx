@@ -12,7 +12,7 @@ import type { Dictionary } from '@/i18n/dictionary';
 import { ProjectMark } from '@/components/project-mark';
 import { VerifiedMark } from '@/components/recognition/verified-mark';
 import { useLocale } from '@/i18n/use-locale';
-import { contactBriefHref } from '@/lib/contact-inquiry';
+import { briefHref } from '@/lib/briefs/links';
 
 type FeatureTabId = keyof Dictionary['landing']['features']['tabs'];
 
@@ -255,12 +255,7 @@ export function LandingFeatures({
                   ))}
                   {showBrief && (
                     <Link
-                      href={contactBriefHref(
-                        explorerDict.briefPrefill.replace(
-                          '{category}',
-                          dict.features.tabs[activeTab.id],
-                        ),
-                      )}
+                      href={briefHref('', conceptCategories[activeTab.id]?.[0])}
                       className="group rounded-3xl p-6 flex flex-col h-48 sm:h-52 bg-white/80 shadow-sm transition-all hover:bg-white hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-800"
                     >
                       <span

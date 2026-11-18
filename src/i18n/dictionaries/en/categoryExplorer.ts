@@ -3,21 +3,21 @@ import type { Dictionary } from '../../dictionary';
 export const categoryExplorer = {
   emptyTitle: "We don't have a solution for that yet.",
   emptyDesc: 'The catalog is growing. Try other words or browse a category.',
-  briefCta: 'Tell us what you need',
-  briefNote: 'Your search goes in the message. A person on the shwcs team reads it.',
-  briefCardTitle: 'Tell us what you need',
+  briefCta: 'Post your need',
+  briefNote:
+    'Your search goes into the need. The projects that fit send you a proposal and a person on the shwcs team reads it.',
+  briefCardTitle: 'Post your need',
   briefCardEmpty:
-    'No {category} projects are published yet. Write to us about what you are looking for: a person on the shwcs team reads it and helps you find it.',
+    'No {category} projects are published yet. Describe what you are looking for: a person on the shwcs team reads it and, when one that fits is published, it sends you a proposal.',
   briefCardFew:
-    "Don't see what you need in {category}? Tell us: a person on the shwcs team reads it.",
-  briefPrefill: 'I am looking for a {category} solution:',
+    "Don't see what you need in {category}? Post your need and the projects that fit send you a proposal.",
   availableSpace: 'Available space',
   applySpaceTitle: 'Your solution could be here',
   applySpaceBtn: 'Apply in',
   applySpaceLabel: 'Apply with a solution for {category}, slot {slot}',
   availableSlotsCount: 'available slot',
   availableSlotsCountPlural: 'available slots',
-  briefCardCta: 'Describe what you need',
+  briefCardCta: 'Post my need',
   solutionFor: 'for',
   clearBtn: 'Clear search',
   option: 'option',
