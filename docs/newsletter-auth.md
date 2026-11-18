@@ -24,6 +24,10 @@ La selección del servidor acepta `NEON_DATABASE_URL`, `DATABASE_URL` o `POSTGRE
 
 ## Pendientes antes del lanzamiento
 
+> 17 nov 2026: el newsletter ya confirma por correo (doble opt-in), envía campañas por segmento
+> desde ops y procesa rebotes y quejas; ver [newsletter.md](newsletter.md). El párrafo siguiente
+> describe el estado anterior.
+
 Newsletter guarda registros, pero NO envía correos todavía. Conectar proveedor/remitente, confirmación de propiedad del correo, baja por enlace seguro, filtro de bajas, protección contra abuso y aviso de privacidad/retención antes de campañas. No hay bienvenida automática ni frecuencia semanal prometida.
 
 Auth no verifica correo ni permite recuperar/cambiar contraseña aún; necesita la integración de correo. No tratar el email como identidad verificada ni asociar estas cuentas con el esquema `users`/productos por coincidencia de correo. Las tablas `auth_accounts` están separadas del esquema de negocio aún sin integrar. Añadir mantenimiento de sesiones/contadores vencidos y una revisión de seguridad antes del lanzamiento.

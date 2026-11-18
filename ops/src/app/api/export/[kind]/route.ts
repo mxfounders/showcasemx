@@ -98,18 +98,32 @@ export const POST = opsRoute<{ kind: string }>(
         r.published_at,
       ]);
     } else if (kind === 'newsletter') {
-      headers = ['correo', 'perfil', 'rol', 'consentimiento', 'alta', 'baja'];
+      headers = [
+        'correo',
+        'perfil',
+        'rol',
+        'idioma',
+        'consentimiento',
+        'alta',
+        'confirmada',
+        'baja',
+        'motivo_baja',
+      ];
       const data = await sql`
-        SELECT email, profile, role, consent_version, created_at, unsubscribed_at FROM newsletter_subscribers
+        SELECT email, profile, role, locale, consent_version, created_at, confirmed_at, unsubscribed_at,
+          unsubscribe_reason FROM newsletter_subscribers
         ORDER BY created_at LIMIT ${MAX_ROWS}
       `;
       rows = data.map(r => [
         r.email,
         r.profile,
         r.role,
+        r.locale,
         r.consent_version,
         r.created_at,
+        r.confirmed_at,
         r.unsubscribed_at,
+        r.unsubscribe_reason,
       ]);
     } else if (kind === 'contacts') {
       headers = [

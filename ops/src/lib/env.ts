@@ -19,6 +19,10 @@ export function configStatus() {
     productOrigin: Boolean(process.env.PRODUCT_APP_ORIGIN?.trim()),
     catalogRevalidate: Boolean(process.env.CATALOG_REVALIDATE_SECRET?.trim()),
     mediaProxy: Boolean(process.env.OPS_MEDIA_SECRET?.trim() && process.env.PRODUCT_APP_ORIGIN),
+    newsletter: Boolean(
+      (process.env.OPS_NEWSLETTER_SECRET?.trim().length ?? 0) >= 32 &&
+      process.env.PRODUCT_APP_ORIGIN,
+    ),
     securityAlerts: Boolean(
       process.env.RESEND_API_KEY?.trim() &&
       (process.env.OPS_ALERT_FROM?.trim() || process.env.AUTH_EMAIL_FROM?.trim()),

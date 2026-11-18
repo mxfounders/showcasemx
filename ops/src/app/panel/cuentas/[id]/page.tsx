@@ -550,7 +550,9 @@ export default async function AccountPage({
                     value: a.newsletter
                       ? a.newsletter.unsubscribedAt
                         ? `Se dio de baja ${fmtDate(a.newsletter.unsubscribedAt)}`
-                        : `Suscrita desde ${fmtDate(a.newsletter.since)}`
+                        : a.newsletter.confirmedAt
+                          ? `Confirmada el ${fmtDate(a.newsletter.confirmedAt)}`
+                          : `Sin confirmar desde ${fmtDate(a.newsletter.since)}`
                       : 'No suscrita',
                   },
                   {

@@ -46,7 +46,10 @@ const routes = new Map<string, Rest>([
   // The founders directory: profiles that show a published listing (SHCWS-120).
   ['fundadores', leaf],
   ['industria', oneOf(industries.map(item => item.slug))],
-  ['newsletter', rest => leaf(rest) || (rest.length === 1 && rest[0] === 'unsubscribe')],
+  [
+    'newsletter',
+    rest => leaf(rest) || (rest.length === 1 && ['unsubscribe', 'confirm'].includes(rest[0])),
+  ],
   ['nuevo', leaf],
   ['onboarding', leaf],
   // A review invitation link (src/lib/reviews/invitations.ts): 16 random bytes in hex.

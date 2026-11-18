@@ -30,7 +30,7 @@ export const newsletter = {
   labels: {
     email: 'Tu correo electrónico',
     purpose:
-      'Usaremos tu correo, perfil y rol para enviarte novedades y avisos relevantes de shwcs.',
+      'Te escribiremos para confirmar tu dirección: solo recibirás el newsletter después de confirmar. Usaremos tu correo, perfil y rol para enviarte novedades de shwcs; los clics se cuentan como totales, nunca por persona.',
     consent: 'Quiero recibir novedades y avisos de shwcs por correo.',
     honeypot: 'Deja este campo vacío',
   },
@@ -41,8 +41,9 @@ export const newsletter = {
   subscribeBtn: 'Suscribirme',
   continueBtn: 'Continuar',
   backBtn: 'Anterior',
-  successTitle: 'Gracias por sumarte.',
-  successDesc: 'Recibimos tu solicitud. Si ya estabas en la lista, no duplicaremos tu registro.',
+  successTitle: 'Revisa tu correo',
+  successDesc:
+    'Te enviamos un enlace para confirmar tu suscripción; vence en 7 días. Hasta que lo abras no te enviaremos el newsletter. Si ya estabas suscrito, no duplicaremos tu registro.',
   successBtn: 'Explorar soluciones',
   /** The page reached from the unsubscribe link at the foot of each newsletter email. */
   unsubscribe: {
@@ -58,6 +59,62 @@ export const newsletter = {
     missingToken: 'Este enlace no contiene una solicitud de baja válida.',
     error: 'No pudimos registrar la baja.',
     genericError: 'No pudimos registrar la baja. Inténtalo de nuevo.',
+  },
+  /** The page reached from the confirmation email (double opt-in, SHCWS-124). */
+  confirm: {
+    metaTitle: 'Confirmar suscripción',
+    title: 'Confirma tu suscripción',
+    desc: 'Un clic y empezarás a recibir el newsletter de shwcs. Puedes darte de baja desde cualquier correo.',
+    submit: 'Confirmar suscripción',
+    pending: 'Confirmando…',
+    openLink: 'Abre el enlace completo que te enviamos por correo.',
+    doneTitle: 'Suscripción confirmada',
+    doneDesc: 'Ya estás en la lista. Cada correo trae un enlace para darte de baja con un clic.',
+    back: 'Explorar soluciones →',
+    error: 'No pudimos confirmar la suscripción.',
+    genericError: 'No pudimos confirmar la suscripción. Inténtalo de nuevo.',
+  },
+  /**
+   * Copy of the newsletter's own emails (confirmation and campaigns). Server-side only;
+   * {placeholders} are replaced in src/lib/newsletter/.
+   */
+  mail: {
+    confirm: {
+      subject: 'Confirma tu suscripción a shwcs',
+      heading: 'Confirma tu suscripción',
+      paragraphs: [
+        'Recibimos una solicitud para suscribir esta dirección al newsletter de shwcs.',
+        'Confírmala con el botón. Si no fuiste tú, ignora este correo: no te enviaremos campañas.',
+      ],
+      button: 'Confirmar suscripción',
+      footer: 'El enlace vence en 7 días y solo funciona una vez.',
+    },
+    reconfirm: {
+      subject: '¿Sigues queriendo recibir el newsletter de shwcs?',
+      heading: '¿Seguimos escribiéndote?',
+      paragraphs: [
+        'Te suscribiste al newsletter de shwcs. Ahora pedimos confirmar cada dirección antes de enviarle campañas.',
+        'Si quieres seguir recibiéndolo, confírmalo con el botón. Si no, ignora este correo: no te enviaremos campañas.',
+      ],
+      button: 'Sí, quiero recibirlo',
+      footer: 'El enlace vence en 7 días y solo funciona una vez.',
+    },
+    campaign: {
+      footer: 'Recibes este correo porque confirmaste tu suscripción al newsletter de shwcs.',
+      unsubscribe: 'Darte de baja',
+      unsubscribeText: 'Darte de baja: {url}',
+      testSubject: '[Prueba v{version}] {subject}',
+      testBanner:
+        'Envío de prueba de la versión {version}. Los clics de esta prueba no se cuentan y la baja no tiene efecto.',
+    },
+    weekly: {
+      subjectOne: 'Nuevo esta semana en shwcs: {name}',
+      subjectMany: 'Nuevo esta semana en shwcs: {count} soluciones',
+      heading: 'Nuevo esta semana',
+      intro:
+        'Estas son las fichas que el equipo aprobó en los últimos siete días, de la más reciente a la más antigua. No están ordenadas por votos.',
+      cta: '[Ver todas en Nuevo esta semana](/es/nuevo)',
+    },
   },
   /** Messages returned by /api/newsletter and /api/newsletter/unsubscribe. */
   api: {
@@ -79,5 +136,10 @@ export const newsletter = {
     unsubscribeDisabled: 'La baja no está disponible en este momento.',
     unsubscribeTooMany: 'Demasiados intentos. Espera un momento.',
     unsubscribeUnavailable: 'No pudimos registrar la baja. Inténtalo de nuevo.',
+    confirmationUnavailable:
+      'No pudimos enviarte el correo de confirmación. Tu solicitud no se perdió: inténtalo de nuevo en unos minutos.',
+    confirmLinkInvalid: 'Este enlace ya se usó o venció. Suscríbete de nuevo para recibir otro.',
+    confirmUnavailable: 'No pudimos confirmar la suscripción. Inténtalo de nuevo.',
+    confirmTooMany: 'Demasiados intentos. Espera un momento.',
   },
 } as const;

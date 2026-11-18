@@ -8,7 +8,7 @@ variables. Separar bases de desarrollo, preview y producción.
 | --- | --- |
 | NEON_DATABASE_URL, DATABASE_URL o POSTGRES_URL | URL de servidor; prioridad en ese orden. Basta una. Necesaria para catálogo aprobado, cuentas, biblioteca, contactos y avisos. |
 | AUTH_APP_ORIGIN | Origen canónico HTTPS sin ruta, query, fragmento ni credenciales. Se usa en enlaces de correo y callback Google. También fija el dominio de las passkeys (rpID = su host, p. ej. `shwcs.site`): en producción solo hay passkeys en ese origen exacto; en previews y otros hosts la opción no aparece. En desarrollo se usa `localhost` con el puerto del servidor (SHCWS-158). |
-| RESEND_API_KEY | Envío transaccional: recuperación, verificación y avisos; no campañas automáticas. |
+| RESEND_API_KEY | Envío transaccional (recuperación, verificación y avisos) y campañas del newsletter con la API de lotes ([newsletter.md](newsletter.md)). |
 | AUTH_EMAIL_FROM | Remitente con dominio autorizado en Resend. |
 | CONTACT_EMAIL_TO | Destino opcional del formulario público. Por defecto `contacto@shwcs.site`. |
 | MONITOR_EMAIL_TO | Destino interno de las alertas de salud de producción. |
@@ -19,7 +19,9 @@ variables. Separar bases de desarrollo, preview y producción.
 | REVIEW_ALERTS | Opcional. `1` activa los correos al equipo de revisión (ficha enviada y resumen diario) fuera de producción; en producción (`VERCEL_ENV=production`) siempre están activos. En desarrollo quedan apagados porque la base tiene revisores reales (SHCWS-139). |
 | SOLUTION_REVIEW_TARGET_HOURS | Opcional, entero 1–720. Tiempo de revisión prometido: la ficha del fundador muestra «Normalmente revisamos en N horas hábiles» (SHCWS-31) y el resumen diario del equipo marca lo que lo pasó (SHCWS-139; sin la variable, 48 h). Sin definir, no se promete ningún plazo al fundador. |
 | AUTH_TOTP_KEY | Exactamente 32 bytes hex (`openssl rand -hex 32`). Cifra en reposo el secreto TOTP de la verificación en dos pasos del producto, igual que OPS_TOTP_KEY hace en el backoffice. Sin ella, Configuración muestra la función como no disponible y nadie puede activarla; el acceso con contraseña no cambia. Rotarla dejaría ilegibles los secretos ya guardados: quien tuviera la verificación activa debería volver a activarla. |
-| NEWSLETTER_UNSUBSCRIBE_SECRET | Secreto servidor de mínimo 32 caracteres para firmar enlaces permanentes de baja. |
+| NEWSLETTER_UNSUBSCRIBE_SECRET | Secreto servidor de mínimo 32 caracteres para firmar enlaces permanentes de baja. Sin él no sale ninguna campaña del newsletter (no habría baja en un clic). |
+| OPS_NEWSLETTER_SECRET | Secreto de 32+ caracteres (`openssl rand -hex 32`), **mismo valor** en `shwcs` y `shwcs-ops`. Autoriza a ops a previsualizar, probar y enviar campañas del newsletter por `POST /api/internal/newsletter` del producto con `Authorization: Bearer`. Sin él (o sin `PRODUCT_APP_ORIGIN` en ops) se pueden escribir borradores, pero no probarlos ni enviarlos. Ver [newsletter.md](newsletter.md). |
+| RESEND_WEBHOOK_SECRET | Solo en `shwcs`. Secreto de firma `whsec_…` del webhook de Resend (`https://shwcs.site/api/webhooks/resend`, eventos `email.delivered`, `email.bounced`, `email.complained`, `email.suppressed`). Verifica la firma Svix; sin él el endpoint responde 503 y los rebotes y quejas no dan de baja. |
 | AUTH_REQUIRE_VERIFIED_EMAIL | true para exigir verificación antes de crear contactos; activar tras probar entrega. |
 | NEXT_PUBLIC_SHOW_DEMO_PROJECTS | false/ausente por defecto. true muestra ejemplos de diseño no contratables. No usar en catálogo público real. |
 | LAUNCH_LEGAL_REVIEWED | true solo después de revisión humana de responsable, contacto y políticas; preflight no valida contenido legal. |

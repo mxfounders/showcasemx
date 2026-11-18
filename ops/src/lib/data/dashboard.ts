@@ -33,7 +33,7 @@ export async function dashboardData(user: { id: string; email: string }) {
           (SELECT count(*) FROM contact_inquiries WHERE handled_at IS NULL)::int AS inquiries,
           (SELECT count(*) FROM account_notifications WHERE email_state = 'failed')::int AS mail_failed,
           (SELECT count(*) FROM account_notifications WHERE email_state IN ('pending', 'sending'))::int AS mail_queued,
-          (SELECT count(*) FROM newsletter_subscribers WHERE unsubscribed_at IS NULL)::int AS subscribers,
+          (SELECT count(*) FROM newsletter_subscribers WHERE confirmed_at IS NOT NULL AND unsubscribed_at IS NULL)::int AS subscribers,
           (SELECT count(*) FROM buyer_lists WHERE visibility = 'public')::int AS public_lists,
           (SELECT count(*) FROM storage_orphans WHERE attempts >= 5)::int AS dead_letters
       `,
