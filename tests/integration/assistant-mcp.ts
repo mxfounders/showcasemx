@@ -208,6 +208,7 @@ const origin = process.env.APP_ORIGIN ?? 'http://localhost:3107';
     for (const item of media) blobKeys.push(String(item.storage_key), ...(item.files ?? []));
 
     // 5. Never another account's listing, with any tool.
+    const [before5] = await sql`SELECT version FROM founder_solutions WHERE id = ${foreignId}`;
     for (const [name, args] of [
       ['ver_lo_que_falta', { ficha_id: foreignId }],
       ['actualizar_borrador', { ficha_id: foreignId, version: 1, cambios: { name: 'Robado' } }],
@@ -220,7 +221,10 @@ const origin = process.env.APP_ORIGIN ?? 'http://localhost:3107';
     const [theirs] =
       await sql`SELECT data->>'name' AS name, version FROM founder_solutions WHERE id = ${foreignId}`;
     assert.equal(theirs.name, '');
-    assert.equal(Number(theirs.version), 1);
+    assert.equal(Number(theirs.version), Number(before5.version), 'their draft is untouched');
+    const [theirMedia] =
+      await sql`SELECT count(*)::int AS n FROM solution_media WHERE solution_id = ${foreignId}`;
+    assert.equal(theirMedia.n, 0);
     const listing = await call(client, 'estado_de_mis_fichas');
     const ids = (listing.body.listings as { id: string }[]).map(item => item.id);
     assert.deepEqual(ids, [id], 'only the owner’s listings are listed');
