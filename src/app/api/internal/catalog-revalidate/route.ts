@@ -4,6 +4,7 @@ import { matchSearchAlerts } from '@/lib/alerts/server';
 import { matchBriefs } from '@/lib/briefs/server';
 import { revalidateTag } from 'next/cache';
 import { authorizedCatalogRevalidate } from '@/lib/catalog-revalidate';
+import { refreshSiteIcons } from '@/lib/solutions/site-icon-store';
 
 // Closes the Fase 1 gap (CLAUDE.md §52): ops is a separate Next.js deployment
 // with its own cache, so a publish/withdraw decided there doesn't invalidate
@@ -28,7 +29,11 @@ export async function POST(request: NextRequest) {
     await matchBriefs().catch(() => console.error('Brief matching failed.'));
     await deliverNotifications({ categories: ['solution', 'alert', 'brief'] }).catch(
       () => undefined,
-    );
+    ); // A listing just published shows its site's current logo right away; one already read
+    // in the last hour is left alone, so a burst of decisions does not re-read every site.
+    await refreshSiteIcons({ limit: 10, staleHours: 1, budgetMs: 45_000 })
+      .then(result => result.changed && revalidateTag('catalog'))
+      .catch(() => undefined);
   });
   return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
 }

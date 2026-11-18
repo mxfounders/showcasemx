@@ -148,7 +148,17 @@ previa del editor, en vez de su inicial.
 - `GET /api/solutions/[id]/site-icon` sigue las reglas de la portada: público con la
   ficha publicada, solo el dueño en borrador y 404 vacío en cualquier otro caso. No es
   `immutable`, porque el dueño puede volver a leer el sitio.
-- El arte local de Cord y Flouvia sigue teniendo prioridad (`staticArtFor()`).
+- **Siempre al día (18 nov 2026, pedido de André al cambiar el favicon de Cord):** el logo
+  leído del sitio va **antes** que el arte local de Cord y Flouvia (`staticArtFor()` queda
+  solo como respaldo sin logo guardado). `refreshSiteIcons()`
+  (`src/lib/solutions/site-icon-store.ts`) vuelve a leer el logo de cada ficha publicada
+  con más de 20 h desde su última lectura, en el cron diario de monitor, y de las leídas
+  hace más de una hora tras cada decisión de publicación en ops (`catalog-revalidate`).
+  Lee solo el logo, no la portada (`fetchSiteIconOnly`). Si los bytes son los mismos solo
+  actualiza `fetched_at`: sin blob nuevo ni huérfano. Un logo distinto tiene clave nueva y
+  la URL pública lleva `?v=<checksum>` (`siteIconUrl`), así que ningún navegador ni la CDN
+  se quedan con el anterior. Un sitio caído conserva su logo y se reintenta al día
+  siguiente.
 
 Páginas largas: muchos sitios mandan más de 512 KB de HTML con CSS y JS en línea, y
 los que hacen streaming de metadatos ponen la `og:image` y los íconos después del
