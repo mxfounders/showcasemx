@@ -77,8 +77,19 @@ No hay que crear una lista primero.
 
 `tests/comparison.test.ts`: tamaño 2–3, identidad, duplicados, claves inválidas y ejemplos,
 solo publicadas, membresía de lista, matriz sí/no/ninguna/sin respuesta, retorno tras iniciar
-sesión, lote sin lista y origen/sesión de `save-comparison`. Recorrido contra el dev con
-fichas publicadas temporales y cuentas `@example.invalid` (ver el comentario en SHCWS-53).
+sesión, lote sin lista y origen/sesión de `save-comparison`.
+
+Recorrido en navegador contra el dev (18 nov 2026, `neondb`, cuatro fichas publicadas y un
+borrador temporales, cuentas temporales borradas al final): en `/es/explorar/cobros` con
+«Atiende y factura en: Colombia», la ficha que atiende y factura en Colombia y la de
+«cualquier país» quedan en la rejilla, la que nunca lo declaró pasa a «También podrían
+servir» con su motivo y la de solo México sale; «Comparar» en tres tarjetas llena la bandeja
+y un cuarto clic se rechaza con aviso; «Comparar 3» abre la tabla con sus nueve grupos, sin
+desbordar la página; el borrador y una clave repetida se rechazan; «Entra para guardarla»
+vuelve a la comparación tras iniciar sesión; «Guardar como lista» crea una lista privada con
+3 proyectos y 3 guardados; «Pedir propuesta a estos 3» envía 3 solicitudes en un grupo con
+`list_id` nulo (los correos de esas cuentas se cambiaron antes a `delivered+…@resend.dev`).
+La ficha y su `.md` muestran «Dónde opera» y los casos, sin el correo privado.
 
 ## Pendiente
 

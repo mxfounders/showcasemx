@@ -301,7 +301,7 @@ export const library = {
     compliance: 'Normas declaradas',
     complianceNone: 'Ninguna declarada.',
     cases: 'Casos de clientes',
-    casesValue: '{count} declarados: {clients}',
+    casesValue: '{clients}',
     casesNote: 'Declarados por el proyecto, sin confirmar por el cliente.',
     providerNote: 'Datos declarados por cada proyecto.',
     /** «Dónde opera» rows; same keys as src/lib/solutions/provider.ts. */

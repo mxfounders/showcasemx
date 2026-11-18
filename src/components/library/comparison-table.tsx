@@ -395,9 +395,7 @@ export function ComparisonTable({
               </>,
               cells(project =>
                 project.caseClients?.length
-                  ? t.casesValue
-                      .replace('{count}', String(project.caseClients.length))
-                      .replace('{clients}', project.caseClients.join(', '))
+                  ? t.casesValue.replace('{clients}', project.caseClients.join(', '))
                   : null,
               ),
               'cases',
