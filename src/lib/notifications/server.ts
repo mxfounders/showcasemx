@@ -156,8 +156,15 @@ export async function deliverNotifications({
         footerNote = 'Te escribimos una sola vez, al terminar de crear tu cuenta.';
       }
       if (row.category === 'security') {
-        email = securityNotice(title, String(row.created_at));
-        buttonHref = `${config.origin}/es/forgot-password`;
+        const passkeyAdded = String(row.source_key).startsWith('security:passkey-added:');
+        email = securityNotice(
+          title,
+          String(row.created_at),
+          passkeyAdded ? 'passkey-added' : 'default',
+        );
+        buttonHref = passkeyAdded
+          ? `${config.origin}/es/account/settings/security`
+          : `${config.origin}/es/forgot-password`;
         footerNote = 'Los avisos de seguridad siempre se envían; no se pueden desactivar.';
       }
       if (row.category === 'community') {

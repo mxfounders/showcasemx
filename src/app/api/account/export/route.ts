@@ -52,6 +52,7 @@ export async function GET(request: NextRequest) {
       publicProfile,
       previousHandles,
       followedProfiles,
+      passkeys,
     ] = await Promise.all([
       sql`SELECT id::text, email, name, organization, profile, role, dashboard_mode, created_at::text, email_verified_at::text, (avatar_key IS NOT NULL OR avatar_data IS NOT NULL) AS has_avatar, totp_confirmed_at IS NOT NULL AS two_step_enabled FROM auth_accounts WHERE id = ${account.id}`,
       sql`SELECT id::text, catalog_key, status, step, version, data, published_data, published_at::text, updated_at::text FROM founder_solutions WHERE owner_id = ${account.id} ORDER BY updated_at`,
@@ -88,6 +89,11 @@ export async function GET(request: NextRequest) {
       sql`SELECT CASE WHEN profile_visible(p.account_id) THEN p.handle END AS handle, f.created_at::text FROM profile_follows f JOIN public_profiles p ON p.account_id = f.profile_id WHERE f.follower_id = ${account.id} ORDER BY f.created_at`.catch(
         () => [],
       ),
+      // Passkeys (SHCWS-158): what the person recognises them by. The public key, the
+      // credential id and the counter only mean something to shwcs's own check, so they stay out.
+      sql`SELECT name, backed_up AS synced, created_at::text, last_used_at::text FROM auth_passkeys WHERE account_id = ${account.id} ORDER BY created_at`.catch(
+        () => [],
+      ),
     ]);
 
     // «Publica tu necesidad» (SHCWS-58): the buyer's briefs with what they received, and
@@ -121,6 +127,7 @@ export async function GET(request: NextRequest) {
       published: { reviews, reviewProofs, solutionComments, listComments, questions },
       alerts,
       following: { lists: followedLists, curators: followedCurators, profiles: followedProfiles },
+      security: { passkeys },
       publicProfile: publicProfile[0]
         ? { ...publicProfile[0], previousHandles: previousHandles }
         : null,

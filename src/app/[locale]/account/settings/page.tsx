@@ -24,23 +24,26 @@ export default async function SettingsPage(props: { params: Promise<{ locale: st
     hasAvatar = false,
     verified = false,
     twoStep = false,
+    passkeys = 0,
     sessions = 1,
     google = false,
     emailPrefs = 0,
     ready = true;
   try {
     const sql = authSql();
-    const [[row], [sessionCount], [identity], [prefs]] = await Promise.all([
+    const [[row], [sessionCount], [identity], [prefs], [keys]] = await Promise.all([
       sql`SELECT name,organization,(avatar_key IS NOT NULL OR avatar_data IS NOT NULL) AS has_avatar,email_verified_at,totp_confirmed_at FROM auth_accounts WHERE id=${account.id}`,
       sql`SELECT count(*)::int AS total FROM auth_sessions WHERE account_id=${account.id} AND expires_at>now()`,
       sql`SELECT email FROM auth_google_identities WHERE account_id=${account.id}`,
       sql`SELECT count(*)::int AS total FROM notification_preferences WHERE owner_id=${account.id}`,
+      sql`SELECT count(*)::int AS total FROM auth_passkeys WHERE account_id=${account.id}`,
     ]);
     name = String(row?.name ?? '');
     organization = String(row?.organization ?? '');
     hasAvatar = Boolean(row?.has_avatar);
     verified = Boolean(row?.email_verified_at);
     twoStep = Boolean(row?.totp_confirmed_at);
+    passkeys = Number(keys?.total ?? 0);
     sessions = Number(sessionCount?.total ?? 1);
     google = Boolean(identity);
     emailPrefs = Number(prefs?.total ?? 0);
@@ -63,8 +66,19 @@ export default async function SettingsPage(props: { params: Promise<{ locale: st
       title: dict.security.title,
       Icon: ShieldIcon,
       tone: brandColors.sage,
-      state: twoStep ? dict.security.twoStepOn : dict.security.passwordOnly,
-      done: twoStep,
+      state:
+        [
+          twoStep ? dict.security.twoStepOn : '',
+          passkeys
+            ? (passkeys === 1 ? dict.security.passkeysOne : dict.security.passkeysOther).replace(
+                '{count}',
+                String(passkeys),
+              )
+            : '',
+        ]
+          .filter(Boolean)
+          .join(' · ') || dict.security.passwordOnly,
+      done: twoStep || passkeys > 0,
       hint: `${(sessions === 1 ? dict.security.sessionsOne : dict.security.sessionsOther).replace('{count}', String(sessions))} · ${verified ? dict.security.emailConfirmed : dict.security.emailUnconfirmed}`,
     },
     {
