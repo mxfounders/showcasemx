@@ -84,9 +84,9 @@ export function register(
   const flags = UP | (verified ? UV : 0) | AT | (key.synced ? BE | BS : 0);
   const authData = authenticatorData({ rpID, flags, counter: key.counter, attested });
   const attestationObject = isoCBOR.encode(
-    new Map<string, string | Uint8Array | Map<string, never>>([
+    new Map<string, string | Uint8Array | Map<string, string>>([
       ['fmt', 'none'],
-      ['attStmt', new Map()],
+      ['attStmt', new Map<string, string>()],
       ['authData', authData],
     ]),
   );
