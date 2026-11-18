@@ -239,8 +239,10 @@ export default async function AnuncioPage({ params }: { params: Promise<{ id: st
                             </Link>
                             .
                           </>
-                        ) : (
+                        ) : credit.refundAmount > 0 ? (
                           'Reembolsado.'
+                        ) : (
+                          'Sin importe que reembolsar.'
                         )}
                         <p className="text-[12px] text-muted">
                           {OUTAGE_REASON_LABEL[credit.reason] ?? credit.reason}

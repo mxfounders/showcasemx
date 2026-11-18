@@ -26,11 +26,11 @@ export const PLACEMENT_LABEL: Record<string, string> = {
 
 /** Why an outage day went the way it did (db/ad-placements-outages.sql, SHCWS-179). */
 export const OUTAGE_REASON_LABEL: Record<string, string> = {
-  room: 'Había cupo el día siguiente a la reserva: se repuso.',
-  noRoom: 'El día siguiente a la reserva estaba lleno: se reembolsó.',
-  ended: 'La reserva ya no tenía días por delante: se reembolsó.',
-  stopped: 'La reserva estaba cancelada o retirada: se reembolsó.',
-  unlisted: 'La ficha ya no estaba publicada: se reembolsó.',
+  room: 'El día siguiente a la reserva tenía cupo.',
+  noRoom: 'El día siguiente a la reserva estaba lleno.',
+  ended: 'La reserva ya no tenía días por delante.',
+  stopped: 'La reserva estaba cancelada o retirada.',
+  unlisted: 'La ficha ya no estaba publicada.',
 };
 export const AD_CURRENCIES = ['usd', 'mxn'] as const;
 export type AdCurrency = (typeof AD_CURRENCIES)[number];
