@@ -209,6 +209,25 @@ export function readImageMeta(html: string, pageUrl: string): string | null {
   return null;
 }
 
+/**
+ * Only the logo of the site, for the daily refresh (src/lib/solutions/site-icon-store.ts):
+ * the same page read and SSRF guards as fetchSiteImage, without downloading the cover.
+ * `unreachable` when the page could not be read, null when it was read and has no logo.
+ */
+export async function fetchSiteIconOnly(website: string): Promise<SiteIcon | null | 'unreachable'> {
+  const fetched = await guardedFetch(
+    website,
+    'text/html,application/xhtml+xml',
+    HTML_TIMEOUT,
+    AGENT,
+  );
+  if (!fetched) return 'unreachable';
+  if (!(fetched.response.headers.get('content-type') ?? '').includes('html')) return 'unreachable';
+  const html = await readCapped(fetched.response, HTML_LIMIT, { truncate: true });
+  if (!html) return 'unreachable';
+  return fetchSiteIcon(html.toString('utf8'), fetched.url, AGENT).catch(() => null);
+}
+
 export async function fetchSiteImage(website: string): Promise<SiteImageResult> {
   const fetched = await guardedFetch(
     website,

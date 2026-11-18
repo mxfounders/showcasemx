@@ -11,6 +11,8 @@ import { runMaintenance } from '@/lib/maintenance';
 import { renewDomainProofs } from '@/lib/trust/renewal';
 import { processOutages, retryOutageRefunds } from '@/lib/ads/outages';
 import { stripeClient } from '@/lib/ads/stripe';
+import { refreshSiteIcons } from '@/lib/solutions/site-icon-store';
+import { revalidateTag } from 'next/cache';
 
 export const dynamic = 'force-dynamic';
 // The 69-B list is a 4.5 MB download on the days it changes (docs/compliance.md).
@@ -59,6 +61,15 @@ export async function GET(request: NextRequest) {
       refunds: run.refunds,
       retried: (await retryOutageRefunds(stripeClient())).issued,
     }))
+    .catch(() => ({ status: 'failed' as const }));
+  // Each published listing's logo, read again from its own site (decided by André, 18 Nov
+  // 2026): a project that changes its favicon shows the new one the next day without asking.
+  // Only a changed logo writes a blob; the catalog cache drops only when one changed.
+  const siteIcons = await refreshSiteIcons()
+    .then(result => {
+      if (result.changed) revalidateTag('catalog');
+      return result;
+    })
     .catch(() => ({ status: 'failed' as const }));
   const config = recoveryConfig();
 
@@ -152,6 +163,7 @@ export async function GET(request: NextRequest) {
         maintenance,
         domains,
         outages,
+        siteIcons,
       },
       { headers: { 'Cache-Control': 'no-store' } },
     );
@@ -184,6 +196,7 @@ export async function GET(request: NextRequest) {
           maintenance,
           domains,
           outages,
+          siteIcons,
         },
         { status: 503, headers: { 'Cache-Control': 'no-store' } },
       );
@@ -202,6 +215,7 @@ export async function GET(request: NextRequest) {
       maintenance,
       domains,
       outages,
+      siteIcons,
     },
     { status: 503, headers: { 'Cache-Control': 'no-store' } },
   );

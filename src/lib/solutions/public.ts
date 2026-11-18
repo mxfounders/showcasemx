@@ -137,27 +137,38 @@ const fetchResponseSignals = unstable_cache(
   ['public-response-signals'],
   { tags: ['catalog'], revalidate: 300 },
 );
-// Listings with a logo read from their own site (SHCWS-177). Its own query, so a
-// database without db/solution-site-icons.sql only goes without logos.
+// Listings with a logo read from their own site (SHCWS-177), with the checksum that
+// versions its URL. Its own query, so a database without db/solution-site-icons.sql only
+// goes without logos.
 const fetchSiteIconIds = unstable_cache(
   async () => {
     const url = getDatabaseUrl();
     if (!url) return [];
-    const rows = await neon(url)`SELECT solution_id::text AS id FROM solution_site_icons`;
-    return rows.map(row => String(row.id));
+    const rows = await neon(url)`SELECT solution_id::text AS id, checksum FROM solution_site_icons`;
+    return rows.map(row => [String(row.id), String(row.checksum)] as [string, string]);
   },
   ['public-site-icons'],
   { tags: ['catalog'], revalidate: 300 },
 );
+/**
+ * The logo read from the listing's own site, which the daily refresh keeps current
+ * (src/lib/solutions/site-icon-store.ts), before the art shipped for Cord/Flouvia: a
+ * project that changes its favicon shows the new one (decided by André, 18 Nov 2026).
+ * The checksum in the URL makes a new logo a new URL, so no browser or CDN keeps the old
+ * one. Null without a stored logo: the card falls back to the shipped art or the initial.
+ */
+export function siteIconUrl(id: string, checksum: string | undefined) {
+  return checksum ? `/api/solutions/${id}/site-icon?v=${checksum.slice(0, 12)}` : undefined;
+}
 export async function publicProducts(): Promise<PublishedProduct[]> {
   try {
     const [rows, responseEntries, iconIds] = await Promise.all([
       fetchPublishedRows(),
       fetchResponseSignals().catch(() => []),
-      fetchSiteIconIds().catch(() => [] as string[]),
+      fetchSiteIconIds().catch(() => [] as [string, string][]),
     ]);
     const responses = new Map(responseEntries);
-    const icons = new Set(iconIds);
+    const icons = new Map(iconIds);
     const products = rows.map(row => {
       const response = responses.get(String(row.id)) ?? null;
       const staticProduct = staticArtFor(row.catalog_key, row.website);
@@ -174,11 +185,7 @@ export async function publicProducts(): Promise<PublishedProduct[]> {
         ...staticProduct,
         ogImage,
         catalogId: row.catalog_key ? String(row.catalog_key) : undefined,
-        // The art shipped for Cord/Flouvia, else the logo read from the listing's own
-        // site (SHCWS-177), else none and the card shows the initial.
-        favicon:
-          staticProduct?.favicon ??
-          (icons.has(String(row.id)) ? `/api/solutions/${row.id}/site-icon` : undefined),
+        favicon: siteIconUrl(String(row.id), icons.get(String(row.id))) ?? staticProduct?.favicon,
         name: String(row.name),
         description: String(row.problem),
         feature: String(row.audience),
