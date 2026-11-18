@@ -3903,3 +3903,35 @@ dos (la Mac del propietario tiene 8 GB y se trababa con más). Cada una dejó su
   `OUTAGE_WEBHOOK_SECRET` en Vercel, con redeploy. Sin ellas el sitio funciona; quedan
   apagados el envío del newsletter desde ops, los eventos de Resend y la reposición por caída.
 
+
+## 89. Fichas de Cord y Flouvia al día y secciones de oferta — 18 noviembre 2026
+
+Pedido del propietario: agregar a las fichas de Cord y Flouvia todo lo que sus sitios
+publican y la ficha no mostraba, sumar las secciones que faltaran y poner las insignias de
+shwcs en ambos sitios. Lo hizo la sesión «fichas-cord-flouvia» (SHCWS-180, 85, 86 y 17).
+Contrato completo: docs/listing-offer.md; investigación y fuentes:
+docs/research/cord-flouvia-2026-11.md y docs/research/cord-flouvia-sources.md.
+
+- **Secciones nuevas (SHCWS-180)**, todas opcionales y sin migración (jsonb):
+  - **Planes**: hasta 6 con nombre, precio, moneda, modalidad y qué incluye. Sin precio dice
+    «A la medida»; con 0, «Gratis». Nunca se convierte de moneda.
+  - **Cómo probarlo**: plan gratis, prueba gratis (con días), sin tarjeta, demo pública,
+    demo con el equipo o diagnóstico gratis.
+  - **Soporte y contrato**: canales, primera respuesta, arranque y condiciones de salida.
+    El SLA (90–100) solo se registra si es un compromiso contractual.
+  - **Para equipos técnicos**: API, webhooks, SDK, MCP, etc., más enlaces a documentación,
+    API, registro de cambios, estado y roadmap.
+- **Dónde aparecen**: en la ficha, la vista previa, el comparador, el Markdown para IA, la
+  ficha preparada con IA (§86, solo lo que el sitio dice) y la revisión en ops. La galería
+  pasa de 4 a 8 imágenes.
+- **Fuera por decisión del propietario**: la sección «Seguridad y datos».
+- **Producción**, con OK del propietario:
+  - El borrador de Cord se actualizó a la v43 con 8 imágenes.
+  - Se creó el borrador de Flouvia.
+  - Los dos están en revisión. El `published_data` de Cord no cambió.
+  - Falta aprobar ambos en ops. Es posible desde que este código está desplegado; antes, la
+    ficha pública no mostraba las secciones nuevas.
+- **Insignias en cordhq.app y flouvia.com (SHCWS-17)**: la sesión las prepara en esos
+  repositorios y las sube con el OK del propietario. No forman parte de este repositorio.
+- **Verificación al integrar**: formato, lint, tipos, 495 pruebas (incluida
+  `tests/offer.test.ts`) y builds del producto y de ops.
