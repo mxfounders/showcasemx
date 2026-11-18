@@ -2,6 +2,7 @@ import { PublicMetrics } from '@/components/metrics/public-metrics';
 import { ReportForm } from '@/components/trust/report-form';
 import { SolutionGallery } from './solution-gallery';
 import { SaveProjectButton } from '@/components/library/save-project-button';
+import { CompareToggle } from '@/components/compare/compare-toggle';
 import { LikeButton } from './like-button';
 import { SolutionSocial } from './solution-social';
 import { SimilarSolutions, type SimilarSection } from './similar-solutions';
@@ -29,6 +30,7 @@ import { solutionSlides } from '@/lib/solutions/gallery';
 import { outboundRel, outboundUrl, type OutboundMedium } from '@/lib/solutions/outbound';
 import { solutionChecklist } from '@/lib/solutions/completeness';
 import { formatPriceFrom, pricingModelLabels } from '@/lib/solutions/pricing';
+import { providerRows } from '@/lib/solutions/provider';
 import { actionButtonStyle, brandColors, solutionCategoryTones } from '@/lib/brand-colors';
 import {
   industries as industryOptions,
@@ -70,6 +72,7 @@ export function SolutionPresentation({
   viewerVerified = false,
   hasSiteImage = false,
   similar,
+  publisher = null,
   outboundMedium = 'listing',
   sponsoredBooking = null,
   reviewBadge,
@@ -81,6 +84,7 @@ export function SolutionPresentation({
   locale,
   dict,
   uiDict,
+  compareDict,
 }: {
   data: SolutionData;
   id: string;
@@ -99,6 +103,11 @@ export function SolutionPresentation({
   hasSiteImage?: boolean;
   /** Public listing only: similar listings and the exits after them (SHCWS-55). */
   similar?: SimilarSection;
+  /**
+   * The owner's public profile (SHCWS-120), only when they turned it on and it shows this
+   * listing. Never derived from the creators the listing declares (§17).
+   */
+  publisher?: { handle: string; name: string; label: string } | null;
   /** `utm_medium` of the project's links: `sponsored` when the visit came from a paid slot. */
   outboundMedium?: OutboundMedium;
   /**
@@ -120,6 +129,8 @@ export function SolutionPresentation({
   locale?: string;
   dict: Dictionary['solution'];
   uiDict: Dictionary['solutionUi'];
+  /** Public listing only: «Comparar» adds it to the comparison tray (SHCWS-53). */
+  compareDict?: Dictionary['catalog']['compare'];
 }) {
   // The project's own links say they come from shwcs (SHCWS-19): UTM tags and, with
   // `rel="noopener"` instead of `noreferrer`, shwcs as the referring origin. The private
@@ -162,6 +173,9 @@ export function SolutionPresentation({
   const offeringLabels = Object.fromEntries(
     localizedOfferingOptions(locale).map(item => [item.value, item.label]),
   );
+  // Where it operates and its track record (SHCWS-56): declared rows only.
+  const provider = providerRows(data, locale ?? 'es', dict.provider);
+  const cases = (data.cases ?? []).filter(item => item.client.trim() && item.result.trim());
   // What the listing still lacks is the founder's to-do, so it lives only in the app:
   // the private preview here, and the account's guide (decided by the owner on
   // 14 Nov 2026; it used to show on the public listing). The public page never lists it.
@@ -449,6 +463,24 @@ export function SolutionPresentation({
               )}
             </dl>
           </section>
+          {provider.length > 0 && (
+            <section className="border-t border-stone-200 pt-8" aria-labelledby="provider-title">
+              <h2 id="provider-title" className="text-xl font-medium">
+                {dict.provider.title}
+              </h2>
+              <p className="mt-2 text-xs text-stone-400">{dict.provider.note}</p>
+              <dl className="mt-6 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+                {provider.map(row => (
+                  <div key={row.key}>
+                    <dt className="text-sm font-medium">{row.label}</dt>
+                    <dd className="mt-1.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-stone-500">
+                      {row.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          )}
           <section className="border-t border-stone-200 pt-8">
             <h2 className="text-xl font-medium">{dict.workTitle}</h2>
             <p className="mt-4 whitespace-pre-wrap break-words leading-relaxed text-stone-600">
@@ -467,12 +499,72 @@ export function SolutionPresentation({
               </a>
             )}
           </section>
-          {!!data.founders?.length && (
+          {cases.length > 0 && (
+            <section className="border-t border-stone-200 pt-8" aria-labelledby="cases-title">
+              <h2 id="cases-title" className="text-xl font-medium">
+                {dict.cases.title}
+              </h2>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                {cases.map((item, index) => {
+                  const href = safeSolutionUrl(item.url);
+                  return (
+                    <article
+                      key={index}
+                      className="flex flex-col rounded-2xl border border-stone-200 bg-white p-5"
+                    >
+                      <h3 className="break-words text-base font-medium text-stone-900">
+                        {item.client}
+                      </h3>
+                      <p className="mt-1 text-[11px] leading-relaxed text-stone-400">
+                        {dict.cases.declared}
+                      </p>
+                      {item.problem.trim() && (
+                        <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-relaxed text-stone-500">
+                          <span className="font-medium text-stone-700">{dict.cases.before}: </span>
+                          {item.problem}
+                        </p>
+                      )}
+                      <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-stone-600">
+                        <span className="font-medium text-stone-800">{dict.cases.after}: </span>
+                        {item.result}
+                      </p>
+                      {href && (
+                        <a
+                          href={out(href)}
+                          target="_blank"
+                          rel={outboundRel}
+                          className="mt-auto inline-flex items-center gap-1.5 pt-4 text-sm font-medium text-[#365DC4]"
+                        >
+                          {dict.cases.readMore}
+                          <ArrowUpRightIcon className="size-3.5" aria-hidden="true" />
+                          <span className="sr-only"> {dict.otherTab}</span>
+                        </a>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+          {(!!data.founders?.length || publisher) && (
             <section className="border-t border-stone-200 pt-8">
               <h2 className="text-xl font-medium">{dict.teamTitle}</h2>
-              <p className="mt-2 text-xs text-stone-400">{dict.teamNote}</p>
+              {publisher && (
+                <p className="mt-3 text-sm text-stone-600">
+                  {publisher.label}{' '}
+                  <Link
+                    href={`/c/${publisher.handle}`}
+                    className="font-medium text-[#365DC4] underline-offset-4 hover:underline"
+                  >
+                    {publisher.name}
+                  </Link>
+                </p>
+              )}
+              {!!data.founders?.length && (
+                <p className="mt-2 text-xs text-stone-400">{dict.teamNote}</p>
+              )}
               <div className="mt-6 space-y-7">
-                {data.founders
+                {(data.founders ?? [])
                   .filter(person => person.name.trim())
                   .map((person, index) => (
                     <article key={index}>
@@ -569,6 +661,15 @@ export function SolutionPresentation({
                   dict={uiDict}
                 />
               </div>
+              {compareDict && !own && (
+                <div className="mt-3">
+                  <CompareToggle
+                    projectKey={catalogKey ? `catalog:${catalogKey}` : `solution:${id}`}
+                    name={data.name}
+                    dict={compareDict}
+                  />
+                </div>
+              )}
               {social && (
                 <div className="mt-3">
                   <LikeButton

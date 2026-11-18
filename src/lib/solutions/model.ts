@@ -1,6 +1,15 @@
 import { readPublicLinks, readFounders, type PublicLink, type SolutionFounder } from './profile';
 import { isCurrencyCode } from '@/lib/currencies';
+import { isCountryCode } from '@/lib/countries';
+import { isLanguageCode } from '@/lib/languages';
 export type SolutionScreenshot = { id: string; caption: string };
+/**
+ * A customer case the project tells about (SHCWS-56): who, what they had, what changed and
+ * a link to read more. Always shown as declared by the project: the customer has not
+ * confirmed it, and nothing in this object can say otherwise (a flag here would be
+ * founder-written, so readSolutionData drops any extra key).
+ */
+export type SolutionCase = { client: string; problem: string; result: string; url?: string };
 // hideSiteImage: the founder's opt-out of showing the auto-fetched og:image of
 // their own site as a ficha slide. Absent/false = shown, so no existing ficha
 // changes. Named in the negative on purpose: an absent boolean must mean
@@ -44,6 +53,26 @@ export type SolutionData = {
   priceUnit?: string;
   setupTime?: string;
   compliance?: string[];
+  /**
+   * Where the provider is and operates (SHCWS-56), all optional and declared by the
+   * project. ISO 3166-1 alpha-2 country codes. `serviceCountries` (where it serves
+   * customers) and `billingCountries` (where it can invoice) keep the tri-state of
+   * industries/companySizes: undefined = never answered, [] = any country, a list = those.
+   */
+  originCountry?: string;
+  serviceCountries?: string[];
+  billingCountries?: string[];
+  /** ISO 4217 currencies it charges in. */
+  currencies?: string[];
+  /** ISO 639-1 languages it gives support in, and its support hours in its own words. */
+  supportLanguages?: string[];
+  supportHours?: string;
+  paymentMethods?: string[];
+  /** Track record, declared: year founded, team and customer bands, customer cases. */
+  foundedYear?: number;
+  teamSize?: string;
+  customerCount?: string;
+  cases?: SolutionCase[];
   /**
    * A category the founder could not find in the list, in their own words. Private:
    * only the team reads it in ops, to learn which categories are missing. It never
@@ -316,6 +345,40 @@ export const solutionCompliance = [
   'soporte-espanol',
   'factura-fiscal-mx',
 ] as const;
+/** How a customer can pay (SHCWS-56). Labels in src/lib/taxonomy.ts. */
+export const solutionPaymentMethods = [
+  'tarjeta',
+  'transferencia',
+  'domiciliacion',
+  'efectivo',
+  'paypal',
+  'billeteras',
+  'credito',
+  'cripto',
+] as const;
+/** People on the team, in bands: a number nobody can check would look more precise than it is. */
+export const solutionTeamSizes = [
+  'uno',
+  'de-2-a-10',
+  'de-11-a-50',
+  'de-51-a-200',
+  'de-201-a-1000',
+  'mas-1000',
+] as const;
+export const solutionCustomerCounts = [
+  'hasta-10',
+  'de-11-a-50',
+  'de-51-a-200',
+  'de-201-a-1000',
+  'de-1001-a-10000',
+  'mas-10000',
+] as const;
+export const maxSolutionCases = 4;
+export const caseLimits = { client: 100, problem: 400, result: 400, url: 500 } as const;
+export const supportHoursLimit = 120;
+/** The earliest founding year a listing can declare; the latest is the current year. */
+export const minFoundedYear = 1900;
+
 // Review states of a founder's solution. Their labels and next-step copy live in
 // the `solutionEditor.statuses` dictionary section, keyed by these same values.
 export const solutionStatuses = [
@@ -591,7 +654,97 @@ export function readSolutionData(value: unknown): SolutionData | null {
       return null;
     result.compliance = Array.from(new Set(input.compliance as string[]));
   }
+  if (input.originCountry !== undefined) {
+    if (!isCountryCode(String(input.originCountry))) return null;
+    result.originCountry = String(input.originCountry);
+  }
+  // Same tri-state as industries: [] = any country, a real answer; absent = never answered.
+  for (const key of ['serviceCountries', 'billingCountries'] as const) {
+    const value = readCodes(input[key], isCountryCode, 300);
+    if (value === null) return null;
+    if (value) result[key] = value;
+  }
+  const currencies = readCodes(input.currencies, isCurrencyCode, 20);
+  if (currencies === null) return null;
+  if (currencies?.length) result.currencies = currencies;
+  const languages = readCodes(input.supportLanguages, isLanguageCode, 20);
+  if (languages === null) return null;
+  if (languages?.length) result.supportLanguages = languages;
+  if (input.supportHours !== undefined) {
+    if (typeof input.supportHours !== 'string' || input.supportHours.length > supportHoursLimit)
+      return null;
+    const value = input.supportHours.trim();
+    if (value) result.supportHours = value;
+  }
+  const payments = readCodes(
+    input.paymentMethods,
+    (value: string) => solutionPaymentMethods.some(item => item === value),
+    solutionPaymentMethods.length,
+  );
+  if (payments === null) return null;
+  if (payments?.length) result.paymentMethods = payments;
+  if (input.foundedYear !== undefined) {
+    if (
+      typeof input.foundedYear !== 'number' ||
+      !Number.isInteger(input.foundedYear) ||
+      input.foundedYear < minFoundedYear ||
+      input.foundedYear > 2100
+    )
+      return null;
+    result.foundedYear = input.foundedYear;
+  }
+  if (input.teamSize !== undefined) {
+    if (!solutionTeamSizes.some(item => item === input.teamSize)) return null;
+    result.teamSize = String(input.teamSize);
+  }
+  if (input.customerCount !== undefined) {
+    if (!solutionCustomerCounts.some(item => item === input.customerCount)) return null;
+    result.customerCount = String(input.customerCount);
+  }
+  if (input.cases !== undefined) {
+    if (!Array.isArray(input.cases) || input.cases.length > maxSolutionCases) return null;
+    const cases: SolutionCase[] = [];
+    for (const item of input.cases) {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) return null;
+      const entry = item as Record<string, unknown>;
+      const read = (key: keyof typeof caseLimits) =>
+        entry[key] === undefined
+          ? ''
+          : typeof entry[key] === 'string' && entry[key].length <= caseLimits[key]
+            ? entry[key].trim()
+            : null;
+      const [client, problem, outcome, url] = [
+        read('client'),
+        read('problem'),
+        read('result'),
+        read('url'),
+      ];
+      if (client === null || problem === null || outcome === null || url === null) return null;
+      // Unknown keys (a «confirmed» flag, say) are dropped: only the customer could confirm.
+      cases.push({ client, problem, result: outcome, ...(url ? { url } : {}) });
+    }
+    result.cases = cases;
+  }
   return result;
+}
+
+/**
+ * A list of codes, deduplicated: undefined when absent, null when anything in it is not
+ * a valid code, and the list (possibly empty) otherwise.
+ */
+function readCodes(
+  value: unknown,
+  valid: (code: string) => boolean,
+  max: number,
+): string[] | null | undefined {
+  if (value === undefined) return undefined;
+  if (
+    !Array.isArray(value) ||
+    value.length > max ||
+    value.some(item => typeof item !== 'string' || !valid(item))
+  )
+    return null;
+  return Array.from(new Set(value as string[]));
 }
 /**
  * Why a solution cannot move forward, as stable codes shared by the editor and the
@@ -614,7 +767,9 @@ export type SolutionErrorCode =
   | 'screenshotCaptionsTooShort'
   | 'foundersInvalid'
   | 'projectLinksInvalid'
-  | 'priceIncomplete';
+  | 'priceIncomplete'
+  | 'foundedYearInvalid'
+  | 'casesInvalid';
 export function solutionErrors(data: SolutionData, step?: number) {
   const errors: Partial<Record<keyof SolutionData, SolutionErrorCode>> = {};
   if (step === undefined || step === 0) {
@@ -679,6 +834,18 @@ export function solutionErrors(data: SolutionData, step?: number) {
       errors.founders = 'foundersInvalid';
     if (data.projectLinks?.some(link => !safeSolutionUrl(link.url)))
       errors.projectLinks = 'projectLinksInvalid';
+  }
+  // Optional track record (SHCWS-56): only checked when declared.
+  if (step === undefined || step === 2) {
+    if (data.foundedYear !== undefined && data.foundedYear > new Date().getUTCFullYear())
+      errors.foundedYear = 'foundedYearInvalid';
+    // A case says who and what changed, and its link is a real web address.
+    if (
+      data.cases?.some(
+        item => !item.client || !item.result || (item.url && !safeSolutionUrl(item.url)),
+      )
+    )
+      errors.cases = 'casesInvalid';
   }
   return errors;
 }

@@ -184,6 +184,13 @@ export const AUDIT_ACTIONS: Record<string, ActionLabel> = {
   brief_shortlist: { label: 'Envió una lista corta', tone: 'blue', group: 'editorial' },
   report_dismiss: { label: 'Descartó un reporte', tone: 'neutral', group: 'editorial' },
   report_withdraw: { label: 'Retiró por reporte', tone: 'terracotta', group: 'editorial' },
+  profile_hide: { label: 'Ocultó un perfil público', tone: 'terracotta', group: 'community' },
+  profile_unhide: { label: 'Volvió a mostrar un perfil público', tone: 'sage', group: 'community' },
+  profile_force_handle: {
+    label: 'Cambió el enlace de un perfil público',
+    tone: 'amber',
+    group: 'community',
+  },
   community_report_resolve: {
     label: 'Resolvió reporte de comunidad',
     tone: 'sage',

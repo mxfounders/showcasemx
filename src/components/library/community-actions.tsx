@@ -28,11 +28,16 @@ async function mutate(data: Record<string, unknown>) {
   return body;
 }
 // Follows have their own endpoint (SHCWS-121); the answer is only the viewer's own state.
-async function follow(action: 'list' | 'curator', id: string): Promise<{ active: boolean }> {
+// With a public profile (SHCWS-120) the person is followed through it, by handle.
+async function follow(
+  action: 'list' | 'curator' | 'profile',
+  id: string,
+  handle = '',
+): Promise<{ active: boolean }> {
   const response = await fetch('/api/follows', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action, id }),
+    body: JSON.stringify(action === 'profile' ? { action, handle } : { action, id }),
   });
   const body = await response.json();
   if (response.status === 401) throw Object.assign(Error(body.error), { login: true });
@@ -49,6 +54,8 @@ export function CommunityActions({
   following,
   followingCurator,
   curator,
+  profile = null,
+  profileDict,
   comments: initialComments,
   own = false,
   dict,
@@ -65,6 +72,12 @@ export function CommunityActions({
   followingCurator: boolean;
   /** The list's public signature. */
   curator: string;
+  /**
+   * The curator's public profile when it is on and shows this list: then «Seguir a…»
+   * follows the person (their projects and lists) instead of only this signature.
+   */
+  profile?: { handle: string; name: string; following: boolean } | null;
+  profileDict?: Dictionary['profiles']['follows'];
   comments: PublicComment[];
   own?: boolean;
   dict: Dictionary['community'];
@@ -74,7 +87,7 @@ export function CommunityActions({
   const [like, setLike] = useState(liked),
     [save, setSave] = useState(saved),
     [followsList, setFollowsList] = useState(following),
-    [followsCurator, setFollowsCurator] = useState(followingCurator),
+    [followsCurator, setFollowsCurator] = useState(profile ? profile.following : followingCurator),
     [likes, setLikes] = useState(initialLikes),
     [saves, setSaves] = useState(initialSaves),
     [commentsCount, setCommentsCount] = useState(initialCommentsCount),
@@ -89,14 +102,17 @@ export function CommunityActions({
   const lock = useRef(false),
     commentId = useRef<string | null>(null);
   const a = dict.actions;
-  async function toggleFollow(action: 'list' | 'curator') {
+  const personAction = profile ? 'profile' : 'curator';
+  const personName = profile?.name ?? curator;
+  const followText = profile && profileDict ? profileDict : null;
+  async function toggleFollow(action: 'list' | 'curator' | 'profile') {
     if (lock.current) return;
     lock.current = true;
     setPending(action);
     setError('');
     setLogin(false);
     try {
-      const result = await follow(action, id);
+      const result = await follow(action, id, profile?.handle);
       if (action === 'list') setFollowsList(result.active);
       else setFollowsCurator(result.active);
     } catch (e) {
@@ -173,22 +189,26 @@ export function CommunityActions({
             <button
               aria-pressed={followsCurator}
               disabled={!!pending}
-              onClick={() => void toggleFollow('curator')}
+              onClick={() => void toggleFollow(personAction)}
               className={button}
               style={followsCurator ? actionButtonStyle : undefined}
             >
               <PersonIcon className="size-4" />
-              {(followsCurator ? followDict.followingCurator : followDict.followCurator).replace(
-                '{name}',
-                curator,
-              )}
+              {(followText
+                ? followsCurator
+                  ? followText.followingPerson
+                  : followText.followPerson
+                : followsCurator
+                  ? followDict.followingCurator
+                  : followDict.followCurator
+              ).replace('{name}', personName)}
             </button>
           </>
         )}
       </div>
       {!own && (
         <p className="mt-3 max-w-xl text-xs text-stone-400">
-          {followDict.hint.replace('{name}', curator)}
+          {(followText ? followText.hint : followDict.hint).replace('{name}', personName)}
         </p>
       )}
       {login && (

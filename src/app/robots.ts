@@ -27,7 +27,10 @@ export default function robots(): MetadataRoute.Robots {
         '/_next/',
         '/api/solutions/*/site-image',
         '/api/solutions/*/media/',
-        ...perLocale(['/comunidad?page=']),
+        ...perLocale(['/comunidad?page=', '/fundadores?page=']),
+        // Founders link to their listing with ?ref=badge (SHCWS-17): crawlable, so the
+        // link counts for the listing, whose canonical drops the query.
+        ...perLocale(['/soluciones/*?ref=badge']),
       ],
       disallow: [
         '/api/',
@@ -37,6 +40,8 @@ export default function robots(): MetadataRoute.Robots {
         ...perLocale([
           '?',
           '/comunidad?',
+          // Temporary comparisons (SHCWS-53): any combination of public listings.
+          '/comparar',
           // Private, or a form every link reaches with its own ?next= return path.
           '/account',
           '/sign-in',

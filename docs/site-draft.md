@@ -63,6 +63,11 @@ Las dos usan el mismo cliente, `src/components/solutions/use-site-draft.tsx`
 - La respuesta se valida otra vez en el servidor (`readDraftOutput`): se descartan valores
   desconocidos, capacidades fuera de las categorías elegidas, textos demasiado cortos y
   cualquier demo cuyo enlace no aparezca en el sitio. Los textos se recortan a sus límites.
+- Desde SHCWS-56 (17 nov 2026) también propone país de origen, países donde atiende y
+  factura, monedas, idiomas y horario de soporte, formas de pago y año de fundación. Los
+  códigos se validan contra `Intl`, un año futuro se descarta y la IA nunca escribe `[]`
+  («cualquier país» es respuesta del fundador). Equipo, número de clientes y casos no se le
+  piden. Ver docs/provider-facts.md.
 - Regla del prompt: si el sitio no lo dice, el campo queda vacío. Nunca precios, clientes,
   cifras, certificaciones ni industrias supuestas. El texto del sitio va como material de
   referencia entre delimitadores (sin `<`/`>` propios) y el prompt de sistema ordena
