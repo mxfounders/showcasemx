@@ -122,12 +122,13 @@ const mcpRequest = (headers: Record<string, string>) =>
   });
 
 test('the MCP endpoint refuses calls without a well-formed bearer token before storage', async () => {
-  for (const headers of [
+  const attempts: Record<string, string>[] = [
     {},
     { authorization: 'Bearer nope' },
     { authorization: 'Basic abc' },
     { cookie: 'showcasemx-session=' + 'a'.repeat(64) },
-  ]) {
+  ];
+  for (const headers of attempts) {
     const response = await mcpPost(mcpRequest(headers));
     assert.equal(response.status, 401);
     assert.match(response.headers.get('www-authenticate') ?? '', /^Bearer /);

@@ -24,9 +24,8 @@ const origin = process.env.APP_ORIGIN ?? 'http://localhost:3107';
 
 (async () => {
   const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
-  const { StreamableHTTPClientTransport } = await import(
-    '@modelcontextprotocol/sdk/client/streamableHttp.js'
-  );
+  const { StreamableHTTPClientTransport } =
+    await import('@modelcontextprotocol/sdk/client/streamableHttp.js');
   const { authSql } = await import('../../src/lib/auth/security');
   const { hashPassword, hashToken } = await import('../../src/lib/auth/password');
   const { deleteObjects } = await import('../../src/lib/storage/blob');
@@ -165,7 +164,8 @@ const origin = process.env.APP_ORIGIN ?? 'http://localhost:3107';
       cambios: { catalog_key: 'cord' },
     });
     assert.equal(smuggled.error, true, 'catalog_key is refused by the schema');
-    const [untouched] = await sql`SELECT catalog_key, version FROM founder_solutions WHERE id = ${id}`;
+    const [untouched] =
+      await sql`SELECT catalog_key, version FROM founder_solutions WHERE id = ${id}`;
     assert.equal(untouched.catalog_key, null);
     assert.equal(Number(untouched.version), version);
 
@@ -217,7 +217,8 @@ const origin = process.env.APP_ORIGIN ?? 'http://localhost:3107';
       const denied = await call(client, name, args);
       assert.equal(denied.body.error, 'notFound', name);
     }
-    const [theirs] = await sql`SELECT data->>'name' AS name, version FROM founder_solutions WHERE id = ${foreignId}`;
+    const [theirs] =
+      await sql`SELECT data->>'name' AS name, version FROM founder_solutions WHERE id = ${foreignId}`;
     assert.equal(theirs.name, '');
     assert.equal(Number(theirs.version), 1);
     const listing = await call(client, 'estado_de_mis_fichas');
@@ -296,7 +297,12 @@ const origin = process.env.APP_ORIGIN ?? 'http://localhost:3107';
   } finally {
     for (const account of [owner, other]) {
       await sql`DELETE FROM auth_accounts WHERE id = ${account.id}`;
-      for (const scope of ['assistant-tokens', 'solution-create', 'solution-update', 'solution-media'])
+      for (const scope of [
+        'assistant-tokens',
+        'solution-create',
+        'solution-update',
+        'solution-media',
+      ])
         await sql`DELETE FROM auth_rate_limits WHERE key = ${`${scope}:${hashToken(account.id)}`}`;
     }
     for (const tokenId of tokenIds)
