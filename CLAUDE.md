@@ -3813,3 +3813,40 @@ en su rama; renumerada al integrarla con `main`, donde §74 es Stripe.)
   permisos del rol `shwcs_app_production`; datos sin cambios). Se activa con el deploy del
   merge del PR mxfounders/showcasemx#1. Revisión legal del texto de Privacidad pendiente
   (SHCWS-144).
+
+## 87. Sesión orquestadora del 17 de noviembre: ramas unidas, firewall, insignia y producción
+
+Pedido del propietario: «sigue arreglando issues de Linear… haz sesiones anidadas, esta es la
+main», luego «haz todo en main» y «sí, migra y sube». Esta sesión reparte issues a sesiones
+paralelas (cada una en su worktree) y los integra en `main` conforme terminan.
+
+- **Ramas unidas**: el `main` local (SHCWS-51, 24, 161, 73 sin subir) y `origin/main` (PR
+  mxfounders/showcasemx#1, ficha con IA, §86) se habían separado; se unieron conservando
+  ambos lados del editor y de la ficha del fundador. Se sumó `pending-prod` (SHCWS-101,
+  141 y 62). Orden de migraciones: 52 site-drafts, 53 updates, 54 slugs, 55 flags, 56
+  contact-batches (docs/database.md).
+- **Producción**: el 17 de noviembre, con `neondb_owner` sobre `/shwcs_production`, se
+  aplicaron `solution-updates`, `solution-slugs`, `account-flags` y `contact-batches`.
+  Verificado: las seis tablas con SELECT/INSERT/UPDATE/DELETE para `shwcs_app_production`,
+  `account_flagged()` ejecutable, Cord con slug `cord`, datos sin cambios (6 cuentas, 7
+  fichas, 1 publicada, 0 solicitudes).
+- **SHCWS-3, firewall**: reglas versionadas en `firewall/rules.json` (Hobby: bypass para
+  webhooks, cron, salud, insignias y archivos para IA; deny a escáneres; 20 POST/min por IP
+  en acceso, contacto y newsletter; ops con su propio juego) y `npm run firewall`, que las
+  deja en borrador (`log` o `enforce`) y nunca publica. Guía en docs/operations.md
+  («Firewall de Vercel»). Falta que el propietario las publique: esta máquina no ve el
+  equipo `mxfounders` en la CLI.
+- **SHCWS-17, insignia**: «Publicado en» muestra «4.8 ★ · 12 reseñas» desde 3 reseñas
+  públicas (`badgeRating`, `badgeRatingMinimum`); el código para copiar enlaza con
+  `?ref=badge` y `robots.txt` deja rastrear exactamente esa query en `/soluciones/*`
+  (`tests/robots.test.ts` aplica la coincidencia más larga de RFC 9309).
+- **SHCWS-178** (§81) estaba sin commit en el checkout principal; entró tal cual.
+- **SHCWS-87**: `docs/research/outreach-targets.csv` y `.md`, 100 proyectos B2B públicos
+  priorizados para la campaña de invitación (México 49 %).
+- Linear: SHCWS-28 y 151 pasan a «In Review» (ya en `origin/main`).
+- Verificación: formato, lint, tipos y 396 pruebas (7 nuevas de firewall, 1 de insignia y
+  1 de robots); insignia rasterizada y revisada a ojo en sus cuatro estilos.
+- En curso en sesiones paralelas al escribir esto: newsletter (124/125), anuncios
+  (79/179/112), necesidades (58/60), perfiles (120), atribución (111/109/110), ficha y
+  comparador (56/53), MCP (152) y passkeys (158). Se integran en `main` al terminar.
+
