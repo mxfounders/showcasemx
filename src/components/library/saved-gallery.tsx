@@ -1,7 +1,7 @@
 'use client';
 import { ExpandingSearch } from '@/components/search/expanding-search';
 import { useState } from 'react';
-import { CheckIcon, ChevronDownIcon, CloseIcon } from '@/components/icons/gota';
+import { CheckIcon, ChevronDownIcon, CloseIcon, FilterLinesIcon } from '@/components/icons/gota';
 import type { BuyerList } from '@/lib/library/model';
 import { filterSaved, type SavedEntry } from '@/lib/library/filters';
 import {
@@ -15,26 +15,33 @@ import type { Dictionary } from '@/i18n/dictionary';
 import { ProjectPin } from './project-pin';
 import { SaveProjectButton } from './save-project-button';
 import { ListMembership } from './list-membership';
+import { LibraryEmpty } from './library-empty';
 import { commonText } from '@/i18n/common';
 type FilterOption = { value: string; label: string };
 function FilterMenu({
   label,
+  placeholder,
   value,
   defaultValue,
   options,
   open,
+  align = 'start',
   onOpenChange,
   onChange,
 }: {
   label: string;
+  /** Short name of the axis («Tipo»), shown while nothing is chosen. */
+  placeholder?: string;
   value: string;
   defaultValue: string;
   options: FilterOption[];
   open: boolean;
+  align?: 'start' | 'end';
   onOpenChange: (open: boolean) => void;
   onChange: (value: string) => void;
 }) {
   const selected = options.find(option => option.value === value) ?? options[0];
+  const chosen = value !== defaultValue;
   return (
     <details
       open={open}
@@ -42,17 +49,21 @@ function FilterMenu({
       className="group relative"
     >
       <summary
-        aria-label={label}
-        data-selected={value !== defaultValue}
+        aria-label={`${label}: ${selected.label}`}
+        data-selected={chosen}
         className="selector-dropdown-trigger [&::-webkit-details-marker]:hidden"
       >
-        <span className="max-w-48 truncate">{selected.label}</span>
+        <span className="max-w-48 truncate">
+          {!chosen && placeholder ? placeholder : selected.label}
+        </span>
         <ChevronDownIcon
           aria-hidden="true"
           className="size-4 shrink-0 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
         />
       </summary>
-      <div className="absolute left-0 top-[calc(100%+0.5rem)] z-30 min-w-56 overflow-hidden rounded-2xl border border-stone-200 bg-white p-2 text-stone-700 shadow-[0_18px_45px_-20px_rgba(41,37,36,0.35)]">
+      <div
+        className={`absolute ${align === 'end' ? 'right-0' : 'left-0'} top-[calc(100%+0.5rem)] z-30 min-w-56 overflow-hidden rounded-2xl border border-stone-200 bg-white p-2 text-stone-700 shadow-[0_18px_45px_-20px_rgba(41,37,36,0.35)]`}
+      >
         {options.map(option => {
           const active = value === option.value;
           return (
@@ -149,41 +160,66 @@ export function SavedGallery({
       { value: 'oldest', label: t.sortOldest },
       { value: 'name', label: t.sortName },
     ];
-  // Also when a filter is already on (e.g. «sin organizar» from Inicio), or it could
-  // not be cleared.
-  const manyEntries = entries.length >= 6 || !!(kind || category || industry || size || list);
+  // The toolbar earns its place: nothing to sort or search with a handful of projects,
+  // and the narrowing menus only from six on. A filter that is already on (for
+  // example «sin organizar» from Inicio) still shows on its own, so it can be cleared.
+  const allFilters = entries.length >= 6;
+  const shows = (value: string) => allFilters || !!value;
+  const showSortSearch = entries.length >= 4 || !!query;
+  const showFilters = allFilters || !!(kind || category || industry || size || list);
+  const showToolbar = showSortSearch || showFilters;
+  // The first menu in the row, if any: while it is plain text its padding would read as
+  // an indent, so the row shifts to line its text up with the title; once it is a
+  // filled pill, the pill itself sits on the edge.
+  const firstMenu = (
+    [
+      [kind, true],
+      [category, true],
+      [industry, industryOptions.length > 1],
+      [size, sizeOptions.length > 1],
+      [list, true],
+    ] as const
+  ).find(([value, available]) => available && shows(value));
+  // Without menus, sort leads the row on a phone, so the same rule applies to it.
+  const alignText = firstMenu ? !firstMenu[0] : sort === 'recent';
   const filterOpen = (id: string) => (open: boolean) =>
     setOpenFilter(current => (open ? id : current === id ? '' : current));
   return (
     <>
-      <div className="mb-8 border-b border-stone-200 pb-6">
-        {/* Wraps instead of forcing one row: six menus and the search overflowed the
-            page at 1440 px. With a handful of saved projects the filters are noise, so
-            only sort and search show until there are enough to narrow down. */}
-        <div className="flex flex-wrap items-center gap-2">
-          {manyEntries && (
-            <>
-              <FilterMenu
-                label={t.filterType}
-                value={kind}
-                defaultValue=""
-                options={typeOptions}
-                open={openFilter === 'kind'}
-                onOpenChange={filterOpen('kind')}
-                onChange={setKind}
-              />
-              <FilterMenu
-                label={t.filterCategory}
-                value={category}
-                defaultValue=""
-                options={categoryOptions}
-                open={openFilter === 'category'}
-                onOpenChange={filterOpen('category')}
-                onChange={setCategory}
-              />
-              {industryOptions.length > 1 && (
+      {showToolbar && (
+        <div
+          className={`${alignText ? '-ml-4' : ''} mb-8 flex flex-wrap items-center gap-x-2 gap-y-2`}
+        >
+          {showFilters && (
+            <div className="flex flex-wrap items-center gap-1">
+              {shows(kind) && (
+                <FilterMenu
+                  label={t.filterType}
+                  placeholder={t.typeLabel}
+                  value={kind}
+                  defaultValue=""
+                  options={typeOptions}
+                  open={openFilter === 'kind'}
+                  onOpenChange={filterOpen('kind')}
+                  onChange={setKind}
+                />
+              )}
+              {shows(category) && (
+                <FilterMenu
+                  label={t.filterCategory}
+                  placeholder={t.categoryLabel}
+                  value={category}
+                  defaultValue=""
+                  options={categoryOptions}
+                  open={openFilter === 'category'}
+                  onOpenChange={filterOpen('category')}
+                  onChange={setCategory}
+                />
+              )}
+              {shows(industry) && industryOptions.length > 1 && (
                 <FilterMenu
                   label={t.filterIndustry}
+                  placeholder={t.industryLabel}
                   value={industry}
                   defaultValue=""
                   options={industryOptions}
@@ -192,9 +228,10 @@ export function SavedGallery({
                   onChange={setIndustry}
                 />
               )}
-              {sizeOptions.length > 1 && (
+              {shows(size) && sizeOptions.length > 1 && (
                 <FilterMenu
                   label={t.filterSize}
+                  placeholder={t.sizeLabel}
                   value={size}
                   defaultValue=""
                   options={sizeOptions}
@@ -203,55 +240,69 @@ export function SavedGallery({
                   onChange={setSize}
                 />
               )}
-              <FilterMenu
-                label={t.filterList}
-                value={list}
-                defaultValue=""
-                options={listOptions}
-                open={openFilter === 'list'}
-                onOpenChange={filterOpen('list')}
-                onChange={setList}
-              />
-            </>
+              {shows(list) && (
+                <FilterMenu
+                  label={t.filterList}
+                  placeholder={t.listLabel}
+                  value={list}
+                  defaultValue=""
+                  options={listOptions}
+                  open={openFilter === 'list'}
+                  onOpenChange={filterOpen('list')}
+                  onChange={setList}
+                />
+              )}
+            </div>
           )}
-          <FilterMenu
-            label={t.sortLabel}
-            value={sort}
-            defaultValue="recent"
-            options={sortOptions}
-            open={openFilter === 'sort'}
-            onOpenChange={filterOpen('sort')}
-            onChange={setSort}
-          />
-          <div className="ml-auto pl-8" onPointerDown={() => setOpenFilter('')}>
-            <ExpandingSearch
-              clearLabel={commonText(locale).clearSearch}
-              className="saved-search"
-              label={t.searchLabel}
-              placeholder={t.searchPlaceholder}
-              value={query}
-              onChange={setQuery}
-            />
+          {/* On a phone this group takes its own row: sort lines up under the menus and
+              the search sits at the far right. */}
+          <div className="flex w-full items-center gap-1 sm:ml-auto sm:w-auto">
+            <p
+              role="status"
+              className="sr-only whitespace-nowrap px-2 text-xs text-stone-400 sm:not-sr-only"
+            >
+              {active &&
+                (entries.length === 1 ? t.countSingular : t.countPlural)
+                  .replace('{visible}', String(visible.length))
+                  .replace('{total}', String(entries.length))}
+            </p>
+            {active && (
+              <button
+                type="button"
+                onClick={clear}
+                className="inline-flex min-h-10 items-center gap-1.5 rounded-full px-3 text-sm text-stone-500 transition-colors hover:bg-white hover:text-stone-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#365DC4]"
+              >
+                <CloseIcon aria-hidden="true" className="size-3.5" />
+                {t.clear}
+              </button>
+            )}
+            {showSortSearch && (
+              <FilterMenu
+                label={t.sortLabel}
+                value={sort}
+                defaultValue="recent"
+                options={sortOptions}
+                open={openFilter === 'sort'}
+                align="end"
+                onOpenChange={filterOpen('sort')}
+                onChange={setSort}
+              />
+            )}
+            {showSortSearch && (
+              <div className="ml-auto sm:ml-0" onPointerDown={() => setOpenFilter('')}>
+                <ExpandingSearch
+                  clearLabel={commonText(locale).clearSearch}
+                  className="saved-search"
+                  label={t.searchLabel}
+                  placeholder={t.searchPlaceholder}
+                  value={query}
+                  onChange={setQuery}
+                />
+              </div>
+            )}
           </div>
         </div>
-        <div className="mt-4 flex min-h-8 items-center justify-between gap-3">
-          <p role="status" className="text-xs text-stone-500">
-            {(entries.length === 1 ? t.countSingular : t.countPlural)
-              .replace('{visible}', String(visible.length))
-              .replace('{total}', String(entries.length))}
-          </p>
-          {active && (
-            <button
-              type="button"
-              onClick={clear}
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs text-stone-500 hover:bg-stone-200/50"
-            >
-              <CloseIcon className="size-3.5" />
-              {t.clear}
-            </button>
-          )}
-        </div>
-      </div>
+      )}
       {visible.length ? (
         <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 xl:grid-cols-3">
           {visible.map(entry => (
@@ -276,17 +327,16 @@ export function SavedGallery({
           ))}
         </div>
       ) : (
-        <div className="py-14 text-center">
-          <h2 className="text-xl font-medium">{t.noMatches}</h2>
+        <LibraryEmpty icon={<FilterLinesIcon />} title={t.noMatches} text={t.noMatchesText}>
           <button
             type="button"
             onClick={clear}
             style={actionButtonStyle}
-            className="action-button mt-5 rounded-full px-5 py-3 text-sm"
+            className="action-button rounded-full px-5 py-3 text-sm font-medium"
           >
             {t.reset}
           </button>
-        </div>
+        </LibraryEmpty>
       )}
     </>
   );

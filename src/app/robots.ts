@@ -28,6 +28,9 @@ export default function robots(): MetadataRoute.Robots {
         '/api/solutions/*/site-image',
         '/api/solutions/*/media/',
         ...perLocale(['/comunidad?page=', '/fundadores?page=']),
+        // Founders link to their listing with ?ref=badge (SHCWS-17): crawlable, so the
+        // link counts for the listing, whose canonical drops the query.
+        ...perLocale(['/soluciones/*?ref=badge']),
       ],
       disallow: [
         '/api/',

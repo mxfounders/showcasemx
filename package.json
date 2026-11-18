@@ -19,7 +19,8 @@
     "gota:sync": "node scripts/gota-sync.mjs",
     "setup:secrets": "node scripts/setup-local-secrets.cjs",
     "verify:resend": "node scripts/verify-resend.cjs",
-    "verify:stripe": "node scripts/verify-stripe.cjs"
+    "verify:stripe": "node scripts/verify-stripe.cjs",
+    "firewall": "node scripts/firewall.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "1.3.0",

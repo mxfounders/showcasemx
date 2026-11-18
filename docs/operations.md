@@ -34,6 +34,70 @@ Requiere que `DATABASE_URL` en `.env.local` pertenezca al rol propietario de Neo
   y `tests/integration/ops.cjs`. Desplegado y con `OPS_TOTP_KEY`/`NEON_DATABASE_URL`
   configuradas apuntando a `shwcs_production` desde el 3 de septiembre de 2026.
 
+## Firewall de Vercel (SHCWS-3)
+
+Protección antes de que una petición llegue a una función: Vercel no cobra lo que el
+firewall bloquea, reta o limita (§79). Las reglas propias están versionadas en
+`firewall/rules.json` y las prueba `tests/firewall.test.ts`.
+
+### Reglas propias
+
+En Hobby caben 3 reglas por proyecto, como mucho 1 de límite de peticiones, y sin
+acciones persistentes. Se evalúan en orden:
+
+| Proyecto | Regla | Acción |
+| --- | --- | --- |
+| `shwcs` | Endpoints de máquinas: webhooks firmados, `/api/internal/*` (cron con secreto), `/api/health`, insignias, `robots.txt`, `sitemap.xml`, `llms.txt` y `/soluciones/<slug>.md` | `bypass` (sin reto de bots) |
+| `shwcs` | Escáneres: `/wp-*`, `.php`, `/.env`, `/.git`, `/xmlrpc`, `phpmyadmin`, `cgi-bin`… | `deny` |
+| `shwcs` | POST a `/api/auth/*`, `/api/contact` y `/api/newsletter` | 20 por minuto por IP, luego 429 |
+| `shwcs-ops` | GET `/login` de la sonda externa (`shwcs-uptime/1.0`) | `bypass` |
+| `shwcs-ops` | Escáneres | `deny` |
+| `shwcs-ops` | POST a `/api/auth/*` (contraseña, código, alta) | 10 por minuto por IP, luego 429 |
+
+Al pasar a Pro (`--plan pro`) se suman un límite general de 300 por minuto en `/api/*` y
+un reto a las combinaciones de tres o más filtros en `/comunidad`, que `robots.txt` ya
+excluye. Los límites por cuenta de la aplicación (`securityLimit`) siguen igual: el
+firewall frena por IP antes de gastar una función, la aplicación frena por identidad.
+
+### Cómo activarlas
+
+Requiere la CLI con sesión en el equipo `mxfounders` y el proyecto vinculado
+(`vercel link`; el de ops desde `ops/`). El script solo deja borradores y nunca publica.
+
+1. Registrar sin bloquear y publicar:
+   `npm run firewall -- --project shwcs --stage log --scope mxfounders`,
+   `npm run firewall -- --project shwcs-ops --stage log --cwd ops --scope mxfounders`,
+   revisar `vercel firewall diff` y `vercel firewall publish --yes` en cada proyecto.
+2. Dejar pasar 24–48 h y revisar en Firewall → Traffic (filtrando por cada regla) que
+   solo coinciden escáneres y ráfagas, no visitantes, buscadores ni Stripe.
+3. Aplicar en firme con `--stage enforce` en ambos proyectos y publicar.
+4. Comprobar: `curl -s -o /dev/null -w '%{http_code}' https://shwcs.site/wp-login.php`
+   responde 403, y 25 POST seguidos a `/api/auth/login` con un correo `@example.invalid`
+   desde la misma IP terminan en 429.
+
+`--dry-run` imprime los comandos sin ejecutar nada. Volver a correr una etapa edita las
+reglas existentes por nombre.
+
+### Reglas administradas (panel de Vercel)
+
+En Firewall → Rules → Managed Rulesets, ambos proyectos:
+
+- **Bot Protection**: primero en `log`, luego en `challenge`. Reta a clientes que no son
+  navegador; los bots verificados (buscadores) y lo que cubre la regla de máquinas pasan.
+- **AI Bots**: recomendado dejarlo en `log`. La estrategia es que los buscadores con IA
+  citen a shwcs (docs/strategy.md); bloquear solo los rastreadores de entrenamiento es
+  una decisión del propietario (§79) que se hace en `robots.txt`, porque el ruleset no
+  distingue entre rastreadores que entrenan y los que citan.
+
+### Attack Mode
+
+Ante un ataque en curso (picos en Observability, 5xx, consumo que se dispara): Firewall →
+Attack Mode → Enable, o `vercel firewall attack-mode enable --duration 1h --yes` desde
+una terminal propia (la CLI no deja hacerlo a un agente). Todo visitante no verificado ve
+un reto; buscadores verificados pasan. Desactivarlo en cuanto pase:
+`vercel firewall attack-mode disable --yes`. Si la sonda externa de disponibilidad marca
+caída mientras está activo, es por el reto, no por el sitio.
+
 ## Incidente del 3 de septiembre de 2026 — variables de entorno vacías en producción
 
 Las variables de entorno de Production del proyecto `shwcs` (`NEON_DATABASE_URL`,
