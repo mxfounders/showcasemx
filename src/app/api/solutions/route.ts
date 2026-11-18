@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession, sessionCookie } from '@/lib/auth/session';
-import { solutionsSql } from '@/lib/solutions/server';
-import { emptySolution, isSolutionId, safeSolutionUrl } from '@/lib/solutions/model';
+import { createDraft } from '@/lib/solutions/writes';
+import { isSolutionId, safeSolutionUrl } from '@/lib/solutions/model';
 import { failure, solutionBody } from '@/lib/solutions/http';
 import { securityLimit } from '@/lib/auth/security';
 import { getDictionary } from '@/i18n/get-dictionary';
@@ -26,16 +26,16 @@ export async function POST(request: NextRequest) {
         ? (safeSolutionUrl(body.website.trim()) ?? '')
         : '';
     if (body.website !== undefined && !website) return failure(t.invalidWebsite, 400);
-    const sql = solutionsSql();
-    await sql`INSERT INTO founder_solutions(id,owner_id,data,editor_question) VALUES(${body.id},${account.id},${JSON.stringify({ ...emptySolution, website, contactEmail: account.email })}::jsonb,'basics') ON CONFLICT(id) DO NOTHING`;
-    const rows =
-      await sql`SELECT id FROM founder_solutions WHERE id=${body.id} AND owner_id=${account.id}`;
-    if (!rows.length) return failure(t.requestUnavailable, 409);
+    // The same insert the assistant's MCP tool uses (src/lib/solutions/writes.ts).
+    const id = await createDraft({
+      id: body.id,
+      ownerId: account.id,
+      email: account.email,
+      website,
+    });
+    if (!id) return failure(t.requestUnavailable, 409);
     captureServerEvent(request, account.id, 'solution_created');
-    return NextResponse.json(
-      { ok: true, id: rows[0].id },
-      { headers: { 'Cache-Control': 'no-store' } },
-    );
+    return NextResponse.json({ ok: true, id }, { headers: { 'Cache-Control': 'no-store' } });
   } catch {
     return failure(t.createFailed, 503);
   }

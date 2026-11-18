@@ -45,6 +45,7 @@ import { alerts } from './alerts';
 import { follows } from './follows';
 import { briefs } from './briefs';
 import { profiles } from './profiles';
+import { assistant } from './assistant';
 
 /** Spanish is the source locale: its shape defines `Dictionary`, which every other locale must satisfy. */
 export const es = {
@@ -95,4 +96,5 @@ export const es = {
   follows,
   briefs,
   profiles,
+  assistant,
 } as const;

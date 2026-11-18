@@ -54,6 +54,8 @@ export async function GET(request: NextRequest) {
       followedProfiles,
       passkeys,
       signupOrigin,
+      assistantTokens,
+      assistantActivity,
     ] = await Promise.all([
       sql`SELECT id::text, email, name, organization, profile, role, dashboard_mode, created_at::text, email_verified_at::text, (avatar_key IS NOT NULL OR avatar_data IS NOT NULL) AS has_avatar, totp_confirmed_at IS NOT NULL AS two_step_enabled FROM auth_accounts WHERE id = ${account.id}`,
       sql`SELECT id::text, catalog_key, status, step, version, data, published_data, published_at::text, updated_at::text FROM founder_solutions WHERE owner_id = ${account.id} ORDER BY updated_at`,
@@ -100,6 +102,13 @@ export async function GET(request: NextRequest) {
       sql`SELECT channel, source, medium, campaign, site, landing, intent, created_at::text FROM account_signup_origins WHERE account_id = ${account.id}`.catch(
         () => [],
       ),
+      // Tokens for the AI assistant (SHCWS-152): never the hash, only what identifies them.
+      sql`SELECT id::text, name, token_hint, scope, created_at::text, expires_at::text, last_used_at::text, revoked_at::text FROM assistant_tokens WHERE account_id = ${account.id} ORDER BY created_at`.catch(
+        () => [],
+      ),
+      sql`SELECT token_id::text, tool, solution_id::text, outcome, code, created_at::text FROM assistant_token_events WHERE account_id = ${account.id} ORDER BY created_at`.catch(
+        () => [],
+      ),
     ]);
 
     // «Publica tu necesidad» (SHCWS-58): the buyer's briefs with what they received, and
@@ -139,6 +148,7 @@ export async function GET(request: NextRequest) {
         ? { ...publicProfile[0], previousHandles: previousHandles }
         : null,
       briefs,
+      assistant: { tokens: assistantTokens, activity: assistantActivity },
     };
 
     return new NextResponse(JSON.stringify(payload, null, 2), {
