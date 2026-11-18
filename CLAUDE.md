@@ -3893,7 +3893,13 @@ dos (la Mac del propietario tiene 8 GB y se trababa con más). Cada una dejó su
   datos (orden de consultas comprobado) y la ficha (casos de clientes + enlace al perfil).
   Verificado sobre `main` 4d18fc83: formato, lint, tipos, 487 pruebas y los builds del
   producto y de ops.
-- **Pendiente para desplegar**: migraciones 57–60, 62 y 63 en `shwcs_production` antes del
-  push; variables `OPS_NEWSLETTER_SECRET` (igual en `shwcs` y `shwcs-ops`),
-  `RESEND_WEBHOOK_SECRET` y `OUTAGE_WEBHOOK_SECRET` en Vercel (acción del propietario).
+- **Producción (18 nov, a pedido del propietario)**: migraciones 57–60, 62 y 63 aplicadas en
+  `shwcs_production` con `neondb_owner`. Verificado: 18 tablas nuevas con
+  SELECT/INSERT/UPDATE/DELETE para `shwcs_app_production`, 5 funciones ejecutables por ese
+  rol, datos sin cambios (6 cuentas, 7 fichas, 1 publicada, 0 solicitudes, 1 suscriptor).
+  `main` subido (8d03f4bd).
+- **Pendiente del propietario**: variables `OPS_NEWSLETTER_SECRET` (igual en `shwcs` y
+  `shwcs-ops`), `RESEND_WEBHOOK_SECRET` (y activar el webhook en Resend) y
+  `OUTAGE_WEBHOOK_SECRET` en Vercel, con redeploy. Sin ellas el sitio funciona; quedan
+  apagados el envío del newsletter desde ops, los eventos de Resend y la reposición por caída.
 
