@@ -112,6 +112,16 @@ function Chips({
   );
 }
 
+const RESOURCE_LABELS: Record<string, string> = {
+  docs: 'Documentación',
+  api: 'Referencia de la API',
+  changelog: 'Registro de cambios',
+  status: 'Estado del servicio',
+  roadmap: 'Roadmap público',
+  help: 'Centro de ayuda',
+  community: 'Comunidad',
+};
+
 function Declared({ value, any }: { value: unknown; any: string }) {
   if (!Array.isArray(value)) return null;
   if (value.length === 0) return <Badge tone="sage">{any}</Badge>;
@@ -275,6 +285,75 @@ function FichaTab({
             },
             { label: 'Evidencia', value: <Prose value={d.evidence} />, wide: true },
             { label: 'Enlace de evidencia', value: <ExternalUrl value={d.evidenceUrl} /> },
+          ]}
+        />
+      </Section>
+
+      {/* SHCWS-180: plans and trying it, support and contract, technical teams. */}
+      <Section title="Planes, soporte y equipos técnicos">
+        <DescriptionList
+          items={[
+            {
+              label: 'Cómo probarlo',
+              value: <Chips values={asList(d.tryOptions)} tone="sage" />,
+              wide: true,
+            },
+            ...(typeof d.trialDays === 'number'
+              ? [{ label: 'Días de prueba', value: fmtNumber(d.trialDays) }]
+              : []),
+            {
+              label: 'Planes',
+              value:
+                Array.isArray(d.plans) && d.plans.length ? (
+                  <ul className="space-y-1.5">
+                    {(d.plans as Array<Record<string, unknown>>).map((plan, index) => (
+                      <li key={index} className="text-[13px]">
+                        <span className="font-semibold">{asText(plan.name) || 'Sin nombre'}</span>
+                        {' · '}
+                        {plan.price === 0
+                          ? 'Gratis'
+                          : typeof plan.price === 'number'
+                            ? `${fmtNumber(plan.price)} ${asText(plan.currency) || '(sin moneda)'}${asText(plan.unit) ? ` · ${humanize(asText(plan.unit))}` : ''}`
+                            : 'A la medida'}
+                        {asText(plan.includes) && (
+                          <span className="text-muted"> · {asText(plan.includes)}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null,
+              wide: true,
+            },
+            {
+              label: 'Canales de soporte',
+              value: <Chips values={asList(d.supportChannels)} />,
+              wide: true,
+            },
+            {
+              label: 'Primera respuesta',
+              value: asText(d.supportResponse) ? humanize(asText(d.supportResponse)) : null,
+            },
+            {
+              label: 'SLA declarado',
+              value: typeof d.slaUptime === 'number' ? `${fmtNumber(d.slaUptime)} %` : null,
+            },
+            { label: 'Arranque', value: <Chips values={asList(d.onboarding)} />, wide: true },
+            {
+              label: 'Si el cliente quiere irse',
+              value: <Chips values={asList(d.exitTerms)} tone="sage" />,
+              wide: true,
+            },
+            {
+              label: 'Herramientas técnicas',
+              value: <Chips values={asList(d.developerTools)} tone="lavender" />,
+              wide: true,
+            },
+            ...(d.resources && typeof d.resources === 'object' && !Array.isArray(d.resources)
+              ? Object.entries(d.resources as Record<string, unknown>).map(([kind, url]) => ({
+                  label: RESOURCE_LABELS[kind] ?? kind,
+                  value: <ExternalUrl value={url} />,
+                }))
+              : []),
           ]}
         />
       </Section>

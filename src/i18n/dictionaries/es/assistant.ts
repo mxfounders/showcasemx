@@ -224,7 +224,7 @@ export const assistant = {
       subir_captura: {
         title: 'Subir captura',
         description:
-          'Descarga una imagen pública (JPG, PNG o WebP, hasta 2 MB) y la guarda en la ficha con el mismo proceso que la subida desde shwcs. Con descripción, la agrega a la ficha si tiene menos de 4 capturas.',
+          'Descarga una imagen pública (JPG, PNG o WebP, hasta 2 MB) y la guarda en la ficha con el mismo proceso que la subida desde shwcs. Con descripción, la agrega a la ficha si tiene menos de 8 imágenes.',
         solution: 'El id de la ficha.',
         url: 'Dirección pública http o https de la imagen.',
         caption: 'Qué muestra la captura, para agregarla a la ficha (3 a 180 caracteres).',
@@ -254,7 +254,7 @@ export const assistant = {
       uploadedOnly:
         'Captura subida a la biblioteca de la ficha. Agrégala con actualizar_borrador (campo screenshots) cuando quieras.',
       uploadedFull:
-        'Captura subida a la biblioteca de la ficha, pero la ficha ya muestra 4 capturas: no se agregó.',
+        'Captura subida a la biblioteca de la ficha, pero la ficha ya muestra 8 imágenes: no se agregó.',
       uploadedNotAttached:
         'Captura subida, pero la ficha cambió mientras tanto y no se agregó. Agrégala con actualizar_borrador.',
       submitted:

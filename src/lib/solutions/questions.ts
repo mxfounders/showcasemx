@@ -25,11 +25,30 @@ export const solutionQuestions = [
   {
     id: 'pricing',
     phase: 2,
-    fields: ['pricingModel', 'priceFrom', 'priceCurrency', 'priceUnit', 'priceBand', 'pricing'],
+    fields: [
+      'pricingModel',
+      'priceFrom',
+      'priceCurrency',
+      'priceUnit',
+      'priceBand',
+      'pricing',
+      'tryOptions',
+      'trialDays',
+      'plans',
+    ],
     optional: true,
   },
   { id: 'delivery', phase: 2, fields: ['setupTime', 'implementation', 'support'], optional: true },
+  // SHCWS-180: how support works and what leaving looks like.
+  {
+    id: 'service',
+    phase: 2,
+    fields: ['supportChannels', 'supportResponse', 'onboarding', 'exitTerms', 'slaUptime'],
+    optional: true,
+  },
   { id: 'integrations', phase: 2, fields: ['integrationKeys', 'integrations'], optional: true },
+  // SHCWS-180: what a technical team can build with, and the public pages behind it.
+  { id: 'developers', phase: 2, fields: ['developerTools', 'resources'], optional: true },
   { id: 'compliance', phase: 2, fields: ['compliance'], optional: true },
   { id: 'scope', phase: 2, fields: ['scope', 'notFor'], optional: true },
   { id: 'founders', phase: 2, fields: ['founders'], optional: true },
@@ -131,8 +150,20 @@ export function sectionFilled(data: SolutionData, id: SolutionQuestion) {
         data.pricingModel?.length ||
         data.priceFrom !== undefined ||
         data.priceBand ||
-        data.pricing
+        data.pricing ||
+        data.tryOptions?.length ||
+        data.plans?.length
       );
+    case 'service':
+      return !!(
+        data.supportChannels?.length ||
+        data.supportResponse ||
+        data.onboarding?.length ||
+        data.exitTerms?.length ||
+        data.slaUptime !== undefined
+      );
+    case 'developers':
+      return !!(data.developerTools?.length || Object.keys(data.resources ?? {}).length);
     case 'delivery':
       return !!(data.setupTime || data.implementation || data.support);
     case 'integrations':

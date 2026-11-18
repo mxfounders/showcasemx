@@ -8,6 +8,7 @@ import { SolutionSocial } from './solution-social';
 import { SimilarSolutions, type SimilarSection } from './similar-solutions';
 import { ShareSolution } from './share-solution';
 import { ContactBar } from './contact-bar';
+import { OfferSections } from './offer-sections';
 import type { ReactNode } from 'react';
 import Link from '@/i18n/navigation';
 import {
@@ -31,6 +32,7 @@ import { outboundRel, outboundUrl, type OutboundMedium } from '@/lib/solutions/o
 import { solutionChecklist } from '@/lib/solutions/completeness';
 import { formatPriceFrom, pricingModelLabels } from '@/lib/solutions/pricing';
 import { providerRows } from '@/lib/solutions/provider';
+import { tryLabels } from '@/lib/solutions/offer';
 import { actionButtonStyle, brandColors, solutionCategoryTones } from '@/lib/brand-colors';
 import {
   industries as industryOptions,
@@ -176,6 +178,8 @@ export function SolutionPresentation({
   // Where it operates and its track record (SHCWS-56): declared rows only.
   const provider = providerRows(data, locale ?? 'es', dict.provider);
   const cases = (data.cases ?? []).filter(item => item.client.trim() && item.result.trim());
+  // How it can be tried (SHCWS-180), next to the price: the first thing a buyer asks.
+  const tryIt = tryLabels(data, locale ?? 'es');
   // What the listing still lacks is the founder's to-do, so it lives only in the app:
   // the private preview here, and the account's guide (decided by the owner on
   // 14 Nov 2026; it used to show on the public listing). The public page never lists it.
@@ -283,6 +287,7 @@ export function SolutionPresentation({
       )}
 
       {(priceFrom ||
+        tryIt.length > 0 ||
         pricingModels.length > 0 ||
         data.priceBand ||
         data.setupTime ||
@@ -298,6 +303,12 @@ export function SolutionPresentation({
                   {dict.priceCurrencyNote.replace('{currency}', data.priceCurrency)}
                 </dd>
               )}
+            </div>
+          )}
+          {tryIt.length > 0 && (
+            <div>
+              <dt className="text-xs text-stone-400">{dict.offer.tryTitle}</dt>
+              <dd className="mt-1 font-medium text-[#416B50]">{tryIt.join(' · ')}</dd>
             </div>
           )}
           {pricingModels.length > 0 && (
@@ -481,6 +492,13 @@ export function SolutionPresentation({
               </dl>
             </section>
           )}
+          <OfferSections
+            data={data}
+            locale={locale ?? 'es'}
+            dict={dict.offer}
+            otherTab={dict.otherTab}
+            out={out}
+          />
           <section className="border-t border-stone-200 pt-8">
             <h2 className="text-xl font-medium">{dict.workTitle}</h2>
             <p className="mt-4 whitespace-pre-wrap break-words leading-relaxed text-stone-600">

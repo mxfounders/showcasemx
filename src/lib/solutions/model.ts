@@ -10,6 +10,29 @@ export type SolutionScreenshot = { id: string; caption: string };
  * founder-written, so readSolutionData drops any extra key).
  */
 export type SolutionCase = { client: string; problem: string; result: string; url?: string };
+/**
+ * One plan of a price list (SHCWS-180): its name, what it costs and what it includes.
+ * No `price` means «a la medida» (quoted); 0 is a free plan; above zero it needs its
+ * currency and what it pays for, like the «Desde» price. Never converted.
+ */
+export type SolutionPlan = {
+  name: string;
+  price?: number;
+  currency?: string;
+  unit?: string;
+  includes?: string;
+};
+/** Public pages a buyer or their technical team reads before deciding (SHCWS-180). */
+export const solutionResourceKinds = [
+  'docs',
+  'api',
+  'changelog',
+  'status',
+  'roadmap',
+  'help',
+  'community',
+] as const;
+export type SolutionResourceKind = (typeof solutionResourceKinds)[number];
 // hideSiteImage: the founder's opt-out of showing the auto-fetched og:image of
 // their own site as a ficha slide. Absent/false = shown, so no existing ficha
 // changes. Named in the negative on purpose: an absent boolean must mean
@@ -73,6 +96,24 @@ export type SolutionData = {
   teamSize?: string;
   customerCount?: string;
   cases?: SolutionCase[];
+  /**
+   * SHCWS-180, all optional and declared. Plans and how to try it; the tools a technical
+   * team can build with and the public pages behind them; how support works and what
+   * leaving looks like. Closed lists so a founder fills them in with clicks.
+   */
+  plans?: SolutionPlan[];
+  tryOptions?: string[];
+  /** Length of the free trial, when `tryOptions` says there is one. */
+  trialDays?: number;
+  developerTools?: string[];
+  resources?: Partial<Record<SolutionResourceKind, string>>;
+  supportChannels?: string[];
+  /** How soon the first answer arrives, as declared (one of `solutionSupportResponses`). */
+  supportResponse?: string;
+  /** Contractual availability in percent; only a real commitment belongs here. */
+  slaUptime?: number;
+  onboarding?: string[];
+  exitTerms?: string[];
   /**
    * A category the founder could not find in the list, in their own words. Private:
    * only the team reads it in ops, to learn which categories are missing. It never
@@ -373,6 +414,73 @@ export const solutionCustomerCounts = [
   'de-1001-a-10000',
   'mas-10000',
 ] as const;
+// SHCWS-180. Labels in src/lib/taxonomy.ts and src/lib/taxonomy-en.ts.
+/** Ways a buyer can try it before paying. */
+export const solutionTryOptions = [
+  'plan-gratis',
+  'prueba-gratis',
+  'sin-tarjeta',
+  'demo-publica',
+  'demo-guiada',
+  'diagnostico-gratis',
+] as const;
+/** What a technical team can build with. */
+export const solutionDeveloperTools = [
+  'api-rest',
+  'graphql',
+  'webhooks',
+  'openapi',
+  'sdks',
+  'cli',
+  'mcp',
+  'sandbox',
+  'embebibles',
+  'oauth',
+] as const;
+export const solutionSupportChannels = [
+  'correo',
+  'chat',
+  'telefono',
+  'whatsapp',
+  'videollamada',
+  'centro-ayuda',
+  'comunidad',
+  'portal-clientes',
+  'persona-asignada',
+] as const;
+/** How soon the first answer arrives, fastest first. */
+export const solutionSupportResponses = [
+  'menos-1-hora',
+  'menos-4-horas',
+  'mismo-dia',
+  'menos-24-horas',
+  'menos-48-horas',
+  'mas-48-horas',
+] as const;
+/** How a new customer gets started. */
+export const solutionOnboarding = [
+  'autoservicio',
+  'configuracion-asistida',
+  'importacion-datos',
+  'capacitacion',
+  'acompanamiento',
+] as const;
+/** What leaving looks like: the lock-in questions a buyer asks before signing. */
+export const solutionExitTerms = [
+  'cancela-cuando-quieras',
+  'sin-plazo-forzoso',
+  'exporta-tus-datos',
+  'borra-tu-cuenta',
+  'codigo-es-tuyo',
+  'garantia-reembolso',
+] as const;
+export const maxSolutionPlans = 6;
+export const planLimits = { name: 40, includes: 240 } as const;
+export const maxTrialDays = 365;
+/** A declared SLA below this is not an availability commitment worth publishing. */
+export const minSlaUptime = 90;
+/** Gallery images per listing; a solution keeps up to 12 files (src/lib/solutions/screenshots.ts). */
+export const maxSolutionScreenshots = 8;
 export const maxSolutionCases = 4;
 export const caseLimits = { client: 100, problem: 400, result: 400, url: 500 } as const;
 export const supportHoursLimit = 120;
@@ -506,7 +614,8 @@ export function readSolutionData(value: unknown): SolutionData | null {
     result.notFor = input.notFor.trim();
   }
   if (input.screenshots !== undefined) {
-    if (!Array.isArray(input.screenshots) || input.screenshots.length > 4) return null;
+    if (!Array.isArray(input.screenshots) || input.screenshots.length > maxSolutionScreenshots)
+      return null;
     const screenshots: SolutionScreenshot[] = [];
     for (const item of input.screenshots) {
       if (
@@ -725,7 +834,135 @@ export function readSolutionData(value: unknown): SolutionData | null {
     }
     result.cases = cases;
   }
+  if (!readOffer(input, result)) return null;
   return result;
+}
+
+/**
+ * Only the SHCWS-180 fields of a stored listing, for readers that select them on their own
+ * (the comparator). Null keys from SQL count as absent; a malformed value yields nothing.
+ */
+export function readOfferFacts(value: unknown): Partial<SolutionData> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const input = Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).filter(([, item]) => item !== null),
+  );
+  const result: SolutionData = { ...emptySolution };
+  if (!readOffer(input, result)) return {};
+  const { plans, tryOptions, trialDays, developerTools, resources } = result;
+  const { supportChannels, supportResponse, slaUptime, onboarding, exitTerms } = result;
+  return Object.fromEntries(
+    Object.entries({
+      plans,
+      tryOptions,
+      trialDays,
+      developerTools,
+      resources,
+      supportChannels,
+      supportResponse,
+      slaUptime,
+      onboarding,
+      exitTerms,
+    }).filter(([, item]) => item !== undefined),
+  );
+}
+
+/**
+ * The SHCWS-180 fields: plans and how to try it, developer tools and public resources,
+ * support and exit terms. Writes what is valid into `result`; false when anything is
+ * malformed, so readSolutionData rejects the whole payload as it does for the rest.
+ */
+function readOffer(input: Record<string, unknown>, result: SolutionData) {
+  if (input.plans !== undefined) {
+    if (!Array.isArray(input.plans) || input.plans.length > maxSolutionPlans) return false;
+    const plans: SolutionPlan[] = [];
+    for (const item of input.plans) {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) return false;
+      const entry = item as Record<string, unknown>;
+      if (typeof entry.name !== 'string' || entry.name.length > planLimits.name) return false;
+      const plan: SolutionPlan = { name: entry.name.trim() };
+      if (entry.price !== undefined) {
+        if (
+          typeof entry.price !== 'number' ||
+          !Number.isFinite(entry.price) ||
+          entry.price < 0 ||
+          entry.price > maxPriceFrom
+        )
+          return false;
+        plan.price = Math.round(entry.price * 100) / 100;
+      }
+      if (entry.currency !== undefined) {
+        if (!isCurrencyCode(entry.currency)) return false;
+        plan.currency = entry.currency;
+      }
+      if (entry.unit !== undefined) {
+        if (!solutionPriceUnits.some(unit => unit === entry.unit)) return false;
+        plan.unit = String(entry.unit);
+      }
+      if (entry.includes !== undefined) {
+        if (typeof entry.includes !== 'string' || entry.includes.length > planLimits.includes)
+          return false;
+        const includes = entry.includes.trim();
+        if (includes) plan.includes = includes;
+      }
+      plans.push(plan);
+    }
+    if (plans.length) result.plans = plans;
+  }
+  const lists = [
+    ['tryOptions', solutionTryOptions],
+    ['developerTools', solutionDeveloperTools],
+    ['supportChannels', solutionSupportChannels],
+    ['onboarding', solutionOnboarding],
+    ['exitTerms', solutionExitTerms],
+  ] as const;
+  for (const [key, allowed] of lists) {
+    const value = readCodes(
+      input[key],
+      (code: string) => allowed.some(item => item === code),
+      allowed.length,
+    );
+    if (value === null) return false;
+    if (value?.length) result[key] = value;
+  }
+  if (input.trialDays !== undefined) {
+    if (
+      typeof input.trialDays !== 'number' ||
+      !Number.isInteger(input.trialDays) ||
+      input.trialDays < 1 ||
+      input.trialDays > maxTrialDays
+    )
+      return false;
+    result.trialDays = input.trialDays;
+  }
+  if (input.supportResponse !== undefined) {
+    if (!solutionSupportResponses.some(item => item === input.supportResponse)) return false;
+    result.supportResponse = String(input.supportResponse);
+  }
+  if (input.slaUptime !== undefined) {
+    if (
+      typeof input.slaUptime !== 'number' ||
+      !Number.isFinite(input.slaUptime) ||
+      input.slaUptime < minSlaUptime ||
+      input.slaUptime > 100
+    )
+      return false;
+    result.slaUptime = Math.round(input.slaUptime * 1000) / 1000;
+  }
+  if (input.resources !== undefined) {
+    if (!input.resources || typeof input.resources !== 'object' || Array.isArray(input.resources))
+      return false;
+    const resources: Partial<Record<SolutionResourceKind, string>> = {};
+    for (const [kind, url] of Object.entries(input.resources as Record<string, unknown>)) {
+      // Unknown kinds are dropped like any unknown key; a known one must be a short string.
+      if (!solutionResourceKinds.some(item => item === kind)) continue;
+      if (typeof url !== 'string' || url.length > 500) return false;
+      const value = url.trim();
+      if (value) resources[kind as SolutionResourceKind] = value;
+    }
+    if (Object.keys(resources).length) result.resources = resources;
+  }
+  return true;
 }
 
 /**
@@ -769,7 +1006,9 @@ export type SolutionErrorCode =
   | 'projectLinksInvalid'
   | 'priceIncomplete'
   | 'foundedYearInvalid'
-  | 'casesInvalid';
+  | 'casesInvalid'
+  | 'plansInvalid'
+  | 'resourcesInvalid';
 export function solutionErrors(data: SolutionData, step?: number) {
   const errors: Partial<Record<keyof SolutionData, SolutionErrorCode>> = {};
   if (step === undefined || step === 0) {
@@ -846,6 +1085,17 @@ export function solutionErrors(data: SolutionData, step?: number) {
       )
     )
       errors.cases = 'casesInvalid';
+    // SHCWS-180: a plan has a name, and a price above zero says in what and per what.
+    if (
+      data.plans?.some(
+        plan =>
+          !plan.name.trim() ||
+          (plan.price !== undefined && plan.price > 0 && (!plan.currency || !plan.unit)),
+      )
+    )
+      errors.plans = 'plansInvalid';
+    if (Object.values(data.resources ?? {}).some(url => !safeSolutionUrl(url)))
+      errors.resources = 'resourcesInvalid';
   }
   return errors;
 }

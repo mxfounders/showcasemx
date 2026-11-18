@@ -12,6 +12,13 @@ import {
   solutionPaymentMethods,
   solutionTeamSizes,
   solutionCustomerCounts,
+  solutionTryOptions,
+  solutionDeveloperTools,
+  solutionResourceKinds,
+  solutionSupportChannels,
+  solutionSupportResponses,
+  solutionOnboarding,
+  solutionExitTerms,
 } from './solutions/model';
 import { matchIndustry, isRealMatch } from './search/facets';
 import {
@@ -31,6 +38,13 @@ import {
   paymentMethodEn,
   teamSizeEn,
   customerCountEn,
+  tryOptionEn,
+  developerToolEn,
+  resourceKindEn,
+  supportChannelEn,
+  supportResponseEn,
+  onboardingEn,
+  exitTermEn,
 } from './taxonomy-en';
 
 /**
@@ -760,6 +774,91 @@ export function localizedTeamSizeOptions(locale?: string) {
 }
 export function localizedCustomerCountOptions(locale?: string) {
   return localizedList(solutionCustomerCounts, customerCountLabels, customerCountEn, locale);
+}
+// SHCWS-180: plans and trying it, technical teams, support and exit terms.
+const tryOptionLabels: Record<string, string> = {
+  'plan-gratis': 'Plan gratis',
+  'prueba-gratis': 'Prueba gratis',
+  'sin-tarjeta': 'Sin tarjeta',
+  'demo-publica': 'Demo pública',
+  'demo-guiada': 'Demo con el equipo',
+  'diagnostico-gratis': 'Diagnóstico gratis',
+};
+const developerToolLabels: Record<string, string> = {
+  'api-rest': 'API REST',
+  graphql: 'API GraphQL',
+  webhooks: 'Webhooks',
+  openapi: 'Especificación OpenAPI',
+  sdks: 'SDKs oficiales',
+  cli: 'Línea de comandos (CLI)',
+  mcp: 'Servidor MCP para asistentes de IA',
+  sandbox: 'Entorno de prueba',
+  embebibles: 'Componentes embebibles',
+  oauth: 'OAuth para apps',
+};
+const resourceKindLabels: Record<string, string> = {
+  docs: 'Documentación',
+  api: 'Referencia de la API',
+  changelog: 'Registro de cambios',
+  status: 'Estado del servicio',
+  roadmap: 'Roadmap público',
+  help: 'Centro de ayuda',
+  community: 'Comunidad',
+};
+const supportChannelLabels: Record<string, string> = {
+  correo: 'Correo',
+  chat: 'Chat en vivo',
+  telefono: 'Teléfono',
+  whatsapp: 'WhatsApp',
+  videollamada: 'Videollamada',
+  'centro-ayuda': 'Centro de ayuda',
+  comunidad: 'Comunidad',
+  'portal-clientes': 'Portal de clientes',
+  'persona-asignada': 'Una persona asignada',
+};
+const supportResponseLabels: Record<string, string> = {
+  'menos-1-hora': 'Menos de 1 hora',
+  'menos-4-horas': 'Menos de 4 horas',
+  'mismo-dia': 'El mismo día hábil',
+  'menos-24-horas': 'Menos de 24 horas',
+  'menos-48-horas': 'Menos de 48 horas',
+  'mas-48-horas': 'Más de 48 horas',
+};
+const onboardingLabels: Record<string, string> = {
+  autoservicio: 'Por tu cuenta',
+  'configuracion-asistida': 'Configuración asistida',
+  'importacion-datos': 'Importación o migración de datos',
+  capacitacion: 'Capacitación al equipo',
+  acompanamiento: 'Acompañamiento dedicado',
+};
+const exitTermLabels: Record<string, string> = {
+  'cancela-cuando-quieras': 'Cancelas cuando quieras',
+  'sin-plazo-forzoso': 'Sin plazo forzoso',
+  'exporta-tus-datos': 'Exportas tus datos',
+  'borra-tu-cuenta': 'Borras tu cuenta y tus datos',
+  'codigo-es-tuyo': 'El código es tuyo',
+  'garantia-reembolso': 'Garantía de reembolso',
+};
+export function localizedTryOptions(locale?: string) {
+  return localizedList(solutionTryOptions, tryOptionLabels, tryOptionEn, locale);
+}
+export function localizedDeveloperToolOptions(locale?: string) {
+  return localizedList(solutionDeveloperTools, developerToolLabels, developerToolEn, locale);
+}
+export function localizedResourceKinds(locale?: string) {
+  return localizedList(solutionResourceKinds, resourceKindLabels, resourceKindEn, locale);
+}
+export function localizedSupportChannelOptions(locale?: string) {
+  return localizedList(solutionSupportChannels, supportChannelLabels, supportChannelEn, locale);
+}
+export function localizedSupportResponseOptions(locale?: string) {
+  return localizedList(solutionSupportResponses, supportResponseLabels, supportResponseEn, locale);
+}
+export function localizedOnboardingOptions(locale?: string) {
+  return localizedList(solutionOnboarding, onboardingLabels, onboardingEn, locale);
+}
+export function localizedExitTermOptions(locale?: string) {
+  return localizedList(solutionExitTerms, exitTermLabels, exitTermEn, locale);
 }
 export function localizedCollections(locale?: string): CollectionEntry[] {
   if (locale !== 'en') return collections;

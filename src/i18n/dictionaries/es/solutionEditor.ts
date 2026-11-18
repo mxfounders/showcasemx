@@ -152,6 +152,8 @@ export const solutionEditor = {
     foundedYearInvalid: 'El año de fundación no puede ser posterior a este año.',
     casesInvalid:
       'Cada caso necesita el cliente y qué cambió; el enlace, si lo pones, debe ser una URL HTTP(S).',
+    plansInvalid: 'Cada plan necesita un nombre; si tiene precio, elige su moneda y qué paga.',
+    resourcesInvalid: 'Cada enlace debe ser una dirección completa que empiece con https://.',
   },
   /** Keyed by `solutionQuestions[].id` (src/lib/solutions/questions.ts). */
   questions: {
@@ -172,24 +174,32 @@ export const solutionEditor = {
       hint: 'Con esto ya puedes enviarla. Lo de abajo es opcional y ayuda a que una empresa decida.',
     },
     screenshots: {
-      title: 'Capturas',
-      hint: 'Hasta cuatro capturas reales del producto o del trabajo entregado, con una línea de contexto y sin datos de tus clientes.',
+      title: 'Imágenes',
+      hint: 'Hasta ocho imágenes del producto o del trabajo entregado, con una línea de contexto y sin datos de tus clientes. Las que muestran pantallas reales con un titular corto se ven mejor.',
     },
     demo: {
       title: 'Demo',
       hint: 'Un recorrido en video, una demo interactiva o una presentación pública.',
     },
     pricing: {
-      title: 'Precio',
-      hint: 'Cómo se contrata y cuánto cuesta. Si cotizas a medida, explica de qué depende.',
+      title: 'Precio y planes',
+      hint: 'Cómo se contrata, cuánto cuesta y cómo se puede probar. Si cotizas a medida, explica de qué depende.',
     },
     delivery: {
       title: 'Arranque y soporte',
       hint: 'Cuánto tarda en estar listo y qué acompañamiento ofreces.',
     },
+    service: {
+      title: 'Soporte y contrato',
+      hint: 'Por dónde te escriben, qué tan rápido respondes y qué pasa si alguien quiere irse. Marca solo lo que cumples hoy.',
+    },
     integrations: {
       title: 'Integraciones',
       hint: 'Con qué herramientas se conecta hoy. Si no se conecta con nada, dilo: también ayuda a decidir.',
+    },
+    developers: {
+      title: 'Para equipos técnicos',
+      hint: 'Con qué puede construir el equipo técnico de tu cliente y dónde lee la documentación, los cambios y el estado del servicio.',
     },
     compliance: {
       title: 'Cumplimiento',
@@ -224,9 +234,11 @@ export const solutionEditor = {
   sections: {
     screenshots: 'Muestra cómo se ve por dentro.',
     demo: 'Deja que lo vean en acción.',
-    pricing: 'Desde cuánto, cómo se contrata y rango.',
+    pricing: 'Desde cuánto, planes y cómo probarlo.',
     delivery: 'Tiempo de arranque y acompañamiento.',
+    service: 'Canales, respuesta y condiciones de salida.',
     integrations: 'Con qué se conecta.',
+    developers: 'API, SDKs, documentación y estado.',
     compliance: 'Normas que puedes sostener.',
     scope: 'Qué incluye y cuándo no encaja.',
     founders: 'Quién está detrás del proyecto.',
@@ -414,6 +426,41 @@ export const solutionEditor = {
       addCase: 'Añadir caso',
       casesCount: '{count}/{limit} casos',
     },
+    /** SHCWS-180: plans and trying it, support and contract, technical teams. */
+    offer: {
+      tryLegend: 'Cómo se puede probar',
+      trialDaysLabel: 'Días de prueba gratis',
+      plansTitle: 'Planes',
+      plansNote:
+        'Hasta 6, como aparecen en tu página de precios. Sin precio se muestra «A la medida»; con 0, «Gratis».',
+      planLabel: 'Plan {index}',
+      planName: 'Nombre',
+      planNamePlaceholder: 'Por ejemplo: Profesional',
+      planPrice: 'Precio',
+      planPricePlaceholder: 'Vacío = a la medida',
+      planPriceInvalid: 'Escribe un número mayor o igual a 0, sin símbolos.',
+      planCurrency: 'Moneda',
+      planUnit: 'Qué paga',
+      planIncludes: 'Qué incluye',
+      planIncludesPlaceholder: 'Lo que lo distingue: usuarios, límites, funciones',
+      planPreview: 'Así se verá:',
+      removePlan: 'Quitar',
+      addPlan: 'Añadir plan',
+      plansCount: '{count}/{limit} planes',
+      frequent: 'Más usadas',
+      all: 'Todas',
+      channelsLegend: 'Por dónde dan soporte',
+      responseLegend: 'Tiempo de primera respuesta',
+      onboardingLegend: 'Cómo arranca un cliente nuevo',
+      exitLegend: 'Si un cliente quiere irse',
+      slaLabel: 'Disponibilidad comprometida en contrato (SLA, %)',
+      slaNote: 'Solo si la firmas en contrato. Si no tienes SLA, déjalo vacío: no pasa nada.',
+      helpLinksTitle: 'Ayuda y comunidad',
+      toolsLegend: 'Con qué puede construir',
+      resourcesTitle: 'Páginas públicas',
+      resourcesNote:
+        'Lo que un equipo técnico revisa antes de decidir. Si alguna no existe, déjala vacía.',
+    },
   },
   profile: {
     linkType: 'Tipo de enlace {index}',
@@ -439,7 +486,7 @@ export const solutionEditor = {
     networkError: 'No pudimos confirmar el cambio. Recarga para comprobarlo antes de repetir.',
     title: 'Muestra cómo funciona',
     description:
-      'Hasta 4 capturas reales. JPG, PNG o WebP, máximo 2 MB cada una. Oculta datos personales de clientes antes de subirlas.',
+      'Hasta 8 imágenes. JPG, PNG o WebP, máximo 2 MB cada una, de preferencia horizontales (16:10). Oculta datos personales de clientes antes de subirlas.',
     uploadNote:
       'Subir no publica: guarda el borrador y envíalo a revisión. Se conserva la ficha aprobada anterior.',
     captionPendingAlt: 'Captura pendiente de descripción',
@@ -450,7 +497,7 @@ export const solutionEditor = {
     removeFromListing: 'Quitar de la ficha',
     processing: 'Procesando…',
     upload: 'Subir captura',
-    inListing: '{count}/4 en esta ficha',
+    inListing: '{count}/{limit} en esta ficha',
     filesSummary: 'Archivos de esta solución ({count}/12)',
     filesNote:
       'Reutiliza capturas o elimina archivos que ya no estén guardados ni publicados. Quitar de la ficha no borra el archivo.',

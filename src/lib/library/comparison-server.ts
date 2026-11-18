@@ -5,6 +5,7 @@ import { getReviewSummaries } from '@/lib/reviews/server';
 import { responseSignals } from '@/lib/solutions/response';
 import { recognitionHost } from '@/lib/recognition/model';
 import { verificationDomain } from '@/lib/trust/domain';
+import { readOfferFacts } from '@/lib/solutions/model';
 
 const list = (value: unknown) =>
   Array.isArray(value)
@@ -37,6 +38,11 @@ export async function comparedProjects(keys: string[]): Promise<Record<string, C
       s.published_data->>'supportHours' AS support_hours,s.published_data->'paymentMethods' AS payment_methods,
       s.published_data->'foundedYear' AS founded_year,s.published_data->>'teamSize' AS team_size,
       s.published_data->>'customerCount' AS customer_count,
+      jsonb_build_object('plans',s.published_data->'plans','tryOptions',s.published_data->'tryOptions',
+        'trialDays',s.published_data->'trialDays','developerTools',s.published_data->'developerTools',
+        'supportChannels',s.published_data->'supportChannels','supportResponse',s.published_data->'supportResponse',
+        'slaUptime',s.published_data->'slaUptime','onboarding',s.published_data->'onboarding',
+        'exitTerms',s.published_data->'exitTerms') AS offer,
       (SELECT array_agg(c->>'client') FROM jsonb_array_elements(CASE WHEN jsonb_typeof(s.published_data->'cases')='array' THEN s.published_data->'cases' ELSE '[]'::jsonb END) c
         WHERE coalesce(c->>'client','')<>'' AND coalesce(c->>'result','')<>'') AS case_clients,
       (SELECT vf.host FROM solution_verifications vf WHERE vf.solution_id=s.id) AS verified_host,
@@ -75,6 +81,7 @@ export async function comparedProjects(keys: string[]): Promise<Record<string, C
       teamSize: text(row.team_size),
       customerCount: text(row.customer_count),
       caseClients: list(row.case_clients) ?? [],
+      ...readOfferFacts(row.offer),
       // Same rules as the catalog card (src/lib/solutions/public.ts): only while the
       // check and the TXT proof are for the host the listing points at today.
       verified:

@@ -21,4 +21,10 @@ export const common = {
   priceFrom: 'Desde {price}',
   /** A declared entry price of 0. */
   priceFree: 'Plan gratuito',
+  /** SHCWS-180: a plan's price when it is 0 or quoted, and a free trial with its length. */
+  planFree: 'Gratis',
+  planCustom: 'A la medida',
+  trialDays: 'Prueba gratis de {days} días',
+  /** A declared contractual availability, {value} = «99.9». */
+  slaUptime: '{value} % de disponibilidad comprometida',
 } as const;

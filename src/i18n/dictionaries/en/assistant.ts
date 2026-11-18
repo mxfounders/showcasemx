@@ -220,7 +220,7 @@ export const assistant = {
       subir_captura: {
         title: 'Upload screenshot',
         description:
-          'Downloads a public image (JPG, PNG or WebP, up to 2 MB) and stores it in the listing with the same process as an upload from shwcs. With a caption, it adds it to the listing if it has fewer than 4 screenshots.',
+          'Downloads a public image (JPG, PNG or WebP, up to 2 MB) and stores it in the listing with the same process as an upload from shwcs. With a caption, it adds it to the listing if it has fewer than 8 images.',
         solution: 'The listing’s id.',
         url: 'Public http or https address of the image.',
         caption: 'What the screenshot shows, to add it to the listing (3 to 180 characters).',
@@ -250,7 +250,7 @@ export const assistant = {
       uploadedOnly:
         'Screenshot uploaded to the listing’s library. Add it with actualizar_borrador (screenshots field) whenever you like.',
       uploadedFull:
-        'Screenshot uploaded to the listing’s library, but the listing already shows 4 screenshots: it wasn’t added.',
+        'Screenshot uploaded to the listing’s library, but the listing already shows 8 images: it wasn’t added.',
       uploadedNotAttached:
         'Screenshot uploaded, but the listing changed in the meantime and it wasn’t added. Add it with actualizar_borrador.',
       submitted:

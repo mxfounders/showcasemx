@@ -16,6 +16,8 @@ import {
   PriceTagIcon,
   RefreshIcon,
   RocketIcon,
+  HeadphonesIcon,
+  CodeIcon,
   ShieldIcon,
   SparklesIcon,
   TargetIcon,
@@ -31,6 +33,7 @@ import { Chips, Suggestions } from './editor/chips';
 import { ListingPreview } from './editor/listing-preview';
 import { PriceFields } from './editor/price-fields';
 import { MarketsFields, TrackFields, type GroupedOptions } from './editor/provider-fields';
+import { DeveloperFields, PlanFields, ServiceFields } from './editor/offer-fields';
 import { priceSummary } from '@/lib/solutions/pricing';
 import { actionButtonStyle, solutionCategoryTones } from '@/lib/brand-colors';
 import {
@@ -77,7 +80,9 @@ const sectionIcons: Partial<Record<SolutionQuestion, GotaIcon>> = {
   demo: PlayIcon,
   pricing: PriceTagIcon,
   delivery: RocketIcon,
+  service: HeadphonesIcon,
   integrations: WorkflowIcon,
+  developers: CodeIcon,
   compliance: ShieldIcon,
   scope: TargetIcon,
   founders: ClientsIcon,
@@ -972,8 +977,19 @@ export function SolutionEditor({
               update={update}
             />
             {evaluation('pricing')}
+            <PlanFields
+              data={data}
+              update={update}
+              locale={locale}
+              currencies={currencies}
+              dict={text.offer}
+            />
           </>
         );
+      case 'service':
+        return <ServiceFields data={data} update={update} locale={locale} dict={text.offer} />;
+      case 'developers':
+        return <DeveloperFields data={data} update={update} locale={locale} dict={text.offer} />;
       case 'delivery':
         return (
           <>

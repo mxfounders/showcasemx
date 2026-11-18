@@ -7,6 +7,7 @@ import { actionButtonStyle } from '@/lib/brand-colors';
 import { safeSolutionUrl } from '@/lib/solutions/model';
 import { formatPriceFrom, priceBandLabel, pricingModelLabels } from '@/lib/solutions/pricing';
 import { providerRowKeys, providerValues } from '@/lib/solutions/provider';
+import { offerValues, planPrice } from '@/lib/solutions/offer';
 import {
   localizedCapabilityLabel,
   localizedCategoryDisplayLabel,
@@ -14,6 +15,7 @@ import {
   localizedIntegrationOptions,
   localizedOfferingOptions,
   localizedSetupTimeOptions,
+  localizedDeveloperToolOptions,
 } from '@/lib/taxonomy';
 import { declaredMatrix, type ComparedProject, type MatrixCell } from '@/lib/library/comparison';
 import type { Dictionary } from '@/i18n/dictionary';
@@ -105,6 +107,10 @@ export function ComparisonTable({
   const capabilities = declaredMatrix(list.map(project => project?.capabilities));
   const integrations = declaredMatrix(list.map(project => project?.integrationKeys));
   const integrationOptions = localizedIntegrationOptions(locale);
+  // SHCWS-180: technical tools as a matrix, like integrations.
+  const tools = declaredMatrix(list.map(project => project?.developerTools));
+  const toolOptions = localizedDeveloperToolOptions(locale);
+  const offer = (project: ComparedProject) => offerValues(project, locale);
   // «Dónde opera» rows only where at least one project declared something (SHCWS-56).
   const provider = list.map(project =>
     project ? providerValues(project, locale, t.provider.anyCountry) : null,
@@ -249,6 +255,27 @@ export function ComparisonTable({
             cells(project => priceBandLabel(project.priceBand, locale)),
           )}
           {row(
+            t.offer.plans,
+            cells(project =>
+              project.plans?.length ? (
+                <ul className="space-y-1">
+                  {project.plans.map((plan, index) => (
+                    <li key={index}>
+                      <span className="text-stone-800">{plan.name}</span> ·{' '}
+                      {planPrice(plan, locale)}
+                    </li>
+                  ))}
+                </ul>
+              ) : null,
+            ),
+            'plans',
+          )}
+          {row(
+            t.offer.tryIt,
+            cells(project => offer(project).tryOptions.join(' · ') || null),
+            'try',
+          )}
+          {row(
             t.fields.pricing,
             cells(project => project.pricing || null),
             'pricing',
@@ -326,6 +353,37 @@ export function ComparisonTable({
       )}
 
       {group(
+        t.groups.service,
+        <>
+          {row(
+            t.offer.channels,
+            cells(project => offer(project).supportChannels.join(', ') || null),
+            'channels',
+          )}
+          {row(
+            t.offer.response,
+            cells(project => offer(project).supportResponse),
+            'response',
+          )}
+          {row(
+            t.offer.sla,
+            cells(project => offer(project).sla),
+            'sla',
+          )}
+          {row(
+            t.offer.onboarding,
+            cells(project => offer(project).onboarding.join(', ') || null),
+            'onboarding',
+          )}
+          {row(
+            t.offer.exitTerms,
+            cells(project => offer(project).exitTerms.join(' · ') || null),
+            'exit',
+          )}
+        </>,
+      )}
+
+      {group(
         t.groups.integrations,
         <>
           {integrations.map(item =>
@@ -352,6 +410,25 @@ export function ComparisonTable({
             'integrations',
             true,
           )}
+        </>,
+      )}
+
+      {group(
+        t.groups.technical,
+        <>
+          {tools.map(item =>
+            row(
+              labelOf(toolOptions, item.value),
+              item.cells.map(cell => matrixCell(cell === 'none' ? 'no' : cell)),
+              `tool-${item.value}`,
+            ),
+          )}
+          {!tools.length &&
+            row(
+              t.groups.technical,
+              cells(() => null),
+              'tools-none',
+            )}
         </>,
       )}
 

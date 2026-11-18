@@ -19,4 +19,8 @@ export const common = {
     "Proved with a TXT record that it controls its site's domain. Not a check of legal identity or of the product.",
   priceFrom: 'From {price}',
   priceFree: 'Free plan',
+  planFree: 'Free',
+  planCustom: 'Custom',
+  trialDays: '{days}-day free trial',
+  slaUptime: '{value}% committed availability',
 } as const satisfies Dictionary['common'];

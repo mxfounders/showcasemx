@@ -15,6 +15,7 @@ import {
 } from '@/lib/taxonomy';
 import { formatPriceFrom, pricingModelLabels } from '@/lib/solutions/pricing';
 import { providerRows } from '@/lib/solutions/provider';
+import { offerValues, planPrice, resourceLinks } from '@/lib/solutions/offer';
 
 /**
  * Plain-text views of shwcs for assistants and crawlers (/llms.txt and
@@ -181,6 +182,40 @@ export function solutionMarkdown({
     ],
     'dónde opera',
   );
+  // SHCWS-180: plans and trying it, support and contract, technical teams, as declared.
+  const offer = offerValues(data, 'es');
+  section('Planes', [
+    offer.tryOptions.length > 0 && `Cómo probarlo: ${offer.tryOptions.join(' · ')}`,
+    list(
+      offer.plans.map(plan =>
+        [`**${text(plan.name)}**`, planPrice(plan, 'es'), text(plan.includes)]
+          .filter(Boolean)
+          .join(' · '),
+      ),
+    ),
+  ]);
+  section('Soporte y contrato', [
+    list(
+      [
+        offer.supportChannels.length && `Canales: ${offer.supportChannels.join(', ')}`,
+        offer.supportResponse && `Primera respuesta: ${offer.supportResponse}`,
+        offer.sla && `Disponibilidad: ${offer.sla}`,
+        offer.onboarding.length && `Cómo se arranca: ${offer.onboarding.join(', ')}`,
+        offer.exitTerms.length && `Si quieres irte: ${offer.exitTerms.join(' · ')}`,
+        ...resourceLinks(data, 'es', ['help', 'community']).map(
+          link => `${link.label}: ${link.href}`,
+        ),
+      ].filter((line): line is string => typeof line === 'string'),
+    ),
+  ]);
+  section('Para equipos técnicos', [
+    offer.developerTools.length > 0 && list(offer.developerTools),
+    list(
+      resourceLinks(data, 'es', ['docs', 'api', 'changelog', 'status', 'roadmap']).map(
+        link => `${link.label}: ${link.href}`,
+      ),
+    ),
+  ]);
   section('Casos de clientes declarados por el proyecto (sin confirmar por el cliente)', [
     list(
       (data.cases ?? [])

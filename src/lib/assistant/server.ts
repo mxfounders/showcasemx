@@ -25,6 +25,7 @@ import {
   solutionPriceUnits,
   solutionPricingModels,
   solutionSetupTimes,
+  maxSolutionScreenshots,
   type FounderSolution,
   type SolutionData,
 } from '@/lib/solutions/model';
@@ -518,7 +519,7 @@ export async function assistantServer(options: { identity: AssistantIdentity; or
       const data = fresh ? current(fresh) : null;
       if (!fresh || !data || fresh.status === 'pending')
         return done({ message: m.uploadedNotAttached, screenshot, addedToListing: false }, row.id);
-      if ((data.screenshots?.length ?? 0) >= 4)
+      if ((data.screenshots?.length ?? 0) >= maxSolutionScreenshots)
         return done({ message: m.uploadedFull, screenshot, addedToListing: false }, row.id);
       const changed = applySolutionChanges(data, {
         screenshots: [...(data.screenshots ?? []), { id: stored.id, caption }],

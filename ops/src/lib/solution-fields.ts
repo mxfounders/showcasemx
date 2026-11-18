@@ -35,6 +35,16 @@ export const FIELD_LABELS: Record<string, string> = {
   priceUnit: 'Qué paga el precio',
   setupTime: 'Tiempo de arranque',
   compliance: 'Cumplimiento',
+  plans: 'Planes',
+  tryOptions: 'Cómo probarlo',
+  trialDays: 'Días de prueba',
+  developerTools: 'Herramientas técnicas',
+  resources: 'Páginas públicas',
+  supportChannels: 'Canales de soporte',
+  supportResponse: 'Primera respuesta',
+  slaUptime: 'SLA declarado',
+  onboarding: 'Arranque',
+  exitTerms: 'Si el cliente quiere irse',
 };
 
 const VALUE_LABELS: Record<string, string> = {
@@ -74,6 +84,17 @@ const VALUE_LABELS: Record<string, string> = {
   'soc-2': 'SOC 2',
   lfpdppp: 'LFPDPPP',
   gdpr: 'GDPR',
+  'api-rest': 'API REST',
+  graphql: 'API GraphQL',
+  sdks: 'SDKs oficiales',
+  cli: 'CLI',
+  mcp: 'Servidor MCP',
+  sandbox: 'Entorno de prueba',
+  'menos-1-hora': 'Menos de 1 hora',
+  'menos-4-horas': 'Menos de 4 horas',
+  'menos-24-horas': 'Menos de 24 horas',
+  'menos-48-horas': 'Menos de 48 horas',
+  'mas-48-horas': 'Más de 48 horas',
 };
 
 export function humanize(value: string): string {

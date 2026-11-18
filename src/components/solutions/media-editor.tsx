@@ -10,7 +10,7 @@ import {
 } from '@/components/icons/gota';
 import { actionButtonStyle } from '@/lib/brand-colors';
 import { libraryButton, libraryError, libraryField } from '@/components/library/client';
-import type { SolutionScreenshot } from '@/lib/solutions/model';
+import { maxSolutionScreenshots, type SolutionScreenshot } from '@/lib/solutions/model';
 import type { Dictionary } from '@/i18n/dictionary';
 type Asset = { id: string; width: number; height: number; in_use: boolean };
 export function MediaEditor({
@@ -173,7 +173,7 @@ export function MediaEditor({
           id="solution-screenshot-upload"
           type="file"
           accept="image/png,image/jpeg,image/webp"
-          disabled={pending || value.length >= 4}
+          disabled={pending || value.length >= maxSolutionScreenshots}
           className="sr-only"
           onChange={event => {
             const selected = event.target.files?.[0];
@@ -182,7 +182,7 @@ export function MediaEditor({
         />
         <button
           type="button"
-          disabled={pending || value.length >= 4}
+          disabled={pending || value.length >= maxSolutionScreenshots}
           onClick={() => file.current?.click()}
           style={actionButtonStyle}
           className={libraryButton}
@@ -191,7 +191,9 @@ export function MediaEditor({
           {pending ? dict.processing : dict.upload}
         </button>
         <span className="ml-3 text-xs text-stone-500">
-          {dict.inListing.replace('{count}', String(value.length))}
+          {dict.inListing
+            .replace('{count}', String(value.length))
+            .replace('{limit}', String(maxSolutionScreenshots))}
         </span>
       </div>
       <details>
@@ -227,7 +229,7 @@ export function MediaEditor({
                   <button
                     type="button"
                     aria-label={dict.addFile}
-                    disabled={pending || value.length >= 4}
+                    disabled={pending || value.length >= maxSolutionScreenshots}
                     onClick={() => onChange([...value, { id: asset.id, caption: '' }])}
                     className="rounded-lg p-2 text-[#365DC4] disabled:opacity-30"
                   >

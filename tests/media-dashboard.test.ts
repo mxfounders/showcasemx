@@ -28,7 +28,7 @@ test('media metadata rejects foreign shapes, duplicate IDs and excessive caption
     [{ id: '../private', caption: 'A' }],
     [{ ...image, caption: 3 }],
     [{ ...image, caption: 'x'.repeat(181) }],
-    Array.from({ length: 5 }, () => ({ ...image, id: randomUUID() })),
+    Array.from({ length: 9 }, () => ({ ...image, id: randomUUID() })),
   ])
     assert.equal(readSolutionData({ ...complete, screenshots }), null);
   assert.ok(readSolutionData(complete));

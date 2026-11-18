@@ -454,3 +454,74 @@ export const collectionEn: Record<string, { title: string; description: string }
     description: 'Automatically gathers the approved listings in the Legal category.',
   },
 };
+
+// SHCWS-180: plans and trying it, technical teams, support and exit terms.
+export const tryOptionEn: Record<string, string> = {
+  'plan-gratis': 'Free plan',
+  'prueba-gratis': 'Free trial',
+  'sin-tarjeta': 'No credit card needed',
+  'demo-publica': 'Public demo',
+  'demo-guiada': 'Demo with the team',
+  'diagnostico-gratis': 'Free consultation',
+};
+
+export const developerToolEn: Record<string, string> = {
+  'api-rest': 'REST API',
+  graphql: 'GraphQL API',
+  webhooks: 'Webhooks',
+  openapi: 'OpenAPI spec',
+  sdks: 'Official SDKs',
+  cli: 'Command line (CLI)',
+  mcp: 'MCP server for AI assistants',
+  sandbox: 'Test environment',
+  embebibles: 'Embeddable components',
+  oauth: 'OAuth for apps',
+};
+
+export const resourceKindEn: Record<string, string> = {
+  docs: 'Documentation',
+  api: 'API reference',
+  changelog: 'Changelog',
+  status: 'Service status',
+  roadmap: 'Public roadmap',
+  help: 'Help center',
+  community: 'Community',
+};
+
+export const supportChannelEn: Record<string, string> = {
+  correo: 'Email',
+  chat: 'Live chat',
+  telefono: 'Phone',
+  whatsapp: 'WhatsApp',
+  videollamada: 'Video call',
+  'centro-ayuda': 'Help center',
+  comunidad: 'Community',
+  'portal-clientes': 'Client portal',
+  'persona-asignada': 'A dedicated contact',
+};
+
+export const supportResponseEn: Record<string, string> = {
+  'menos-1-hora': 'Under 1 hour',
+  'menos-4-horas': 'Under 4 hours',
+  'mismo-dia': 'Same business day',
+  'menos-24-horas': 'Under 24 hours',
+  'menos-48-horas': 'Under 48 hours',
+  'mas-48-horas': 'More than 48 hours',
+};
+
+export const onboardingEn: Record<string, string> = {
+  autoservicio: 'Self-serve',
+  'configuracion-asistida': 'Assisted setup',
+  'importacion-datos': 'Data import or migration',
+  capacitacion: 'Team training',
+  acompanamiento: 'Dedicated onboarding',
+};
+
+export const exitTermEn: Record<string, string> = {
+  'cancela-cuando-quieras': 'Cancel anytime',
+  'sin-plazo-forzoso': 'No minimum term',
+  'exporta-tus-datos': 'Export your data',
+  'borra-tu-cuenta': 'Delete your account and data',
+  'codigo-es-tuyo': 'You own the code',
+  'garantia-reembolso': 'Money-back guarantee',
+};

@@ -1,3 +1,4 @@
+import type { OfferFacts } from '@/lib/solutions/offer';
 import { validProjectKey, type BuyerProject } from './model';
 import type { ProviderFacts } from '@/lib/solutions/provider';
 import type { ReviewSummary } from '@/lib/reviews/server';
@@ -43,7 +44,8 @@ export function comparisonHref(keys: readonly string[]) {
 
 /** A listing as the comparator reads it: the library's public fields plus decision data. */
 export type ComparedProject = BuyerProject &
-  ProviderFacts & {
+  ProviderFacts &
+  OfferFacts & {
     capabilities?: string[];
     integrationKeys?: string[];
     setupTime?: string;

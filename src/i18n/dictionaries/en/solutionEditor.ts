@@ -137,6 +137,9 @@ export const solutionEditor = {
     foundedYearInvalid: 'The founding year cannot be later than this year.',
     casesInvalid:
       'Each case needs the customer and what changed; the link, if you add one, must be an HTTP(S) URL.',
+    plansInvalid:
+      'Each plan needs a name; if it has a price, choose its currency and what it pays for.',
+    resourcesInvalid: 'Each link must be a full address starting with https://.',
   },
   questions: {
     basics: {
@@ -156,24 +159,32 @@ export const solutionEditor = {
       hint: 'This is enough to submit. Everything below is optional and helps a company decide.',
     },
     screenshots: {
-      title: 'Screenshots',
-      hint: 'Up to four real screenshots of the product or the delivered work, with one line of context and no client data.',
+      title: 'Images',
+      hint: 'Up to eight images of the product or the delivered work, with one line of context and no client data. Real screens with a short headline look best.',
     },
     demo: {
       title: 'Demo',
       hint: 'A video walkthrough, an interactive demo or a public presentation.',
     },
     pricing: {
-      title: 'Pricing',
-      hint: 'How it is bought and what it costs. If you quote per project, explain what it depends on.',
+      title: 'Pricing and plans',
+      hint: 'How it is bought, what it costs and how it can be tried. If you quote per project, explain what it depends on.',
     },
     delivery: {
       title: 'Setup and support',
       hint: 'How long it takes to get started and what support you offer.',
     },
+    service: {
+      title: 'Support and contract',
+      hint: 'Where customers reach you, how fast you answer and what happens if someone wants to leave. Only mark what you do today.',
+    },
     integrations: {
       title: 'Integrations',
       hint: 'The tools it connects to today. If it connects to nothing, say so: that helps people decide too.',
+    },
+    developers: {
+      title: 'For technical teams',
+      hint: 'What your customer’s technical team can build with, and where they read the docs, the changes and the service status.',
     },
     compliance: {
       title: 'Compliance',
@@ -207,9 +218,11 @@ export const solutionEditor = {
   sections: {
     screenshots: 'Show what it looks like inside.',
     demo: 'Let people see it in action.',
-    pricing: 'Starting price, pricing model and range.',
+    pricing: 'Starting price, plans and how to try it.',
     delivery: 'Setup time and support.',
+    service: 'Channels, response time and exit terms.',
     integrations: 'What it connects to.',
+    developers: 'API, SDKs, docs and status.',
     compliance: 'Standards you can back up.',
     scope: 'What is included and when it doesn’t fit.',
     founders: 'Who is behind the project.',
@@ -394,6 +407,41 @@ export const solutionEditor = {
       addCase: 'Add a case',
       casesCount: '{count}/{limit} cases',
     },
+    offer: {
+      tryLegend: 'How it can be tried',
+      trialDaysLabel: 'Free trial days',
+      plansTitle: 'Plans',
+      plansNote:
+        'Up to 6, as they appear on your pricing page. With no price it shows «Custom»; with 0, «Free».',
+      planLabel: 'Plan {index}',
+      planName: 'Name',
+      planNamePlaceholder: 'For example: Professional',
+      planPrice: 'Price',
+      planPricePlaceholder: 'Empty = custom',
+      planPriceInvalid: 'Enter a number of 0 or more, without symbols.',
+      planCurrency: 'Currency',
+      planUnit: 'What it pays for',
+      planIncludes: 'What it includes',
+      planIncludesPlaceholder: 'What sets it apart: users, limits, features',
+      planPreview: 'It will read:',
+      removePlan: 'Remove',
+      addPlan: 'Add plan',
+      plansCount: '{count}/{limit} plans',
+      frequent: 'Most used',
+      all: 'All',
+      channelsLegend: 'Where you give support',
+      responseLegend: 'First response time',
+      onboardingLegend: 'How a new customer gets started',
+      exitLegend: 'If a customer wants to leave',
+      slaLabel: 'Contractual availability (SLA, %)',
+      slaNote:
+        'Only if you sign it in a contract. If you have no SLA, leave it empty: that is fine.',
+      helpLinksTitle: 'Help and community',
+      toolsLegend: 'What it can be built with',
+      resourcesTitle: 'Public pages',
+      resourcesNote:
+        'What a technical team checks before deciding. If one does not exist, leave it empty.',
+    },
   },
   profile: {
     linkType: 'Link type {index}',
@@ -419,7 +467,7 @@ export const solutionEditor = {
     networkError: "We couldn't confirm the change. Reload to check before trying again.",
     title: 'Show how it works',
     description:
-      "Up to 4 real screenshots. JPG, PNG or WebP, 2 MB max each. Hide clients' personal data before uploading.",
+      "Up to 8 images. JPG, PNG or WebP, 2 MB max each, ideally landscape (16:10). Hide clients' personal data before uploading.",
     uploadNote:
       'Uploading doesn’t publish: save the draft and submit it for review. The previously approved listing stays in place.',
     captionPendingAlt: 'Screenshot awaiting a description',
@@ -430,7 +478,7 @@ export const solutionEditor = {
     removeFromListing: 'Remove from listing',
     processing: 'Processing…',
     upload: 'Upload screenshot',
-    inListing: '{count}/4 on this listing',
+    inListing: '{count}/{limit} on this listing',
     filesSummary: 'Files for this solution ({count}/12)',
     filesNote:
       'Reuse screenshots or delete files that are no longer saved or published. Removing one from the listing doesn’t delete the file.',

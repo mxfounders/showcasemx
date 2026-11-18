@@ -15,6 +15,21 @@ import {
   solutionPaymentMethods,
   supportHoursLimit,
   minFoundedYear,
+  maxSolutionPlans,
+  maxTrialDays,
+  maxPriceFrom,
+  minSlaUptime,
+  planLimits,
+  solutionPriceUnits,
+  solutionTryOptions,
+  solutionDeveloperTools,
+  solutionSupportChannels,
+  solutionSupportResponses,
+  solutionOnboarding,
+  solutionExitTerms,
+  solutionResourceKinds,
+  type SolutionPlan,
+  type SolutionResourceKind,
   type SolutionData,
 } from './model';
 import { isCountryCode } from '@/lib/countries';
@@ -30,6 +45,12 @@ import {
   localizedPricingModelOptions,
   localizedSetupTimeOptions,
   localizedPaymentMethodOptions,
+  localizedTryOptions,
+  localizedDeveloperToolOptions,
+  localizedSupportChannelOptions,
+  localizedSupportResponseOptions,
+  localizedOnboardingOptions,
+  localizedExitTermOptions,
 } from '@/lib/taxonomy';
 
 /**
@@ -73,6 +94,11 @@ const listFields = [
   'integrationKeys',
   'compliance',
   'paymentMethods',
+  'tryOptions',
+  'developerTools',
+  'supportChannels',
+  'onboarding',
+  'exitTerms',
 ] as const;
 /** Code lists checked against Intl (SHCWS-56): countries, currencies, languages. */
 const codeFields = [
@@ -88,12 +114,17 @@ const choiceFields = [
   'demoUrl',
   'originCountry',
   'foundedYear',
+  'trialDays',
+  'supportResponse',
+  'slaUptime',
 ] as const;
 export const draftFields = [
   ...(Object.keys(textFields) as TextField[]),
   ...listFields,
   ...codeFields,
   ...choiceFields,
+  'plans',
+  'resources',
   'projectLinks',
 ] as const;
 export type DraftField = (typeof draftFields)[number];
@@ -142,6 +173,35 @@ export const siteDraftSchema = {
     supportHours: text,
     paymentMethods: list(solutionPaymentMethods),
     foundedYear: nullable({ type: 'integer' }),
+    tryOptions: list(solutionTryOptions),
+    trialDays: nullable({ type: 'integer' }),
+    plans: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['name', 'price', 'currency', 'unit', 'includes'],
+        properties: {
+          name: { type: 'string' },
+          price: nullable({ type: 'number' }),
+          currency: text,
+          unit: nullable({ type: 'string', enum: [...solutionPriceUnits] }),
+          includes: text,
+        },
+      },
+    },
+    developerTools: list(solutionDeveloperTools),
+    resources: {
+      type: 'object',
+      additionalProperties: false,
+      required: [...solutionResourceKinds],
+      properties: Object.fromEntries(solutionResourceKinds.map(kind => [kind, text])),
+    },
+    supportChannels: list(solutionSupportChannels),
+    supportResponse: nullable({ type: 'string', enum: [...solutionSupportResponses] }),
+    slaUptime: nullable({ type: 'number' }),
+    onboarding: list(solutionOnboarding),
+    exitTerms: list(solutionExitTerms),
     sources: {
       type: 'array',
       items: {
@@ -209,6 +269,12 @@ Campos:
 - supportHours: el horario de soporte tal como lo publica el sitio. Máximo 120 caracteres.
 - paymentMethods: formas de pago que el sitio menciona.
 - foundedYear: el año de fundación, solo si el sitio lo dice («desde 2019», «fundada en 2021»).
+- tryOptions: cómo se puede probar antes de pagar, solo si el sitio lo dice (plan gratis, prueba gratis, sin tarjeta, demo pública, demo con el equipo, diagnóstico gratis). trialDays: los días de la prueba gratis, solo si el sitio da la cifra.
+- plans: los planes de la página de precios, en su orden, hasta 6: name (máximo 40 caracteres), price (el número publicado; 0 si es gratis; null si es «a la medida» o «contactar»), currency (código ISO 4217 del precio), unit (lo que paga ese precio) e includes (lo principal que incluye, máximo 200 caracteres). Si el sitio muestra precios en varias monedas, usa la que aparece en la página leída. Sin promociones temporales ni descuentos con fecha. Si no hay planes publicados, lista vacía.
+- developerTools: lo que el sitio dice que ofrece a equipos técnicos (API, webhooks, SDKs, CLI, MCP…).
+- resources: la URL exacta, tomada de la lista de enlaces, de la documentación (docs), la referencia de la API (api), el registro de cambios (changelog), la página de estado (status), el roadmap público (roadmap), el centro de ayuda (help) y la comunidad (community). null si no aparece.
+- supportChannels: por dónde el sitio dice que da soporte. supportResponse: solo si el sitio da un tiempo de respuesta. slaUptime: solo si el sitio publica un porcentaje de disponibilidad comprometido por contrato; si dice que no tiene SLA o no lo dice, null.
+- onboarding: cómo arranca un cliente nuevo, según el sitio. exitTerms: solo condiciones que el sitio afirma (cancelar cuando quieras, exportar datos, el código es del cliente…).
 
 Categorías y capacidades:
 ${capabilities}
@@ -220,7 +286,13 @@ Rangos de precio: ${catalog(localizedPriceBandOptions('es'))}
 Tiempo de arranque: ${catalog(localizedSetupTimeOptions('es'))}
 Integraciones: ${catalog(localizedIntegrationOptions('es'))}
 Cumplimiento: ${catalog(localizedComplianceOptions('es'))}
-Formas de pago: ${catalog(localizedPaymentMethodOptions('es'))}`;
+Formas de pago: ${catalog(localizedPaymentMethodOptions('es'))}
+Cómo probarlo: ${catalog(localizedTryOptions('es'))}
+Herramientas técnicas: ${catalog(localizedDeveloperToolOptions('es'))}
+Canales de soporte: ${catalog(localizedSupportChannelOptions('es'))}
+Primera respuesta: ${catalog(localizedSupportResponseOptions('es'))}
+Arranque: ${catalog(localizedOnboardingOptions('es'))}
+Si el cliente quiere irse: ${catalog(localizedExitTermOptions('es'))}`;
 }
 
 const demoHint = /demo|prueba|trial|try|agenda|book|sandbox|gratis|free|empieza|start/i;
@@ -321,6 +393,11 @@ export function readDraftOutput(raw: unknown, site: Pick<SiteReading, 'pages' | 
     ['integrationKeys', solutionIntegrations],
     ['compliance', solutionCompliance],
     ['paymentMethods', solutionPaymentMethods],
+    ['tryOptions', solutionTryOptions],
+    ['developerTools', solutionDeveloperTools],
+    ['supportChannels', solutionSupportChannels],
+    ['onboarding', solutionOnboarding],
+    ['exitTerms', solutionExitTerms],
   ];
   for (const [field, values] of lists) {
     const chosen = known(values, input[field]);
@@ -370,6 +447,35 @@ export function readDraftOutput(raw: unknown, site: Pick<SiteReading, 'pages' | 
     input.foundedYear <= new Date().getUTCFullYear()
   )
     patch.foundedYear = input.foundedYear;
+  // SHCWS-180. A trial length only with a trial; an SLA only in the accepted range.
+  if (
+    patch.tryOptions?.includes('prueba-gratis') &&
+    typeof input.trialDays === 'number' &&
+    Number.isInteger(input.trialDays) &&
+    input.trialDays >= 1 &&
+    input.trialDays <= maxTrialDays
+  )
+    patch.trialDays = input.trialDays;
+  if (solutionSupportResponses.includes(input.supportResponse as never))
+    patch.supportResponse = String(input.supportResponse);
+  if (
+    typeof input.slaUptime === 'number' &&
+    input.slaUptime >= minSlaUptime &&
+    input.slaUptime <= 100
+  )
+    patch.slaUptime = input.slaUptime;
+  const plans = readDraftPlans(input.plans);
+  if (plans.length) patch.plans = plans;
+  // A resource link must be one that really appears on the site, like the demo.
+  if (input.resources && typeof input.resources === 'object' && !Array.isArray(input.resources)) {
+    const resources: Partial<Record<SolutionResourceKind, string>> = {};
+    for (const kind of solutionResourceKinds) {
+      const raw = (input.resources as Record<string, unknown>)[kind];
+      const url = typeof raw === 'string' ? safeSolutionUrl(raw.trim()) : null;
+      if (url && site.anchors.some(anchor => anchor.url === url)) resources[kind] = url;
+    }
+    if (Object.keys(resources).length) patch.resources = resources;
+  }
   if (typeof input.demoUrl === 'string') {
     const demo = safeSolutionUrl(input.demoUrl.trim());
     if (demo && site.anchors.some(anchor => anchor.url === demo)) patch.demoUrl = demo;
@@ -389,6 +495,45 @@ export function readDraftOutput(raw: unknown, site: Pick<SiteReading, 'pages' | 
   for (const field of Object.keys(sources) as DraftField[])
     if (!(field in patch)) delete sources[field];
   return { patch, sources };
+}
+
+/**
+ * Plans from the model, checked like a save: a name, a price that is a real amount (0 =
+ * free, absent = quoted), a known currency and unit. A plan with an amount but no currency
+ * keeps its name and loses the price rather than showing a number without its money.
+ */
+function readDraftPlans(value: unknown): SolutionPlan[] {
+  if (!Array.isArray(value)) return [];
+  const plans: SolutionPlan[] = [];
+  for (const item of value.slice(0, maxSolutionPlans)) {
+    if (!item || typeof item !== 'object') continue;
+    const entry = item as Record<string, unknown>;
+    const name = typeof entry.name === 'string' ? clip(entry.name, planLimits.name) : '';
+    if (!name) continue;
+    const plan: SolutionPlan = { name };
+    const currency =
+      typeof entry.currency === 'string' ? entry.currency.trim().toUpperCase() : undefined;
+    const unit = solutionPriceUnits.find(option => option === entry.unit);
+    if (
+      typeof entry.price === 'number' &&
+      Number.isFinite(entry.price) &&
+      entry.price >= 0 &&
+      entry.price <= maxPriceFrom &&
+      (entry.price === 0 || (currency && isCurrencyCode(currency) && unit))
+    ) {
+      plan.price = Math.round(entry.price * 100) / 100;
+      if (entry.price > 0) {
+        plan.currency = currency;
+        plan.unit = unit;
+      }
+    }
+    if (typeof entry.includes === 'string') {
+      const includes = clip(entry.includes, planLimits.includes);
+      if (includes) plan.includes = includes;
+    }
+    plans.push(plan);
+  }
+  return plans;
 }
 
 /** What can be read from the site without any model: its name and public links. */

@@ -117,6 +117,22 @@ export const solution = {
     after: 'Qué cambió',
     readMore: 'Leer el caso',
   },
+  /** SHCWS-180: plans and trying it, technical teams, support and contract. */
+  offer: {
+    plansTitle: 'Planes',
+    tryTitle: 'Cómo probarlo',
+    plansNote:
+      'Precios declarados por el proyecto, en su moneda. Confirma el precio vigente en su sitio.',
+    technicalTitle: 'Para equipos técnicos',
+    technicalNote: 'Herramientas y páginas declaradas por el proyecto.',
+    serviceTitle: 'Soporte y contrato',
+    channels: 'Por dónde dan soporte',
+    response: 'Primera respuesta',
+    sla: 'Disponibilidad',
+    onboarding: 'Cómo se arranca',
+    exitTerms: 'Si quieres irte',
+    serviceNote: 'Condiciones declaradas por el proyecto. Confírmalas en su contrato.',
+  },
   toolsCount: 'herramientas',
   verifyLink: 'verificas tu correo',
   verifyNote: 'Tu actividad se guarda, pero solo cuenta para el orden del catálogo si',
